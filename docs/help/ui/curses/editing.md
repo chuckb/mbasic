@@ -1,0 +1,98 @@
+# Editing Programs in Curses UI
+
+How to write and edit BASIC programs.
+
+## Line-Based Editing
+
+BASIC programs are made of numbered lines:
+
+```basic
+10 PRINT "Hello"
+20 END
+```
+
+Each line starts with a line number (1-65535).
+
+## Adding Lines
+
+1. Type a line number
+2. Type your BASIC code
+3. Press **Enter** to save the line
+
+### Example
+
+```
+Type: 10 PRINT "Hello"
+Press Enter
+→ Line 10 saved
+```
+
+## Editing Existing Lines
+
+1. Use **Up/Down** arrows to navigate to the line
+2. Edit the text
+3. Press **Enter** to save changes
+
+## Deleting Lines
+
+To delete a line:
+
+1. Navigate to the line
+2. Delete all text after the line number
+3. Press **Enter**
+
+Or type just the line number:
+
+```
+Type: 10
+Press Enter
+→ Line 10 deleted
+```
+
+## Line Numbering
+
+### Auto-increment
+
+After entering a line, the cursor moves to the next line number (incremented by 10).
+
+### Manual Line Numbers
+
+You can use any line numbers:
+
+```basic
+10 PRINT "First"
+15 PRINT "Middle"
+20 PRINT "Last"
+```
+
+This leaves room to insert lines later.
+
+## Cursor Movement
+
+| Key | Action |
+|-----|--------|
+| **Left/Right** | Move within line |
+| **Up/Down** | Move between lines |
+| **Home** or **Ctrl+A** | Start of line |
+| **End** or **Ctrl+E** | End of line |
+
+## Editing Keys
+
+| Key | Action |
+|-----|--------|
+| **Backspace** | Delete before cursor |
+| **Delete** | Delete at cursor |
+| **Enter** | Save line |
+
+## Tips
+
+- Line numbers can be any value 1-65535
+- Common practice: increment by 10
+- This leaves room for insertions
+- Use **Ctrl+A/E** if no Home/End keys
+
+## See Also
+
+- [Keyboard Commands](keyboard-commands.md) - All shortcuts
+- [Running Programs](running.md) - Execute your code
+- [File Operations](files.md) - Save and load

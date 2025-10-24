@@ -9,6 +9,8 @@ from .base import UIBackend
 from runtime import Runtime
 from interpreter import Interpreter
 from iohandler.curses_io import CursesIOHandler
+from .help_browser import HelpBrowser
+import os
 
 
 class CursesBackend(UIBackend):
@@ -60,6 +62,9 @@ class CursesBackend(UIBackend):
         self.editor_scroll_offset = 0
         self.status_message = "Ready"
 
+        # Help system
+        self.help_browser = None
+
     def start(self) -> None:
         """Start the curses UI.
 
@@ -98,6 +103,10 @@ class CursesBackend(UIBackend):
         # Create CursesIOHandler for program execution
         self.curses_io = CursesIOHandler(output_win=self.output_win, debug_enabled=False)
 
+        # Initialize help browser
+        help_root = os.path.join(os.path.dirname(__file__), '../../docs/help')
+        self.help_browser = HelpBrowser(self.stdscr, help_root)
+
         # Load program into editor
         self._load_program_to_editor()
 
@@ -114,6 +123,9 @@ class CursesBackend(UIBackend):
             # ESC: Clear error message and return to Ready
             elif key == 27:  # ESC
                 self.status_message = "Ready"
+            # Help: F1 or H
+            elif key == curses.KEY_F1 or key == ord('h') or key == ord('H'):
+                self._show_help()
             # Run: F2 or Ctrl+R
             elif key == curses.KEY_F2 or key == 18:  # Ctrl+R
                 self._run_program()
@@ -230,7 +242,7 @@ class CursesBackend(UIBackend):
         if "error" in self.status_message.lower() or len(self.status_message) > 40:
             status_text = f" MBASIC | {self.status_message} | [ESC to clear]"
         else:
-            status_text = f" MBASIC | {self.status_message} | ^R=Run ^L=List ^S=Save ^O=Load ^N=New Q=Quit"
+            status_text = f" MBASIC | {self.status_message} | F1/H=Help ^R=Run ^L=List ^S=Save ^O=Load Q=Quit"
 
         height, width = self.status_win.getmaxyx()
         self.status_win.addstr(0, 0, status_text[:width-1])
@@ -511,6 +523,15 @@ class CursesBackend(UIBackend):
             self.status_message = f"Saved to {filename}"
         except Exception as e:
             self.status_message = f"Save error: {e}"
+
+    def _show_help(self) -> None:
+        """Show the help browser."""
+        if self.help_browser:
+            # Show help starting at curses UI index
+            self.help_browser.show_help("ui/curses/index.md")
+            # After help exits, redraw everything
+            self._create_windows()
+            self._refresh_all()
 
     def cmd_load(self, filename: str) -> None:
         """Execute LOAD command - load from file."""
