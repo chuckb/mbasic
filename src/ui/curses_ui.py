@@ -335,7 +335,9 @@ class CursesBackend(UIBackend):
         if curses.has_colors():
             self.menu_win.bkgd(' ', curses.color_pair(1))
 
+        # Always clear the entire line to ensure proper background
         height, width = self.menu_win.getmaxyx()
+        self.menu_win.addstr(0, 0, ' ' * (width - 1))
 
         # Draw menu titles
         x = 1
