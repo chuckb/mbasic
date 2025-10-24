@@ -166,7 +166,12 @@ class CursesBackend(UIBackend):
             # ESC: Toggle menu or clear error
             elif key == 27:  # ESC
                 if self.menu_active:
-                    # Exit menu mode
+                    # Exit menu mode - erase dropdown
+                    if self.dropdown_win:
+                        self.dropdown_win.erase()
+                        self.dropdown_win.noutrefresh()
+                        del self.dropdown_win
+                        self.dropdown_win = None
                     self.menu_active = False
                     self.menu_dropdown_open = False
                     self.status_message = "Ready"
@@ -178,18 +183,12 @@ class CursesBackend(UIBackend):
                     self.current_menu_item = 0
             # Menu navigation
             elif self.menu_active and key == curses.KEY_LEFT:
-                # Previous menu - close old dropdown and open new one
-                if self.dropdown_win:
-                    del self.dropdown_win
-                    self.dropdown_win = None
+                # Previous menu - open its dropdown (old one erased in _draw_menu_dropdown)
                 self.current_menu = (self.current_menu - 1) % len(self.menus)
                 self.current_menu_item = 0
                 self.menu_dropdown_open = True
             elif self.menu_active and key == curses.KEY_RIGHT:
-                # Next menu - close old dropdown and open new one
-                if self.dropdown_win:
-                    del self.dropdown_win
-                    self.dropdown_win = None
+                # Next menu - open its dropdown (old one erased in _draw_menu_dropdown)
                 self.current_menu = (self.current_menu + 1) % len(self.menus)
                 self.current_menu_item = 0
                 self.menu_dropdown_open = True
@@ -313,10 +312,6 @@ class CursesBackend(UIBackend):
         """Refresh all windows."""
         import curses
 
-        # Force editor and output to redraw (clears old dropdown)
-        self.editor_win.touchwin()
-        self.output_win.touchwin()
-
         self._draw_menu()
         self._draw_status()
         self._draw_output()
@@ -384,8 +379,10 @@ class CursesBackend(UIBackend):
         # Create dropdown window (keep as instance variable so it persists)
         menu_height = len(items) + 2  # +2 for borders
         try:
-            # Delete old dropdown if it exists
+            # Erase old dropdown if it exists
             if self.dropdown_win:
+                self.dropdown_win.erase()
+                self.dropdown_win.noutrefresh()
                 del self.dropdown_win
                 self.dropdown_win = None
 
