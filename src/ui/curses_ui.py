@@ -171,22 +171,22 @@ class CursesBackend(UIBackend):
                     self.menu_dropdown_open = False
                     self.status_message = "Ready"
                 else:
-                    # Enter menu mode
+                    # Enter menu mode and open first dropdown
                     self.menu_active = True
-                    self.menu_dropdown_open = False
+                    self.menu_dropdown_open = True
                     self.current_menu = 0
                     self.current_menu_item = 0
             # Menu navigation
             elif self.menu_active and key == curses.KEY_LEFT:
-                # Previous menu - close dropdown
-                self.menu_dropdown_open = False
+                # Previous menu - open its dropdown
                 self.current_menu = (self.current_menu - 1) % len(self.menus)
                 self.current_menu_item = 0
+                self.menu_dropdown_open = True
             elif self.menu_active and key == curses.KEY_RIGHT:
-                # Next menu - close dropdown
-                self.menu_dropdown_open = False
+                # Next menu - open its dropdown
                 self.current_menu = (self.current_menu + 1) % len(self.menus)
                 self.current_menu_item = 0
+                self.menu_dropdown_open = True
             elif self.menu_active and key == curses.KEY_UP:
                 if self.menu_dropdown_open:
                     # Previous menu item
@@ -407,10 +407,8 @@ class CursesBackend(UIBackend):
         # If there's an error or long message, show ESC hint
         if "error" in self.status_message.lower() or len(self.status_message) > 40:
             status_text = f" MBASIC | {self.status_message} | [ESC to clear]"
-        elif self.menu_active and self.menu_dropdown_open:
-            status_text = f" MBASIC | Menu: ↑/↓ select item  Enter=execute  ESC=cancel"
         elif self.menu_active:
-            status_text = f" MBASIC | Menu: ←/→ select menu  ↓=open  ESC=cancel"
+            status_text = f" MBASIC | Menu: ←/→ switch  ↑/↓ navigate  Enter=execute  ESC=cancel"
         else:
             status_text = f" MBASIC | {self.status_message} | ESC=Menu ^P=Help ^R=Run ^S=Save ^O=Load Q=Quit"
 
