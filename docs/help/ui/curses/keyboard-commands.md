@@ -11,7 +11,7 @@ All keyboard shortcuts for the curses text interface.
 | **F5** | **Ctrl+S** | Save program (prompts for filename) |
 | **F9** | **Ctrl+O** | Load program (prompts for filename) |
 | | **Ctrl+N** | New program (clear all lines) |
-| **F1** or **H** | | Open help system |
+| **F1** | | Open help system |
 | **ESC** | | Clear error message, return to Ready |
 | **Q** | | Quit the IDE |
 
@@ -65,7 +65,7 @@ When viewing help (like you are now):
 
 - The cursor shows where you're typing
 - Press **ESC** anytime to clear error messages
-- **F1** on a BASIC keyword gives context help
+- **F1** opens help system
 - Lines are saved when you press **Enter**
 - Line numbers auto-increment by 10
 

@@ -123,8 +123,8 @@ class CursesBackend(UIBackend):
             # ESC: Clear error message and return to Ready
             elif key == 27:  # ESC
                 self.status_message = "Ready"
-            # Help: F1 or H
-            elif key == curses.KEY_F1 or key == ord('h') or key == ord('H'):
+            # Help: F1
+            elif key == curses.KEY_F1:
                 self._show_help()
             # Run: F2 or Ctrl+R
             elif key == curses.KEY_F2 or key == 18:  # Ctrl+R
@@ -242,7 +242,7 @@ class CursesBackend(UIBackend):
         if "error" in self.status_message.lower() or len(self.status_message) > 40:
             status_text = f" MBASIC | {self.status_message} | [ESC to clear]"
         else:
-            status_text = f" MBASIC | {self.status_message} | F1/H=Help ^R=Run ^L=List ^S=Save ^O=Load Q=Quit"
+            status_text = f" MBASIC | {self.status_message} | F1=Help ^R=Run ^L=List ^S=Save ^O=Load Q=Quit"
 
         height, width = self.status_win.getmaxyx()
         self.status_win.addstr(0, 0, status_text[:width-1])

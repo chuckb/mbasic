@@ -18,7 +18,7 @@ Full-screen terminal interface for MBASIC.
 - **F2** or **Ctrl+R** - Run program
 - **F5** or **Ctrl+S** - Save program
 - **F9** or **Ctrl+O** - Load program
-- **F1** or **H** - Open help
+- **F1** - Open help
 - **ESC** - Clear errors
 - **Q** - Quit
 

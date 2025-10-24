@@ -44,7 +44,7 @@ Let's write a simple program:
 You don't need to memorize everything. The status line shows common commands:
 
 - **F2** or **Ctrl+R** - Run program
-- **F1** or **H** - Help (you're here now!)
+- **F1** - Help (you're here now!)
 - **Q** - Quit
 
 If you don't have function keys, use the **Ctrl** alternatives shown.
@@ -73,5 +73,5 @@ Or jump to the BASIC language:
 
 - Press **ESC** to clear error messages
 - Status line shows available commands
-- Help is always available with **F1** or **H**
+- Help is always available with **F1**
 - Lines auto-increment by 10 for easy editing
