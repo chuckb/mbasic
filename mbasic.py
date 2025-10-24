@@ -158,11 +158,24 @@ Examples:
     if args.backend == 'cli':
         from iohandler.console import ConsoleIOHandler
         io_handler = ConsoleIOHandler(debug_enabled=args.debug)
+    elif args.backend == 'curses':
+        # Curses backend creates its own CursesIOHandler internally
+        # Pass a dummy handler for initialization (will be replaced)
+        from iohandler.console import ConsoleIOHandler
+        io_handler = ConsoleIOHandler(debug_enabled=args.debug)
+    elif args.backend == 'tk':
+        # Tk backend uses console I/O for now (will implement TkIOHandler later)
+        from iohandler.console import ConsoleIOHandler
+        io_handler = ConsoleIOHandler(debug_enabled=args.debug)
     elif args.backend == 'visual':
-        # For now, visual backend uses console I/O (stub)
+        # Visual backend uses console I/O (stub)
         from iohandler.console import ConsoleIOHandler
         io_handler = ConsoleIOHandler(debug_enabled=args.debug)
         print("Note: Visual backend is a stub, using console I/O")
+    else:
+        # Fallback to console I/O
+        from iohandler.console import ConsoleIOHandler
+        io_handler = ConsoleIOHandler(debug_enabled=args.debug)
 
     # Create program manager
     from editing import ProgramManager
