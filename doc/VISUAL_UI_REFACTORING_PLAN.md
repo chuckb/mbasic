@@ -360,22 +360,40 @@ class UIBackend:
 
 **Time Estimate**: 1-2 hours
 
-#### Phase 5: Example Visual UI
+#### Phase 5: Visual UI Preparation (DEFERRED)
 
-**Goal**: Create a minimal visual UI example
+**Goal**: Stop before implementing visual UI, evaluate mobile-friendly options
 
-1. **Create examples/embed_gui.py**
-   - Simple tkinter or pygame example
-   - Custom GUIIOHandler
-   - Visual program display
-   - Button-based UI
+**Status**: This phase is intentionally deferred until after Phases 1-4 are complete.
 
-2. **Document**:
-   - How to create custom backends
-   - How to implement custom IOHandlers
-   - How to embed in larger applications
+**Rationale**: The architecture created in Phases 1-4 (IOHandler, UIBackend) is framework-agnostic. Before committing to a specific visual framework, we'll evaluate cross-platform options for **iOS, Android, and desktop**.
 
-**Time Estimate**: 3-4 hours
+**Potential Mobile Frameworks to Evaluate**:
+1. **Kivy** - Python native, runs on iOS/Android/Desktop, touch-friendly
+2. **BeeWare (Toga)** - Native widgets on each platform, Python-based
+3. **PyQt/PySide** - QML for mobile, mature framework
+4. **React Native + Python bridge** - Web tech, native performance
+5. **Flutter + Python bridge** - High-performance, beautiful UIs
+6. **Web-based (PWA)** - HTML5/JavaScript calling Python backend via REST/WebSocket
+
+**Evaluation Criteria**:
+- iOS and Android support (primary requirement)
+- Touch input and gesture support
+- Native feel vs web view performance
+- Deployment complexity (app store requirements)
+- Screen size adaptation (phone/tablet)
+- Text editor widget quality
+- Development velocity
+- Python integration quality
+
+**Phase 5 Implementation**:
+After Phase 4, we'll create a separate document (MOBILE_UI_EVALUATION.md) analyzing each framework with:
+- Proof-of-concept implementations
+- Pros/cons for MBASIC use case
+- Recommended approach
+- Implementation plan for chosen framework
+
+**Time Estimate**: TBD (depends on framework choice and evaluation time)
 
 ### Migration Strategy
 
@@ -387,7 +405,8 @@ class UIBackend:
 **Gradual Migration:**
 1. Phase 1-3: Refactor internal structure (no API changes)
 2. Phase 4: Add dynamic loading (optional --backend flag)
-3. Phase 5: Add visual backend example
+3. **STOP**: Evaluate mobile UI frameworks before Phase 5
+4. Phase 5: Implement chosen mobile/visual backend (deferred)
 
 **Testing:**
 - After each phase, run existing test suite
@@ -515,21 +534,29 @@ def create_mbasic_interpreter(output_callback, input_callback):
 - [ ] Test: CLI backend loads dynamically
 - [ ] Document: How to create custom backends
 
-### Phase 5: Visual Example
-- [ ] Create examples/embed_gui.py
-- [ ] Implement simple tkinter UI
-- [ ] Implement GUIIOHandler
-- [ ] Document: Visual UI integration guide
-- [ ] Create video/screenshots
+### Phase 5: Mobile/Visual UI (DEFERRED)
+**STOP HERE - Complete Phases 1-4 first, then evaluate mobile frameworks**
+- [ ] Create MOBILE_UI_EVALUATION.md
+- [ ] Evaluate Kivy, BeeWare, PyQt, React Native, Flutter, PWA
+- [ ] Build proof-of-concept for top 2-3 options
+- [ ] Choose framework based on iOS/Android support
+- [ ] Design mobile-specific UI (touch, gestures, screen sizes)
+- [ ] Implement chosen framework
+- [ ] Document: Mobile UI integration guide
 
 ## Timeline Estimate
 
-**Total**: 11-16 hours
+**Phases 1-4 (Core Refactoring)**: 8-12 hours
 - Phase 1: 2-3 hours (I/O abstraction)
 - Phase 2: 2-3 hours (Program management)
 - Phase 3: 3-4 hours (UI abstraction)
 - Phase 4: 1-2 hours (Dynamic loading)
-- Phase 5: 3-4 hours (Visual example)
+
+**Phase 5 (Mobile UI)**: TBD - Deferred pending framework evaluation
+- Framework evaluation: 2-4 hours
+- Proof-of-concepts: 4-8 hours
+- Implementation: 8-20 hours (varies by framework)
+- Documentation: 2-4 hours
 
 ## Risks and Mitigations
 
@@ -556,8 +583,65 @@ Once the refactoring is complete, these become possible:
 5. **Testing**: Mock I/O for comprehensive testing
 6. **Network**: Remote BASIC execution (telnet-like)
 
+## Mobile Platform Considerations
+
+### iOS and Android Requirements
+
+The architecture must support:
+- **Touch Input**: No mouse, touch gestures (tap, swipe, pinch)
+- **Screen Sizes**: Phone (3-7") to tablet (8-13")
+- **Virtual Keyboard**: Screen space management when keyboard is visible
+- **App Store Requirements**: Code signing, sandboxing, review process
+- **Native vs Web Feel**: Balance between performance and development speed
+
+### Framework Requirements for MBASIC
+
+1. **Text Editing Widget**
+   - Line numbers display
+   - Syntax highlighting (nice to have)
+   - Touch-friendly scrolling
+   - Selection and cursor control
+
+2. **Output Display**
+   - Monospace font support
+   - Scrollable text output
+   - Clear screen capability
+   - ANSI/cursor positioning (for CLS, LOCATE)
+
+3. **Input Handling**
+   - Dialog for INPUT statement
+   - Keyboard management
+   - INKEY$ simulation (button or gesture)
+
+4. **Program Management**
+   - File picker for LOAD/SAVE
+   - Visual line editor
+   - RUN/STOP buttons
+   - Program listing view
+
+### Recommended Evaluation Order
+
+After Phase 4 completion:
+
+1. **Kivy** (Try first)
+   - Pro: Pure Python, iOS/Android/Desktop proven
+   - Pro: Good documentation, active community
+   - Con: Custom widget look (not native)
+
+2. **BeeWare** (Try second)
+   - Pro: Native widgets on each platform
+   - Pro: Python-native philosophy
+   - Con: Younger project, less mature
+
+3. **Web-based (PWA)** (Fallback)
+   - Pro: Easiest cross-platform
+   - Pro: Familiar web technologies
+   - Con: Need Python backend (API approach)
+
 ## Conclusion
 
 This refactoring plan provides a clear path to making MBASIC embeddable in visual UIs while maintaining CLI functionality. The architecture uses standard Python patterns (importlib, abstract interfaces) and follows best practices for separation of concerns.
 
-The incremental approach ensures each phase is testable and doesn't break existing functionality. The result will be a flexible, embeddable BASIC interpreter suitable for both command-line and graphical applications.
+**Key Decision**: The plan deliberately stops after Phase 4 to evaluate mobile frameworks properly. The IOHandler and UIBackend architecture is framework-agnostic and will work with any UI technology chosen for iOS/Android support.
+
+The incremental approach ensures each phase is testable and doesn't break existing functionality. Phases 1-4 create a flexible, embeddable BASIC interpreter core that can be wrapped in any UI framework - command-line, desktop GUI, mobile app, or web interface.
