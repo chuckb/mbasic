@@ -70,6 +70,7 @@ python3 mbasic.py --backend curses tests/test_curses_hello.bas
 | **F5** | **Ctrl+S** | Save program (prompts for filename) |
 | **F9** | **Ctrl+O** | Load program (prompts for filename) |
 | | **Ctrl+N** | New program (clear) |
+| **ESC** | | Clear error message, show commands |
 | **Q** | | Quit IDE |
 | **Up/Down** | | Navigate between lines |
 | **Left/Right** | | Move cursor within line |
@@ -350,7 +351,8 @@ Enjoy programming BASIC in the terminal! 🚀
 │ COMMANDS: (Ctrl+key if no function keys)               │
 │  F2 / ^R = Run Program     F3 / ^L = List Program      │
 │  F5 / ^S = Save to File    F9 / ^O = Load from File    │
-│       ^N = New Program     Q      = Quit IDE            │
+│       ^N = New Program     ESC    = Clear error msg    │
+│       Q  = Quit IDE                                     │
 │                                                         │
 │ EDITING:                                                │
 │  Enter      = Save line and advance                     │
@@ -367,5 +369,6 @@ Enjoy programming BASIC in the terminal! 🚀
 │  3. Press Enter to save line                            │
 │  4. Repeat for more lines                               │
 │  5. Press F2 or Ctrl+R to run                           │
+│  6. If error, press ESC to see commands again           │
 └─────────────────────────────────────────────────────────┘
 ```
