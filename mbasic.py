@@ -5,8 +5,10 @@ MBASIC 5.21 Interpreter
 Usage:
     python3 mbasic.py                    # Interactive mode (CLI)
     python3 mbasic.py program.bas        # Execute program
-    python3 mbasic.py --backend cli      # Explicitly use CLI backend
-    python3 mbasic.py --backend visual   # Use visual backend (stub)
+    python3 mbasic.py --backend cli      # CLI backend (default)
+    python3 mbasic.py --backend curses   # Curses text UI (full-screen terminal)
+    python3 mbasic.py --backend tk       # Tkinter GUI (graphical)
+    python3 mbasic.py --backend visual   # Generic visual stub
     python3 mbasic.py --debug            # Enable debug output
 """
 
@@ -34,7 +36,7 @@ def load_backend(backend_name, io_handler, program_manager):
     """Load a UI backend dynamically using importlib
 
     Args:
-        backend_name: Name of backend ('cli' or 'visual')
+        backend_name: Name of backend ('cli', 'visual', 'curses', 'tk')
         io_handler: IOHandler instance for I/O operations
         program_manager: ProgramManager instance for program storage
 
@@ -46,12 +48,24 @@ def load_backend(backend_name, io_handler, program_manager):
         AttributeError: If backend doesn't have required classes
     """
     try:
-        # Import the backend module
-        backend_module = importlib.import_module(f'ui.{backend_name}')
+        # Map backend name to module and class name
+        backend_map = {
+            'cli': ('ui.cli', 'CLIBackend'),
+            'visual': ('ui.visual', 'VisualBackend'),
+            'curses': ('ui.curses_ui', 'CursesBackend'),
+            'tk': ('ui.tk_ui', 'TkBackend'),
+        }
 
-        # Get the backend class (CLIBackend, VisualBackend, etc.)
-        backend_class_name = f'{backend_name.upper()}Backend' if backend_name == 'cli' else f'{backend_name.capitalize()}Backend'
-        backend_class = getattr(backend_module, backend_class_name)
+        if backend_name not in backend_map:
+            raise ValueError(f"Unknown backend: {backend_name}")
+
+        module_name, class_name = backend_map[backend_name]
+
+        # Import the backend module
+        backend_module = importlib.import_module(module_name)
+
+        # Get the backend class
+        backend_class = getattr(backend_module, class_name)
 
         # Create and return the backend instance
         return backend_class(io_handler, program_manager)
@@ -59,7 +73,7 @@ def load_backend(backend_name, io_handler, program_manager):
     except ImportError as e:
         raise ImportError(f"Failed to load backend '{backend_name}': {e}")
     except AttributeError as e:
-        raise AttributeError(f"Backend '{backend_name}' does not have class '{backend_class_name}': {e}")
+        raise AttributeError(f"Backend '{backend_name}' does not have class '{class_name}': {e}")
 
 
 def run_file(program_path, backend, debug_enabled=False):
@@ -111,8 +125,10 @@ def main():
 Examples:
   python3 mbasic.py                    # Interactive mode (CLI)
   python3 mbasic.py program.bas        # Run program and enter interactive mode
-  python3 mbasic.py --backend cli      # Explicitly use CLI backend
-  python3 mbasic.py --backend visual   # Use visual backend (stub)
+  python3 mbasic.py --backend cli      # CLI backend (default)
+  python3 mbasic.py --backend curses   # Curses text UI (full-screen terminal)
+  python3 mbasic.py --backend tk       # Tkinter GUI (graphical)
+  python3 mbasic.py --backend visual   # Generic visual stub
   python3 mbasic.py --debug            # Enable debug output
         """
     )
@@ -125,7 +141,7 @@ Examples:
 
     parser.add_argument(
         '--backend',
-        choices=['cli', 'visual'],
+        choices=['cli', 'visual', 'curses', 'tk'],
         default='cli',
         help='UI backend to use (default: cli)'
     )
