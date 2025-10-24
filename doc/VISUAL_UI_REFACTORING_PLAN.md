@@ -222,12 +222,22 @@ class ProgramManager:
 #### 3. InterpreterEngine (src/core/engine.py)
 
 ```python
+class ExecutionState:
+    """Snapshot of current execution state for debugging"""
+    current_line: int
+    current_statement_index: int
+    stopped: bool
+    breakpoints: Set[int]
+
 class InterpreterEngine:
-    """Core interpreter engine with abstracted I/O"""
+    """Core interpreter engine with abstracted I/O and debugging support"""
 
     def __init__(self, io_handler: IOHandler):
         self.io = io_handler
         self.runtime = None
+        self.execution_state = ExecutionState()
+        self.step_mode: Optional[str] = None  # None, 'line', 'statement', 'expression'
+        self.step_callback: Optional[Callable] = None
 
     def run_program(self, program: ProgramNode) -> None:
         """Execute a BASIC program"""
@@ -244,6 +254,96 @@ class InterpreterEngine:
     def continue_execution(self) -> None:
         """Continue after STOP or Ctrl+C"""
         ...
+
+    # Debugging and Inspection Interface
+    def get_variable_table(self) -> Dict[str, Any]:
+        """Export all variables with their current values and types
+
+        Returns:
+            Dict mapping variable names to their values:
+            {
+                'A': 42,
+                'B$': 'HELLO',
+                'C#': 3.14159,
+                'D(': [1, 2, 3, 4, 5],  # Array
+                'FN_X': <DEF FN object>,  # User-defined function
+            }
+        """
+        if not self.runtime:
+            return {}
+        return self.runtime.get_all_variables()
+
+    def get_gosub_stack(self) -> List[int]:
+        """Export GOSUB call stack
+
+        Returns:
+            List of line numbers representing GOSUB return points:
+            [100, 500, 1000]  # Called GOSUB at lines 100, 500, 1000
+        """
+        if not self.runtime:
+            return []
+        return self.runtime.get_gosub_stack()
+
+    def get_for_loop_stack(self) -> List[Dict[str, Any]]:
+        """Export FOR loop stack for debugging
+
+        Returns:
+            List of FOR loop contexts:
+            [
+                {'var': 'I', 'current': 5, 'end': 10, 'step': 1, 'line': 100},
+                {'var': 'J', 'current': 2, 'end': 5, 'step': 1, 'line': 150}
+            ]
+        """
+        if not self.runtime:
+            return []
+        return self.runtime.get_for_loop_stack()
+
+    def get_execution_state(self) -> ExecutionState:
+        """Get current execution state for debugging UI"""
+        return self.execution_state
+
+    # Stepping and Breakpoint Support
+    def set_step_mode(self, mode: str, callback: Callable = None) -> None:
+        """Enable stepping mode
+
+        Args:
+            mode: 'line', 'statement', or 'expression'
+            callback: Optional callback(state) called at each step
+        """
+        self.step_mode = mode
+        self.step_callback = callback
+
+    def clear_step_mode(self) -> None:
+        """Disable stepping, run normally"""
+        self.step_mode = None
+        self.step_callback = None
+
+    def step_line(self) -> None:
+        """Execute one line then pause"""
+        self.set_step_mode('line')
+        self.continue_execution()
+
+    def step_statement(self) -> None:
+        """Execute one statement then pause"""
+        self.set_step_mode('statement')
+        self.continue_execution()
+
+    def step_expression(self) -> None:
+        """Step through expression evaluation (enter sub-expressions)"""
+        self.set_step_mode('expression')
+        self.continue_execution()
+
+    def set_breakpoint(self, line: int) -> None:
+        """Set a breakpoint at a line number"""
+        self.execution_state.breakpoints.add(line)
+
+    def clear_breakpoint(self, line: int) -> None:
+        """Clear a breakpoint"""
+        self.execution_state.breakpoints.discard(line)
+
+    def clear_all_breakpoints(self) -> None:
+        """Clear all breakpoints"""
+        self.execution_state.breakpoints.clear()
 ```
 
 #### 4. UIBackend Interface (src/ui/base.py)
@@ -276,11 +376,144 @@ class UIBackend:
         ...
 ```
 
+### Debugging and Inspection Features
+
+Visual UIs need access to runtime state for debugging displays. The architecture provides comprehensive inspection capabilities:
+
+#### Variable Table Display
+
+The visual UI can display all variables in real-time:
+
+```python
+# In visual UI update loop
+variables = engine.get_variable_table()
+
+# Display in variable watch window:
+# A = 42 (INTEGER)
+# B$ = "HELLO" (STRING)
+# C# = 3.14159 (DOUBLE)
+# D( = [1, 2, 3, 4, 5] (ARRAY)
+# FN_X = <function> (DEF FN)
+```
+
+**Implementation details:**
+- Variable table includes suffix (%, $, #, !, (, FN_) for type identification
+- Arrays show as list of values (or summary if large)
+- DEF FN functions marked specially
+- Updated at each step or breakpoint
+
+#### Call Stack Display
+
+Display GOSUB/RETURN call stack for debugging:
+
+```python
+gosub_stack = engine.get_gosub_stack()
+for_stack = engine.get_for_loop_stack()
+
+# GOSUB Stack:
+# → Line 1000  (current)
+# → Line 500
+# → Line 100
+
+# FOR Loop Stack:
+# FOR I = 5 TO 10 STEP 1  (line 100)
+# FOR J = 2 TO 5 STEP 1   (line 150)
+```
+
+**Use cases:**
+- Visualize nested GOSUB calls
+- Detect infinite recursion
+- Show FOR loop nesting
+- Display loop variable values
+
+#### Execution Stepping
+
+Three levels of stepping granularity:
+
+**Line Stepping**: Execute one entire line
+```python
+engine.step_line()  # Executes: 100 PRINT A: GOSUB 500: B = B + 1
+# Pauses after completing all statements on line 100
+```
+
+**Statement Stepping**: Execute one statement at a time
+```python
+engine.step_statement()  # Executes: PRINT A
+engine.step_statement()  # Executes: GOSUB 500
+engine.step_statement()  # Executes: B = B + 1
+# Pauses after each statement
+```
+
+**Expression Stepping**: Step into expression evaluation
+```python
+# Line: 100 X = (A + B) * (C + D)
+engine.step_expression()  # Evaluates: A
+engine.step_expression()  # Evaluates: B
+engine.step_expression()  # Evaluates: A + B
+engine.step_expression()  # Evaluates: C
+engine.step_expression()  # Evaluates: D
+engine.step_expression()  # Evaluates: C + D
+engine.step_expression()  # Evaluates: (A + B) * (C + D)
+# Shows expression evaluation tree
+```
+
+#### Breakpoints
+
+Set breakpoints at line numbers:
+
+```python
+engine.set_breakpoint(100)
+engine.set_breakpoint(500)
+engine.run_program(program)  # Pauses at line 100
+# User inspects variables, call stack
+engine.continue_execution()  # Continues to line 500
+```
+
+**Visual UI features:**
+- Click line numbers to toggle breakpoints
+- Red dot indicates breakpoint
+- Highlight current line during execution
+- Step buttons: Step Line, Step Statement, Step Expression
+- Continue button: Run until next breakpoint
+
+#### Step Callbacks
+
+Register callbacks for UI updates during stepping:
+
+```python
+def on_step(state: ExecutionState):
+    # Update UI highlighting
+    highlight_line(state.current_line)
+
+    # Update variable display
+    refresh_variable_table()
+
+    # Update call stack display
+    refresh_call_stack()
+
+    # Scroll to current line
+    scroll_to_line(state.current_line)
+
+engine.set_step_mode('line', callback=on_step)
+```
+
+#### Runtime State Inspection
+
+Access full execution state:
+
+```python
+state = engine.get_execution_state()
+print(f"Current line: {state.current_line}")
+print(f"Statement index: {state.current_statement_index}")
+print(f"Stopped: {state.stopped}")
+print(f"Breakpoints: {state.breakpoints}")
+```
+
 ### Refactoring Steps
 
-#### Phase 1: I/O Abstraction
+#### Phase 1: I/O Abstraction and Debugging Support
 
-**Goal**: Extract all I/O into IOHandler interface
+**Goal**: Extract all I/O into IOHandler interface AND add debugging/inspection capabilities
 
 1. **Create src/io/ directory structure**
    - base.py: IOHandler interface
@@ -293,14 +526,31 @@ class UIBackend:
    - Replace error messages with `self.io.error()`
    - Replace DEBUG print with `self.io.debug()`
 
-3. **Refactor basic_builtins.py**
+3. **Add debugging support to InterpreterEngine**
+   - Add ExecutionState class
+   - Implement `get_variable_table()` method
+   - Implement `get_gosub_stack()` method
+   - Implement `get_for_loop_stack()` method
+   - Implement `get_execution_state()` method
+   - Add stepping support: `step_line()`, `step_statement()`, `step_expression()`
+   - Add breakpoint support: `set_breakpoint()`, `clear_breakpoint()`
+   - Add step_callback mechanism for UI updates
+
+4. **Extend runtime.py to support inspection**
+   - Add `get_all_variables()` method to export variable table
+   - Add `get_gosub_stack()` method to export return stack
+   - Add `get_for_loop_stack()` method to export FOR loop contexts
+   - Track current_line and current_statement during execution
+
+5. **Refactor basic_builtins.py**
    - Pass IOHandler to built-in functions
    - Replace `input()` with `io_handler.input()`
    - Replace `print()` with `io_handler.output()`
 
-4. **Test**: Ensure CLI still works with ConsoleIOHandler
+6. **Test**: Ensure CLI still works with ConsoleIOHandler
+7. **Test**: Verify debugging methods return correct data
 
-**Time Estimate**: 2-3 hours
+**Time Estimate**: 3-4 hours (increased for debugging features)
 
 #### Phase 2: Program Management
 
@@ -481,6 +731,98 @@ def create_mbasic_interpreter(output_callback, input_callback):
     return backend
 ```
 
+### Example: Visual Debugger UI
+
+```python
+class VisualDebuggerUI:
+    """Example visual UI with full debugging support"""
+
+    def __init__(self):
+        self.io = GUIIOHandler(self.output_widget)
+        self.program = ProgramManager(default_def_type_map())
+        self.engine = InterpreterEngine(self.io)
+
+        # UI components
+        self.code_editor = CodeEditorWidget()
+        self.output_widget = OutputWidget()
+        self.variable_table = VariableTableWidget()
+        self.call_stack_widget = CallStackWidget()
+
+        # Register step callback
+        self.engine.set_step_mode('line', callback=self.on_step)
+
+    def on_step(self, state: ExecutionState):
+        """Called at each step during execution"""
+        # Highlight current line in editor
+        self.code_editor.highlight_line(state.current_line)
+        self.code_editor.scroll_to_line(state.current_line)
+
+        # Update variable table
+        variables = self.engine.get_variable_table()
+        self.variable_table.update(variables)
+
+        # Update call stack display
+        gosub_stack = self.engine.get_gosub_stack()
+        for_stack = self.engine.get_for_loop_stack()
+        self.call_stack_widget.update(gosub_stack, for_stack)
+
+        # Update UI state
+        self.update_button_states(state)
+
+    def on_run_clicked(self):
+        """Run button clicked"""
+        program_ast = self.program.get_ast()
+        self.engine.clear_step_mode()  # Run normally
+        self.engine.run_program(program_ast)
+
+    def on_step_line_clicked(self):
+        """Step Line button clicked"""
+        self.engine.step_line()
+
+    def on_step_statement_clicked(self):
+        """Step Statement button clicked"""
+        self.engine.step_statement()
+
+    def on_step_expression_clicked(self):
+        """Step Expression button clicked"""
+        self.engine.step_expression()
+
+    def on_continue_clicked(self):
+        """Continue button clicked (run to next breakpoint)"""
+        self.engine.continue_execution()
+
+    def on_breakpoint_toggle(self, line_number: int):
+        """User clicked on line number to toggle breakpoint"""
+        state = self.engine.get_execution_state()
+        if line_number in state.breakpoints:
+            self.engine.clear_breakpoint(line_number)
+            self.code_editor.remove_breakpoint_marker(line_number)
+        else:
+            self.engine.set_breakpoint(line_number)
+            self.code_editor.add_breakpoint_marker(line_number)
+
+    def on_variable_clicked(self, var_name: str):
+        """User clicked on variable to inspect"""
+        variables = self.engine.get_variable_table()
+        value = variables.get(var_name)
+        self.show_variable_inspector(var_name, value)
+
+    def update_button_states(self, state: ExecutionState):
+        """Update button enabled/disabled states"""
+        self.run_button.enabled = not state.stopped
+        self.step_buttons.enabled = state.stopped
+        self.continue_button.enabled = state.stopped
+```
+
+This example shows how a visual UI can:
+- Display all variables in real-time during execution
+- Show GOSUB and FOR loop call stacks
+- Support line/statement/expression stepping
+- Toggle breakpoints by clicking line numbers
+- Highlight the current execution line
+- Inspect variable values on click
+
+
 ## Benefits of This Architecture
 
 ### For CLI Users
@@ -493,6 +835,9 @@ def create_mbasic_interpreter(output_callback, input_callback):
 - **Flexible I/O**: Custom handlers for any UI framework
 - **Embeddable**: Drop interpreter into existing apps
 - **Dynamic Loading**: No need to modify mbasic.py
+- **Full Debugging Support**: Variable inspection, call stacks, stepping, breakpoints
+- **Real-time State Access**: Query runtime state at any time during execution
+- **Step Callbacks**: UI updates automatically during stepping
 
 ### For Maintainers
 - **Separation of Concerns**: Core logic vs UI vs I/O
@@ -502,13 +847,27 @@ def create_mbasic_interpreter(output_callback, input_callback):
 
 ## Implementation Checklist
 
-### Phase 1: I/O Abstraction
+### Phase 1: I/O Abstraction and Debugging Support
 - [ ] Create src/io/ directory structure
 - [ ] Implement IOHandler interface (base.py)
 - [ ] Implement ConsoleIOHandler (console.py)
 - [ ] Refactor interpreter.py to use IOHandler
 - [ ] Refactor basic_builtins.py to use IOHandler
+- [ ] Add ExecutionState class to engine.py
+- [ ] Implement get_variable_table() in InterpreterEngine
+- [ ] Implement get_gosub_stack() in InterpreterEngine
+- [ ] Implement get_for_loop_stack() in InterpreterEngine
+- [ ] Implement stepping methods (step_line, step_statement, step_expression)
+- [ ] Implement breakpoint methods (set_breakpoint, clear_breakpoint)
+- [ ] Add step_callback mechanism
+- [ ] Extend runtime.py with get_all_variables() method
+- [ ] Extend runtime.py with get_gosub_stack() method
+- [ ] Extend runtime.py with get_for_loop_stack() method
+- [ ] Track current_line and current_statement in runtime
 - [ ] Test: CLI functionality unchanged
+- [ ] Test: Variable table exports correctly
+- [ ] Test: Call stacks export correctly
+- [ ] Test: Stepping and breakpoints work
 
 ### Phase 2: Program Management
 - [ ] Create src/editing/ directory
@@ -546,11 +905,11 @@ def create_mbasic_interpreter(output_callback, input_callback):
 
 ## Timeline Estimate
 
-**Phases 1-4 (Core Refactoring)**: 8-12 hours
-- Phase 1: 2-3 hours (I/O abstraction)
+**Phases 1-4 (Core Refactoring)**: 10-14 hours
+- Phase 1: 3-4 hours (I/O abstraction + debugging features)
 - Phase 2: 2-3 hours (Program management)
 - Phase 3: 3-4 hours (UI abstraction)
-- Phase 4: 1-2 hours (Dynamic loading)
+- Phase 4: 2-3 hours (Dynamic loading + debugging UI examples)
 
 **Phase 5 (Mobile UI)**: TBD - Deferred pending framework evaluation
 - Framework evaluation: 2-4 hours
