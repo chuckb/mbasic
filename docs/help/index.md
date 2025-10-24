@@ -1,49 +1,32 @@
-# MBASIC 5.21 Help
+# MBASIC IDE Help
 
-Welcome to the MBASIC 5.21 Interpreter help system!
+Welcome to the MBASIC Interpreter IDE!
 
-## User Interface Help
+## Quick Start
 
-Choose your UI for specific instructions:
+- **^R** - Run the current program
+- **^P** - Show this help
+- **^Q** - Quit the IDE
+- **^X** - Open menu
 
-- [Curses Text UI](ui/curses/index.md) - Full-screen terminal interface
-- [Tkinter GUI](ui/tk/index.md) - Graphical desktop interface
-- [CLI REPL](ui/cli/index.md) - Command-line interface
+## Topics
 
-## BASIC Language Reference
+[Keyboard Shortcuts](shortcuts.md)
 
-Language documentation (same for all UIs):
+[BASIC Language Reference](language.md)
 
-- [Getting Started](getting-started.md) - Your first BASIC program
-- [Variables and Data Types](language/data-types.md)
-- [Statements](language/statements/index.md)
-  - [PRINT](language/statements/print.md) - Output to screen
-  - [INPUT](language/statements/input.md) - Get user input
-  - [IF-THEN-ELSE](language/statements/if-then.md) - Conditionals
-  - [FOR-NEXT](language/statements/for-next.md) - Loops
-  - [GOTO and GOSUB](language/statements/goto-gosub.md) - Jumps
-  - [DEF FN](language/statements/def-fn.md) - User functions
-- [Built-in Functions](language/functions/index.md)
-  - [Math Functions](language/functions/math.md)
-  - [String Functions](language/functions/string.md)
-
-## Examples
-
-- [Hello World](examples/hello-world.md)
-- [Loops and Counting](examples/loops.md)
-- [User-Defined Functions](examples/functions.md)
+[Examples](examples.md)
 
 ## Navigation
 
-- **Up/Down** - Scroll through help
+- **↑/↓** - Scroll up/down
 - **Space** - Page down
-- **Enter** - Follow a link
-- **U** - Go up to parent topic
+- **B** - Page up
+- **Enter** - Follow link
+- **U** - Go back/up
 - **Q** or **ESC** - Exit help
 
-## Tips
+## About
 
-- Press **F1** or **H** to open help
-- Cursor on BASIC keyword + **F1** = context help
-- UI commands are in UI-specific sections
-- Language features are in Language Reference
+This is a Microsoft BASIC-80 compatible interpreter with a modern IDE.
+It supports classic BASIC programs from CP/M and early microcomputers.

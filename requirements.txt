@@ -1,15 +1,13 @@
 # MBASIC 5.21 Interpreter Requirements
-#
-# This project uses only Python standard library modules.
-# No external dependencies are required.
-#
+
 # Minimum Python version: 3.8
 # Recommended Python version: 3.9 or later
-#
-# Python 3.8+ is required for:
-# - Assignment expressions (walrus operator :=) if used
-# - Positional-only parameters
-# - f-string improvements
-#
-# To verify your Python version:
-#   python3 --version
+
+# Core dependencies (required)
+# None - uses Python standard library only
+
+# Optional UI dependencies
+urwid>=2.0.0        # For curses backend (full-screen terminal UI)
+
+# Development/testing dependencies (optional)
+pexpect>=4.8.0      # For automated UI testing

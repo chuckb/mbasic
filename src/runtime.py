@@ -11,6 +11,7 @@ This module manages:
 - File I/O state
 """
 
+import time
 from ast_nodes import DataStatementNode, DefFnStatementNode
 
 
@@ -34,6 +35,7 @@ class Runtime:
 
         # Variable storage (PRIVATE - use get_variable/set_variable methods)
         self._variables = {}          # name_with_suffix -> value
+        self._variable_metadata = {}  # name_with_suffix -> {'last_access': {...}, 'last_set': {...}, 'debugger_set': bool}
         self._arrays = {}             # name_with_suffix -> {'dims': [...], 'data': [...]}
         self.common_vars = []         # List of variable names declared in COMMON (order matters!)
         self.array_base = 0           # Array index base (0 or 1, set by OPTION BASE)
@@ -190,9 +192,106 @@ class Runtime:
         # No DEF type map or not found - default to single precision
         return (name + '!', '!')
 
-    def get_variable(self, name, type_suffix=None, def_type_map=None):
+    def get_variable(self, name, type_suffix=None, def_type_map=None, token=None):
         """
-        Get variable value, returning default if not set.
+        Get variable value for program execution, tracking read access.
+
+        This method MUST be called with a token for normal program execution.
+        For debugging/inspection without tracking, use get_variable_for_debugger().
+
+        Args:
+            name: Variable name (e.g., 'x', 'foo')
+            type_suffix: Type suffix ($, %, !, #) or None
+            def_type_map: Optional DEF type mapping
+            token: REQUIRED - Token object with line and position info for tracking
+
+        Returns:
+            Variable value (default 0 for numeric, "" for string)
+
+        Raises:
+            ValueError: If token is None (use get_variable_for_debugger instead)
+        """
+        if token is None:
+            raise ValueError("get_variable() requires token parameter. Use get_variable_for_debugger() for debugging.")
+
+        # Resolve full variable name
+        full_name, resolved_suffix = self._resolve_variable_name(name, type_suffix, def_type_map)
+
+        # Track read access
+        if full_name not in self._variable_metadata:
+            self._variable_metadata[full_name] = {
+                'last_read': None,
+                'last_write': None,
+                'debugger_set': False
+            }
+        self._variable_metadata[full_name]['last_read'] = {
+            'line': getattr(token, 'line', self.current_line.line_number if self.current_line else None),
+            'position': getattr(token, 'position', None),
+            'timestamp': time.perf_counter()  # High precision timestamp for debugging
+        }
+
+        # Return existing value or default
+        if full_name in self._variables:
+            return self._variables[full_name]
+
+        # Default values
+        if resolved_suffix == '$':
+            return ""
+        else:
+            return 0
+
+    def set_variable(self, name, type_suffix, value, def_type_map=None, token=None, debugger_set=False):
+        """
+        Set variable value for program execution, tracking write access.
+
+        This method MUST be called with a token for normal program execution.
+        For debugger writes, pass debugger_set=True (token can be None).
+
+        Args:
+            name: Variable name
+            type_suffix: Type suffix or None
+            value: New value
+            def_type_map: Optional DEF type mapping
+            token: REQUIRED (unless debugger_set=True) - Token with line and position
+            debugger_set: True if this set is from debugger, not program execution
+
+        Raises:
+            ValueError: If token is None and debugger_set is False
+        """
+        if token is None and not debugger_set:
+            raise ValueError("set_variable() requires token parameter. Use debugger_set=True for debugger writes.")
+
+        # Resolve full variable name
+        full_name, _ = self._resolve_variable_name(name, type_suffix, def_type_map)
+        self._variables[full_name] = value
+
+        # Initialize metadata if needed
+        if full_name not in self._variable_metadata:
+            self._variable_metadata[full_name] = {
+                'last_read': None,
+                'last_write': None,
+                'debugger_set': False
+            }
+
+        # Update last_write tracking if token provided
+        if token is not None:
+            self._variable_metadata[full_name]['last_write'] = {
+                'line': getattr(token, 'line', self.current_line.line_number if self.current_line else None),
+                'position': getattr(token, 'position', None),
+                'timestamp': time.perf_counter()  # High precision timestamp for debugging
+            }
+
+        # Mark if debugger set this variable
+        if debugger_set:
+            self._variable_metadata[full_name]['debugger_set'] = True
+
+    def get_variable_for_debugger(self, name, type_suffix=None, def_type_map=None):
+        """
+        Get variable value for debugger/inspector WITHOUT updating access tracking.
+
+        This method is intended ONLY for debugger/inspector use to read variable
+        values without affecting the access tracking metadata. For normal program
+        execution, use get_variable() with a token.
 
         Args:
             name: Variable name (e.g., 'x', 'foo')
@@ -205,7 +304,7 @@ class Runtime:
         # Resolve full variable name
         full_name, resolved_suffix = self._resolve_variable_name(name, type_suffix, def_type_map)
 
-        # Return existing value or default
+        # Return existing value or default (no tracking)
         if full_name in self._variables:
             return self._variables[full_name]
 
@@ -214,20 +313,6 @@ class Runtime:
             return ""
         else:
             return 0
-
-    def set_variable(self, name, type_suffix, value, def_type_map=None):
-        """
-        Set variable value.
-
-        Args:
-            name: Variable name
-            type_suffix: Type suffix or None
-            value: New value
-            def_type_map: Optional DEF type mapping
-        """
-        # Resolve full variable name
-        full_name, _ = self._resolve_variable_name(name, type_suffix, def_type_map)
-        self._variables[full_name] = value
 
     def get_variable_raw(self, full_name):
         """
@@ -273,6 +358,76 @@ class Runtime:
             dict: Copy of variable table
         """
         return dict(self._variables)
+
+    def get_variables_by_recent_access(self, include_metadata=False):
+        """
+        Get all variables sorted by most recent access.
+
+        Variables that have been accessed more recently appear first.
+        Variables with no access tracking appear last in alphabetical order.
+        Sorting is based on high-precision timestamps from time.perf_counter().
+
+        Args:
+            include_metadata: If True, include access metadata in results
+
+        Returns:
+            list: If include_metadata=False, list of (name, value) tuples
+                  If include_metadata=True, list of (name, value, metadata) tuples
+                  Sorted by most recent access first
+
+        Example:
+            [('x%', 10, {'last_read': {'line': 100, 'position': 5, 'timestamp': 1234.567},
+                         'last_write': {'line': 95, 'position': 10, 'timestamp': 1234.500},
+                         'debugger_set': False}),
+             ('y$', 'hello', {'last_read': None,
+                              'last_write': {'line': 90, 'position': 2, 'timestamp': 1234.123},
+                              'debugger_set': False}),
+             ('z!', 3.14, {'last_read': None, 'last_write': None, 'debugger_set': False})]
+        """
+        result = []
+
+        for full_name, value in self._variables.items():
+            metadata = self._variable_metadata.get(full_name, {
+                'last_read': None,
+                'last_write': None,
+                'debugger_set': False
+            })
+
+            if include_metadata:
+                result.append((full_name, value, metadata))
+            else:
+                result.append((full_name, value))
+
+        # Sort by access time - most recent first
+        # Variables with no access go to end, then alphabetically
+        def sort_key(item):
+            if include_metadata:
+                full_name, value, metadata = item
+            else:
+                full_name, value = item
+                metadata = self._variable_metadata.get(full_name, {
+                    'last_read': None,
+                    'last_write': None
+                })
+
+            # Get most recent timestamp from either read or write
+            last_read = metadata.get('last_read')
+            last_write = metadata.get('last_write')
+
+            read_timestamp = last_read.get('timestamp', 0) if last_read else 0
+            write_timestamp = last_write.get('timestamp', 0) if last_write else 0
+            most_recent_timestamp = max(read_timestamp, write_timestamp)
+
+            if most_recent_timestamp == 0:
+                # No access - sort to end alphabetically
+                return (1, 0, full_name)
+            else:
+                # Has access - sort by timestamp (descending - most recent first)
+                # Use negative timestamp so higher (more recent) comes first
+                return (0, -most_recent_timestamp, full_name)
+
+        result.sort(key=sort_key)
+        return result
 
     def get_all_arrays(self):
         """

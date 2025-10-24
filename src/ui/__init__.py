@@ -7,7 +7,15 @@ UI types (CLI, GUI, web, mobile, etc.).
 from .base import UIBackend
 from .cli import CLIBackend
 from .visual import VisualBackend
-from .curses_ui import CursesBackend
 from .tk_ui import TkBackend
+
+# Try to import urwid-based curses UI (optional dependency)
+try:
+    from .curses_ui import CursesBackend
+    _has_curses = True
+except ImportError:
+    # Curses UI not available
+    _has_curses = False
+    CursesBackend = None
 
 __all__ = ['UIBackend', 'CLIBackend', 'VisualBackend', 'CursesBackend', 'TkBackend']

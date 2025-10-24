@@ -28,7 +28,7 @@ Press Enter
 
 ## Loading Programs
 
-1. Press **F9** or **Ctrl+O**
+1. Press **b** or **Ctrl+O**
 2. Status line prompts: "Load file: _"
 3. Type filename
 4. Press **Enter**
@@ -44,7 +44,7 @@ Press Enter
 ### Example
 
 ```
-Press F9
+Press b
 Type: hello.bas
 Press Enter
 → Program loads into editor

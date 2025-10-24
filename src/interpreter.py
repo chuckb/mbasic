@@ -20,7 +20,7 @@ class BreakException(Exception):
 class Interpreter:
     """Execute MBASIC AST"""
 
-    def __init__(self, runtime, io_handler=None):
+    def __init__(self, runtime, io_handler=None, breakpoint_callback=None):
         self.runtime = runtime
         self.builtins = BuiltinFunctions(runtime)
 
@@ -29,6 +29,34 @@ class Interpreter:
             from iohandler.console import ConsoleIOHandler
             io_handler = ConsoleIOHandler(debug_enabled=False)
         self.io = io_handler
+
+        # Breakpoint callback - called when a breakpoint is hit
+        # Callback should take (line_number, statement_index) and return True to continue, False to stop
+        self.breakpoint_callback = breakpoint_callback
+        self.breakpoints = set()  # Set of line numbers with breakpoints
+
+    @staticmethod
+    def _make_token_info(node):
+        """Create a token info object from an AST node for variable tracking.
+
+        Args:
+            node: AST node with line_num and column attributes
+
+        Returns:
+            Object with line and position attributes, or None if node is None
+        """
+        if node is None:
+            return None
+
+        class TokenInfo:
+            def __init__(self, line, position):
+                self.line = line
+                self.position = position
+
+        return TokenInfo(
+            getattr(node, 'line_num', 0),
+            getattr(node, 'column', 0)
+        )
 
     def _setup_break_handler(self):
         """Setup Ctrl+C handler to set break flag"""
@@ -84,6 +112,91 @@ class Interpreter:
             # Restore original handler
             self._restore_break_handler()
 
+    def step_once(self):
+        """Execute one line and return status.
+
+        Returns:
+            dict with keys:
+                'status': 'running', 'breakpoint', 'stopped', 'halted', 'completed', 'error'
+                'line': current line number (or None)
+                'message': optional message
+        """
+        # Initialize if not started
+        if not hasattr(self, '_step_line_index'):
+            self._step_line_index = 0
+            self.runtime.stopped = False
+            self.runtime.halted = False
+            # Setup runtime tables
+            self.runtime.setup()
+
+        # Check if already finished
+        if self._step_line_index >= len(self.runtime.line_order):
+            return {'status': 'completed', 'line': None, 'message': 'Program completed'}
+
+        if self.runtime.halted:
+            return {'status': 'halted', 'line': self.runtime.current_line.line_number if self.runtime.current_line else None}
+
+        # Get current line
+        line_number = self.runtime.line_order[self._step_line_index]
+        line_node = self.runtime.line_table[line_number]
+        self.runtime.current_line = line_node
+
+        # Check for breakpoint BEFORE executing
+        if line_number in self.breakpoints:
+            return {
+                'status': 'breakpoint',
+                'line': line_number,
+                'message': f'Breakpoint at line {line_number}'
+            }
+
+        # Execute all statements on this line
+        self.runtime.current_stmt_index = 0
+        try:
+            while self.runtime.current_stmt_index < len(line_node.statements):
+                if self.runtime.halted:
+                    break
+                stmt = line_node.statements[self.runtime.current_stmt_index]
+                self.execute_statement(stmt)
+
+                # Check if we need to jump
+                if self.runtime.next_line is not None:
+                    break
+
+                self.runtime.current_stmt_index += 1
+
+        except Exception as e:
+            return {
+                'status': 'error',
+                'line': line_number,
+                'message': str(e)
+            }
+
+        # Handle jumps (GOTO, GOSUB, etc.)
+        if self.runtime.next_line is not None:
+            target_line = self.runtime.next_line
+            self.runtime.next_line = None
+            try:
+                self._step_line_index = self.runtime.line_order.index(target_line)
+            except ValueError:
+                return {
+                    'status': 'error',
+                    'line': line_number,
+                    'message': f'Undefined line {target_line}'
+                }
+        else:
+            # Move to next line
+            self._step_line_index += 1
+
+        # Check status after execution
+        if self.runtime.stopped:
+            return {'status': 'stopped', 'line': line_number}
+        elif self.runtime.halted:
+            return {'status': 'halted', 'line': line_number}
+        elif self._step_line_index >= len(self.runtime.line_order):
+            return {'status': 'completed', 'line': line_number, 'message': 'Program completed'}
+        else:
+            return {'status': 'running', 'line': line_number}
+
     def _run_loop(self, start_index=0):
         """Internal: Execute the main interpreter loop
 
@@ -113,6 +226,36 @@ class Interpreter:
                 self.io.debug(f"Outer loop: line_index={line_index}, line_number={line_number}")
 
             self.runtime.current_line = line_node
+
+            # Check for breakpoint at this line OR if we're in step mode
+            # Step mode is stored in the callback's parent object (if available)
+            step_mode = False
+            if self.breakpoint_callback and hasattr(self.breakpoint_callback, '__self__'):
+                step_mode = getattr(self.breakpoint_callback.__self__, 'step_mode', False)
+
+            # Debug logging
+            import os
+            if os.environ.get('DEBUG_BP'):
+                import sys
+                print(f"[BP_CHECK] Line {line_number}: breakpoints={self.breakpoints}, step_mode={step_mode}, has_callback={self.breakpoint_callback is not None}", file=sys.stderr)
+
+            if (line_number in self.breakpoints or step_mode) and self.breakpoint_callback:
+                # Debug: breakpoint hit
+                if os.environ.get('DEBUG_BP'):
+                    print(f"[BP_HIT] Calling breakpoint callback for line {line_number}", file=sys.stderr)
+
+                # Call breakpoint callback - if it returns False, stop execution
+                should_continue = self.breakpoint_callback(line_number, 0)
+
+                if os.environ.get('DEBUG_BP'):
+                    print(f"[BP_RESULT] Callback returned: {should_continue}", file=sys.stderr)
+
+                if not should_continue:
+                    # Set stopped state like STOP command
+                    self.runtime.stopped = True
+                    self.runtime.stop_line = self.runtime.current_line
+                    self.runtime.stop_stmt_index = 0
+                    return
 
             # Print trace output if TRON is enabled
             if self.runtime.trace_on:
@@ -365,7 +508,8 @@ class Interpreter:
             self.runtime.set_variable(
                 stmt.variable.name,
                 stmt.variable.type_suffix,
-                value
+                value,
+                token=self._make_token_info(stmt.variable)
             )
 
     def execute_swap(self, stmt):
@@ -377,7 +521,7 @@ class Interpreter:
             value1 = self.runtime.get_array_element(stmt.var1.name, stmt.var1.type_suffix, subscripts1)
         else:
             # Simple variable
-            value1 = self.runtime.get_variable(stmt.var1.name, stmt.var1.type_suffix)
+            value1 = self.runtime.get_variable(stmt.var1.name, stmt.var1.type_suffix, token=self._make_token_info(stmt.var1))
 
         if stmt.var2.subscripts:
             # Array element
@@ -385,7 +529,7 @@ class Interpreter:
             value2 = self.runtime.get_array_element(stmt.var2.name, stmt.var2.type_suffix, subscripts2)
         else:
             # Simple variable
-            value2 = self.runtime.get_variable(stmt.var2.name, stmt.var2.type_suffix)
+            value2 = self.runtime.get_variable(stmt.var2.name, stmt.var2.type_suffix, token=self._make_token_info(stmt.var2))
 
         # Swap the values
         if stmt.var1.subscripts:
@@ -399,7 +543,8 @@ class Interpreter:
             self.runtime.set_variable(
                 stmt.var1.name,
                 stmt.var1.type_suffix,
-                value2
+                value2,
+                token=self._make_token_info(stmt.var1)
             )
 
         if stmt.var2.subscripts:
@@ -413,7 +558,8 @@ class Interpreter:
             self.runtime.set_variable(
                 stmt.var2.name,
                 stmt.var2.type_suffix,
-                value1
+                value1,
+                token=self._make_token_info(stmt.var2)
             )
 
     def execute_print(self, stmt):
@@ -670,7 +816,7 @@ class Interpreter:
 
         # Set loop variable to start
         var_name = stmt.variable.name + (stmt.variable.type_suffix or "")
-        self.runtime.set_variable(stmt.variable.name, stmt.variable.type_suffix, start)
+        self.runtime.set_variable(stmt.variable.name, stmt.variable.type_suffix, start, token=self._make_token_info(stmt.variable))
 
         # Register loop
         self.runtime.push_for_loop(
@@ -702,19 +848,23 @@ class Interpreter:
         # If no variables specified, process innermost loop only
         if not var_list:
             var_name = list(self.runtime.for_loops.keys())[-1]
-            self._execute_next_single(var_name)
+            self._execute_next_single(var_name, var_node=None)
         else:
             # Process each variable in order
             for var_node in var_list:
                 var_name = var_node.name + (var_node.type_suffix or "")
                 # Process this NEXT
-                should_continue = self._execute_next_single(var_name)
+                should_continue = self._execute_next_single(var_name, var_node=var_node)
                 # If this loop continues (jumps back), don't process remaining variables
                 if should_continue:
                     return
 
-    def _execute_next_single(self, var_name):
+    def _execute_next_single(self, var_name, var_node=None):
         """Execute NEXT for a single variable.
+
+        Args:
+            var_name: Full variable name with suffix
+            var_node: Optional VariableNode for token info
 
         Returns:
             True if loop continues (jumped back), False if loop finished
@@ -724,8 +874,24 @@ class Interpreter:
         if not loop_info:
             raise RuntimeError(f"NEXT without FOR: {var_name}")
 
+        # Create token info for tracking
+        token = self._make_token_info(var_node) if var_node else None
+
         # Increment loop variable
-        current = self.runtime.get_variable(var_name.rstrip('$%!#'), var_name[-1] if var_name[-1] in '$%!#' else None)
+        base_name = var_name.rstrip('$%!#')
+        type_suffix = var_name[-1] if var_name[-1] in '$%!#' else None
+
+        if token:
+            current = self.runtime.get_variable(base_name, type_suffix, token=token)
+        else:
+            # NEXT without variable - use current line for token
+            class TokenInfo:
+                def __init__(self, line):
+                    self.line = line
+                    self.position = 0
+            token = TokenInfo(self.runtime.current_line.line_number if self.runtime.current_line else 0)
+            current = self.runtime.get_variable(base_name, type_suffix, token=token)
+
         step = loop_info['step']
         new_value = current + step
 
@@ -745,7 +911,7 @@ class Interpreter:
                 raise RuntimeError(f"NEXT error: FOR statement in line {return_line} no longer exists")
 
             # Continue loop - update variable and jump to statement AFTER the FOR
-            self.runtime.set_variable(var_name.rstrip('$%!#'), var_name[-1] if var_name[-1] in '$%!#' else None, new_value)
+            self.runtime.set_variable(base_name, type_suffix, new_value, token=token)
             self.runtime.next_line = return_line
             # Resume at the statement AFTER the FOR statement
             self.runtime.next_stmt_index = return_stmt + 1
@@ -926,7 +1092,7 @@ class Interpreter:
                 subscripts = [int(self.evaluate_expression(sub)) for sub in var_node.subscripts]
                 self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, value)
             else:
-                self.runtime.set_variable(var_node.name, var_node.type_suffix, value)
+                self.runtime.set_variable(var_node.name, var_node.type_suffix, value, token=self._make_token_info(var_node))
 
     def execute_restore(self, stmt):
         """Execute RESTORE statement"""
@@ -1089,7 +1255,7 @@ class Interpreter:
                 subscripts = [int(self.evaluate_expression(sub)) for sub in var_node.subscripts]
                 self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, value)
             else:
-                self.runtime.set_variable(var_node.name, var_node.type_suffix, value)
+                self.runtime.set_variable(var_node.name, var_node.type_suffix, value, token=self._make_token_info(var_node))
 
     def _read_line_from_file(self, file_num):
         """Read a line from file, respecting ^Z as EOF (CP/M style)
@@ -1170,7 +1336,7 @@ class Interpreter:
             subscripts = [int(self.evaluate_expression(sub)) for sub in var_node.subscripts]
             self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, line)
         else:
-            self.runtime.set_variable(var_node.name, var_node.type_suffix, line)
+            self.runtime.set_variable(var_node.name, var_node.type_suffix, line, token=self._make_token_info(var_node))
 
     def execute_write(self, stmt):
         """Execute WRITE statement - output comma-delimited data
@@ -1825,7 +1991,8 @@ class Interpreter:
                 self.runtime.set_variable(
                     var_node.name,
                     var_node.type_suffix,
-                    modified_value
+                    modified_value,
+                    token=self._make_token_info(var_node)
                 )
         else:
             # If it's a more complex expression, we can't modify it in-place
@@ -1973,7 +2140,7 @@ class Interpreter:
             return self.runtime.get_array_element(expr.name, expr.type_suffix, subscripts)
         else:
             # Simple variable
-            return self.runtime.get_variable(expr.name, expr.type_suffix)
+            return self.runtime.get_variable(expr.name, expr.type_suffix, token=self._make_token_info(expr))
 
     def evaluate_binaryop(self, expr):
         """Evaluate binary operation"""
@@ -2072,19 +2239,27 @@ class Interpreter:
         # Evaluate arguments
         args = [self.evaluate_expression(arg) for arg in expr.arguments]
 
+        # Create token info from function call expression
+        call_token = self._make_token_info(expr)
+
         # Save parameter values (function parameters shadow variables)
+        # Note: We use get_variable_for_debugger here because we're saving state, not actually reading for use
         saved_vars = {}
         for i, param in enumerate(func_def.parameters):
             param_name = param.name + (param.type_suffix or "")
-            saved_vars[param_name] = self.runtime.get_variable(param.name, param.type_suffix)
+            saved_vars[param_name] = self.runtime.get_variable_for_debugger(param.name, param.type_suffix)
             if i < len(args):
-                self.runtime.set_variable(param.name, param.type_suffix, args[i])
+                # Set parameter to argument value - this is part of function call
+                self.runtime.set_variable(param.name, param.type_suffix, args[i], token=call_token)
 
         # Evaluate function expression
         result = self.evaluate_expression(func_def.expression)
 
         # Restore parameter values
+        # Use debugger_set=True since this is implementation detail, not actual program assignment
         for param_name, saved_value in saved_vars.items():
-            self.runtime.set_variable(param_name.rstrip('$%!#'), param_name[-1] if param_name[-1] in '$%!#' else None, saved_value)
+            base_name = param_name.rstrip('$%!#')
+            type_suffix = param_name[-1] if param_name[-1] in '$%!#' else None
+            self.runtime.set_variable(base_name, type_suffix, saved_value, debugger_set=True)
 
         return result

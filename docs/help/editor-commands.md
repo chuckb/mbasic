@@ -7,7 +7,7 @@
 | **F2** | **Ctrl+R** | Run program |
 | **F3** | **Ctrl+L** | List program to output |
 | **F5** | **Ctrl+S** | Save program |
-| **F9** | **Ctrl+O** | Load program |
+| **b** | **Ctrl+O** | Load program |
 | | **Ctrl+N** | New program (clear all) |
 | **F1** or **H** | | Open help |
 | **ESC** | | Clear error message |

@@ -3,13 +3,13 @@
 MBASIC 5.21 Interpreter
 
 Usage:
-    python3 mbasic.py                    # Interactive mode (CLI)
-    python3 mbasic.py program.bas        # Execute program
-    python3 mbasic.py --backend cli      # CLI backend (default)
-    python3 mbasic.py --backend curses   # Curses text UI (full-screen terminal)
-    python3 mbasic.py --backend tk       # Tkinter GUI (graphical)
-    python3 mbasic.py --backend visual   # Generic visual stub
-    python3 mbasic.py --debug            # Enable debug output
+    python3 mbasic.py                         # Interactive mode (CLI)
+    python3 mbasic.py program.bas             # Execute program
+    python3 mbasic.py --backend cli           # CLI backend (default)
+    python3 mbasic.py --backend curses        # Curses text UI (urwid, full-screen terminal)
+    python3 mbasic.py --backend tk            # Tkinter GUI (graphical)
+    python3 mbasic.py --backend visual        # Generic visual stub
+    python3 mbasic.py --debug                 # Enable debug output
 """
 
 import sys
@@ -123,13 +123,13 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python3 mbasic.py                    # Interactive mode (CLI)
-  python3 mbasic.py program.bas        # Run program and enter interactive mode
-  python3 mbasic.py --backend cli      # CLI backend (default)
-  python3 mbasic.py --backend curses   # Curses text UI (full-screen terminal)
-  python3 mbasic.py --backend tk       # Tkinter GUI (graphical)
-  python3 mbasic.py --backend visual   # Generic visual stub
-  python3 mbasic.py --debug            # Enable debug output
+  python3 mbasic.py                         # Interactive mode (CLI)
+  python3 mbasic.py program.bas             # Run program and enter interactive mode
+  python3 mbasic.py --backend cli           # CLI backend (default)
+  python3 mbasic.py --backend curses        # Curses text UI (urwid, full-screen terminal)
+  python3 mbasic.py --backend tk            # Tkinter GUI (graphical)
+  python3 mbasic.py --backend visual        # Generic visual stub
+  python3 mbasic.py --debug                 # Enable debug output
         """
     )
 
