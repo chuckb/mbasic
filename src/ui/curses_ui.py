@@ -16,6 +16,7 @@ from .keybindings import (
     KEYBINDINGS_BY_CATEGORY
 )
 from .markdown_renderer import MarkdownRenderer
+from .help_widget import HelpWidget
 from runtime import Runtime
 from interpreter import Interpreter
 from lexer import Lexer
@@ -1828,45 +1829,39 @@ class CursesBackend(UIBackend):
                 self.loop.draw_screen()
 
     def _show_help(self):
-        """Show help dialog from markdown file."""
-        # Load and render the quick reference markdown
-        help_path = Path(__file__).parent.parent.parent / "docs" / "help" / "ui" / "curses" / "quick-reference.md"
+        """Show interactive help browser."""
+        # Get help root directory
+        help_root = Path(__file__).parent.parent.parent / "docs" / "help"
 
-        if help_path.exists():
-            with open(help_path, 'r') as f:
-                markdown = f.read()
+        # Create help widget
+        help_widget = HelpWidget(str(help_root), "ui/curses/quick-reference.md")
 
-            renderer = MarkdownRenderer()
-            help_lines, links = renderer.render(markdown)
-            help_text = "\n".join(help_lines)
-        else:
-            # Fallback if file doesn't exist
-            help_text = f"Help file not found: {help_path}\n\nPress ESC to close."
-
-        # Create help dialog
-        text = urwid.Text(help_text.strip())
-        fill = urwid.Filler(text, valign='top')
-        box = urwid.LineBox(fill, title="Help - Press ESC to close")
+        # Create overlay
         overlay = urwid.Overlay(
-            urwid.AttrMap(box, 'body'),
+            urwid.AttrMap(help_widget, 'body'),
             self.loop.widget,
             align='center',
-            width=('relative', 80),
+            width=('relative', 90),
             valign='middle',
-            height=('relative', 80)
+            height=('relative', 90)
         )
 
         # Store original widget BEFORE replacing it
         main_widget = self.loop.widget
 
-        # Set up a one-time keypress handler to close the dialog
-        def close_help(key):
-            self.loop.widget = main_widget
-            self.loop.unhandled_input = self._handle_input
+        # Set up keypress handler to close help when ESC/Q pressed
+        def help_input(key):
+            # Let the help widget handle the key first
+            result = help_widget.keypress((80, 24), key)
+            if result == 'esc':
+                # Help widget wants to close
+                self.loop.widget = main_widget
+                self.loop.unhandled_input = self._handle_input
+            # Don't return anything - we handled it
 
         # Show overlay and set handler
         self.loop.widget = overlay
-        self.loop.unhandled_input = close_help
+        self.loop.unhandled_input = help_input
 
     def _show_menu(self):
         """Show menu with all available commands."""
