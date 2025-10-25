@@ -64,7 +64,7 @@ class TopLeftBox(urwid.WidgetWrap):
         super().__init__(pile)
 
 
-class OutputLineWidget(urwid.WidgetWrap):
+class OutputLineWidget(urwid.Text):
     """Selectable text widget for output lines with cursor indicator on first char."""
 
     def __init__(self, text):
@@ -73,10 +73,9 @@ class OutputLineWidget(urwid.WidgetWrap):
         Args:
             text: The line text to display
         """
-        self.text = text
-        self._text_widget = urwid.Text("")
-        super().__init__(self._text_widget)
-        self._update_display(False)
+        self.line_text = text
+        # Start with plain text
+        super().__init__(text)
 
     def selectable(self):
         """Make this widget selectable for focus."""
@@ -85,27 +84,6 @@ class OutputLineWidget(urwid.WidgetWrap):
     def keypress(self, size, key):
         """Handle keypresses - just return them to allow navigation."""
         return key
-
-    def _update_display(self, has_focus):
-        """Update display based on focus state.
-
-        Args:
-            has_focus: True if this widget has focus
-        """
-        if has_focus:
-            # Show green background on first character only
-            if self.text and len(self.text) > 0:
-                first_char = self.text[0]
-                rest = self.text[1:] if len(self.text) > 1 else ""
-                markup = [('output_focus', first_char), rest]
-                self._text_widget.set_text(markup)
-            else:
-                # Empty line - show a visible cursor character
-                markup = [('output_focus', ' ')]
-                self._text_widget.set_text(markup)
-        else:
-            # No focus, show plain text
-            self._text_widget.set_text(self.text)
 
     def render(self, size, focus=False):
         """Render with focus highlighting on first character.
@@ -117,7 +95,22 @@ class OutputLineWidget(urwid.WidgetWrap):
         Returns:
             Canvas for rendering
         """
-        self._update_display(focus)
+        # Update text based on focus state
+        if focus:
+            # Show green background on first character only
+            if self.line_text and len(self.line_text) > 0:
+                first_char = self.line_text[0]
+                rest = self.line_text[1:] if len(self.line_text) > 1 else ""
+                markup = [('output_focus', first_char), rest]
+                self.set_text(markup)
+            else:
+                # Empty line - show a visible cursor character
+                markup = [('output_focus', ' ')]
+                self.set_text(markup)
+        else:
+            # No focus, show plain text
+            self.set_text(self.line_text)
+
         return super().render(size, focus)
 
 
