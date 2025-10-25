@@ -185,7 +185,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     # Now let the key be processed at the new position
                     return super().keypress(size, key)
             else:
-                # Typing a digit in line number area - overwrite mode
+                # Typing a digit in line number area
                 if line_num < len(lines):
                     line_start = sum(len(lines[i]) + 1 for i in range(line_num))
                     line = lines[line_num]
@@ -202,11 +202,24 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     # Find position within linenum_field (0-4)
                     pos_in_field = col_in_line - 1
 
-                    # Replace character at position (overwrite mode)
-                    linenum_list = list(linenum_field)
-                    if pos_in_field < len(linenum_list):
-                        linenum_list[pos_in_field] = key
-                    linenum_field = ''.join(linenum_list)
+                    # Check if at rightmost position (column 5, pos_in_field 4)
+                    if pos_in_field == 4:
+                        # At rightmost position: shift left and add new digit at end
+                        linenum_list = list(linenum_field)
+                        linenum_list.append(key)
+                        # Keep only rightmost 5 characters (shift left if overflow)
+                        linenum_list = linenum_list[-5:]
+                        linenum_field = ''.join(linenum_list)
+                        # Stay at same position (rightmost)
+                        new_col = 5
+                    else:
+                        # Not at rightmost: overwrite at position
+                        linenum_list = list(linenum_field)
+                        if pos_in_field < len(linenum_list):
+                            linenum_list[pos_in_field] = key
+                        linenum_field = ''.join(linenum_list)
+                        # Move cursor right after typed digit
+                        new_col = min(col_in_line + 1, 5)
 
                     # Rebuild line
                     new_line = status + linenum_field + rest
@@ -216,8 +229,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     # Update text
                     self.edit_widget.set_edit_text(new_text)
 
-                    # Position cursor after typed digit (move right, stay in field)
-                    new_col = min(col_in_line + 1, 5)
+                    # Position cursor
                     new_cursor_pos = line_start + new_col
                     self.edit_widget.set_edit_pos(new_cursor_pos)
 
@@ -234,14 +246,16 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     line = line + ' ' * (7 - len(line))
 
                 if key.isdigit():
-                    # Digit at column 6: move back to column 5 and replace that digit
+                    # Digit at column 6: shift left and add new digit at end
                     status = line[0]
                     linenum_field = line[1:6]  # 5 characters
                     rest = line[6:]
 
-                    # Replace rightmost digit (position 4 in field, column 5 overall)
+                    # Shift left and add new digit at end (calculator style)
                     linenum_list = list(linenum_field)
-                    linenum_list[4] = key  # position 4 = rightmost of 5-char field
+                    linenum_list.append(key)
+                    # Keep only rightmost 5 characters (shift left if overflow)
+                    linenum_list = linenum_list[-5:]
                     linenum_field = ''.join(linenum_list)
 
                     # Rebuild line
