@@ -58,6 +58,229 @@ class TopLeftBox(urwid.WidgetWrap):
         super().__init__(pile)
 
 
+class ProgramEditorWidget(urwid.WidgetWrap):
+    """3-column program editor widget for BASIC programs.
+
+    Columns:
+    1. Status (1 char): ● for breakpoint, ? for error, space otherwise
+    2. Line number (5 chars): auto-numbered line numbers
+    3. Program text (rest): BASIC code
+    """
+
+    def __init__(self):
+        """Initialize the program editor."""
+        # Program lines storage: {line_num: code_text}
+        self.lines = {}
+        # Breakpoints: set of line numbers
+        self.breakpoints = set()
+        # Errors: {line_num: error_message}
+        self.errors = {}
+
+        # Auto-numbering settings
+        self.auto_number_start = 10
+        self.auto_number_increment = 10
+        self.auto_number_enabled = True
+        self.next_auto_line_num = self.auto_number_start
+
+        # Current line being edited
+        self.current_line_num = None
+
+        # Create the display widget
+        self.text_widget = urwid.Text("", wrap='clip')
+        self.edit_widget = urwid.Edit("", "", multiline=True, wrap='clip')
+
+        # Use a pile to allow switching between display and edit modes
+        self.pile = urwid.Pile([self.edit_widget])
+
+        super().__init__(self.pile)
+
+        # Initialize with empty program
+        self._update_display()
+
+    def keypress(self, size, key):
+        """Handle key presses for auto-numbering and editing."""
+        # Handle Enter key for auto-numbering
+        if key == 'enter' and self.auto_number_enabled:
+            # Get current text
+            current_text = self.edit_widget.get_edit_text()
+            cursor_pos = self.edit_widget.get_cursor_coords(size)[0]
+
+            # Check if we're on the last line and it's empty or just whitespace
+            lines_list = current_text.split('\n')
+            if cursor_pos >= len(current_text) or (cursor_pos < len(current_text) and current_text[cursor_pos] == '\n'):
+                # At end of a line or on an empty line
+                # Add a new line with auto-number
+                while self.next_auto_line_num in self.lines:
+                    self.next_auto_line_num += self.auto_number_increment
+
+                # Format new line: "  NNNNN "
+                new_line_prefix = f"  {self.next_auto_line_num:5d} "
+
+                # Insert newline and prefix
+                result = super().keypress(size, key)
+                # Insert the prefix at current position
+                current_text = self.edit_widget.get_edit_text()
+                cursor_pos = self.edit_widget.edit_pos
+                new_text = current_text[:cursor_pos] + new_line_prefix + current_text[cursor_pos:]
+                self.edit_widget.set_edit_text(new_text)
+                self.edit_widget.set_edit_pos(cursor_pos + len(new_line_prefix))
+
+                return None
+
+        # Let parent handle the key
+        return super().keypress(size, key)
+
+    def _format_line(self, line_num, code_text):
+        """Format a single program line with status, line number, and code.
+
+        Args:
+            line_num: Line number
+            code_text: BASIC code text
+
+        Returns:
+            Formatted string: "S NNNNN CODE"
+        """
+        # Status column (1 char)
+        if line_num in self.breakpoints:
+            status = '●'
+        elif line_num in self.errors:
+            status = '?'
+        else:
+            status = ' '
+
+        # Line number column (5 chars, right-aligned)
+        line_num_str = f"{line_num:5d}"
+
+        # Combine: status + space + line_num + space + code
+        return f"{status} {line_num_str} {code_text}"
+
+    def _update_display(self):
+        """Update the text display with all program lines."""
+        if not self.lines:
+            # Empty program
+            display_text = ""
+        else:
+            # Format all lines
+            formatted_lines = []
+            for line_num in sorted(self.lines.keys()):
+                code_text = self.lines[line_num]
+                formatted_lines.append(self._format_line(line_num, code_text))
+            display_text = '\n'.join(formatted_lines)
+
+        # Update the edit widget
+        self.edit_widget.set_edit_text(display_text)
+
+    def get_program_text(self):
+        """Get the program as line-numbered text.
+
+        Returns:
+            String with all lines in format "LINENUM CODE"
+        """
+        if not self.lines:
+            return ""
+
+        lines_list = []
+        for line_num in sorted(self.lines.keys()):
+            lines_list.append(f"{line_num} {self.lines[line_num]}")
+        return '\n'.join(lines_list)
+
+    def set_program_text(self, text):
+        """Set the program from line-numbered text.
+
+        Args:
+            text: String with lines in format "LINENUM CODE"
+        """
+        self.lines = {}
+        self.errors = {}
+
+        for line in text.split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+
+            # Parse "LINENUM CODE"
+            parts = line.split(None, 1)
+            if parts and parts[0].isdigit():
+                line_num = int(parts[0])
+                code = parts[1] if len(parts) > 1 else ""
+                self.lines[line_num] = code
+
+        self._update_display()
+
+    def set_edit_text(self, text):
+        """Compatibility alias for set_program_text.
+
+        Args:
+            text: String with lines in format "LINENUM CODE"
+        """
+        self.set_program_text(text)
+
+    def get_edit_text(self):
+        """Compatibility alias for get_program_text.
+
+        Returns:
+            String with all lines in format "LINENUM CODE"
+        """
+        return self.get_program_text()
+
+    def add_line(self, line_num, code_text):
+        """Add or update a program line.
+
+        Args:
+            line_num: Line number
+            code_text: BASIC code (without line number)
+        """
+        self.lines[line_num] = code_text
+        # Clear any error for this line when modified
+        if line_num in self.errors:
+            del self.errors[line_num]
+        self._update_display()
+
+    def delete_line(self, line_num):
+        """Delete a program line.
+
+        Args:
+            line_num: Line number to delete
+        """
+        if line_num in self.lines:
+            del self.lines[line_num]
+        if line_num in self.errors:
+            del self.errors[line_num]
+        if line_num in self.breakpoints:
+            self.breakpoints.remove(line_num)
+        self._update_display()
+
+    def clear(self):
+        """Clear all program lines."""
+        self.lines = {}
+        self.errors = {}
+        self.breakpoints = set()
+        self._update_display()
+
+    def toggle_breakpoint(self, line_num):
+        """Toggle breakpoint on a line.
+
+        Args:
+            line_num: Line number
+        """
+        if line_num in self.breakpoints:
+            self.breakpoints.remove(line_num)
+        else:
+            self.breakpoints.add(line_num)
+        self._update_display()
+
+    def set_error(self, line_num, error_msg):
+        """Mark a line as having an error.
+
+        Args:
+            line_num: Line number
+            error_msg: Error message
+        """
+        self.errors[line_num] = error_msg
+        self._update_display()
+
+
+# Keep old EditorWidget for compatibility
 class EditorWidget(urwid.Edit):
     """Multi-line editor widget for BASIC programs."""
 
@@ -119,7 +342,7 @@ class CursesBackend(UIBackend):
     def _create_ui(self):
         """Create the urwid UI layout."""
         # Create widgets
-        self.editor = EditorWidget()
+        self.editor = ProgramEditorWidget()
         self.output = urwid.Text("")
         self.status_bar = urwid.Text("MBASIC 5.21 - Press Ctrl+H for help, Ctrl+Q to quit")
 
@@ -430,30 +653,16 @@ Examples:
     def _new_program(self):
         """Clear the current program."""
         self.editor_lines = {}
-        self.editor.set_edit_text("")
+        self.editor.clear()
         self.output_buffer.append("Program cleared")
         self._update_output()
         self.status_bar.set_text("Ready - Press Ctrl+H for help")
 
     def _parse_editor_content(self):
         """Parse the editor content into line-numbered statements."""
-        content = self.editor.get_edit_text()
-
-        # Clear existing lines
-        self.editor_lines = {}
-
-        # Parse each line
-        for line in content.split('\n'):
-            line = line.strip()
-            if not line:
-                continue
-
-            # Try to extract line number
-            parts = line.split(None, 1)
-            if parts and parts[0].isdigit():
-                line_num = int(parts[0])
-                code = parts[1] if len(parts) > 1 else ""
-                self.editor_lines[line_num] = code
+        # ProgramEditorWidget already maintains lines internally
+        # Just copy them to editor_lines for compatibility
+        self.editor_lines = self.editor.lines.copy()
 
     def _update_output(self):
         """Update the output window with buffered content."""
