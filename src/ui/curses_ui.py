@@ -5,6 +5,7 @@ It provides an editor, output window, and menu system.
 """
 
 import urwid
+from pathlib import Path
 from .base import UIBackend
 from .keybindings import (
     HELP_KEY, MENU_KEY, QUIT_KEY, QUIT_ALT_KEY,
@@ -14,6 +15,7 @@ from .keybindings import (
     STATUS_BAR_SHORTCUTS, EDITOR_STATUS, OUTPUT_STATUS,
     KEYBINDINGS_BY_CATEGORY
 )
+from .markdown_renderer import MarkdownRenderer
 from runtime import Runtime
 from interpreter import Interpreter
 from lexer import Lexer
@@ -1826,85 +1828,21 @@ class CursesBackend(UIBackend):
                 self.loop.draw_screen()
 
     def _show_help(self):
-        """Show help dialog."""
-        # Build help text from keybindings module
-        help_lines = ["MBASIC 5.21 - Keyboard Shortcuts", ""]
+        """Show help dialog from markdown file."""
+        # Load and render the quick reference markdown
+        help_path = Path(__file__).parent.parent.parent / "docs" / "help" / "ui" / "curses" / "quick-reference.md"
 
-        for category, bindings in KEYBINDINGS_BY_CATEGORY.items():
-            help_lines.append(f"{category}:")
-            for key_display, description in bindings:
-                help_lines.append(f"  {key_display:20} - {description}")
-            help_lines.append("")
+        if help_path.exists():
+            with open(help_path, 'r') as f:
+                markdown = f.read()
 
-        help_text = "\n".join(help_lines) + """
-Screen Editor:
-  Column Layout:
-    [0]   Status: ? error (highest), ● breakpoint, space normal
-    [1-5] Line number (5 digits, right-aligned)
-    [6]   Separator space
-    [7+]  BASIC code
+            renderer = MarkdownRenderer()
+            help_lines, links = renderer.render(markdown)
+            help_text = "\n".join(help_lines)
+        else:
+            # Fallback if file doesn't exist
+            help_text = f"Help file not found: {help_path}\n\nPress ESC to close."
 
-  Status Priority (when line has multiple states):
-    1. Error (?) - highest, shown when syntax error exists
-    2. Breakpoint (●) - shown when no error but breakpoint set
-    3. Normal ( ) - default
-
-  Line Number Editing:
-    - Type digits in columns 1-5 (calculator-style)
-    - Numbers auto right-justify when leaving column
-    - Leftmost digit drops when typing at rightmost position
-    - Backspace deletes rightmost digit and right-justifies
-
-  Navigation:
-    Up/Down       - Move between lines (sorts if in number area)
-    Left/Right    - Move within line (no auto-sort)
-    Page Up/Down  - Scroll pages (triggers sort)
-    Home/End      - Jump to start/end (triggers sort)
-    Tab/Enter     - Move to code area / new line (triggers sort)
-
-  Auto-Numbering:
-    - First line starts at 10 (configurable)
-    - Press Enter for next line (auto-increments by 10)
-    - Uses current line number + increment
-    - Avoids collisions with existing lines
-    - Configure in .mbasic.conf
-
-Screen Editor:
-  Column Layout:
-    [0]   Status: ? error (highest), ● breakpoint, space normal
-    [1-5] Line number (5 digits, right-aligned)
-    [6]   Separator space
-    [7+]  BASIC code
-
-  Status Priority (when line has multiple states):
-    1. Error (?) - highest, shown when syntax error exists
-    2. Breakpoint (●) - shown when no error but breakpoint set
-    3. Normal ( ) - default
-
-  Line Number Editing:
-    - Type digits in columns 1-5 (calculator-style)
-    - Numbers auto right-justify when leaving column
-    - Leftmost digit drops when typing at rightmost position
-    - Backspace deletes rightmost digit and right-justifies
-
-  Navigation:
-    Up/Down       - Move between lines (sorts if in number area)
-    Left/Right    - Move within line (no auto-sort)
-    Page Up/Down  - Scroll pages (triggers sort)
-    Home/End      - Jump to start/end (triggers sort)
-    Tab/Enter     - Move to code area / new line (triggers sort)
-
-  Auto-Numbering:
-    - First line starts at 10 (configurable)
-    - Press Enter for next line (auto-increments by 10)
-    - Uses current line number + increment
-    - Avoids collisions with existing lines
-    - Configure in .mbasic.conf
-
-Examples:
-  10 PRINT "Hello, World!"
-  20 END
-"""
         # Create help dialog
         text = urwid.Text(help_text.strip())
         fill = urwid.Filler(text, valign='top')
