@@ -980,8 +980,11 @@ Errors will appear in the output window with full tracebacks.
 ### Long Term (v2.0)
 
 - [ ] Mouse support for all operations
-- [ ] Watch window for variables
-- [ ] Call stack viewer
+- [ ] Watch window for variables (pause and ask before implementing)
+- [ ] Call stack and loop nesting viewer (pause and ask before implementing)
+  - Shows GOSUB/RETURN stack
+  - Shows active FOR/WHILE loops
+  - Combined because they must nest properly together
 
 ## Resources
 
