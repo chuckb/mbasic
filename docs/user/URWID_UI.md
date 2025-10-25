@@ -34,6 +34,7 @@ python3 mbasic.py --backend curses program.bas
 
 - **Full-screen editor** - Multi-line text editor for BASIC programs with column-based layout
 - **Status indicators** - Visual breakpoint (●) and error (?) markers
+- **Automatic syntax checking** - Real-time parse error detection with '?' markers
 - **Line number editing** - Calculator-style digit entry with auto right-justification
 - **Auto-numbering** - Smart line numbering with configurable increment
 - **Automatic sorting** - Lines sort by number when navigating
@@ -353,6 +354,73 @@ Press `Tab` to switch between editor and output window:
 - Press `Tab` again to return to editor
 
 Output window can display unlimited lines and is fully scrollable.
+
+## Automatic Syntax Checking
+
+The editor automatically checks syntax as you type and marks errors with the '?' indicator.
+
+### How It Works
+
+- **Real-time checking** - Syntax is validated after 0.1s of idle time
+- **Visual feedback** - Lines with parse errors show '?' in status column
+- **Auto-clearing** - Error markers disappear when you fix the syntax
+- **Safe operation** - Uses isolated parser, won't affect running programs or breakpoints
+
+### Status Column Indicators
+
+| Indicator | Meaning |
+|-----------|---------|
+| ` ` (space) | Normal line, no errors |
+| `?` | Parse error (syntax problem) |
+| `●` | Breakpoint set (not yet implemented) |
+
+### Examples
+
+**Valid syntax:**
+```basic
+   10 PRINT "Hello"
+   20 FOR I = 1 TO 10
+   30 NEXT I
+```
+
+**With syntax errors:**
+```basic
+   10 PRINT "Hello"
+?  20 FOR I = 1 TO       (incomplete statement)
+?  30 PRINT "Missing     (missing closing quote)
+   40 END
+```
+
+### What Gets Checked
+
+The parser validates:
+- **Lexical errors** - Invalid tokens, unterminated strings
+- **Syntax errors** - Incomplete statements, wrong keyword usage
+- **Statement structure** - Proper BASIC statement format
+
+### What Doesn't Get Checked
+
+Runtime-only errors are **not** detected:
+- Variable not defined (runtime error)
+- Array out of bounds (runtime error)
+- Division by zero (runtime error)
+- Type mismatches (detected at runtime)
+- Line number references (GOTO/GOSUB to non-existent line)
+
+### Performance
+
+Syntax checking is optimized:
+- Only checks lines that changed
+- Runs after typing stops (0.1s delay)
+- Doesn't slow down paste operations
+- Minimal impact on editing responsiveness
+
+### Working with Breakpoints
+
+When breakpoint support is added, the status column will show both:
+- Line with breakpoint: `●`
+- Line with error: `?`
+- Line with both: `●` (breakpoint takes priority)
 
 ## Automatic Line Sorting
 

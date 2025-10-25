@@ -77,6 +77,7 @@ python3 mbasic.py
 The **curses screen editor** (default) provides a full-screen terminal interface:
 - Visual line editor with auto-numbering
 - Status indicators for breakpoints and errors
+- **Automatic syntax checking** (marks parse errors with '?')
 - Calculator-style line number editing
 - Automatic line sorting
 - Split-screen output window
