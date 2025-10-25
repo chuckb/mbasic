@@ -68,6 +68,17 @@ class TopLeftBox(urwid.WidgetWrap):
         return self._w.selectable()
 
 
+class SelectableText(urwid.Text):
+    """Text widget that is selectable for ListBox scrolling."""
+
+    def selectable(self):
+        return True
+
+    def keypress(self, size, key):
+        # Return key unconsumed so ListBox can handle up/down scrolling
+        return key
+
+
 def make_output_line(text):
     """Create an output line widget.
 
@@ -75,9 +86,9 @@ def make_output_line(text):
         text: Line text to display
 
     Returns:
-        Plain Text widget (not selectable - output is read-only)
+        Selectable text widget for scrolling in ListBox
     """
-    return urwid.Text(text if text else "")
+    return SelectableText(text if text else "")
 
 
 class ProgramEditorWidget(urwid.WidgetWrap):
@@ -147,13 +158,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         - Column 6: Space
         - Columns 7+: Code - editable
         """
-        # CRITICAL PERFORMANCE: For paste operations, skip expensive processing
-        # Only process special keys that actually need column-aware handling
-        if not (key.startswith('ctrl ') or
-                key in ['tab', 'enter', 'esc', 'up', 'down', 'left', 'right',
-                        'page up', 'page down', 'home', 'end', 'backspace']):
-            # Normal character - just pass through
-            # This makes paste 100x faster by skipping text parsing
+        # CRITICAL PERFORMANCE: For paste, skip ALL processing for normal typing
+        # Check if it's a single printable character (not a special key)
+        if len(key) == 1 and key >= ' ' and key <= '~':
+            # Fast path: normal printable ASCII - just pass through
+            # This avoids expensive text parsing on every pasted character
             return super().keypress(size, key)
 
         # Get current cursor position (only for special keys)
@@ -925,9 +934,17 @@ class CursesBackend(UIBackend):
             raise urwid.ExitMainLoop()
 
         elif key == 'tab':
-            # Tab is reserved for future use, just pass through for now
-            # Output area is not selectable (read-only)
-            pass
+            # Toggle between editor (position 0) and output (position 1)
+            pile = self.loop.widget.base_widget
+            if pile.focus_position == 0:
+                # Switch to output for scrolling
+                pile.focus_position = 1
+                self.status_bar.set_text("Output - Use Up/Down to scroll, Tab to return to editor")
+            else:
+                # Switch back to editor
+                pile.focus_position = 0
+                self.status_bar.set_text("Editor - Press Ctrl+H for help")
+            return None
 
         elif key == 'ctrl h':
             # Show help
