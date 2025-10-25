@@ -63,6 +63,10 @@ class TopLeftBox(urwid.WidgetWrap):
 
         super().__init__(pile)
 
+    def selectable(self):
+        """Pass through selectability of wrapped widget."""
+        return self._w.selectable()
+
 
 class SelectableText(urwid.Text):
     """Simple selectable text widget."""
@@ -97,13 +101,13 @@ def make_output_line(text):
 
         # Wrap in AttrMap to apply focus highlighting to first char
         # When focused, anything with 'output' becomes 'output_focus'
-        attr_widget = urwid.AttrMap(widget, 'output', {None: 'output', 'output': 'output_focus'})
+        attr_widget = urwid.AttrMap(widget, None, {'output': 'output_focus'})
 
         return attr_widget
     else:
         # Empty line - show space with potential focus
         widget = SelectableText([('output', ' ')])
-        attr_widget = urwid.AttrMap(widget, 'output', {None: 'output', 'output': 'output_focus'})
+        attr_widget = urwid.AttrMap(widget, None, {'output': 'output_focus'})
         return attr_widget
 
 
@@ -949,9 +953,11 @@ class CursesBackend(UIBackend):
             if pile.focus_position == 0:
                 # Switch to output
                 pile.focus_position = 1
+                self.status_bar.set_text("Output area active - Use Up/Down to scroll, Tab to return to editor")
             else:
                 # Switch back to editor
                 pile.focus_position = 0
+                self.status_bar.set_text("Editor active - Press Ctrl+H for help")
             return None
 
         elif key == 'ctrl h':
