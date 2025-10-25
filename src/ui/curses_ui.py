@@ -68,45 +68,6 @@ class TopLeftBox(urwid.WidgetWrap):
         return self._w.selectable()
 
 
-class OutputLine(urwid.Text):
-    """Output line widget with green cursor on first char when focused."""
-
-    def __init__(self, text):
-        self.line_text = text if text else " "
-        super().__init__(self.line_text)
-        self._has_focus = False
-
-    def selectable(self):
-        return True
-
-    def keypress(self, size, key):
-        return key  # Return unconsumed for ListBox navigation
-
-    def render(self, size, focus=False):
-        """Render with green cursor on first char if focused."""
-        # ALWAYS update text markup based on focus state
-        # Don't check if focus changed - just update based on current state
-        if focus and len(self.line_text) > 0:
-            # GREEN cursor on first character
-            first_char = self.line_text[0]
-            rest = self.line_text[1:] if len(self.line_text) > 1 else ""
-            markup = [('output_focus', first_char), rest]
-            self.set_text(markup)
-        else:
-            # No focus - plain text
-            self.set_text(self.line_text)
-
-        self._has_focus = focus
-        return super().render(size, focus)
-
-    def get_cursor_coords(self, size):
-        """Return cursor position to help ListBox keep it visible."""
-        if self._has_focus:
-            # Return cursor at position 0 (first character)
-            return (0, 0)
-        return None
-
-
 def make_output_line(text):
     """Create an output line widget.
 
@@ -114,9 +75,9 @@ def make_output_line(text):
         text: Line text to display
 
     Returns:
-        OutputLine widget
+        Plain Text widget (not selectable - output is read-only)
     """
-    return OutputLine(text)
+    return urwid.Text(text if text else "")
 
 
 class ProgramEditorWidget(urwid.WidgetWrap):
@@ -955,10 +916,6 @@ class CursesBackend(UIBackend):
             # Use bright yellow for focus - this affects cursor visibility
             ('focus', 'black', 'yellow', 'standout'),
             ('error', 'light red', 'black'),
-            # Output area styles
-            ('output', 'white', 'black'),
-            ('output_cursor', 'white', 'black'),  # Cursor position (normal state)
-            ('output_focus', 'black', 'light green', 'standout'),  # Cursor when focused
         ]
 
     def _handle_input(self, key):
@@ -968,18 +925,9 @@ class CursesBackend(UIBackend):
             raise urwid.ExitMainLoop()
 
         elif key == 'tab':
-            # Toggle between editor (position 0) and output (position 1)
-            # Get the pile widget from the main widget
-            pile = self.loop.widget.base_widget
-            if pile.focus_position == 0:
-                # Switch to output
-                pile.focus_position = 1
-                self.status_bar.set_text("Output area active - Use Up/Down to scroll, Tab to return to editor")
-            else:
-                # Switch back to editor
-                pile.focus_position = 0
-                self.status_bar.set_text("Editor active - Press Ctrl+H for help")
-            return None
+            # Tab is reserved for future use, just pass through for now
+            # Output area is not selectable (read-only)
+            pass
 
         elif key == 'ctrl h':
             # Show help
@@ -1018,7 +966,6 @@ Global Commands:
   Ctrl+N  - New program
   Ctrl+S  - Save program
   Ctrl+O  - Open/Load program
-  Tab             - Toggle between Editor and Output
 
 Screen Editor:
   Column Layout:
@@ -1046,12 +993,6 @@ Screen Editor:
     - Uses current line number + increment
     - Avoids collisions with existing lines
     - Configure in .mbasic.conf
-
-Output Area:
-  Tab            - Switch to output area
-  Up/Down        - Scroll through output
-  Green cursor   - First character shows current line
-  Tab            - Return to editor
 
 Examples:
   10 PRINT "Hello, World!"
