@@ -534,15 +534,17 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # Let parent handle the key (allows arrows, backspace, etc.)
         return super().keypress(size, key)
 
-    def _format_line(self, line_num, code_text):
+    def _format_line(self, line_num, code_text, highlight_stmt=None, line_node=None):
         """Format a single program line with status, line number, and code.
 
         Args:
             line_num: Line number
             code_text: BASIC code text
+            highlight_stmt: Optional statement index to highlight (0-based)
+            line_node: Optional LineNode from parser (needed for highlight)
 
         Returns:
-            Formatted string: "SNNNNN CODE"
+            Formatted string or urwid markup: "SNNNNN CODE" with optional highlighting
         """
         # Status column (1 char)
         if line_num in self.breakpoints:
@@ -555,11 +557,55 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # Line number column (5 chars, right-aligned)
         line_num_str = f"{line_num:5d}"
 
-        # Combine: status + line_num + space + code
-        return f"{status}{line_num_str} {code_text}"
+        # Prefix: status + line_num + space
+        prefix = f"{status}{line_num_str} "
 
-    def _update_display(self):
-        """Update the text display with all program lines."""
+        # If no highlighting requested, return simple string
+        if highlight_stmt is None or line_node is None:
+            return prefix + code_text
+
+        # Find statement boundaries for highlighting
+        try:
+            statements = line_node.statements
+            if highlight_stmt < 0 or highlight_stmt >= len(statements):
+                # Invalid statement index, return without highlight
+                return prefix + code_text
+
+            # Split code by colons to find statement boundaries
+            parts = code_text.split(':')
+
+            # If statement index is out of range for parts, highlight whole line
+            if highlight_stmt >= len(parts):
+                return [prefix, ('active_stmt', code_text)]
+
+            # Build the result with the highlighted statement
+            result = [prefix]
+
+            for i, part in enumerate(parts):
+                if i > 0:
+                    result.append(':')  # Add back the colon separator
+
+                if i == highlight_stmt:
+                    # This is the statement to highlight
+                    result.append(('active_stmt', part))
+                else:
+                    # Normal text
+                    result.append(part)
+
+            return result
+
+        except Exception:
+            # If anything goes wrong, return without highlighting
+            return prefix + code_text
+
+    def _update_display(self, highlight_line=None, highlight_stmt=None, line_table=None):
+        """Update the text display with all program lines.
+
+        Args:
+            highlight_line: Optional line number to highlight a statement on
+            highlight_stmt: Optional statement index to highlight (0-based)
+            line_table: Optional dict of line_num -> LineNode for getting statement positions
+        """
         if not self.lines:
             # Empty program - start with first line number ready
             # Format: "SNNNNN " where S=status (1), NNNNN=line# (5), space (1)
@@ -567,12 +613,34 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             # Increment counter since we've used this number for display
             self.next_auto_line_num += self.auto_number_increment
         else:
-            # Format all lines
+            # Format all lines (with optional highlighting)
             formatted_lines = []
             for line_num in sorted(self.lines.keys()):
                 code_text = self.lines[line_num]
-                formatted_lines.append(self._format_line(line_num, code_text))
-            display_text = '\n'.join(formatted_lines)
+
+                # Check if this line should be highlighted
+                if line_num == highlight_line and line_table and line_num in line_table:
+                    line_node = line_table[line_num]
+                    formatted = self._format_line(line_num, code_text, highlight_stmt, line_node)
+                else:
+                    formatted = self._format_line(line_num, code_text)
+
+                formatted_lines.append(formatted)
+
+            # Join lines - handle both string and markup formats
+            if any(isinstance(line, list) for line in formatted_lines):
+                # We have markup - need to join carefully
+                display_text = []
+                for i, line in enumerate(formatted_lines):
+                    if i > 0:
+                        display_text.append('\n')
+                    if isinstance(line, list):
+                        display_text.extend(line)
+                    else:
+                        display_text.append(line)
+            else:
+                # All strings - simple join
+                display_text = '\n'.join(formatted_lines)
 
         # Update the edit widget
         self.edit_widget.set_edit_text(display_text)
@@ -1314,6 +1382,8 @@ class CursesBackend(UIBackend):
             # Use bright yellow for focus - this affects cursor visibility
             ('focus', 'black', 'yellow', 'standout'),
             ('error', 'light red', 'black'),
+            # Highlight for active statement during step debugging
+            ('active_stmt', 'black', 'light cyan'),
         ]
 
     def _handle_input(self, key):
@@ -1392,6 +1462,8 @@ class CursesBackend(UIBackend):
         try:
             state = self.interpreter.get_state()
             if state.status in ('paused', 'at_breakpoint'):
+                # Clear statement highlighting when continuing
+                self.editor._update_display()
                 # Continue from breakpoint
                 self.status_bar.set_text("Continuing execution...")
                 self.interpreter.cont()
@@ -1421,16 +1493,30 @@ class CursesBackend(UIBackend):
                     self.output_buffer.extend(new_output)
                     self._update_output()
 
+                # Update editor display with statement highlighting
+                if state.status in ('paused', 'at_breakpoint') and state.current_line:
+                    # Highlight the current statement in the editor
+                    self.editor._update_display(
+                        highlight_line=state.current_line,
+                        highlight_stmt=state.current_statement_index,
+                        line_table=self.runtime.line_table if self.runtime else None
+                    )
+
                 # Show where we paused
                 if state.status in ('paused', 'at_breakpoint'):
-                    self.output_buffer.append(f"→ Paused at line {state.current_line}")
+                    stmt_info = f" statement {state.current_statement_index + 1}" if state.current_statement_index > 0 else ""
+                    self.output_buffer.append(f"→ Paused at line {state.current_line}{stmt_info}")
                     self._update_output()
-                    self.status_bar.set_text(f"Paused at line {state.current_line} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
+                    self.status_bar.set_text(f"Paused at line {state.current_line}{stmt_info} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
                 elif state.status == 'done':
+                    # Clear highlighting when done
+                    self.editor._update_display()
                     self.output_buffer.append("Program completed")
                     self._update_output()
                     self.status_bar.set_text("Program completed")
                 elif state.status == 'error':
+                    # Clear highlighting on error
+                    self.editor._update_display()
                     error_msg = state.error_info.error_message if state.error_info else "Unknown error"
                     line_num = state.error_info.error_line if state.error_info else "?"
                     self.output_buffer.append(f"Error at line {line_num}: {error_msg}")

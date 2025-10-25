@@ -579,6 +579,49 @@ Workflow:
 Program stopped by user
 ```
 
+#### Visual Statement Highlighting
+
+When stepping through code with `Ctrl+T`, the active statement is highlighted with a colored background (cyan). This is especially useful for lines with multiple colon-separated statements.
+
+**Example:**
+```
+Line with single statement:
+    10 PRINT "Hello"
+    → Entire statement highlighted when stepping
+
+Line with multiple statements:
+    20 X = 5 : Y = 10 : PRINT X + Y
+    → When stepping:
+      Step 1: "X = 5" highlighted (statement 1/3)
+      Step 2: "Y = 10" highlighted (statement 2/3)
+      Step 3: "PRINT X + Y" highlighted (statement 3/3)
+```
+
+**Features:**
+- Each statement in a multi-statement line is highlighted separately
+- Colored background (cyan) makes the active statement obvious
+- Highlighting clears when you continue (Ctrl+G) or stop (Ctrl+X)
+- Status bar shows statement number: "Paused at line 20 statement 2"
+
+**Typical workflow:**
+```
+Program:
+    10 A = 1 : B = 2 : C = A + B : PRINT C
+
+1. Set breakpoint on line 10 (Ctrl+B)
+2. Run (Ctrl+R)
+   → Pauses at line 10, "A = 1" highlighted in cyan
+3. Step (Ctrl+T)
+   → "B = 2" highlighted in cyan
+   Status: "Paused at line 10 statement 2"
+4. Step (Ctrl+T)
+   → "C = A + B" highlighted in cyan
+   Status: "Paused at line 10 statement 3"
+5. Step (Ctrl+T)
+   → "PRINT C" highlighted in cyan, prints "3"
+   Status: "Paused at line 10 statement 4"
+```
+
 #### Tips
 
 - **Set multiple breakpoints** - Pause at different points in your code
@@ -586,6 +629,7 @@ Program stopped by user
 - **Continue past breakpoints** - Use Ctrl+G to skip to next interesting point
 - **Stop anytime** - Press Ctrl+X if program is stuck or running too long
 - **Combine with output** - Watch output window to see results of each step
+- **Multi-statement lines** - Use statement highlighting to see exactly which part is executing
 
 ### Line Editing Commands
 
@@ -880,7 +924,7 @@ Errors will appear in the output window with full tracebacks.
 
 - [x] Add breakpoint support (toggle with Ctrl+B)
 - [x] Implement Step/Continue/Stop debugger (Ctrl+T/Ctrl+G/Ctrl+X)
-- [ ] Add syntax highlighting
+- [x] Visual stepping through colon-separated statements (cyan highlighting shows active statement)
 - [ ] Create menu system
 
 ### Long Term (v2.0)
@@ -889,7 +933,6 @@ Errors will appear in the output window with full tracebacks.
 - [ ] Split-pane view (code + output side-by-side)
 - [ ] Watch window for variables
 - [ ] Call stack viewer
-- [ ] Deprecate npyscreen backend
 
 ## Resources
 
