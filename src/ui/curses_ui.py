@@ -132,6 +132,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         self._loop = None  # Will be set by CursesBackend after loop creation
         self._idle_delay = 0.1  # Seconds to wait after last keystroke before refresh
 
+        # Syntax error tracking
+        self.syntax_errors = {}  # Maps line number -> error message
+        self._output_walker = None  # Will be set by CursesBackend for displaying errors
+
         # Use a pile to allow switching between display and edit modes
         self.pile = urwid.Pile([self.edit_widget])
 
@@ -711,11 +715,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             code_text: The BASIC code (without line number)
 
         Returns:
-            True if syntax is valid, False if there's a parse error
+            Tuple of (is_valid: bool, error_message: str or None)
         """
         if not code_text or not code_text.strip():
             # Empty lines are valid
-            return True
+            return (True, None)
 
         try:
             # Import here to avoid circular dependencies
@@ -737,7 +741,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 # this is a bare identifier like "foo" which should be invalid
                 if (first_token.type == TokenType.IDENTIFIER and
                     second_token.type in (TokenType.EOF, TokenType.COLON)):
-                    return False
+                    return (False, f"Invalid statement: '{first_token.value}' is not a BASIC keyword")
 
             # Parse the statement
             # Create a new parser with empty def_type_map to avoid affecting existing state
@@ -750,14 +754,19 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 # Check if this was an actual REM keyword or implicit REM
                 # Look at first token - if it's not REM/REMARK/', it's implicit
                 if tokens and tokens[0].type not in (TokenType.REM, TokenType.REMARK, TokenType.APOSTROPHE):
-                    return False
+                    return (False, f"Invalid statement: '{tokens[0].value}' is not a BASIC keyword")
 
             # If we get here, parsing succeeded with valid syntax
-            return True
+            return (True, None)
 
         except Exception as e:
             # Any error (lexer or parser) means invalid syntax
-            return False
+            # Extract a useful error message
+            error_msg = str(e)
+            # Remove "Parse error at line X, column Y: " prefix if present
+            if "Parse error" in error_msg and ":" in error_msg:
+                error_msg = error_msg.split(":", 1)[1].strip()
+            return (False, error_msg)
 
     def _update_syntax_errors(self, text):
         """Update status indicators for lines with syntax errors.
@@ -771,6 +780,9 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         lines = text.split('\n')
         changed = False
 
+        # Clear old error messages
+        self.syntax_errors.clear()
+
         for i, line in enumerate(lines):
             if not line or len(line) < 7:
                 continue
@@ -779,6 +791,13 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             status = line[0]
             linenum_col = line[1:6]
             code_area = line[7:] if len(line) > 7 else ""
+
+            # Parse line number
+            line_number_str = linenum_col.strip()
+            try:
+                line_number = int(line_number_str) if line_number_str else 0
+            except:
+                line_number = 0
 
             # Skip empty code lines
             if not code_area.strip():
@@ -789,21 +808,55 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 continue
 
             # Check syntax
-            is_valid = self._check_line_syntax(code_area)
+            is_valid, error_msg = self._check_line_syntax(code_area)
 
-            if not is_valid and status != '?':
-                # Mark as error
-                lines[i] = '?' + line[1:]
-                changed = True
+            if not is_valid:
+                # Mark as error and store error message
+                if status != '?':
+                    lines[i] = '?' + line[1:]
+                    changed = True
+                # Store error message
+                if line_number > 0 and error_msg:
+                    self.syntax_errors[line_number] = error_msg
             elif is_valid and status == '?':
                 # Clear error marker (only if it was an error, preserve breakpoints)
                 lines[i] = ' ' + line[1:]
                 changed = True
 
+        # Update output window with errors
+        self._display_syntax_errors()
+
         if changed:
             return '\n'.join(lines)
         else:
             return text
+
+    def _display_syntax_errors(self):
+        """Display syntax error messages in the output window."""
+        if not self._output_walker:
+            # Output window not available yet
+            return
+
+        if not self.syntax_errors:
+            # No errors - clear output if it only has error messages
+            # (don't clear if there's program output)
+            return
+
+        # Clear output window
+        self._output_walker.clear()
+
+        # Add error header
+        self._output_walker.append(make_output_line("=== Syntax Errors ==="))
+        self._output_walker.append(make_output_line(""))
+
+        # Add each error
+        for line_number in sorted(self.syntax_errors.keys()):
+            error_msg = self.syntax_errors[line_number]
+            self._output_walker.append(make_output_line(f"Line {line_number}: {error_msg}"))
+
+        # Auto-scroll to bottom to show errors
+        if len(self._output_walker) > 0:
+            self._output_walker.set_focus(len(self._output_walker) - 1)
 
     def _parse_line_numbers(self, text):
         """Parse and reformat lines that start with numbers.
@@ -1159,6 +1212,9 @@ class CursesBackend(UIBackend):
         # Create scrollable output window using ListBox
         self.output_walker = urwid.SimpleFocusListWalker([])
         self.output = urwid.ListBox(self.output_walker)
+
+        # Pass output_walker to editor for displaying syntax errors
+        self.editor._output_walker = self.output_walker
 
         self.status_bar = urwid.Text("MBASIC 5.21 - Press Ctrl+H for help, Ctrl+Q or Ctrl+C to quit")
 
