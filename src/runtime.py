@@ -392,15 +392,6 @@ class Runtime:
         self._arrays.clear()
 
 
-    def get_all_arrays(self):
-        """
-        Get a copy of all arrays.
-
-        Returns:
-            dict: Copy of array table
-        """
-        return dict(self._arrays)
-
     def update_variables(self, variables):
         """
         Bulk update variables.
