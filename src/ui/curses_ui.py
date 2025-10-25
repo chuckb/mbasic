@@ -152,14 +152,19 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         - Column 6: Space
         - Columns 7+: Code - editable
         """
+        # CRITICAL: Check if we have pending updates from paste
+        # If so, process them NOW before handling this key
+        if self._needs_refresh or self._needs_sort:
+            self._perform_deferred_refresh()
+
         # CRITICAL PERFORMANCE: For paste, skip ALL processing for normal typing
         # Check if it's a single printable character (not a special key)
         if len(key) == 1 and key >= ' ' and key <= '~':
             # Fast path: normal printable ASCII - just pass through
             # This avoids expensive text parsing on every pasted character
 
-            # Schedule deferred refresh - will happen after input stops
-            self._schedule_deferred_refresh()
+            # Mark that we need to parse/refresh after paste completes
+            self._needs_refresh = True
 
             return super().keypress(size, key)
 
@@ -184,11 +189,6 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         is_leftright_arrow = key in ['left', 'right']  # Left/right stay on same line
         is_arrow_key = is_updown_arrow or is_leftright_arrow
         is_other_nav_key = key in ['page up', 'page down', 'home', 'end']
-
-        # FALLBACK: If navigation key pressed and refresh pending, do it now
-        # This ensures paste updates appear even if alarm doesn't fire
-        if (is_control_key or is_arrow_key or is_other_nav_key) and self._needs_refresh:
-            self._perform_deferred_refresh()
 
         # PERFORMANCE: Skip right-justification during rapid typing/paste
         # Only do it when navigating (which is when user expects formatting)
@@ -753,21 +753,20 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
             # SECOND: Check lines with column structure
             if len(line) >= 7:
-                # Extract status and code area
+                # Extract status, line number column, and code area
                 status = line[0]
+                linenum_col = line[1:6]  # Existing line number column
                 code_area = line[7:] if len(line) >= 7 else ""
 
                 # Check if code area starts with a number (after stripping leading spaces)
                 # (It's never legal for BASIC code to start with a digit)
                 code_stripped = code_area.lstrip()
                 if code_stripped and code_stripped[0].isdigit():
-                    # Parse: extract leading number and rest of code from stripped version
-                    num_str = ""
+                    # Found a duplicate number in code area - remove it
 
-                    # Extract the number
+                    # Extract the number from code area
                     j = 0
                     while j < len(code_stripped) and code_stripped[j].isdigit():
-                        num_str += code_stripped[j]
                         j += 1
 
                     # Get rest of line (skip spaces after number)
@@ -775,12 +774,18 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                         j += 1
                     rest = code_stripped[j:]
 
-                    # Reformat: put number in line number column (right-justified)
-                    if num_str:
+                    # Check if line number column is empty (all spaces)
+                    if linenum_col.strip():
+                        # Line number column has a number - keep it, just remove duplicate from code
+                        new_line = f"{status}{linenum_col} {rest}"
+                    else:
+                        # Line number column is empty - use the number from code area
+                        num_str = code_stripped[:code_stripped.find(' ') if ' ' in code_stripped else len(code_stripped)]
                         line_num_formatted = f"{num_str:>5}"
                         new_line = f"{status}{line_num_formatted} {rest}"
-                        lines[i] = new_line
-                        changed = True
+
+                    lines[i] = new_line
+                    changed = True
 
         if changed:
             return '\n'.join(lines)
