@@ -108,3 +108,43 @@ diff /tmp/our.txt /tmp/real.txt
 ```
 
 **Full details:** See `tests/HOW_TO_RUN_REAL_MBASIC.md`
+
+### Testing the Curses UI
+
+**IMPORTANT:** The curses UI cannot be tested manually in headless environments. Use the automated testing framework.
+
+**Quick test (recommended):**
+```bash
+python3 utils/test_curses_comprehensive.py
+```
+
+**What it tests:**
+- UI creation and initialization
+- Input handlers (Ctrl+H, Ctrl+L, Ctrl+N, Ctrl+R, etc.)
+- Program parsing from editor
+- Program execution with tick-based interpreter
+- Process lifecycle (startup/shutdown)
+
+**Exit codes:**
+- `0` - All tests passed
+- `1` - One or more tests failed (details in output)
+
+**When to use:**
+- Before committing changes to curses UI
+- After modifying interpreter tick-based execution
+- When debugging curses UI issues
+- To verify UI works without manual testing
+
+**Available test scripts:**
+- `utils/test_curses_comprehensive.py` - Full test suite (use this)
+- `utils/test_curses_pexpect.py` - Integration testing only
+- `utils/test_curses_pyte.py` - Terminal emulator (experimental)
+- `utils/test_curses_urwid_sim.py` - Direct simulation testing
+
+**Full documentation:** See `docs/dev/CURSES_UI_TESTING.md`
+
+**Common errors caught:**
+- `loop.draw_screen()` called before loop running
+- Missing interpreter initialization
+- Input handler exceptions
+- Tick execution errors
