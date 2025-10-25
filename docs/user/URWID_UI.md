@@ -363,6 +363,7 @@ The editor automatically checks syntax as you type and marks errors with the '?'
 
 - **Real-time checking** - Syntax is validated after 0.1s of idle time
 - **Visual feedback** - Lines with parse errors show '?' in status column
+- **Error messages** - Detailed error descriptions appear in output window
 - **Auto-clearing** - Error markers disappear when you fix the syntax
 - **Safe operation** - Uses isolated parser, won't affect running programs or breakpoints
 
@@ -390,6 +391,37 @@ The editor automatically checks syntax as you type and marks errors with the '?'
 ?  30 PRINT "Missing     (missing closing quote)
    40 END
 ```
+
+**Output window shows:**
+```
+=== Syntax Errors ===
+
+Line 20: Expected expression after TO
+Line 30: Unterminated string
+```
+
+### Error Messages
+
+When syntax errors are detected, detailed messages appear in the output window:
+
+**Format:**
+```
+=== Syntax Errors ===
+
+Line <number>: <error description>
+```
+
+**Example error messages:**
+- `Invalid statement: 'foo' is not a BASIC keyword` - Bare identifier
+- `Unterminated string` - Missing closing quote
+- `Expected expression after TO` - Incomplete FOR loop
+- `Unexpected token: THEN` - Syntax error in IF statement
+
+**Behavior:**
+- Errors update automatically as you type
+- Sorted by line number for easy reference
+- Clear when you fix all errors
+- Replaced by program output when you run code
 
 ### What Gets Checked
 
