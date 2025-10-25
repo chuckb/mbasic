@@ -35,7 +35,7 @@ class Runtime:
 
         # Variable storage (PRIVATE - use get_variable/set_variable methods)
         # Each variable is stored as: name_with_suffix -> {'value': val, 'last_read': {...}, 'last_write': {...}}
-        # Note: line -1 in last_write indicates debugger/prompt set
+        # Note: line -1 in last_write indicates debugger/prompt/internal set (not from program execution)
         self._variables = {}
         self._arrays = {}             # name_with_suffix -> {'dims': [...], 'data': [...]}
         self.common_vars = []         # List of variable names declared in COMMON (order matters!)
@@ -283,7 +283,7 @@ class Runtime:
                 'timestamp': time.perf_counter()
             }
         elif token is not None:
-            # Normal program execution
+            # Normal program execution or internal set (token.line may be -1 for internal/system variables)
             self._variables[full_name]['last_write'] = {
                 'line': getattr(token, 'line', self.current_line.line_number if self.current_line else None),
                 'position': getattr(token, 'position', None),
@@ -342,18 +342,40 @@ class Runtime:
         Use this only for special cases like system variables.
         For normal variables, use set_variable() instead.
 
+        This now calls set_variable() internally for uniform handling.
+        Uses a fake token with line=-1 to indicate internal/system setting.
+
         Args:
             full_name: Full variable name with suffix (lowercase)
             value: Value to set
         """
-        if full_name not in self._variables:
-            self._variables[full_name] = {
-                'value': value,
-                'last_read': None,
-                'last_write': None
-            }
-        else:
-            self._variables[full_name]['value'] = value
+        # Split the variable name from the type suffix
+        name = full_name
+        type_suffix = None
+
+        if full_name.endswith('%'):
+            name = full_name[:-1]
+            type_suffix = '%'
+        elif full_name.endswith('!'):
+            name = full_name[:-1]
+            type_suffix = '!'
+        elif full_name.endswith('#'):
+            name = full_name[:-1]
+            type_suffix = '#'
+        elif full_name.endswith('$'):
+            name = full_name[:-1]
+            type_suffix = '$'
+
+        # Create a fake token with line=-1 to indicate internal/system setting
+        class FakeToken:
+            def __init__(self):
+                self.line = -1
+                self.position = None
+
+        fake_token = FakeToken()
+
+        # Call set_variable for uniform handling
+        self.set_variable(name, type_suffix, value, token=fake_token)
 
     def clear_variables(self):
         """Clear all variables."""
