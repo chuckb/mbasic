@@ -769,22 +769,23 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 status = line[0]
                 code_area = line[7:] if len(line) >= 7 else ""
 
-                # Check if code area starts with a number
+                # Check if code area starts with a number (after stripping leading spaces)
                 # (It's never legal for BASIC code to start with a digit)
-                if code_area and code_area[0].isdigit():
-                    # Parse: extract leading number and rest of code
+                code_stripped = code_area.lstrip()
+                if code_stripped and code_stripped[0].isdigit():
+                    # Parse: extract leading number and rest of code from stripped version
                     num_str = ""
 
                     # Extract the number
                     j = 0
-                    while j < len(code_area) and code_area[j].isdigit():
-                        num_str += code_area[j]
+                    while j < len(code_stripped) and code_stripped[j].isdigit():
+                        num_str += code_stripped[j]
                         j += 1
 
                     # Get rest of line (skip spaces after number)
-                    while j < len(code_area) and code_area[j] == ' ':
+                    while j < len(code_stripped) and code_stripped[j] == ' ':
                         j += 1
-                    rest = code_area[j:]
+                    rest = code_stripped[j:]
 
                     # Reformat: put number in line number column (right-justified)
                     if num_str:
