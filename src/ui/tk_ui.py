@@ -142,6 +142,8 @@ class TkBackend(UIBackend):
         edit_menu.add_command(label="Cut", command=self._menu_cut, accelerator="Ctrl+X")
         edit_menu.add_command(label="Copy", command=self._menu_copy, accelerator="Ctrl+C")
         edit_menu.add_command(label="Paste", command=self._menu_paste, accelerator="Ctrl+V")
+        edit_menu.add_separator()
+        edit_menu.add_command(label="Toggle Breakpoint", command=self._toggle_breakpoint, accelerator="Ctrl+B")
 
         # Run menu
         run_menu = tk.Menu(menubar, tearoff=0)
@@ -167,6 +169,7 @@ class TkBackend(UIBackend):
         self.root.bind("<Control-r>", lambda e: self._menu_run())
         self.root.bind("<Control-t>", lambda e: self._menu_step())
         self.root.bind("<Control-g>", lambda e: self._menu_continue())
+        self.root.bind("<Control-b>", lambda e: self._toggle_breakpoint())
         # Note: Ctrl+X conflicts with Cut, so we'll check in the handler
         self.root.bind("<F5>", lambda e: self._menu_run())
 
@@ -320,6 +323,29 @@ class TkBackend(UIBackend):
         except Exception as e:
             self._add_output(f"Stop error: {e}\n")
             self._set_status("Error")
+
+    def _toggle_breakpoint(self):
+        """Toggle breakpoint on current line (Ctrl+B)."""
+        # Get current BASIC line number from cursor position
+        line_number = self.editor_text.get_current_line_number()
+
+        if not line_number:
+            self._set_status("No line number at cursor")
+            return
+
+        # Toggle in breakpoints set
+        if line_number in self.breakpoints:
+            self.breakpoints.remove(line_number)
+            self.editor_text.set_breakpoint(line_number, False)
+            self._set_status(f"Breakpoint removed from line {line_number}")
+        else:
+            self.breakpoints.add(line_number)
+            self.editor_text.set_breakpoint(line_number, True)
+            self._set_status(f"Breakpoint set on line {line_number}")
+
+        # Update interpreter state if running
+        if self.interpreter:
+            self.interpreter.state.breakpoints = self.breakpoints.copy()
 
     def _menu_clear_output(self):
         """Run > Clear Output"""
