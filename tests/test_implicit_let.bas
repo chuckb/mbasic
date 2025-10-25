@@ -1,0 +1,3 @@
+10 X% = 99
+20 PRINT "X%="; X%
+30 SYSTEM

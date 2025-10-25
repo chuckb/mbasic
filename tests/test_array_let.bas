@@ -1,0 +1,6 @@
+10 DIM A%(2)
+20 PRINT "Before LET"
+30 LET A%(0) = 99
+40 PRINT "After LET"
+50 PRINT "A%(0)="; A%(0)
+60 SYSTEM

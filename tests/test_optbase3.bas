@@ -1,0 +1,16 @@
+10 REM Test OPTION BASE and array bounds
+20 OPTION BASE 1
+30 DIM A%(5)
+40 A%(1) = 101
+50 A%(5) = 505
+60 PRINT "A%(1)="; A%(1)
+70 PRINT "A%(5)="; A%(5)
+80 ON ERROR GOTO 110
+90 PRINT "Trying A%(0)..."
+95 X% = A%(0)
+100 PRINT "A%(0)="; X%
+105 GOTO 130
+110 PRINT "Error accessing A%(0)"
+120 RESUME 130
+130 PRINT "Done"
+140 SYSTEM

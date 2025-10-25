@@ -1163,11 +1163,24 @@ class Interpreter:
         """Execute OPTION BASE statement
 
         Sets the lower bound for array indices.
-        Must be executed before any DIM statements.
+        Must be executed BEFORE any arrays are DIM'd (MBASIC 5.21 behavior).
 
         Syntax: OPTION BASE 0 | 1
+
+        Raises:
+            RuntimeError: If OPTION BASE has already been executed OR if any arrays exist
         """
+        # MBASIC 5.21 gives "Duplicate Definition" if:
+        # 1. OPTION BASE has already been executed, OR
+        # 2. Any arrays have been created (even with implicit BASE 0)
+        if self.runtime.option_base_executed:
+            raise RuntimeError("Duplicate Definition")
+
+        if len(self.runtime._arrays) > 0:
+            raise RuntimeError("Duplicate Definition")
+
         self.runtime.array_base = stmt.base
+        self.runtime.option_base_executed = True
 
     def execute_error(self, stmt):
         """Execute ERROR statement

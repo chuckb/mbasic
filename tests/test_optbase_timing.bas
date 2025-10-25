@@ -1,0 +1,6 @@
+10 REM Test OPTION BASE timing
+20 DIM A%(5)
+30 PRINT "Array created"
+40 OPTION BASE 0
+50 PRINT "OPTION BASE 0 executed"
+60 SYSTEM

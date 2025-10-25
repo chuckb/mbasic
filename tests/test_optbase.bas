@@ -1,0 +1,16 @@
+10 REM Test OPTION BASE change behavior
+20 OPTION BASE 0
+30 DIM A%(5)
+40 A%(0) = 100
+50 A%(5) = 500
+60 PRINT "A%(0)="; A%(0)
+70 PRINT "A%(5)="; A%(5)
+80 OPTION BASE 1
+90 DIM B%(5)
+100 B%(1) = 101
+110 B%(5) = 505
+120 PRINT "B%(1)="; B%(1)
+130 PRINT "B%(5)="; B%(5)
+140 PRINT "A%(0)="; A%(0)
+150 PRINT "A%(5)="; A%(5)
+160 SYSTEM

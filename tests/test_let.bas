@@ -1,0 +1,4 @@
+10 PRINT "Before LET"
+20 LET X% = 99
+30 PRINT "After LET, X%="; X%
+40 SYSTEM

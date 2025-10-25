@@ -526,11 +526,12 @@ class Parser:
 
         # Assignment (implicit LET) or implicit REM (comment line)
         elif token.type == TokenType.IDENTIFIER:
-            # Check if next token is = (assignment) or not (treat as comment)
+            # Check if next token is = or ( (assignment) or not (treat as comment)
             # In old BASIC, lines like "REMEMBER THIS" or "REMARKABLE PROGRAM"
             # were treated as comments even though they're not REM statements
+            # Note: ( indicates array subscript like A%(0) = 99
             next_token = self.peek()
-            if next_token and next_token.type == TokenType.EQUAL:
+            if next_token and next_token.type in (TokenType.EQUAL, TokenType.LPAREN):
                 return self.parse_assignment()
             else:
                 # Treat as implicit REM - consume rest of line

@@ -1,0 +1,11 @@
+10 REM Test OPTION BASE after DIM
+20 DIM A%(5)
+30 A%(0) = 100
+40 A%(5) = 500
+50 PRINT "A%(0)="; A%(0)
+60 PRINT "A%(5)="; A%(5)
+70 OPTION BASE 1
+80 PRINT "Set OPTION BASE 1"
+90 PRINT "A%(0)="; A%(0)
+100 PRINT "A%(5)="; A%(5)
+110 SYSTEM
