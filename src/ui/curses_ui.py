@@ -721,17 +721,38 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             # Import here to avoid circular dependencies
             from lexer import Lexer
             from parser import Parser
+            from ast_nodes import RemarkStatementNode
+            from tokens import TokenType
 
             # Tokenize the code
             lexer = Lexer(code_text)
             tokens = lexer.tokenize()
 
+            # Reject bare identifiers (the parser treats them as implicit REMs for
+            # old BASIC compatibility, but in the editor we want to be stricter)
+            if len(tokens) >= 2:
+                first_token = tokens[0]
+                second_token = tokens[1]
+                # If first token is identifier and second is EOF (or colon),
+                # this is a bare identifier like "foo" which should be invalid
+                if (first_token.type == TokenType.IDENTIFIER and
+                    second_token.type in (TokenType.EOF, TokenType.COLON)):
+                    return False
+
             # Parse the statement
             # Create a new parser with empty def_type_map to avoid affecting existing state
             parser = Parser(tokens, def_type_map={})
-            parser.parse_statement()
+            result = parser.parse_statement()
 
-            # If we get here, parsing succeeded
+            # Additional check: reject implicit REM statements (bare identifiers)
+            # The parser allows these for compatibility, but we want stricter checking
+            if isinstance(result, RemarkStatementNode):
+                # Check if this was an actual REM keyword or implicit REM
+                # Look at first token - if it's not REM/REMARK/', it's implicit
+                if tokens and tokens[0].type not in (TokenType.REM, TokenType.REMARK, TokenType.APOSTROPHE):
+                    return False
+
+            # If we get here, parsing succeeded with valid syntax
             return True
 
         except Exception as e:
