@@ -34,11 +34,13 @@ class Runtime:
             self.line_table_dict = None
 
         # Variable storage (PRIVATE - use get_variable/set_variable methods)
-        self._variables = {}          # name_with_suffix -> value
-        self._variable_metadata = {}  # name_with_suffix -> {'last_access': {...}, 'last_set': {...}, 'debugger_set': bool}
+        # Each variable is stored as: name_with_suffix -> {'value': val, 'last_read': {...}, 'last_write': {...}}
+        # Note: line -1 in last_write indicates debugger/prompt set
+        self._variables = {}
         self._arrays = {}             # name_with_suffix -> {'dims': [...], 'data': [...]}
         self.common_vars = []         # List of variable names declared in COMMON (order matters!)
         self.array_base = 0           # Array index base (0 or 1, set by OPTION BASE)
+        self.option_base_executed = False  # Track if OPTION BASE has been executed (can only execute once)
 
         # Execution control
         self.current_line = None      # Currently executing LineNode
@@ -217,28 +219,25 @@ class Runtime:
         # Resolve full variable name
         full_name, resolved_suffix = self._resolve_variable_name(name, type_suffix, def_type_map)
 
-        # Track read access
-        if full_name not in self._variable_metadata:
-            self._variable_metadata[full_name] = {
+        # Initialize variable entry if needed
+        if full_name not in self._variables:
+            # Create with default value
+            default_value = "" if resolved_suffix == '$' else 0
+            self._variables[full_name] = {
+                'value': default_value,
                 'last_read': None,
-                'last_write': None,
-                'debugger_set': False
+                'last_write': None
             }
-        self._variable_metadata[full_name]['last_read'] = {
+
+        # Track read access
+        self._variables[full_name]['last_read'] = {
             'line': getattr(token, 'line', self.current_line.line_number if self.current_line else None),
             'position': getattr(token, 'position', None),
             'timestamp': time.perf_counter()  # High precision timestamp for debugging
         }
 
-        # Return existing value or default
-        if full_name in self._variables:
-            return self._variables[full_name]
-
-        # Default values
-        if resolved_suffix == '$':
-            return ""
-        else:
-            return 0
+        # Return value
+        return self._variables[full_name]['value']
 
     def set_variable(self, name, type_suffix, value, def_type_map=None, token=None, debugger_set=False):
         """
@@ -263,35 +262,41 @@ class Runtime:
 
         # Resolve full variable name
         full_name, _ = self._resolve_variable_name(name, type_suffix, def_type_map)
-        self._variables[full_name] = value
 
-        # Initialize metadata if needed
-        if full_name not in self._variable_metadata:
-            self._variable_metadata[full_name] = {
+        # Initialize variable entry if needed
+        if full_name not in self._variables:
+            self._variables[full_name] = {
+                'value': None,
                 'last_read': None,
-                'last_write': None,
-                'debugger_set': False
+                'last_write': None
             }
 
-        # Update last_write tracking if token provided
-        if token is not None:
-            self._variable_metadata[full_name]['last_write'] = {
+        # Set value
+        self._variables[full_name]['value'] = value
+
+        # Update last_write tracking
+        if debugger_set:
+            # Debugger/prompt set: use line -1 as sentinel
+            self._variables[full_name]['last_write'] = {
+                'line': -1,
+                'position': None,
+                'timestamp': time.perf_counter()
+            }
+        elif token is not None:
+            # Normal program execution
+            self._variables[full_name]['last_write'] = {
                 'line': getattr(token, 'line', self.current_line.line_number if self.current_line else None),
                 'position': getattr(token, 'position', None),
                 'timestamp': time.perf_counter()  # High precision timestamp for debugging
             }
-
-        # Mark if debugger set this variable
-        if debugger_set:
-            self._variable_metadata[full_name]['debugger_set'] = True
 
     def get_variable_for_debugger(self, name, type_suffix=None, def_type_map=None):
         """
         Get variable value for debugger/inspector WITHOUT updating access tracking.
 
         This method is intended ONLY for debugger/inspector use to read variable
-        values without affecting the access tracking metadata. For normal program
-        execution, use get_variable() with a token.
+        values without affecting the access tracking (last_read/last_write). For normal
+        program execution, use get_variable() with a token.
 
         Args:
             name: Variable name (e.g., 'x', 'foo')
@@ -306,7 +311,7 @@ class Runtime:
 
         # Return existing value or default (no tracking)
         if full_name in self._variables:
-            return self._variables[full_name]
+            return self._variables[full_name]['value']
 
         # Default values
         if resolved_suffix == '$':
@@ -327,7 +332,8 @@ class Runtime:
         Returns:
             Variable value or None if not found
         """
-        return self._variables.get(full_name)
+        var_entry = self._variables.get(full_name)
+        return var_entry['value'] if var_entry else None
 
     def set_variable_raw(self, full_name, value):
         """
@@ -340,7 +346,14 @@ class Runtime:
             full_name: Full variable name with suffix (lowercase)
             value: Value to set
         """
-        self._variables[full_name] = value
+        if full_name not in self._variables:
+            self._variables[full_name] = {
+                'value': value,
+                'last_read': None,
+                'last_write': None
+            }
+        else:
+            self._variables[full_name]['value'] = value
 
     def clear_variables(self):
         """Clear all variables."""
@@ -350,84 +363,6 @@ class Runtime:
         """Clear all arrays."""
         self._arrays.clear()
 
-    def get_all_variables(self):
-        """
-        Get a copy of all variables.
-
-        Returns:
-            dict: Copy of variable table
-        """
-        return dict(self._variables)
-
-    def get_variables_by_recent_access(self, include_metadata=False):
-        """
-        Get all variables sorted by most recent access.
-
-        Variables that have been accessed more recently appear first.
-        Variables with no access tracking appear last in alphabetical order.
-        Sorting is based on high-precision timestamps from time.perf_counter().
-
-        Args:
-            include_metadata: If True, include access metadata in results
-
-        Returns:
-            list: If include_metadata=False, list of (name, value) tuples
-                  If include_metadata=True, list of (name, value, metadata) tuples
-                  Sorted by most recent access first
-
-        Example:
-            [('x%', 10, {'last_read': {'line': 100, 'position': 5, 'timestamp': 1234.567},
-                         'last_write': {'line': 95, 'position': 10, 'timestamp': 1234.500},
-                         'debugger_set': False}),
-             ('y$', 'hello', {'last_read': None,
-                              'last_write': {'line': 90, 'position': 2, 'timestamp': 1234.123},
-                              'debugger_set': False}),
-             ('z!', 3.14, {'last_read': None, 'last_write': None, 'debugger_set': False})]
-        """
-        result = []
-
-        for full_name, value in self._variables.items():
-            metadata = self._variable_metadata.get(full_name, {
-                'last_read': None,
-                'last_write': None,
-                'debugger_set': False
-            })
-
-            if include_metadata:
-                result.append((full_name, value, metadata))
-            else:
-                result.append((full_name, value))
-
-        # Sort by access time - most recent first
-        # Variables with no access go to end, then alphabetically
-        def sort_key(item):
-            if include_metadata:
-                full_name, value, metadata = item
-            else:
-                full_name, value = item
-                metadata = self._variable_metadata.get(full_name, {
-                    'last_read': None,
-                    'last_write': None
-                })
-
-            # Get most recent timestamp from either read or write
-            last_read = metadata.get('last_read')
-            last_write = metadata.get('last_write')
-
-            read_timestamp = last_read.get('timestamp', 0) if last_read else 0
-            write_timestamp = last_write.get('timestamp', 0) if last_write else 0
-            most_recent_timestamp = max(read_timestamp, write_timestamp)
-
-            if most_recent_timestamp == 0:
-                # No access - sort to end alphabetically
-                return (1, 0, full_name)
-            else:
-                # Has access - sort by timestamp (descending - most recent first)
-                # Use negative timestamp so higher (more recent) comes first
-                return (0, -most_recent_timestamp, full_name)
-
-        result.sort(key=sort_key)
-        return result
 
     def get_all_arrays(self):
         """
@@ -443,9 +378,27 @@ class Runtime:
         Bulk update variables.
 
         Args:
-            variables: dict of variable_name -> value
+            variables: list of variable dicts (from get_all_variables())
+                      Each dict contains: name, type_suffix, is_array, value/dimensions,
+                      last_read, last_write
         """
-        self._variables.update(variables)
+        for var_info in variables:
+            # Reconstruct full name
+            full_name = var_info['name'] + var_info['type_suffix']
+
+            if var_info['is_array']:
+                # Restore array
+                self._arrays[full_name] = {
+                    'dims': var_info['dimensions'],
+                    'data': [0] * self._calculate_array_size(var_info['dimensions'])
+                }
+            else:
+                # Restore scalar variable
+                self._variables[full_name] = {
+                    'value': var_info['value'],
+                    'last_read': var_info.get('last_read'),
+                    'last_write': var_info.get('last_write')
+                }
 
     def update_arrays(self, arrays):
         """
@@ -507,10 +460,9 @@ class Runtime:
         array_info = self._arrays[full_name]
         dims = array_info['dims']
         data = array_info['data']
-        base = array_info.get('base', 0)  # Get stored base, default to 0 for old arrays
 
-        # Calculate flat index
-        index = self._calculate_array_index(subscripts, dims, base)
+        # Calculate flat index using global array_base
+        index = self._calculate_array_index(subscripts, dims, self.array_base)
 
         # Bounds check
         if index < 0 or index >= len(data):
@@ -543,9 +495,9 @@ class Runtime:
         array_info = self._arrays[full_name]
         dims = array_info['dims']
         data = array_info['data']
-        base = array_info.get('base', 0)  # Get stored base, default to 0 for old arrays
 
-        index = self._calculate_array_index(subscripts, dims, base)
+        # Calculate flat index using global array_base
+        index = self._calculate_array_index(subscripts, dims, self.array_base)
 
         if index < 0 or index >= len(data):
             raise RuntimeError(f"Array subscript out of range: {full_name}{subscripts}")
@@ -615,8 +567,7 @@ class Runtime:
         # Create array
         self._arrays[full_name] = {
             'dims': dimensions,
-            'data': [default_value] * total_size,
-            'base': self.array_base  # Store base for later access validation
+            'data': [default_value] * total_size
         }
 
     def delete_array(self, name, type_suffix=None, def_type_map=None):
@@ -776,29 +727,84 @@ class Runtime:
     # ========================================================================
 
     def get_all_variables(self):
-        """Export all variables with their current values.
+        """Export all variables with structured type information.
 
-        Returns a dictionary mapping variable names (with type suffixes) to their values.
-        This is used by visual debuggers to display the variable table.
+        Returns detailed information about each variable including:
+        - Base name (without type suffix)
+        - Type suffix character
+        - For scalars: current value
+        - For arrays: dimensions and base
+        - Access tracking: last_read and last_write info
 
         Returns:
-            dict: Variable name (with suffix) -> value
-                 Examples: {'A': 42, 'B$': 'HELLO', 'C#': 3.14, 'D(': [...]}
+            list: List of dictionaries with variable information
+                  Each dict contains:
+                  - 'name': Base name (e.g., 'x', 'counter', 'msg')
+                  - 'type_suffix': Type character ($, %, !, #)
+                  - 'is_array': Boolean
+                  - 'value': Current value (scalars only)
+                  - 'dimensions': List of dimension sizes (arrays only)
+                  - 'base': Array base 0 or 1 (arrays only)
+                  - 'last_read': {'line': int, 'position': int, 'timestamp': float} or None
+                  - 'last_write': {'line': int, 'position': int, 'timestamp': float} or None
 
-        Note: Array variables are returned with '(' suffix to distinguish from scalars.
+        Example:
+            [
+                {'name': 'counter', 'type_suffix': '%', 'is_array': False, 'value': 42,
+                 'last_read': {'line': 20, 'position': 5, 'timestamp': 1234.567},
+                 'last_write': {'line': 10, 'position': 4, 'timestamp': 1234.500}},
+                {'name': 'msg', 'type_suffix': '$', 'is_array': False, 'value': 'hello',
+                 'last_read': None, 'last_write': {'line': 15, 'position': 2, 'timestamp': 1234.200}},
+                {'name': 'matrix', 'type_suffix': '%', 'is_array': True,
+                 'dimensions': [10, 5], 'base': 0, 'last_read': None, 'last_write': None}
+            ]
+
+        Note: line -1 in last_write indicates debugger/prompt set
         """
-        result = {}
+        result = []
 
-        # Export scalar variables
-        result.update(self.variables)
+        # Helper to parse full name into base name and suffix
+        def parse_name(full_name):
+            if not full_name:
+                return full_name, '!'
 
-        # Export array variables (add '(' suffix to name)
-        for array_name, array_data in self.arrays.items():
-            result[array_name] = array_data['data']
+            last_char = full_name[-1]
+            if last_char in ('$', '%', '!', '#'):
+                return full_name[:-1], last_char
+            else:
+                # No suffix - assume single precision
+                return full_name, '!'
 
-        # Export user-defined functions (add 'FN_' prefix)
-        for fn_name, fn_def in self.user_functions.items():
-            result[fn_name] = f"<DEF FN {fn_name}>"
+        # Process scalar variables
+        for full_name, var_entry in self._variables.items():
+            base_name, type_suffix = parse_name(full_name)
+
+            var_info = {
+                'name': base_name,
+                'type_suffix': type_suffix,
+                'is_array': False,
+                'value': var_entry['value'],
+                'last_read': var_entry['last_read'],
+                'last_write': var_entry['last_write']
+            }
+
+            result.append(var_info)
+
+        # Process arrays
+        for full_name, array_data in self._arrays.items():
+            base_name, type_suffix = parse_name(full_name)
+
+            var_info = {
+                'name': base_name,
+                'type_suffix': type_suffix,
+                'is_array': True,
+                'dimensions': array_data['dims'],
+                'base': self.array_base,  # Global OPTION BASE setting
+                'last_read': None,  # Arrays don't track access yet
+                'last_write': None
+            }
+
+            result.append(var_info)
 
         return result
 

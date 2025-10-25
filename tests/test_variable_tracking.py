@@ -49,46 +49,61 @@ def test_variable_tracking():
 
     # Check variable tracking
     print("\n" + "="*60)
-    print("Variables sorted by recent access:")
+    print("Variables with access tracking:")
     print("="*60)
 
-    vars_sorted = runtime.get_variables_by_recent_access(include_metadata=True)
+    all_vars = runtime.get_all_variables()
 
-    for var_name, value, metadata in vars_sorted:
+    # Sort by most recent access (like the old get_variables_by_recent_access)
+    def get_most_recent_timestamp(var):
+        read_ts = var['last_read']['timestamp'] if var['last_read'] else 0
+        write_ts = var['last_write']['timestamp'] if var['last_write'] else 0
+        return max(read_ts, write_ts)
+
+    vars_sorted = sorted(all_vars, key=get_most_recent_timestamp, reverse=True)
+
+    for var in vars_sorted:
+        if var['is_array']:
+            continue  # Skip arrays
+
+        var_name = var['name'] + var['type_suffix']
+        value = var['value']
+
         print(f"\n{var_name} = {value}")
 
-        if metadata['last_read']:
-            print(f"  Last READ:  line {metadata['last_read']['line']}, "
-                  f"pos {metadata['last_read']['position']}, "
-                  f"timestamp {metadata['last_read']['timestamp']:.6f}")
+        if var['last_read']:
+            print(f"  Last READ:  line {var['last_read']['line']}, "
+                  f"pos {var['last_read']['position']}, "
+                  f"timestamp {var['last_read']['timestamp']:.6f}")
         else:
             print(f"  Last READ:  None")
 
-        if metadata['last_write']:
-            print(f"  Last WRITE: line {metadata['last_write']['line']}, "
-                  f"pos {metadata['last_write']['position']}, "
-                  f"timestamp {metadata['last_write']['timestamp']:.6f}")
+        if var['last_write']:
+            print(f"  Last WRITE: line {var['last_write']['line']}, "
+                  f"pos {var['last_write']['position']}, "
+                  f"timestamp {var['last_write']['timestamp']:.6f}")
         else:
             print(f"  Last WRITE: None")
 
-        print(f"  Debugger set: {metadata['debugger_set']}")
+        debugger_set = var['last_write'] and var['last_write']['line'] == -1
+        print(f"  Debugger set: {debugger_set}")
 
     # Test debugger get (should not update tracking)
     print("\n" + "="*60)
     print("Testing debugger get (should not update tracking)...")
     print("="*60)
 
-    # Get current metadata for x!
-    x_meta_before = runtime._variable_metadata.get('x!', {})
-    last_read_before = x_meta_before.get('last_read')
+    # Get current tracking for x!
+    x_var_before = [v for v in runtime.get_all_variables() if v['name'] == 'x'][0]
+    last_read_before = x_var_before['last_read']
 
     # Use debugger get
     x_value = runtime.get_variable_for_debugger('x', '!')
     print(f"Got x! = {x_value} using get_variable_for_debugger()")
 
-    # Check metadata hasn't changed
-    x_meta_after = runtime._variable_metadata.get('x!', {})
-    last_read_after = x_meta_after.get('last_read')
+    # Check tracking hasn't changed
+    x_var_after = [v for v in runtime.get_all_variables() if v['name'] == 'x'][0]
+    last_read_after = x_var_after['last_read']
 
     if last_read_before == last_read_after:
         print("✓ Debugger get did NOT update tracking (correct)")
@@ -103,13 +118,14 @@ def test_variable_tracking():
     runtime.set_variable('test', '%', 999, debugger_set=True)
     print("Set test% = 999 using debugger_set=True")
 
-    test_meta = runtime._variable_metadata.get('test%', {})
-    print(f"test% debugger_set flag: {test_meta.get('debugger_set')}")
+    test_var = [v for v in runtime.get_all_variables() if v['name'] == 'test'][0]
+    debugger_set = test_var['last_write'] and test_var['last_write']['line'] == -1
+    print(f"test% last_write line: {test_var['last_write']['line']}")
 
-    if test_meta.get('debugger_set'):
-        print("✓ Debugger set flag is True (correct)")
+    if debugger_set:
+        print("✓ Debugger set flag is correct (line -1)")
     else:
-        print("✗ Debugger set flag is False (wrong!)")
+        print("✗ Debugger set flag is wrong")
 
     print("\n" + "="*60)
     print("All tests completed!")
