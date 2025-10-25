@@ -183,13 +183,20 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     linenum_list[4] = ' '
                     linenum_field = ''.join(linenum_list)
 
+                    # Right-justify the line number
+                    line_num_text = linenum_field.strip()
+                    if line_num_text:
+                        linenum_field = f"{line_num_text:>5}"
+                    else:
+                        linenum_field = '     '
+
                     # Rebuild line
                     new_line = status + linenum_field + rest
                     lines[line_num] = new_line
                     new_text = '\n'.join(lines)
                     self.edit_widget.set_edit_text(new_text)
 
-                    # Move cursor to column 5 (where the deleted digit was)
+                    # Move cursor to column 5 (rightmost position after right-justify)
                     new_cursor_pos = line_start + 5
                     self.edit_widget.set_edit_pos(new_cursor_pos)
                     return None
@@ -210,16 +217,23 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     linenum_list[pos_in_field] = ' '
                     linenum_field = ''.join(linenum_list)
 
+                    # Right-justify the line number
+                    line_num_text = linenum_field.strip()
+                    if line_num_text:
+                        linenum_field = f"{line_num_text:>5}"
+                    else:
+                        linenum_field = '     '
+
                     # Rebuild line
                     new_line = status + linenum_field + rest
                     lines[line_num] = new_line
                     new_text = '\n'.join(lines)
                     self.edit_widget.set_edit_text(new_text)
 
-                    # Move cursor left (but stay in line number field)
-                    if col_in_line > 1:
-                        new_cursor_pos = line_start + col_in_line - 1
-                        self.edit_widget.set_edit_pos(new_cursor_pos)
+                    # After right-justify, move cursor to rightmost position (col 5)
+                    # This gives consistent behavior and user knows where they are
+                    new_cursor_pos = line_start + 5
+                    self.edit_widget.set_edit_pos(new_cursor_pos)
                     return None
 
         # Prevent typing in status column (column 0)
