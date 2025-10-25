@@ -135,6 +135,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # Syntax error tracking
         self.syntax_errors = {}  # Maps line number -> error message
         self._output_walker = None  # Will be set by CursesBackend for displaying errors
+        self._showing_syntax_errors = False  # Track if output window has syntax errors
 
         # Use a pile to allow switching between display and edit modes
         self.pile = urwid.Pile([self.edit_widget])
@@ -193,6 +194,24 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         is_leftright_arrow = key in ['left', 'right']  # Left/right stay on same line
         is_arrow_key = is_updown_arrow or is_leftright_arrow
         is_other_nav_key = key in ['page up', 'page down', 'home', 'end']
+
+        # Check syntax when leaving line or pressing control keys
+        # (Not during normal typing - avoids annoying errors for incomplete lines)
+        if is_control_key or is_updown_arrow or is_other_nav_key:
+            # About to navigate or run command - check syntax now
+            new_text = self._update_syntax_errors(current_text)
+            if new_text != current_text:
+                # Text was updated with error markers - update the editor
+                self.edit_widget.set_edit_text(new_text)
+                # Recalculate positions
+                current_text = new_text
+                cursor_pos = self.edit_widget.edit_pos
+                text_before_cursor = current_text[:cursor_pos]
+                line_num = text_before_cursor.count('\n')
+                lines = current_text.split('\n')
+                if line_num < len(lines):
+                    line_start_pos = sum(len(lines[i]) + 1 for i in range(line_num))
+                    col_in_line = cursor_pos - line_start_pos
 
         # PERFORMANCE: Skip right-justification during rapid typing/paste
         # Only do it when navigating (which is when user expects formatting)
@@ -839,11 +858,15 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             return
 
         if not self.syntax_errors:
-            # No errors - don't clear output (might have program output)
+            # No errors - clear output IF it was showing syntax errors before
+            if self._showing_syntax_errors:
+                self._output_walker.clear()
+                self._showing_syntax_errors = False
             return
 
-        # Clear output window
+        # Clear output window and show syntax errors
         self._output_walker.clear()
+        self._showing_syntax_errors = True
 
         # Add error header
         self._output_walker.append(make_output_line("=== Syntax Errors ==="))
@@ -999,18 +1022,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 self.edit_widget.set_edit_pos(cursor_pos)
             current_text = new_text
 
-        # Step 2: Check syntax and mark errors
-        # (This sets '?' status for lines with parse errors)
-        new_text = self._update_syntax_errors(current_text)
-        if new_text != current_text:
-            # Text was updated with error markers - update the editor
-            self.edit_widget.set_edit_text(new_text)
-            # Try to maintain cursor position
-            if cursor_pos <= len(new_text):
-                self.edit_widget.set_edit_pos(cursor_pos)
-            current_text = new_text
-
-        # Step 3: Perform deferred sorting if needed
+        # Step 2: Perform deferred sorting if needed
         if self._needs_sort:
             lines = current_text.split('\n')
 
