@@ -37,6 +37,53 @@
 - Add comments explaining complex logic
 
 ## Testing
+
+### Testing with Python Implementation
 - Test files should be in `basic/bas_tests/`
 - Use MBASIC 5.21 syntax only
 - Test both successful parsing and error cases
+- Run with: `python3 mbasic.py <program.bas>`
+
+### Testing with Real MBASIC 5.21
+
+**IMPORTANT:** To verify behavior against authentic MBASIC 5.21, use the tnylpo CP/M emulator.
+
+**Location:** Real MBASIC 5.21 is at `com/mbasic.com`
+
+**How to run:**
+```bash
+cd tests/
+(cat test.bas && echo "RUN") | timeout 10 tnylpo ../com/mbasic
+```
+
+**Critical requirements:**
+1. **Must run from `tests/` directory**
+2. **Programs must end with `SYSTEM` not `END`**
+   - `END` hangs at "Ok" prompt waiting for input
+   - `SYSTEM` exits MBASIC cleanly
+3. **Keep lines short** (MBASIC has line buffer limits)
+
+**Example test file:**
+```basic
+10 PRINT "Hello"
+20 FOR I = 1 TO 3
+30   PRINT I
+40 NEXT I
+50 SYSTEM
+```
+
+**Comparing outputs:**
+```bash
+cd tests/
+
+# Our implementation
+python3 ../mbasic.py test.bas > /tmp/our.txt 2>&1
+
+# Real MBASIC 5.21
+(cat test.bas && echo "RUN") | timeout 10 tnylpo ../com/mbasic > /tmp/real.txt 2>&1
+
+# Compare
+diff /tmp/our.txt /tmp/real.txt
+```
+
+**Full details:** See `tests/HOW_TO_RUN_REAL_MBASIC.md`
