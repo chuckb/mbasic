@@ -64,6 +64,7 @@ class TkBackend(UIBackend):
         """
         import tkinter as tk
         from tkinter import ttk, scrolledtext
+        from .tk_widgets import LineNumberedText
 
         # Create main window
         self.root = tk.Tk()
@@ -80,17 +81,16 @@ class TkBackend(UIBackend):
         paned = ttk.PanedWindow(self.root, orient=tk.HORIZONTAL)
         paned.pack(fill=tk.BOTH, expand=True)
 
-        # Left pane: Editor
+        # Left pane: Editor with line numbers
         editor_frame = ttk.Frame(paned)
         paned.add(editor_frame, weight=1)
 
         ttk.Label(editor_frame, text="Program Editor:").pack(anchor=tk.W, padx=5, pady=5)
-        self.editor_text = scrolledtext.ScrolledText(
+        self.editor_text = LineNumberedText(
             editor_frame,
             wrap=tk.NONE,
             width=60,
-            height=30,
-            font=("Courier", 10)
+            height=30
         )
         self.editor_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
@@ -349,6 +349,9 @@ class TkBackend(UIBackend):
         self.editor_text.delete(1.0, tk.END)
         for line_num, line_text in self.program.get_lines():
             self.editor_text.insert(tk.END, line_text + "\n")
+
+        # Clear error indicators
+        self.editor_text.clear_all_errors()
 
     def _save_editor_to_program(self):
         """Save editor content back to program."""
