@@ -59,6 +59,7 @@ Documentation for external formats, protocols, and standards.
 
 ## Quick Links
 
-- [Quick Reference](QUICK_REFERENCE.md) - Fast command reference
+- [Quick Reference](user/QUICK_REFERENCE.md) - Fast command reference
 - [Help System Index](help/common/index.md) - Main help system entry
 - [Development Status](dev/STATUS.md) - Current project status
+- [Help System Design](help/README.md) - In-UI help system documentation
