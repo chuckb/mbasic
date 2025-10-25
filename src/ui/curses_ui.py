@@ -134,11 +134,12 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         else:
             col_in_line = 0
 
-        # Check if pressing a control key
+        # Check if pressing a control key or navigation key
         is_control_key = key.startswith('ctrl ') or key in ['tab', 'enter', 'esc']
+        is_nav_key = key in ['up', 'down', 'left', 'right', 'page up', 'page down', 'home', 'end']
 
         # If control key or leaving line number area, right-justify line number
-        if is_control_key or (col_in_line == 6 and len(key) == 1):
+        if is_control_key or is_nav_key or (col_in_line == 6 and len(key) == 1):
             # Right-justify the line number on the current line
             if line_num < len(lines) and len(lines[line_num]) >= 6:
                 line = lines[line_num]
@@ -159,6 +160,12 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                         old_cursor = cursor_pos
                         self.edit_widget.set_edit_text(new_text)
                         self.edit_widget.set_edit_pos(old_cursor)
+
+        # If using navigation keys while in line number area, sort lines first
+        if is_nav_key and 1 <= col_in_line <= 6:
+            self._sort_and_position_line(lines, line_num, target_column=col_in_line)
+            # After sorting, let the navigation key work normally
+            return super().keypress(size, key)
 
         # Handle backspace key specially to protect separator space
         if key == 'backspace':
@@ -631,12 +638,13 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     # Silently ignore config errors and use defaults
                     pass
 
-    def _sort_and_position_line(self, lines, current_line_index):
+    def _sort_and_position_line(self, lines, current_line_index, target_column=7):
         """Sort lines by line number and position cursor at the moved line.
 
         Args:
             lines: List of text lines
             current_line_index: Index of line that triggered the sort
+            target_column: Column to position cursor at (default: 7 for code area)
         """
         if current_line_index >= len(lines):
             return
@@ -668,9 +676,9 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # Find where the current line ended up
         try:
             new_index = sorted_lines.index(current_line_text)
-            # Calculate position at start of code area (column 7)
+            # Calculate position at target column
             line_start = sum(len(sorted_lines[i]) + 1 for i in range(new_index))
-            new_cursor_pos = line_start + 7
+            new_cursor_pos = line_start + target_column
             self.edit_widget.set_edit_pos(new_cursor_pos)
         except ValueError:
             # Line not found, position at end
