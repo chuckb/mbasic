@@ -157,32 +157,54 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             cursor_pos = new_cursor_pos
             col_in_line = 2
 
-        # Handle Enter key for auto-numbering
-        if key == 'enter' and self.auto_number_enabled:
-            # Check if we're at end of line or on an empty line
-            if cursor_pos >= len(current_text) or current_text[cursor_pos] == '\n':
-                # Add a new line with auto-number
-                while self.next_auto_line_num in self.lines:
-                    self.next_auto_line_num += self.auto_number_increment
-
-                # Format new line: "  NNNNN "
-                new_line_prefix = f"  {self.next_auto_line_num:5d} "
-
-                # Insert newline and prefix
-                result = super().keypress(size, key)
-                # Insert the prefix at current position
-                current_text = self.edit_widget.get_edit_text()
-                cursor_pos = self.edit_widget.edit_pos
-                new_text = current_text[:cursor_pos] + new_line_prefix + current_text[cursor_pos:]
-                self.edit_widget.set_edit_text(new_text)
-                self.edit_widget.set_edit_pos(cursor_pos + len(new_line_prefix))
-
-                # Increment for next line
-                self.next_auto_line_num += self.auto_number_increment
-
+        # Filter input in line number column (2-6) - only allow digits
+        if 2 <= col_in_line <= 6 and len(key) == 1 and key.isprintable():
+            # Only allow digits in line number area
+            if not key.isdigit():
+                # Reject non-digit characters (but allow navigation keys)
                 return None
 
-        # Let parent handle the key
+        # Handle Enter key - commits line and moves to next with auto-numbering
+        if key == 'enter' and self.auto_number_enabled:
+            # Right-justify current line number before committing
+            if line_num < len(lines) and len(lines[line_num]) >= 7:
+                line = lines[line_num]
+                status = line[0] if len(line) > 0 else ' '
+                line_num_text = line[2:7].strip()
+                rest_of_line = line[7:] if len(line) > 7 else ''
+
+                if line_num_text:
+                    line_num_formatted = f"{line_num_text:>5}"
+                    lines[line_num] = f"{status} {line_num_formatted}{rest_of_line}"
+                    current_text = '\n'.join(lines)
+                    self.edit_widget.set_edit_text(current_text)
+
+            # Move to end of current line
+            if line_num < len(lines):
+                line_start = sum(len(lines[i]) + 1 for i in range(line_num))
+                line_end = line_start + len(lines[line_num])
+                self.edit_widget.set_edit_pos(line_end)
+
+            # Add a new line with auto-number
+            while self.next_auto_line_num in self.lines:
+                self.next_auto_line_num += self.auto_number_increment
+
+            # Format new line: "  NNNNN "
+            new_line_prefix = f"\n  {self.next_auto_line_num:5d} "
+
+            # Insert newline and prefix at end of current line
+            current_text = self.edit_widget.get_edit_text()
+            cursor_pos = self.edit_widget.edit_pos
+            new_text = current_text[:cursor_pos] + new_line_prefix + current_text[cursor_pos:]
+            self.edit_widget.set_edit_text(new_text)
+            self.edit_widget.set_edit_pos(cursor_pos + len(new_line_prefix))
+
+            # Increment for next line
+            self.next_auto_line_num += self.auto_number_increment
+
+            return None
+
+        # Let parent handle the key (allows arrows, backspace, etc.)
         return super().keypress(size, key)
 
     def _format_line(self, line_num, code_text):
