@@ -88,32 +88,32 @@ class TkBackend(UIBackend):
         self._create_toolbar()
 
         # Create main content area (split pane)
-        paned = ttk.PanedWindow(self.root, orient=tk.HORIZONTAL)
+        paned = ttk.PanedWindow(self.root, orient=tk.VERTICAL)
         paned.pack(fill=tk.BOTH, expand=True)
 
-        # Left pane: Editor with line numbers
+        # Top pane: Editor with line numbers (60% of space)
         editor_frame = ttk.Frame(paned)
-        paned.add(editor_frame, weight=1)
+        paned.add(editor_frame, weight=3)
 
         ttk.Label(editor_frame, text="Program Editor:").pack(anchor=tk.W, padx=5, pady=5)
         self.editor_text = LineNumberedText(
             editor_frame,
             wrap=tk.NONE,
-            width=60,
-            height=30
+            width=100,
+            height=20
         )
         self.editor_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Right pane: Output
+        # Bottom pane: Output (40% of space)
         output_frame = ttk.Frame(paned)
-        paned.add(output_frame, weight=1)
+        paned.add(output_frame, weight=2)
 
         ttk.Label(output_frame, text="Output:").pack(anchor=tk.W, padx=5, pady=5)
         self.output_text = scrolledtext.ScrolledText(
             output_frame,
             wrap=tk.WORD,
-            width=60,
-            height=30,
+            width=100,
+            height=15,
             font=("Courier", 10),
             state=tk.DISABLED
         )
