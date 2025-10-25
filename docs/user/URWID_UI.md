@@ -58,6 +58,7 @@ python3 mbasic.py --backend curses program.bas
 | `Ctrl+Q` / `Ctrl+C` | Quit the program |
 | `Ctrl+M` | Show menu with all commands and shortcuts |
 | `Ctrl+H` | Show help dialog |
+| `Ctrl+W` | Toggle variables watch window |
 | `Ctrl+R` | Run the current program |
 | `Ctrl+L` | List program lines |
 | `Ctrl+N` | New program (clear editor) |
@@ -680,6 +681,66 @@ Program:
 - **Stop anytime** - Press Ctrl+X if program is stuck or running too long
 - **Combine with output** - Watch output window to see results of each step
 - **Multi-statement lines** - Use statement highlighting to see exactly which part is executing
+- **Watch variables** - Press Ctrl+W to show/hide the variables window
+
+### Watch Window (Variables)
+
+The variables watch window shows all current variables and their values during program execution. It updates automatically when stepping through code.
+
+#### Using the Watch Window
+
+**Toggle visibility:**
+- Press `Ctrl+W` to show/hide the variables window
+- Window appears between the Editor and Output sections
+- Only useful when a program is running or paused
+
+**What it shows:**
+- All scalar variables with their current values
+- Arrays with their dimensions
+- Variables sorted alphabetically for easy scanning
+- Type suffixes shown (%, $, !, #)
+
+**Example display:**
+```
+┌─ Variables (Ctrl+W to toggle) ─────────┐
+│ COUNTER%     = 5                       │
+│ I!           = 3                       │
+│ MSG$         = "Hello"                 │
+│ MATRIX%      = Array(10x10)            │
+│ X!           = 1.5                     │
+│ Y!           = 2.75                    │
+└────────────────────────────────────────┘
+```
+
+**When it updates:**
+- Automatically after each step (Ctrl+T)
+- When paused at a breakpoint
+- Shows current state when you toggle it on
+
+**Typical workflow:**
+```
+1. Set breakpoint on line 10
+2. Press Ctrl+R to run
+3. Program pauses at line 10
+4. Press Ctrl+W to show variables window
+5. Press Ctrl+T to step - watch variables update
+6. Press Ctrl+T again - see new values
+7. Press Ctrl+W to hide when not needed
+```
+
+**Variable formats:**
+- **Integers** (`%`): `COUNTER% = 42`
+- **Single precision** (`!`): `X! = 3.14159`
+- **Double precision** (`#`): `PI# = 3.14159265358979`
+- **Strings** (`$`): `NAME$ = "Alice"`
+- **Arrays**: `DATA% = Array(100)` or `MATRIX% = Array(10x20)`
+
+**Tips:**
+- Toggle on/off as needed - doesn't slow execution
+- Useful for tracking loop variables during stepping
+- Arrays show dimensions, not contents (too large to display)
+- Variables appear as soon as they're assigned
+- Empty display shows "(no variables yet)"
 
 ### Line Editing Commands
 
@@ -979,7 +1040,7 @@ Errors will appear in the output window with full tracebacks.
 
 ### Long Term (v2.0)
 
-- [ ] Watch window for variables
+- [x] Watch window for variables (Ctrl+W shows/hides all variables and their values)
 - [ ] Call stack and loop nesting viewer
   - Shows GOSUB/RETURN stack
   - Shows active FOR/WHILE loops

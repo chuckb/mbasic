@@ -1248,6 +1248,9 @@ class CursesBackend(UIBackend):
         self.editor = None
         self.output = None
         self.status_bar = None
+        self.variables_walker = None
+        self.variables_window = None
+        self.watch_window_visible = False
 
         # Editor state
         self.editor_lines = {}  # line_num -> text for editing
@@ -1344,34 +1347,45 @@ class CursesBackend(UIBackend):
         # Pass output_walker to editor for displaying syntax errors
         self.editor._output_walker = self.output_walker
 
-        self.status_bar = urwid.Text("MBASIC 5.21 - Press Ctrl+H for help, Ctrl+M for menu, Ctrl+Q to quit")
+        # Create variables window (watch window)
+        self.variables_walker = urwid.SimpleFocusListWalker([])
+        self.variables_window = urwid.ListBox(self.variables_walker)
+
+        self.status_bar = urwid.Text("MBASIC 5.21 - Press Ctrl+H for help, Ctrl+M for menu, Ctrl+W for variables, Ctrl+Q to quit")
 
         # Create editor frame with top/left border only (no bottom/right space reserved)
-        editor_frame = TopLeftBox(
+        self.editor_frame = TopLeftBox(
             urwid.Filler(self.editor, valign='top'),
             title="Editor"
         )
 
+        # Create variables frame (initially hidden)
+        self.variables_frame = TopLeftBox(
+            self.variables_window,
+            title="Variables (Ctrl+W to toggle)"
+        )
+
         # Create output frame with top/left border only (no bottom/right space reserved)
         # ListBox doesn't need Filler since it handles its own scrolling
-        output_frame = TopLeftBox(
+        self.output_frame = TopLeftBox(
             self.output,
             title="Output"
         )
 
-        # Create layout - menu bar at top, editor (70%), output (30%), status bar at bottom
-        pile = urwid.Pile([
+        # Create layout - menu bar at top, editor, (optional variables), output, status bar at bottom
+        # Store as instance variable so we can modify it when toggling variables window
+        self.pile = urwid.Pile([
             ('pack', self.menu_bar),
-            ('weight', 7, editor_frame),
-            ('weight', 3, output_frame),
+            ('weight', 7, self.editor_frame),
+            ('weight', 3, self.output_frame),
             ('pack', self.status_bar)
         ])
 
         # Set focus to the editor (second item in pile, after menu bar)
-        pile.focus_position = 1
+        self.pile.focus_position = 1
 
         # Create main widget with keybindings
-        main_widget = urwid.AttrMap(pile, 'body')
+        main_widget = urwid.AttrMap(self.pile, 'body')
 
         # Set up the main loop with cursor visible
         self.loop = urwid.MainLoop(
@@ -1448,6 +1462,10 @@ class CursesBackend(UIBackend):
             # Toggle breakpoint on current line
             self._toggle_breakpoint_current_line()
 
+        elif key == 'ctrl w':
+            # Toggle variables window
+            self._toggle_variables_window()
+
         elif key == 'ctrl d':
             # Delete current line
             self._delete_current_line()
@@ -1516,6 +1534,10 @@ class CursesBackend(UIBackend):
                         highlight_stmt=state.current_statement_index,
                         line_table=self.runtime.line_table if self.runtime else None
                     )
+
+                    # Update variables window if visible
+                    if self.watch_window_visible:
+                        self._update_variables_window()
 
                 # Show where we paused
                 if state.status in ('paused', 'at_breakpoint'):
@@ -1783,6 +1805,7 @@ Global Commands:
   Ctrl+Q / Ctrl+C  - Quit
   Ctrl+M  - Show menu
   Ctrl+H  - This help
+  Ctrl+W  - Toggle variables watch window
   Ctrl+R  - Run program
   Ctrl+L  - List program
   Ctrl+N  - New program
@@ -1796,6 +1819,7 @@ Debugger Commands (when program running):
   Ctrl+G  - Continue execution (Go)
   Ctrl+T  - Step - execute one line (sTep)
   Ctrl+X  - Stop execution (eXit)
+  Ctrl+W  - Show/hide variables window
 
 Screen Editor:
   Column Layout:
@@ -1880,6 +1904,7 @@ Run                           Help
   Step            Ctrl+T        About           (see help)
   Continue        Ctrl+G
   Stop            Ctrl+X
+  Variables       Ctrl+W
 
 ══════════════════════════════════════════════════════════════
 
@@ -1911,6 +1936,70 @@ Run                           Help
         # Store original widget
         main_widget = self.loop.widget.base_widget
         self.loop.unhandled_input = close_menu
+
+    def _toggle_variables_window(self):
+        """Toggle visibility of the variables watch window."""
+        self.watch_window_visible = not self.watch_window_visible
+
+        if self.watch_window_visible:
+            # Add variables window to the pile (position 2, between editor and output)
+            # Layout: menu (0), editor (1), variables (2), output (3), status (4)
+            self.pile.contents.insert(2, (self.variables_frame, ('weight', 2)))
+            self.status_bar.set_text("Variables window shown - Ctrl+W to hide")
+
+            # Update variables display if we have a runtime
+            if self.runtime:
+                self._update_variables_window()
+        else:
+            # Remove variables window from pile
+            # Find and remove the variables frame
+            for i, (widget, options) in enumerate(self.pile.contents):
+                if widget is self.variables_frame:
+                    self.pile.contents.pop(i)
+                    break
+            self.status_bar.set_text("Variables window hidden - Ctrl+W to show")
+
+        # Redraw screen
+        if hasattr(self, 'loop') and self.loop:
+            self.loop.draw_screen()
+
+    def _update_variables_window(self):
+        """Update the variables window with current runtime state."""
+        if not self.runtime:
+            return
+
+        # Clear current display
+        self.variables_walker.clear()
+
+        # Get all variables from runtime
+        variables = self.runtime.get_all_variables()
+
+        if not variables:
+            self.variables_walker.append(make_output_line("(no variables yet)"))
+            return
+
+        # Sort by name for consistent display
+        variables.sort(key=lambda v: v['name'] + v['type_suffix'])
+
+        # Display each variable
+        for var in variables:
+            name = var['name'] + var['type_suffix']
+
+            if var['is_array']:
+                # Array: show dimensions
+                dims = 'x'.join(str(d) for d in var['dimensions'])
+                line = f"{name:12} = Array({dims})"
+            else:
+                # Scalar: show value
+                value = var['value']
+                if var['type_suffix'] == '$':
+                    # String: show with quotes
+                    line = f"{name:12} = \"{value}\""
+                else:
+                    # Numeric: show as-is
+                    line = f"{name:12} = {value}"
+
+            self.variables_walker.append(make_output_line(line))
 
     def _run_program(self):
         """Run the current program using tick-based interpreter."""
