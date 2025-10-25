@@ -6,6 +6,8 @@ Executes BASIC programs from AST.
 
 import sys
 import signal
+from dataclasses import dataclass, field
+from typing import Literal, Optional, Callable, Any
 from runtime import Runtime
 from basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingFormatter
 from tokens import TokenType
@@ -17,8 +19,57 @@ class BreakException(Exception):
     pass
 
 
+@dataclass
+class CallFrame:
+    """Represents a single call in the GOSUB stack"""
+    return_line: int
+    return_stmt: int
+
+
+@dataclass
+class ErrorInfo:
+    """Information about a runtime error"""
+    error_code: int
+    error_line: int
+    error_message: str
+
+
+@dataclass
+class InterpreterState:
+    """Complete execution state of the interpreter at any point in time"""
+
+    # Execution status
+    status: Literal['idle', 'running', 'paused', 'done',
+                    'waiting_for_input', 'at_breakpoint', 'error'] = 'idle'
+
+    # Execution position
+    current_line: Optional[int] = None
+    current_statement_index: int = 0
+    line_index: int = 0  # Index into runtime.line_order
+
+    # Input handling (THE CRITICAL STATE)
+    input_prompt: Optional[str] = None
+    input_variables: list = field(default_factory=list)  # Variables waiting for input
+    input_buffer: list = field(default_factory=list)  # Buffered input values
+    input_file_number: Optional[int] = None  # If reading from file
+
+    # Debugging
+    breakpoints: set = field(default_factory=set)
+    pause_requested: bool = False  # Set by pause() method
+
+    # Error handling
+    error_info: Optional[ErrorInfo] = None
+
+    # Performance tracking
+    statements_executed: int = 0
+    execution_time_ms: float = 0.0
+
+    # First line flag (for CONT support)
+    is_first_line: bool = True
+
+
 class Interpreter:
-    """Execute MBASIC AST"""
+    """Execute MBASIC AST with tick-based execution for UI integration"""
 
     def __init__(self, runtime, io_handler=None, breakpoint_callback=None):
         self.runtime = runtime
@@ -33,7 +84,9 @@ class Interpreter:
         # Breakpoint callback - called when a breakpoint is hit
         # Callback should take (line_number, statement_index) and return True to continue, False to stop
         self.breakpoint_callback = breakpoint_callback
-        self.breakpoints = set()  # Set of line numbers with breakpoints
+
+        # Execution state for tick-based execution
+        self.state = InterpreterState()
 
     @staticmethod
     def _make_token_info(node):
@@ -71,20 +124,339 @@ class Interpreter:
         if hasattr(self, 'old_signal_handler'):
             signal.signal(signal.SIGINT, self.old_signal_handler)
 
-    def run(self):
-        """Execute the program from start to finish"""
-        # Setup runtime tables
-        self.runtime.setup()
+    # ========================================================================
+    # New Tick-Based Execution API
+    # ========================================================================
 
-        # Setup Ctrl+C handler
-        self._setup_break_handler()
+    def start(self):
+        """Initialize program for execution.
+
+        Sets up the runtime environment and prepares for tick-based execution.
+
+        Returns:
+            InterpreterState: Initial state (typically 'idle' or 'error' if setup fails)
+        """
+        try:
+            # Setup runtime tables
+            self.runtime.setup()
+
+            # Initialize state
+            self.state = InterpreterState()
+            self.state.status = 'running'
+            self.state.line_index = 0
+            self.state.current_statement_index = 0
+            self.state.is_first_line = True
+
+            # Setup Ctrl+C handler
+            self._setup_break_handler()
+
+            return self.state
+
+        except Exception as e:
+            # Setup failed
+            self.state.status = 'error'
+            self.state.error_info = ErrorInfo(
+                error_code=5,  # Illegal function call (generic error)
+                error_line=0,
+                error_message=str(e)
+            )
+            return self.state
+
+    def tick(self, mode='run', max_statements=100):
+        """Execute a quantum of work and return updated state.
+
+        Args:
+            mode: Execution mode:
+                - 'run': Execute up to max_statements
+                - 'step_line': Execute next line, then pause
+                - 'step_statement': Execute next statement, then pause
+            max_statements: Maximum statements to execute before yielding (for 'run' mode)
+
+        Returns:
+            InterpreterState: Updated state after execution quantum
+        """
+        import time
+        start_time = time.time()
+        statements_in_tick = 0
 
         try:
-            # Execute from the beginning
-            self._run_loop(start_index=0)
+            while statements_in_tick < max_statements:
+                # Check for pause request
+                if self.state.pause_requested:
+                    self.state.status = 'paused'
+                    self.state.pause_requested = False
+                    return self.state
+
+                # Check if program is complete
+                if self.state.line_index >= len(self.runtime.line_order):
+                    self.state.status = 'done'
+                    self._restore_break_handler()
+                    return self.state
+
+                # Check if halted
+                if self.runtime.halted:
+                    self.state.status = 'done'
+                    self._restore_break_handler()
+                    return self.state
+
+                # Check for Ctrl+C break
+                if self.runtime.break_requested:
+                    self.runtime.break_requested = False
+                    self.runtime.stopped = True
+                    self.runtime.stop_line = self.runtime.current_line
+                    self.runtime.stop_stmt_index = self.runtime.current_stmt_index
+                    self.io.output("")
+                    self.io.output(f"Break in {self.runtime.current_line.line_number if self.runtime.current_line else '?'}")
+                    self.state.status = 'paused'
+                    return self.state
+
+                # Get current line
+                line_number = self.runtime.line_order[self.state.line_index]
+                line_node = self.runtime.line_table[line_number]
+                self.runtime.current_line = line_node
+                self.state.current_line = line_number
+
+                # Check for breakpoint
+                if line_number in self.state.breakpoints:
+                    self.state.status = 'at_breakpoint'
+                    return self.state
+
+                # Print trace if enabled
+                if self.runtime.trace_on:
+                    self.io.output(f"[{line_number}]")
+
+                # Handle statement index initialization
+                if self.runtime.next_stmt_index is not None:
+                    self.runtime.current_stmt_index = self.runtime.next_stmt_index
+                    self.runtime.next_stmt_index = None
+                    self.state.current_statement_index = self.runtime.current_stmt_index
+                elif self.state.is_first_line and self.runtime.current_stmt_index > 0:
+                    # Continuing from STOP
+                    pass
+                else:
+                    self.runtime.current_stmt_index = 0
+                    self.state.current_statement_index = 0
+
+                # Clear first line flag
+                if self.state.is_first_line:
+                    self.state.is_first_line = False
+
+                # Execute all statements on this line
+                while self.runtime.current_stmt_index < len(line_node.statements):
+                    if self.runtime.halted:
+                        break
+
+                    stmt = line_node.statements[self.runtime.current_stmt_index]
+                    self.state.current_statement_index = self.runtime.current_stmt_index
+
+                    # Execute statement
+                    try:
+                        self.execute_statement(stmt)
+                        statements_in_tick += 1
+                        self.state.statements_executed += 1
+
+                    except BreakException:
+                        # User pressed Ctrl+C during INPUT
+                        self.runtime.stopped = True
+                        self.runtime.stop_line = self.runtime.current_line
+                        self.runtime.stop_stmt_index = self.runtime.current_stmt_index
+                        self.io.output(f"Break in {self.runtime.current_line.line_number if self.runtime.current_line else '?'}")
+                        self.state.status = 'paused'
+                        return self.state
+
+                    except Exception as e:
+                        # Check if we have an error handler
+                        if self.runtime.error_handler is not None and not self.runtime.in_error_handler:
+                            error_code = self._map_exception_to_error_code(e)
+                            self._invoke_error_handler(error_code, line_node.line_number, self.runtime.current_stmt_index)
+                            break
+                        else:
+                            # No error handler - set error state
+                            self.state.status = 'error'
+                            self.state.error_info = ErrorInfo(
+                                error_code=self._map_exception_to_error_code(e),
+                                error_line=line_number,
+                                error_message=str(e)
+                            )
+                            self._restore_break_handler()
+                            raise
+
+                    # Check if we transitioned to waiting for input
+                    if self.state.status == 'waiting_for_input':
+                        return self.state
+
+                    # Check if we need to jump
+                    if self.runtime.next_line is not None:
+                        break
+
+                    self.runtime.current_stmt_index += 1
+
+                    # Handle step modes
+                    if mode == 'step_statement':
+                        self.state.status = 'paused'
+                        return self.state
+
+                # Handle jumps
+                if self.runtime.next_line is not None:
+                    target_line = self.runtime.next_line
+                    self.runtime.next_line = None
+                    try:
+                        self.state.line_index = self.runtime.line_order.index(target_line)
+                    except ValueError:
+                        self.state.status = 'error'
+                        self.state.error_info = ErrorInfo(
+                            error_code=8,  # Undefined line number
+                            error_line=line_number,
+                            error_message=f"Undefined line number: {target_line}"
+                        )
+                        self._restore_break_handler()
+                        raise RuntimeError(f"Undefined line number: {target_line}")
+                else:
+                    # Move to next line
+                    self.state.line_index += 1
+
+                # Handle step_line mode
+                if mode == 'step_line':
+                    self.state.status = 'paused'
+                    return self.state
+
+                # Yield control periodically
+                if mode == 'run' and statements_in_tick >= max_statements:
+                    return self.state
+
+        except Exception as e:
+            # Unhandled error
+            if self.state.status != 'error':
+                self.state.status = 'error'
+                self.state.error_info = ErrorInfo(
+                    error_code=5,
+                    error_line=self.state.current_line or 0,
+                    error_message=str(e)
+                )
+            raise
         finally:
-            # Restore original handler
-            self._restore_break_handler()
+            # Update execution time
+            elapsed = (time.time() - start_time) * 1000
+            self.state.execution_time_ms += elapsed
+
+        return self.state
+
+    def provide_input(self, value: str):
+        """Provide input when state.status == 'waiting_for_input'.
+
+        Args:
+            value: User input string (will be parsed based on variable type)
+
+        Returns:
+            InterpreterState: Updated state (typically status='running')
+        """
+        if self.state.status != 'waiting_for_input':
+            raise RuntimeError("Not waiting for input")
+
+        # Add value to input buffer
+        self.state.input_buffer.append(value)
+
+        # Resume execution - the INPUT handler will consume from buffer
+        self.state.status = 'running'
+
+        return self.state
+
+    def pause(self):
+        """Request pause of execution.
+
+        This can be called asynchronously (e.g., from UI thread).
+
+        Returns:
+            InterpreterState: Current state
+        """
+        self.state.pause_requested = True
+        return self.state
+
+    def continue_execution(self):
+        """Continue from paused/breakpoint state.
+
+        Returns:
+            InterpreterState: Updated state (status='running')
+        """
+        if self.state.status not in ('paused', 'at_breakpoint'):
+            raise RuntimeError("Not paused or at breakpoint")
+
+        self.state.status = 'running'
+        return self.state
+
+    def reset(self):
+        """Reset program to initial state.
+
+        Returns:
+            InterpreterState: Reset state
+        """
+        self.state = InterpreterState()
+        return self.state
+
+    def get_state(self):
+        """Get current state without executing.
+
+        Returns:
+            InterpreterState: Current state
+        """
+        return self.state
+
+    def set_breakpoint(self, line: int):
+        """Add a breakpoint at the specified line number.
+
+        Args:
+            line: Line number for breakpoint
+        """
+        self.state.breakpoints.add(line)
+
+    def clear_breakpoint(self, line: int):
+        """Remove a breakpoint at the specified line number.
+
+        Args:
+            line: Line number to remove breakpoint from
+        """
+        self.state.breakpoints.discard(line)
+
+    # ========================================================================
+    # Legacy Execution Methods (kept for backward compatibility)
+    # ========================================================================
+
+    def run(self):
+        """Execute the program from start to finish (CLI-compatible wrapper).
+
+        This wraps the new tick-based API with synchronous input handling
+        for backward compatibility with CLI usage.
+        """
+        # Start execution
+        state = self.start()
+
+        if state.status == 'error':
+            if state.error_info:
+                raise RuntimeError(state.error_info.error_message)
+            return
+
+        # Run until done
+        while state.status not in ('done', 'error'):
+            state = self.tick(mode='run', max_statements=10000)
+
+            # Handle input synchronously for CLI
+            if state.status == 'waiting_for_input':
+                # Synchronous input for CLI
+                try:
+                    value = input()  # Use built-in input() for CLI
+                    state = self.provide_input(value)
+                except KeyboardInterrupt:
+                    # User pressed Ctrl+C during input
+                    self.io.output("")
+                    self.io.output(f"Break in {state.current_line or '?'}")
+                    return
+                except EOFError:
+                    self.io.output("")
+                    return
+
+        # Handle final errors
+        if state.status == 'error' and state.error_info:
+            raise RuntimeError(state.error_info.error_message)
 
     def run_from_current(self):
         """Resume execution from current position (for CONT after STOP)
@@ -1206,7 +1578,12 @@ class Interpreter:
         raise RuntimeError(f"ERROR {error_code}")
 
     def execute_input(self, stmt):
-        """Execute INPUT statement - read from keyboard or file"""
+        """Execute INPUT statement - read from keyboard or file
+
+        In tick-based execution mode, this may transition to 'waiting_for_input' state
+        instead of blocking. When input is provided via provide_input(), execution
+        resumes from the input buffer.
+        """
         # Check if reading from file
         if stmt.file_number is not None:
             file_num = int(self.evaluate_expression(stmt.file_number))
@@ -1216,36 +1593,37 @@ class Interpreter:
             if file_info['mode'] != 'I':
                 raise RuntimeError(f"File #{file_num} not open for input")
 
-            # Read from file
+            # Read from file (synchronous - files don't need state machine)
             line = self._read_line_from_file(file_num)
             if line is None:
                 raise RuntimeError("Input past end of file")
         else:
-            # Read from keyboard
-            # Show prompt if any
-            if stmt.prompt:
-                prompt_value = self.evaluate_expression(stmt.prompt)
-                self.io.output(prompt_value, end='')
-                # Always add "? " after prompt
-                self.io.output("? ", end='')
+            # Reading from keyboard - check if we have buffered input
+            if self.state.input_buffer:
+                # Use buffered input from provide_input()
+                line = self.state.input_buffer.pop(0)
             else:
-                # No prompt, always show "?"
-                self.io.output("? ", end='')
+                # No buffered input - need to wait for user input
+                # Show prompt
+                if stmt.prompt:
+                    prompt_value = self.evaluate_expression(stmt.prompt)
+                    self.io.output(prompt_value, end='')
+                    self.io.output("? ", end='')
+                    full_prompt = prompt_value + "? "
+                else:
+                    self.io.output("? ", end='')
+                    full_prompt = "? "
 
-            # Read input
-            # Temporarily restore default signal handler so Ctrl+C can interrupt input()
-            signal.signal(signal.SIGINT, self.old_signal_handler if hasattr(self, 'old_signal_handler') else signal.default_int_handler)
-            try:
-                line = self.io.input()
-            except KeyboardInterrupt:
-                # User pressed Ctrl+C during input - break to command mode
-                self.io.output("")  # Newline after ^C
-                # Re-install our signal handler
-                self._setup_break_handler()
-                raise BreakException()
-            finally:
-                # Always re-install our signal handler
-                self._setup_break_handler()
+                # Transition to waiting_for_input state
+                self.state.status = 'waiting_for_input'
+                self.state.input_prompt = full_prompt
+                self.state.input_variables = stmt.variables  # Save variables for resumption
+                self.state.input_file_number = None
+
+                # Save statement for resumption
+                # We'll need to re-execute this statement when input is provided
+                # The tick() loop will detect waiting_for_input and return
+                return
 
         # Parse comma-separated values
         values = [v.strip() for v in line.split(',')]
@@ -1272,6 +1650,10 @@ class Interpreter:
                 self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, value, token=self._make_token_info(var_node))
             else:
                 self.runtime.set_variable(var_node.name, var_node.type_suffix, value, token=self._make_token_info(var_node))
+
+        # Clear input state after successful completion
+        self.state.input_variables = []
+        self.state.input_prompt = None
 
     def _read_line_from_file(self, file_num):
         """Read a line from file, respecting ^Z as EOF (CP/M style)
@@ -1312,7 +1694,12 @@ class Interpreter:
                 line_bytes.append(b)
 
     def execute_lineinput(self, stmt):
-        """Execute LINE INPUT statement - read entire line"""
+        """Execute LINE INPUT statement - read entire line
+
+        In tick-based execution mode, this may transition to 'waiting_for_input' state
+        instead of blocking. When input is provided via provide_input(), execution
+        resumes from the input buffer.
+        """
         # Check if reading from file
         if stmt.file_number is not None:
             file_num = int(self.evaluate_expression(stmt.file_number))
@@ -1322,29 +1709,33 @@ class Interpreter:
             if file_info['mode'] != 'I':
                 raise RuntimeError(f"File #{file_num} not open for input")
 
-            # Read from file
+            # Read from file (synchronous - files don't need state machine)
             line = self._read_line_from_file(file_num)
             if line is None:
                 raise RuntimeError("Input past end of file")
         else:
-            # Read from keyboard
-            if stmt.prompt:
-                prompt_value = self.evaluate_expression(stmt.prompt)
-                self.io.output(prompt_value, end='')
+            # Reading from keyboard - check if we have buffered input
+            if self.state.input_buffer:
+                # Use buffered input from provide_input()
+                line = self.state.input_buffer.pop(0)
+            else:
+                # No buffered input - need to wait for user input
+                # Show prompt
+                if stmt.prompt:
+                    prompt_value = self.evaluate_expression(stmt.prompt)
+                    self.io.output(prompt_value, end='')
+                    full_prompt = prompt_value
+                else:
+                    full_prompt = ""
 
-            # Temporarily restore default signal handler so Ctrl+C can interrupt input()
-            signal.signal(signal.SIGINT, self.old_signal_handler if hasattr(self, 'old_signal_handler') else signal.default_int_handler)
-            try:
-                line = self.io.input()
-            except KeyboardInterrupt:
-                # User pressed Ctrl+C during input - break to command mode
-                self.io.output("")  # Newline after ^C
-                # Re-install our signal handler
-                self._setup_break_handler()
-                raise BreakException()
-            finally:
-                # Always re-install our signal handler
-                self._setup_break_handler()
+                # Transition to waiting_for_input state
+                self.state.status = 'waiting_for_input'
+                self.state.input_prompt = full_prompt
+                self.state.input_variables = [stmt.variable]  # Save variable for resumption
+                self.state.input_file_number = None
+
+                # The tick() loop will detect waiting_for_input and return
+                return
 
         # Assign entire line to variable (no parsing)
         var_node = stmt.variable
@@ -1353,6 +1744,10 @@ class Interpreter:
             self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, line, token=self._make_token_info(var_node))
         else:
             self.runtime.set_variable(var_node.name, var_node.type_suffix, line, token=self._make_token_info(var_node))
+
+        # Clear input state after successful completion
+        self.state.input_variables = []
+        self.state.input_prompt = None
 
     def execute_write(self, stmt):
         """Execute WRITE statement - output comma-delimited data

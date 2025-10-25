@@ -1,0 +1,8 @@
+10 I = 0
+20 GOTO 50
+30 WHILE I < 3
+40   I = I + 1
+50   PRINT "I="; I
+60 WEND
+70 PRINT "Done"
+80 SYSTEM
