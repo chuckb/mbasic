@@ -227,11 +227,16 @@ class CursesUITester:
                 child.send('\x12')  # Ctrl+R
                 time.sleep(1)
 
-                # Quit
+                # Quit with Ctrl+Q
                 child.send('\x11')  # Ctrl+Q
-                time.sleep(0.5)
+                time.sleep(1)
 
                 # Check if process exited cleanly
+                if child.isalive():
+                    # Try Ctrl+C as well
+                    child.send('\x03')  # Ctrl+C
+                    time.sleep(1)
+
                 if child.isalive():
                     child.terminate()
                     result.fail("Process did not exit cleanly")

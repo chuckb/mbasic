@@ -336,15 +336,51 @@ class CursesBackend(UIBackend):
         # Create the UI layout
         self._create_ui()
 
+        # Set up signal handling for clean exit
+        import signal
+
+        def handle_sigint(signum, frame):
+            """Handle Ctrl+C (SIGINT) gracefully."""
+            raise urwid.ExitMainLoop()
+
+        # Register signal handler
+        signal.signal(signal.SIGINT, handle_sigint)
+
         # Run the main loop
-        self.loop.run()
+        try:
+            self.loop.run()
+        except KeyboardInterrupt:
+            # Handle Ctrl+C gracefully
+            pass
+        finally:
+            # Cleanup
+            self._cleanup()
+
+    def _cleanup(self):
+        """Clean up resources before exit."""
+        # Stop any running interpreter
+        if hasattr(self, 'interpreter') and self.interpreter:
+            try:
+                # Try to stop cleanly
+                pass
+            except:
+                pass
+
+        # Clear any pending alarms
+        if hasattr(self, 'loop') and self.loop:
+            try:
+                # Remove all alarms
+                for alarm in list(self.loop.event_loop.alarm_list):
+                    self.loop.remove_alarm(alarm)
+            except:
+                pass
 
     def _create_ui(self):
         """Create the urwid UI layout."""
         # Create widgets
         self.editor = ProgramEditorWidget()
         self.output = urwid.Text("")
-        self.status_bar = urwid.Text("MBASIC 5.21 - Press Ctrl+H for help, Ctrl+Q to quit")
+        self.status_bar = urwid.Text("MBASIC 5.21 - Press Ctrl+H for help, Ctrl+Q or Ctrl+C to quit")
 
         # Create editor frame with top/left border only (no bottom/right space reserved)
         editor_frame = TopLeftBox(
@@ -387,8 +423,8 @@ class CursesBackend(UIBackend):
 
     def _handle_input(self, key):
         """Handle global keyboard shortcuts."""
-        if key == 'ctrl q':
-            # Quit
+        if key == 'ctrl q' or key == 'ctrl c':
+            # Quit (Ctrl+Q or Ctrl+C)
             raise urwid.ExitMainLoop()
 
         elif key == 'ctrl h':
@@ -420,7 +456,7 @@ class CursesBackend(UIBackend):
         help_text = """
 MBASIC 5.21 - Keyboard Shortcuts
 
-Ctrl+Q  - Quit
+Ctrl+Q / Ctrl+C  - Quit
 Ctrl+H  - This help
 Ctrl+R  - Run program
 Ctrl+L  - List program
