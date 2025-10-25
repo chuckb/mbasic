@@ -1167,9 +1167,32 @@ Examples:
 
     def _parse_editor_content(self):
         """Parse the editor content into line-numbered statements."""
-        # ProgramEditorWidget already maintains lines internally
-        # Just copy them to editor_lines for compatibility
-        self.editor_lines = self.editor.lines.copy()
+        # Parse the visual editor text into line-numbered statements
+        self.editor_lines = {}
+
+        # Get the raw text from the editor
+        text = self.editor.edit_widget.get_edit_text()
+
+        # Parse each line
+        for line in text.split('\n'):
+            if len(line) < 7:  # Too short to have status + linenum + separator
+                continue
+
+            # Extract line number from columns 1-5
+            line_num_text = line[1:6].strip()
+            if not line_num_text or not line_num_text.isdigit():
+                continue
+
+            line_num = int(line_num_text)
+
+            # Extract code from column 7 onwards
+            code = line[7:] if len(line) > 7 else ""
+
+            # Store in editor_lines
+            self.editor_lines[line_num] = code
+
+        # Also update the editor's internal lines dictionary for consistency
+        self.editor.lines = self.editor_lines.copy()
 
     def _update_output(self):
         """Update the output window with buffered content."""
