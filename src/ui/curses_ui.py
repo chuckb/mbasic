@@ -49,11 +49,17 @@ class TopLeftBox(urwid.WidgetWrap):
             original_widget
         ], dividechars=0)
 
+        # Set focus to the content (column 1, not the border)
+        content_with_border.focus_position = 1
+
         # Stack top border and content
         pile = urwid.Pile([
             ('pack', top_border),
             content_with_border
         ])
+
+        # Set focus to the content area (not the top border)
+        pile.focus_position = 1
 
         super().__init__(pile)
 
@@ -91,6 +97,9 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         # Use a pile to allow switching between display and edit modes
         self.pile = urwid.Pile([self.edit_widget])
+
+        # Set focus to the edit widget
+        self.pile.focus_position = 0
 
         super().__init__(self.pile)
 
@@ -577,14 +586,18 @@ class CursesBackend(UIBackend):
             ('pack', self.status_bar)
         ])
 
+        # Set focus to the editor (first item in pile)
+        pile.focus_position = 0
+
         # Create main widget with keybindings
         main_widget = urwid.AttrMap(pile, 'body')
 
-        # Set up the main loop
+        # Set up the main loop with cursor visible
         self.loop = urwid.MainLoop(
             main_widget,
             palette=self._get_palette(),
-            unhandled_input=self._handle_input
+            unhandled_input=self._handle_input,
+            handle_mouse=False
         )
 
     def _get_palette(self):
@@ -595,6 +608,8 @@ class CursesBackend(UIBackend):
             ('footer', 'white', 'dark blue'),
             ('focus', 'black', 'yellow'),
             ('error', 'light red', 'black'),
+            # Cursor styles - make cursor visible
+            ('cursor', 'black', 'light gray'),
         ]
 
     def _handle_input(self, key):
