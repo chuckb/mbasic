@@ -136,7 +136,9 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         # Check if pressing a control key or navigation key
         is_control_key = key.startswith('ctrl ') or key in ['tab', 'enter', 'esc']
-        is_arrow_key = key in ['up', 'down', 'left', 'right']
+        is_updown_arrow = key in ['up', 'down']  # Up/down move to different lines
+        is_leftright_arrow = key in ['left', 'right']  # Left/right stay on same line
+        is_arrow_key = is_updown_arrow or is_leftright_arrow
         is_other_nav_key = key in ['page up', 'page down', 'home', 'end']
 
         # If control key or other nav key or leaving line number area, right-justify line number
@@ -162,10 +164,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                         self.edit_widget.set_edit_text(new_text)
                         self.edit_widget.set_edit_pos(old_cursor)
 
-        # Sort lines if leaving line number area with non-arrow keys
-        # Arrow keys (up/down/left/right) should move freely without sorting
-        # Other keys (page up/down, home, end, control keys) should sort first
-        if 1 <= col_in_line <= 6 and (is_control_key or is_other_nav_key):
+        # Sort lines if leaving line number area
+        # Up/down arrows: sort (move to different line)
+        # Left/right arrows: don't sort (stay on same line)
+        # Other keys (page up/down, home, end, control keys): sort
+        if 1 <= col_in_line <= 6 and (is_control_key or is_other_nav_key or is_updown_arrow):
             self._sort_and_position_line(lines, line_num, target_column=col_in_line)
             # After sorting, let the key work normally
             return super().keypress(size, key)
