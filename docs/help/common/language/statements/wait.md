@@ -1,5 +1,17 @@
 # WAIT
 
+## Implementation Note
+
+⚠️ **Not Implemented**: This feature requires direct hardware I/O port access and is not implemented in this Python-based interpreter.
+
+**Behavior**: Statement is parsed but no operation is performed
+
+**Why**: Cannot access hardware I/O ports from a Python interpreter. WAIT was used to synchronize with hardware devices by polling I/O ports.
+
+**Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.
+
+---
+
 ## Syntax
 
 ```basic

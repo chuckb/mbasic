@@ -1,5 +1,19 @@
 # CALL
 
+## Implementation Note
+
+⚠️ **Not Implemented**: This feature calls machine language (assembly) subroutines and is not implemented in this Python-based interpreter.
+
+**Behavior**: Statement is parsed but no operation is performed
+
+**Why**: Cannot execute machine code from a Python interpreter. CALL was used to invoke hand-written assembly language routines for performance-critical operations or hardware access.
+
+**See Also**: [USR](../functions/usr.md) function (also not implemented)
+
+**Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.
+
+---
+
 ## Syntax
 
 ```basic

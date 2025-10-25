@@ -1,5 +1,17 @@
 # INP
 
+## Implementation Note
+
+⚠️ **Not Implemented**: This feature requires direct hardware I/O port access and is not implemented in this Python-based interpreter.
+
+**Behavior**: Always returns 0
+
+**Why**: Cannot access hardware I/O ports from a Python interpreter. This function is specific to systems with memory-mapped I/O or port-based hardware interfaces.
+
+**Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.
+
+---
+
 ## Syntax
 
 ```basic
