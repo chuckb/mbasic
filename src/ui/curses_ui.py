@@ -1251,6 +1251,9 @@ class CursesBackend(UIBackend):
         self.variables_walker = None
         self.variables_window = None
         self.watch_window_visible = False
+        self.stack_walker = None
+        self.stack_window = None
+        self.stack_window_visible = False
 
         # Editor state
         self.editor_lines = {}  # line_num -> text for editing
@@ -1351,7 +1354,11 @@ class CursesBackend(UIBackend):
         self.variables_walker = urwid.SimpleFocusListWalker([])
         self.variables_window = urwid.ListBox(self.variables_walker)
 
-        self.status_bar = urwid.Text("MBASIC 5.21 - Press Ctrl+H for help, Ctrl+M for menu, Ctrl+W for variables, Ctrl+Q to quit")
+        # Create stack window (call stack and loops)
+        self.stack_walker = urwid.SimpleFocusListWalker([])
+        self.stack_window = urwid.ListBox(self.stack_walker)
+
+        self.status_bar = urwid.Text("MBASIC 5.21 - Press Ctrl+H for help, Ctrl+M for menu, Ctrl+W for variables, Ctrl+K for stack, Ctrl+Q to quit")
 
         # Create editor frame with top/left border only (no bottom/right space reserved)
         self.editor_frame = TopLeftBox(
@@ -1363,6 +1370,12 @@ class CursesBackend(UIBackend):
         self.variables_frame = TopLeftBox(
             self.variables_window,
             title="Variables (Ctrl+W to toggle)"
+        )
+
+        # Create stack frame (initially hidden)
+        self.stack_frame = TopLeftBox(
+            self.stack_window,
+            title="Execution Stack (Ctrl+K to toggle)"
         )
 
         # Create output frame with top/left border only (no bottom/right space reserved)
@@ -1466,6 +1479,10 @@ class CursesBackend(UIBackend):
             # Toggle variables window
             self._toggle_variables_window()
 
+        elif key == 'ctrl k':
+            # Toggle execution stack window
+            self._toggle_stack_window()
+
         elif key == 'ctrl d':
             # Delete current line
             self._delete_current_line()
@@ -1538,6 +1555,10 @@ class CursesBackend(UIBackend):
                     # Update variables window if visible
                     if self.watch_window_visible:
                         self._update_variables_window()
+
+                    # Update stack window if visible
+                    if self.stack_window_visible:
+                        self._update_stack_window()
 
                 # Show where we paused
                 if state.status in ('paused', 'at_breakpoint'):
@@ -1806,6 +1827,7 @@ Global Commands:
   Ctrl+M  - Show menu
   Ctrl+H  - This help
   Ctrl+W  - Toggle variables watch window
+  Ctrl+K  - Toggle execution stack window
   Ctrl+R  - Run program
   Ctrl+L  - List program
   Ctrl+N  - New program
@@ -1820,6 +1842,7 @@ Debugger Commands (when program running):
   Ctrl+T  - Step - execute one line (sTep)
   Ctrl+X  - Stop execution (eXit)
   Ctrl+W  - Show/hide variables window
+  Ctrl+K  - Show/hide execution stack window
 
 Screen Editor:
   Column Layout:
@@ -1905,6 +1928,7 @@ Run                           Help
   Continue        Ctrl+G
   Stop            Ctrl+X
   Variables       Ctrl+W
+  Stack           Ctrl+K
 
 ══════════════════════════════════════════════════════════════
 
@@ -2000,6 +2024,69 @@ Run                           Help
                     line = f"{name:12} = {value}"
 
             self.variables_walker.append(make_output_line(line))
+
+    def _toggle_stack_window(self):
+        """Toggle visibility of the execution stack window."""
+        self.stack_window_visible = not self.stack_window_visible
+
+        if self.stack_window_visible:
+            # Determine insertion position based on whether variables window is visible
+            # Layout: menu (0), editor (1), [variables (2)], [stack (2 or 3)], output, status
+            insert_pos = 3 if self.watch_window_visible else 2
+            self.pile.contents.insert(insert_pos, (self.stack_frame, ('weight', 2)))
+            self.status_bar.set_text("Stack window shown - Ctrl+K to hide")
+
+            # Update stack display if we have a runtime
+            if self.runtime:
+                self._update_stack_window()
+        else:
+            # Remove stack window from pile
+            for i, (widget, options) in enumerate(self.pile.contents):
+                if widget is self.stack_frame:
+                    self.pile.contents.pop(i)
+                    break
+            self.status_bar.set_text("Stack window hidden - Ctrl+K to show")
+
+        # Redraw screen
+        if hasattr(self, 'loop') and self.loop:
+            self.loop.draw_screen()
+
+    def _update_stack_window(self):
+        """Update the stack window with current execution stack."""
+        if not self.runtime:
+            return
+
+        # Clear current display
+        self.stack_walker.clear()
+
+        # Get execution stack from runtime (GOSUB, FOR, WHILE)
+        stack = self.runtime.get_execution_stack()
+
+        if not stack:
+            self.stack_walker.append(make_output_line("(empty stack)"))
+            return
+
+        # Display stack from bottom to top (oldest to newest)
+        for i, entry in enumerate(stack):
+            indent = "  " * i  # Indent to show nesting level
+
+            if entry['type'] == 'GOSUB':
+                line = f"{indent}GOSUB from line {entry['from_line']}"
+            elif entry['type'] == 'FOR':
+                var = entry['var']
+                current = entry['current']
+                end = entry['end']
+                step = entry['step']
+                line = f"{indent}FOR {var} = {current} TO {end}"
+                if step != 1:
+                    line += f" STEP {step}"
+                line += f" (line {entry['line']})"
+            elif entry['type'] == 'WHILE':
+                line = f"{indent}WHILE (line {entry['line']})"
+            else:
+                line = f"{indent}Unknown: {entry}"
+
+            self.stack_walker.append(make_output_line(line))
 
     def _run_program(self):
         """Run the current program using tick-based interpreter."""

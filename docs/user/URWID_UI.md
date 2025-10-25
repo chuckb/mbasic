@@ -48,6 +48,11 @@ python3 mbasic.py --backend curses program.bas
 - **Configuration** - Configurable settings via .mbasic.conf
 - **Optimized paste** - High-performance paste with automatic line number parsing
 - **Edge-to-edge display** - No left borders for clean copy/paste
+- **Breakpoint debugging** - Set breakpoints, step through code, continue execution
+- **Watch window** - View all variables and their values during debugging (Ctrl+W)
+- **Stack viewer** - View call stack and active loops in nesting order (Ctrl+K)
+- **Statement highlighting** - Visual cyan highlight for active statement in multi-statement lines
+- **Menu system** - Ctrl+M shows all commands organized by category
 
 ### Keyboard Shortcuts
 
@@ -59,6 +64,7 @@ python3 mbasic.py --backend curses program.bas
 | `Ctrl+M` | Show menu with all commands and shortcuts |
 | `Ctrl+H` | Show help dialog |
 | `Ctrl+W` | Toggle variables watch window |
+| `Ctrl+K` | Toggle execution stack window |
 | `Ctrl+R` | Run the current program |
 | `Ctrl+L` | List program lines |
 | `Ctrl+N` | New program (clear editor) |
@@ -682,6 +688,7 @@ Program:
 - **Combine with output** - Watch output window to see results of each step
 - **Multi-statement lines** - Use statement highlighting to see exactly which part is executing
 - **Watch variables** - Press Ctrl+W to show/hide the variables window
+- **View execution stack** - Press Ctrl+K to show/hide the call stack and loop nesting
 
 ### Watch Window (Variables)
 
@@ -741,6 +748,71 @@ The variables watch window shows all current variables and their values during p
 - Arrays show dimensions, not contents (too large to display)
 - Variables appear as soon as they're assigned
 - Empty display shows "(no variables yet)"
+
+### Execution Stack Window
+
+The execution stack window shows the current call stack and active loops. It displays GOSUB calls, FOR loops, and WHILE loops in their proper nesting order. Updates automatically when stepping through code.
+
+#### Using the Stack Window
+
+**Toggle visibility:**
+- Press `Ctrl+K` to show/hide the execution stack window
+- Window appears between editor and output (or after variables window if visible)
+- Most useful when debugging nested subroutines and loops
+
+**What it shows:**
+- GOSUB return addresses with originating line numbers
+- Active FOR loops with current variable values
+- Active WHILE loops with line numbers
+- Indentation shows nesting depth
+- Displays oldest (outermost) to newest (innermost) top-to-bottom
+
+**Example display:**
+```
+┌─ Execution Stack (Ctrl+K to toggle) ──┐
+│ GOSUB from line 20                     │
+│   FOR I! = 2 TO 5 (line 110)          │
+│     WHILE (line 130)                   │
+└────────────────────────────────────────┘
+```
+
+This shows: main program called subroutine from line 20, which started a FOR loop (currently I=2), inside which is an active WHILE loop.
+
+**When it updates:**
+- Automatically after each step (Ctrl+T)
+- When paused at a breakpoint
+- When GOSUB/RETURN or loop entry/exit occurs
+- Shows current state when you toggle it on
+
+**Stack entry formats:**
+- **GOSUB**: `GOSUB from line 50` - subroutine was called from line 50
+- **FOR loop**: `FOR I! = 3 TO 10 STEP 2 (line 100)` - loop at line 100, I currently 3
+- **WHILE loop**: `WHILE (line 200)` - WHILE loop started at line 200
+
+**Typical workflow:**
+```
+1. Write program with nested GOSUB and loops
+2. Set breakpoint inside nested section
+3. Press Ctrl+R to run
+4. Press Ctrl+K to show stack window
+5. Press Ctrl+T to step - watch stack grow/shrink
+6. See exactly where you are in the nesting
+7. Press Ctrl+K to hide when not needed
+```
+
+**Benefits:**
+- See the full call chain and loop nesting at a glance
+- Understand where you are in deeply nested code
+- Verify proper nesting (unified stack detects nesting errors)
+- Track loop progress (current value, end value, step)
+- Debug complex control flow
+
+**Tips:**
+- Indentation shows nesting depth visually
+- Stack grows downward (newest at bottom)
+- Empty stack shows "(empty stack)" when at top level
+- Stack is empty before any GOSUB or loop entered
+- Helps visualize recursion depth
 
 ### Line Editing Commands
 
@@ -1041,10 +1113,10 @@ Errors will appear in the output window with full tracebacks.
 ### Long Term (v2.0)
 
 - [x] Watch window for variables (Ctrl+W shows/hides all variables and their values)
-- [ ] Call stack and loop nesting viewer
+- [x] Call stack and loop nesting viewer (Ctrl+K)
   - Shows GOSUB/RETURN stack
   - Shows active FOR/WHILE loops
-  - Combined because they must nest properly together
+  - Combined in unified execution stack with proper nesting validation
 
 ### Possible Future Features
 
