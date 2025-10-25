@@ -5460,11 +5460,10 @@ class SemanticAnalyzer:
         # Reachability
         self.reachability = ReachabilityInfo()
 
-        # Forward substitution
+        # Forward substitution - only clear analysis results, not structural data
         self.forward_substitutions.clear()
-        self.variable_assignments.clear()
-        self.variable_usage_count.clear()
-        self.variable_usage_lines.clear()
+        # NOTE: variable_assignments is structural (populated in Phase 1) - do NOT clear
+        # NOTE: variable_usage_count/lines are unused instance vars (analysis uses local vars)
 
         # Live variables
         self.live_var_info.clear()
