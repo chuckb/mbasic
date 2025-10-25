@@ -1,19 +1,18 @@
-# MBASIC 5.21 Compiler
+# Historical Documentation
 
-A compiler for CP/M era Microsoft BASIC-80 (MBASIC) version 5.21, written in Python.
+This directory contains archived development documentation from the MBASIC 5.21 interpreter project.
 
-## Current Status
+## Project Evolution
 
-**Lexer: Complete** ✓
+The project started as a **compiler** effort but evolved into an **interpreter** implementation.
 
-The lexer tokenizes MBASIC 5.21 source code according to the BASIC-80 Reference Manual specifications.
-
-**Tested against 373 real CP/M BASIC programs**: **63.0% success rate (235/374 files lexed successfully)**
-- Started at ~16% with basic implementation
-- Improved to 47.1% with REMARK, #, & support
-- Achieved 59.4% with leading-decimal-point support (.5 syntax)
-- Improved to 63.0% with detokenizer fixes
-- Estimated 75% success rate on pure MBASIC programs (excluding other dialects)
+**Early Development (Compiler Phase):**
+- **Lexer**: Achieved 63.0% success rate (235/374 files) on real CP/M BASIC programs
+  - Started at ~16% with basic implementation
+  - Improved to 47.1% with REMARK, #, & support
+  - Achieved 59.4% with leading-decimal-point support (.5 syntax)
+  - Improved to 63.0% with detokenizer fixes
+  - Estimated 75% success rate on pure MBASIC programs (excluding other dialects)
 
 **Parser: Complete** ✓
 
