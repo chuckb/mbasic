@@ -930,7 +930,6 @@ Errors will appear in the output window with full tracebacks.
 ### Long Term (v2.0)
 
 - [ ] Mouse support for all operations
-- [ ] Split-pane view (code + output side-by-side)
 - [ ] Watch window for variables
 - [ ] Call stack viewer
 
