@@ -157,9 +157,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             cursor_pos = new_cursor_pos
             col_in_line = 2
 
-        # Filter input in line number column (2-6) - only allow digits
+        # Handle input in line number column (2-6)
         if 2 <= col_in_line <= 6 and len(key) == 1 and key.isprintable():
-            # Only allow digits in line number area
             if not key.isdigit():
                 # Move cursor to code area (column 8) and insert character there
                 if line_num < len(lines):
@@ -177,6 +176,47 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                     self.edit_widget.set_edit_pos(new_cursor_pos)
                     # Now let the key be processed at the new position
                     return super().keypress(size, key)
+            else:
+                # Typing a digit in line number area - keep within 5-character field
+                if line_num < len(lines):
+                    line_start = sum(len(lines[i]) + 1 for i in range(line_num))
+                    line = lines[line_num]
+
+                    # Ensure line is at least 8 characters
+                    if len(line) < 8:
+                        line = line + ' ' * (8 - len(line))
+
+                    # Extract parts: status (0), space (1), linenum (2-6), space (7), code (8+)
+                    status = line[0]
+                    space1 = line[1]
+                    linenum_field = line[2:7]  # 5 characters
+                    rest = line[7:]
+
+                    # Find position within linenum_field (0-4)
+                    pos_in_field = col_in_line - 2
+
+                    # Insert digit at position and keep only 5 chars
+                    linenum_list = list(linenum_field)
+                    linenum_list.insert(pos_in_field, key)
+
+                    # Keep only rightmost 5 characters (shift left if overflow)
+                    linenum_list = linenum_list[-5:]
+                    linenum_field = ''.join(linenum_list)
+
+                    # Rebuild line
+                    new_line = status + space1 + linenum_field + rest
+                    lines[line_num] = new_line
+                    new_text = '\n'.join(lines)
+
+                    # Update text
+                    self.edit_widget.set_edit_text(new_text)
+
+                    # Position cursor after inserted digit (but stay in field)
+                    new_col = min(col_in_line + 1, 6)
+                    new_cursor_pos = line_start + new_col
+                    self.edit_widget.set_edit_pos(new_cursor_pos)
+
+                    return None
 
         # Handle Enter key - commits line and moves to next with auto-numbering
         if key == 'enter' and self.auto_number_enabled:
