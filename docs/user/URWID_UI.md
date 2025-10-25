@@ -62,6 +62,7 @@ python3 mbasic.py --backend curses program.bas
 | `Ctrl+N` | New program (clear editor) |
 | `Ctrl+S` | Save program to file |
 | `Ctrl+O` | Open/Load program from file |
+| `Ctrl+B` | Toggle breakpoint on current line |
 | `Tab` | Switch between editor and output window |
 
 #### Navigation Keys
@@ -459,10 +460,18 @@ Syntax checking is optimized:
 
 ### Working with Breakpoints
 
-When breakpoint support is added, the status column will show both:
-- Line with breakpoint: `●`
-- Line with error: `?`
-- Line with both: `●` (breakpoint takes priority)
+Breakpoints can be toggled on any line using `Ctrl+B`. The status column shows:
+- Line with breakpoint only: `●`
+- Line with error only: `?`
+- Line with both: `?` (error takes priority)
+
+**How to use breakpoints:**
+1. Position cursor on any line
+2. Press `Ctrl+B` to toggle breakpoint
+3. Status bar shows "Breakpoint set on line X" or "Breakpoint removed from line X"
+4. Line's status column updates to show `●` (or `?` if line also has error)
+
+**Priority system:** When a line has both an error and a breakpoint, the error (`?`) is shown. After fixing the error, the breakpoint indicator (`●`) becomes visible.
 
 ## Automatic Line Sorting
 
@@ -634,8 +643,8 @@ Errors will appear in the output window with full tracebacks.
 
 ### Medium Term (v1.5)
 
-- [ ] Add breakpoint support
-- [ ] Implement Step/Continue/End
+- [x] Add breakpoint support (toggle with Ctrl+B)
+- [ ] Implement Step/Continue/End (use breakpoints to pause execution)
 - [ ] Add syntax highlighting
 - [ ] Create menu system
 

@@ -89,6 +89,7 @@ The **curses screen editor** (default) provides a full-screen terminal interface
 - `Ctrl+R` - Run program
 - `Ctrl+S` - Save program
 - `Ctrl+O` - Open program
+- `Ctrl+B` - Toggle breakpoint on current line
 - `Ctrl+H` - Help
 - `Tab` - Switch between editor and output
 - Arrow keys, Page Up/Down for navigation

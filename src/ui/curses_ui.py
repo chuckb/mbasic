@@ -1346,6 +1346,67 @@ class CursesBackend(UIBackend):
             # Open/Load program
             self._load_program()
 
+        elif key == 'ctrl b':
+            # Toggle breakpoint on current line
+            self._toggle_breakpoint_current_line()
+
+    def _toggle_breakpoint_current_line(self):
+        """Toggle breakpoint on the current line where the cursor is."""
+        # Get current cursor position
+        cursor_pos = self.editor.edit_widget.edit_pos
+        current_text = self.editor.edit_widget.get_edit_text()
+
+        # Find which line we're on
+        text_before_cursor = current_text[:cursor_pos]
+        line_index = text_before_cursor.count('\n')
+
+        # Get the line text
+        lines = current_text.split('\n')
+        if line_index >= len(lines):
+            return
+
+        line = lines[line_index]
+
+        # Extract line number from columns 1-5
+        if len(line) < 6:
+            return
+
+        line_number_str = line[1:6].strip()
+        if not line_number_str or not line_number_str.isdigit():
+            return
+
+        line_number = int(line_number_str)
+
+        # Toggle breakpoint
+        if line_number in self.editor.breakpoints:
+            self.editor.breakpoints.remove(line_number)
+            self.status_bar.set_text(f"Breakpoint removed from line {line_number}")
+        else:
+            self.editor.breakpoints.add(line_number)
+            self.status_bar.set_text(f"Breakpoint set on line {line_number}")
+
+        # Update display to show/hide breakpoint indicator
+        # Need to recalculate status for this line
+        status = line[0]
+        code_area = line[7:] if len(line) > 7 else ""
+
+        # Check if line has syntax error
+        has_syntax_error = line_number in self.editor.syntax_errors
+
+        # Get new status based on priority
+        new_status = self.editor._get_status_char(line_number, has_syntax_error)
+
+        # Update the line if status changed
+        if status != new_status:
+            lines[line_index] = new_status + line[1:]
+            new_text = '\n'.join(lines)
+            self.editor.edit_widget.set_edit_text(new_text)
+            # Restore cursor position
+            self.editor.edit_widget.set_edit_pos(cursor_pos)
+            # Force screen redraw
+            if self.loop:
+                self.loop.draw_screen()
+
     def _show_help(self):
         """Show help dialog."""
         help_text = """
@@ -1359,6 +1420,7 @@ Global Commands:
   Ctrl+N  - New program
   Ctrl+S  - Save program
   Ctrl+O  - Open/Load program
+  Ctrl+B  - Toggle breakpoint on current line
 
 Screen Editor:
   Column Layout:
