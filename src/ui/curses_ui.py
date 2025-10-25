@@ -97,7 +97,16 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         # Create the display widget
         self.text_widget = urwid.Text("", wrap='clip')
-        self.edit_widget = urwid.Edit("", "", multiline=True, wrap='clip')
+
+        # Use Edit with allow_tab=False to improve performance
+        # and align='left' for faster rendering
+        self.edit_widget = urwid.Edit(
+            "", "",
+            multiline=True,
+            align='left',
+            wrap='clip',
+            allow_tab=False
+        )
 
         # Use a pile to allow switching between display and edit modes
         self.pile = urwid.Pile([self.edit_widget])
@@ -141,8 +150,20 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         is_arrow_key = is_updown_arrow or is_leftright_arrow
         is_other_nav_key = key in ['page up', 'page down', 'home', 'end']
 
-        # If control key or other nav key or leaving line number area, right-justify line number
-        if is_control_key or is_arrow_key or is_other_nav_key or (col_in_line == 6 and len(key) == 1):
+        # Only right-justify when actually leaving line number area or on control/nav keys
+        # Don't do expensive operations on left/right arrows or regular typing
+        should_right_justify = False
+        if is_control_key or is_updown_arrow or is_other_nav_key:
+            # Control keys, up/down, page up/down, home/end: always right-justify
+            should_right_justify = True
+        elif is_leftright_arrow and 1 <= col_in_line <= 6:
+            # Left/right arrows IN line number area: don't right-justify (performance)
+            should_right_justify = False
+        elif col_in_line == 6 and len(key) == 1 and key.isprintable():
+            # Typing at separator column: right-justify before moving to code area
+            should_right_justify = True
+
+        if should_right_justify:
             # Right-justify the line number on the current line
             if line_num < len(lines) and len(lines[line_num]) >= 6:
                 line = lines[line_num]
