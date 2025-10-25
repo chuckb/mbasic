@@ -218,6 +218,25 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
                     return None
 
+        # Handle input at column 7 (separator space) - move to code area
+        if col_in_line == 7 and len(key) == 1 and key.isprintable():
+            # Move cursor to code area (column 8) and insert character there
+            if line_num < len(lines):
+                line_start = sum(len(lines[i]) + 1 for i in range(line_num))
+                # Ensure line is at least 8 characters long
+                line = lines[line_num]
+                if len(line) < 8:
+                    # Pad line to have at least 8 characters
+                    line = line + ' ' * (8 - len(line))
+                    lines[line_num] = line
+                    current_text = '\n'.join(lines)
+                    self.edit_widget.set_edit_text(current_text)
+                # Move cursor to column 8
+                new_cursor_pos = line_start + 8
+                self.edit_widget.set_edit_pos(new_cursor_pos)
+                # Now let the key be processed at the new position
+                return super().keypress(size, key)
+
         # Handle Enter key - commits line and moves to next with auto-numbering
         if key == 'enter' and self.auto_number_enabled:
             # Right-justify current line number before committing
