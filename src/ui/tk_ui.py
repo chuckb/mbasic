@@ -51,6 +51,11 @@ class TkBackend(UIBackend):
         self.breakpoints = set()  # Set of line numbers with breakpoints
         self.tick_timer_id = None  # ID of pending after() call
 
+        # Variables watch window state
+        self.variables_window = None
+        self.variables_tree = None
+        self.variables_visible = False
+
         # Tkinter widgets (created in start())
         self.root = None
         self.editor_text = None
@@ -113,6 +118,9 @@ class TkBackend(UIBackend):
         self.status_label = ttk.Label(self.root, text="Ready", relief=tk.SUNKEN, anchor=tk.W)
         self.status_label.pack(side=tk.BOTTOM, fill=tk.X)
 
+        # Create variables watch window (initially hidden)
+        self._create_variables_window()
+
         # Load program into editor if already loaded
         self._refresh_editor()
 
@@ -157,6 +165,11 @@ class TkBackend(UIBackend):
         run_menu.add_separator()
         run_menu.add_command(label="Clear Output", command=self._menu_clear_output)
 
+        # View menu
+        view_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="View", menu=view_menu)
+        view_menu.add_command(label="Variables", command=self._toggle_variables, accelerator="Ctrl+W")
+
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Help", menu=help_menu)
@@ -170,6 +183,7 @@ class TkBackend(UIBackend):
         self.root.bind("<Control-t>", lambda e: self._menu_step())
         self.root.bind("<Control-g>", lambda e: self._menu_continue())
         self.root.bind("<Control-b>", lambda e: self._toggle_breakpoint())
+        self.root.bind("<Control-w>", lambda e: self._toggle_variables())
         # Note: Ctrl+X conflicts with Cut, so we'll check in the handler
         self.root.bind("<F5>", lambda e: self._menu_run())
 
@@ -278,6 +292,9 @@ class TkBackend(UIBackend):
                 self._add_output(f"\n--- Error at line {line_num}: {error_msg} ---\n")
                 self._set_status("Error")
 
+            # Update variables window if visible
+            self._update_variables()
+
         except Exception as e:
             self._add_output(f"Step error: {e}\n")
             self._set_status("Error")
@@ -346,6 +363,76 @@ class TkBackend(UIBackend):
         # Update interpreter state if running
         if self.interpreter:
             self.interpreter.state.breakpoints = self.breakpoints.copy()
+
+    def _create_variables_window(self):
+        """Create variables watch window (Toplevel)."""
+        import tkinter as tk
+        from tkinter import ttk
+
+        # Create window
+        self.variables_window = tk.Toplevel(self.root)
+        self.variables_window.title("Variables")
+        self.variables_window.geometry("400x300")
+        self.variables_window.protocol("WM_DELETE_WINDOW", lambda: self._toggle_variables())
+        self.variables_window.withdraw()  # Hidden initially
+
+        # Create Treeview
+        tree = ttk.Treeview(self.variables_window, columns=('Type', 'Value'), show='tree headings')
+        tree.heading('#0', text='Variable')
+        tree.heading('Type', text='Type')
+        tree.heading('Value', text='Value')
+        tree.column('#0', width=100)
+        tree.column('Type', width=100)
+        tree.column('Value', width=200)
+        tree.pack(fill=tk.BOTH, expand=True)
+
+        self.variables_tree = tree
+
+    def _toggle_variables(self):
+        """Toggle variables window visibility (Ctrl+W)."""
+        if self.variables_visible:
+            self.variables_window.withdraw()
+            self.variables_visible = False
+        else:
+            self.variables_window.deiconify()
+            self.variables_visible = True
+            self._update_variables()
+
+    def _update_variables(self):
+        """Update variables window from runtime."""
+        if not self.variables_visible or not self.runtime:
+            return
+
+        # Clear tree
+        for item in self.variables_tree.get_children():
+            self.variables_tree.delete(item)
+
+        # Get variables from runtime
+        variables = self.runtime.get_all_variables()
+
+        # Map type suffix to type name
+        type_map = {
+            '$': 'String',
+            '%': 'Integer',
+            '!': 'Single',
+            '#': 'Double'
+        }
+
+        # Add to tree
+        for var in sorted(variables, key=lambda v: v['name']):
+            name = var['name'] + var['type_suffix']
+            type_name = type_map.get(var['type_suffix'], 'Unknown')
+
+            if var['is_array']:
+                dims = 'x'.join(str(d) for d in var['dimensions'])
+                value = f"Array({dims})"
+            else:
+                value = var['value']
+                if var['type_suffix'] == '$':
+                    value = f'"{value}"'
+
+            self.variables_tree.insert('', 'end', text=name,
+                                      values=(type_name, value))
 
     def _menu_clear_output(self):
         """Run > Clear Output"""
