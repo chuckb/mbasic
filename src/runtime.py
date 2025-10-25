@@ -461,15 +461,17 @@ class Runtime:
         """
         return full_name in self._arrays
 
-    def get_array_element(self, name, type_suffix, subscripts, def_type_map=None):
+    def get_array_element(self, name, type_suffix, subscripts, def_type_map=None, token=None):
         """
-        Get array element value.
+        Get array element value, optionally tracking read access.
 
         Args:
             name: Array name
             type_suffix: Type suffix or None
             subscripts: List of subscript values
             def_type_map: Optional DEF type mapping
+            token: Optional token object with line and position info for tracking.
+                   If None, read access is not tracked (for debugger use).
 
         Returns:
             Array element value
@@ -496,11 +498,33 @@ class Runtime:
         if index < 0 or index >= len(data):
             raise RuntimeError(f"Array subscript out of range: {full_name}{subscripts}")
 
+        # Track read access if token is provided
+        if token is not None:
+            # Create tracking key for this array element
+            element_key = f"{full_name}[{','.join(map(str, subscripts))}]"
+
+            # Initialize tracking dict if needed
+            if not hasattr(self, '_array_element_tracking'):
+                self._array_element_tracking = {}
+
+            if element_key not in self._array_element_tracking:
+                self._array_element_tracking[element_key] = {
+                    'last_read': None,
+                    'last_write': None
+                }
+
+            # Update read tracking
+            self._array_element_tracking[element_key]['last_read'] = {
+                'line': getattr(token, 'line', self.current_line.line_number if self.current_line else None),
+                'position': getattr(token, 'position', None),
+                'timestamp': time.perf_counter()
+            }
+
         return data[index]
 
-    def set_array_element(self, name, type_suffix, subscripts, value, def_type_map=None):
+    def set_array_element(self, name, type_suffix, subscripts, value, def_type_map=None, token=None):
         """
-        Set array element value.
+        Set array element value, optionally tracking write access.
 
         Args:
             name: Array name
@@ -508,6 +532,8 @@ class Runtime:
             subscripts: List of subscript values
             value: Value to set
             def_type_map: Optional DEF type mapping
+            token: Optional token object with line and position info for tracking.
+                   If None, write access is not tracked.
         """
         # Resolve full array name
         full_name, _ = self._resolve_variable_name(name, type_suffix, def_type_map)
@@ -531,6 +557,48 @@ class Runtime:
             raise RuntimeError(f"Array subscript out of range: {full_name}{subscripts}")
 
         data[index] = value
+
+        # Track write access if token is provided
+        if token is not None:
+            # Create tracking key for this array element
+            element_key = f"{full_name}[{','.join(map(str, subscripts))}]"
+
+            # Initialize tracking dict if needed
+            if not hasattr(self, '_array_element_tracking'):
+                self._array_element_tracking = {}
+
+            if element_key not in self._array_element_tracking:
+                self._array_element_tracking[element_key] = {
+                    'last_read': None,
+                    'last_write': None
+                }
+
+            # Update write tracking
+            self._array_element_tracking[element_key]['last_write'] = {
+                'line': getattr(token, 'line', self.current_line.line_number if self.current_line else None),
+                'position': getattr(token, 'position', None),
+                'timestamp': time.perf_counter()
+            }
+
+    def get_array_element_for_debugger(self, name, type_suffix, subscripts, def_type_map=None):
+        """
+        Get array element value for debugger/inspector WITHOUT updating access tracking.
+
+        This method is intended ONLY for debugger/inspector use to read array element
+        values without affecting the access tracking. For normal program execution,
+        use get_array_element() with a token.
+
+        Args:
+            name: Array name
+            type_suffix: Type suffix or None
+            subscripts: List of subscript values
+            def_type_map: Optional DEF type mapping
+
+        Returns:
+            Array element value
+        """
+        # Simply call get_array_element without a token (no tracking)
+        return self.get_array_element(name, type_suffix, subscripts, def_type_map, token=None)
 
     def _calculate_array_index(self, subscripts, dims, base=0):
         """

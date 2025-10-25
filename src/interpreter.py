@@ -501,7 +501,8 @@ class Interpreter:
                 stmt.variable.name,
                 stmt.variable.type_suffix,
                 subscripts,
-                value
+                value,
+                token=self._make_token_info(stmt.variable)
             )
         else:
             # Simple variable assignment
@@ -518,7 +519,7 @@ class Interpreter:
         if stmt.var1.subscripts:
             # Array element
             subscripts1 = [int(self.evaluate_expression(sub)) for sub in stmt.var1.subscripts]
-            value1 = self.runtime.get_array_element(stmt.var1.name, stmt.var1.type_suffix, subscripts1)
+            value1 = self.runtime.get_array_element(stmt.var1.name, stmt.var1.type_suffix, subscripts1, token=self._make_token_info(stmt.var1))
         else:
             # Simple variable
             value1 = self.runtime.get_variable(stmt.var1.name, stmt.var1.type_suffix, token=self._make_token_info(stmt.var1))
@@ -526,7 +527,7 @@ class Interpreter:
         if stmt.var2.subscripts:
             # Array element
             subscripts2 = [int(self.evaluate_expression(sub)) for sub in stmt.var2.subscripts]
-            value2 = self.runtime.get_array_element(stmt.var2.name, stmt.var2.type_suffix, subscripts2)
+            value2 = self.runtime.get_array_element(stmt.var2.name, stmt.var2.type_suffix, subscripts2, token=self._make_token_info(stmt.var2))
         else:
             # Simple variable
             value2 = self.runtime.get_variable(stmt.var2.name, stmt.var2.type_suffix, token=self._make_token_info(stmt.var2))
@@ -537,7 +538,8 @@ class Interpreter:
                 stmt.var1.name,
                 stmt.var1.type_suffix,
                 subscripts1,
-                value2
+                value2,
+                token=self._make_token_info(stmt.var1)
             )
         else:
             self.runtime.set_variable(
@@ -552,7 +554,8 @@ class Interpreter:
                 stmt.var2.name,
                 stmt.var2.type_suffix,
                 subscripts2,
-                value1
+                value1,
+                token=self._make_token_info(stmt.var2)
             )
         else:
             self.runtime.set_variable(
@@ -1090,7 +1093,7 @@ class Interpreter:
             # Store in variable
             if var_node.subscripts:
                 subscripts = [int(self.evaluate_expression(sub)) for sub in var_node.subscripts]
-                self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, value)
+                self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, value, token=self._make_token_info(var_node))
             else:
                 self.runtime.set_variable(var_node.name, var_node.type_suffix, value, token=self._make_token_info(var_node))
 
@@ -1266,7 +1269,7 @@ class Interpreter:
             # Store
             if var_node.subscripts:
                 subscripts = [int(self.evaluate_expression(sub)) for sub in var_node.subscripts]
-                self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, value)
+                self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, value, token=self._make_token_info(var_node))
             else:
                 self.runtime.set_variable(var_node.name, var_node.type_suffix, value, token=self._make_token_info(var_node))
 
@@ -1347,7 +1350,7 @@ class Interpreter:
         var_node = stmt.variable
         if var_node.subscripts:
             subscripts = [int(self.evaluate_expression(sub)) for sub in var_node.subscripts]
-            self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, line)
+            self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, line, token=self._make_token_info(var_node))
         else:
             self.runtime.set_variable(var_node.name, var_node.type_suffix, line, token=self._make_token_info(var_node))
 
@@ -1997,7 +2000,8 @@ class Interpreter:
                     var_node.name,
                     var_node.type_suffix,
                     subscripts,
-                    modified_value
+                    modified_value,
+                    token=self._make_token_info(var_node)
                 )
             else:
                 # Simple variable
@@ -2148,9 +2152,9 @@ class Interpreter:
     def evaluate_variable(self, expr):
         """Evaluate variable reference"""
         if expr.subscripts:
-            # Array access
+            # Array access - track access
             subscripts = [int(self.evaluate_expression(sub)) for sub in expr.subscripts]
-            return self.runtime.get_array_element(expr.name, expr.type_suffix, subscripts)
+            return self.runtime.get_array_element(expr.name, expr.type_suffix, subscripts, token=self._make_token_info(expr))
         else:
             # Simple variable
             return self.runtime.get_variable(expr.name, expr.type_suffix, token=self._make_token_info(expr))
