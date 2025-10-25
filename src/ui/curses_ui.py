@@ -68,45 +68,48 @@ class TopLeftBox(urwid.WidgetWrap):
         return self._w.selectable()
 
 
-class SelectableText(urwid.Text):
-    """Simple selectable text widget."""
+class OutputLine(urwid.Text):
+    """Output line widget with green cursor on first char when focused."""
+
+    def __init__(self, text):
+        self.line_text = text if text else " "
+        super().__init__(self.line_text)
+        self._has_focus = False
 
     def selectable(self):
-        """Make this widget selectable for focus."""
         return True
 
     def keypress(self, size, key):
-        """Handle keypresses - return unconsumed to allow ListBox navigation."""
-        return key
+        return key  # Return unconsumed for ListBox navigation
+
+    def render(self, size, focus=False):
+        """Render with green cursor on first char if focused."""
+        # Update text markup based on focus state
+        if focus != self._has_focus:
+            self._has_focus = focus
+            if focus and len(self.line_text) > 0:
+                # GREEN cursor on first character
+                first_char = self.line_text[0]
+                rest = self.line_text[1:] if len(self.line_text) > 1 else ""
+                markup = [('output_focus', first_char), rest]
+                self.set_text(markup)
+            else:
+                # No focus - plain text
+                self.set_text(self.line_text)
+
+        return super().render(size, focus)
 
 
 def make_output_line(text):
-    """Create an output line widget with focus highlighting on first char.
+    """Create an output line widget.
 
     Args:
         text: Line text to display
 
     Returns:
-        Widget with focus highlighting
+        OutputLine widget
     """
-    if text and len(text) > 0:
-        # Create markup with first character using 'output_cursor' attribute
-        first_char = text[0]
-        rest = text[1:] if len(text) > 1 else ""
-
-        # Mark first char with special attribute so we can target it with focus_map
-        markup = [('output_cursor', first_char), ('output', rest)]
-        widget = SelectableText(markup)
-    else:
-        # Empty line
-        markup = [('output_cursor', ' ')]
-        widget = SelectableText(markup)
-
-    # Wrap in AttrMap: when focused, 'output_cursor' becomes 'output_focus'
-    # Other attributes (like 'output') stay unchanged
-    attr_widget = urwid.AttrMap(widget, None, {'output_cursor': 'output_focus'})
-
-    return attr_widget
+    return OutputLine(text)
 
 
 class ProgramEditorWidget(urwid.WidgetWrap):
@@ -173,18 +176,21 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         - Column 6: Space
         - Columns 7+: Code - editable
         """
-        # PERFORMANCE OPTIMIZATION for paste and fast typing:
-        # If it's a normal printable character (not special key), skip expensive processing
-        # and let urwid handle it directly
+        # PERFORMANCE: Check if we're in code area first (cheap check)
+        # Only do expensive column detection if we might need special handling
+        cursor_pos = self.edit_widget.edit_pos
+
+        # Quick heuristic: if cursor is far from start of line, likely in code area
+        # This avoids expensive text parsing for most typing
         is_special_key = (
             key.startswith('ctrl ') or
             key in ['tab', 'enter', 'esc', 'up', 'down', 'left', 'right',
                     'page up', 'page down', 'home', 'end', 'backspace', 'delete']
         )
 
+        # For normal typing (not special keys), do minimal processing
         if not is_special_key and len(key) == 1:
-            # Normal typing - just pass through without expensive text parsing
-            # This makes paste operations MUCH faster
+            # Fast path: just let urwid handle it
             return super().keypress(size, key)
 
         # Get current cursor position
