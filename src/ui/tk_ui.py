@@ -239,6 +239,8 @@ class TkBackend(UIBackend):
         edit_menu.add_command(label="Copy", command=self._menu_copy, accelerator="Ctrl+C")
         edit_menu.add_command(label="Paste", command=self._menu_paste, accelerator="Ctrl+V")
         edit_menu.add_separator()
+        edit_menu.add_command(label="Insert Line", command=self._smart_insert_line, accelerator="Ctrl+I")
+        edit_menu.add_separator()
         edit_menu.add_command(label="Toggle Breakpoint", command=self._toggle_breakpoint, accelerator="Ctrl+B")
         edit_menu.add_command(label="Clear All Breakpoints", command=self._clear_all_breakpoints)
 

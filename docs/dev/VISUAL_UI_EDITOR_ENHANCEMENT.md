@@ -1,5 +1,21 @@
 # Visual UI Editor Enhancement Project
 
+## Status: PARTIAL IMPLEMENTATION
+
+**What's Been Done:**
+- ✅ Auto-numbering on Enter (src/ui/tk_ui.py:1305)
+- ✅ Smart Insert Line - Ctrl+I (src/ui/tk_ui.py:1469, bound at line 284)
+- ✅ Auto-sort on line change (src/ui/tk_ui.py:1395 _check_line_change)
+- ✅ LineNumberedText widget with status-only column (src/ui/tk_widgets.py:16, width=20)
+- ✅ Renumber dialog (Web UI: src/ui/web/web_ui.py:476)
+
+**What's NOT Done:**
+- ❌ Complete removal of line number duplication (status column narrowed but numbers still may show)
+- ❌ Auto-scroll to sorted position (needs verification)
+- ❌ Full feature parity with curses UI (see TK_UI_ENHANCEMENT_PLAN.md)
+
+---
+
 ## Problem Statement
 
 The Tk and Web UI program editors have several usability issues compared to the curses UI:

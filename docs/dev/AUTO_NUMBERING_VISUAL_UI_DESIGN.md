@@ -1,6 +1,23 @@
 # Auto-Numbering and Line Insertion for Visual UIs
 
 ## Date: 2025-10-26
+## Status: DESIGN DOCUMENT - Proposed Enhancements
+
+**Current Implementation Status:**
+- ✅ **Basic auto-numbering on Enter**: IMPLEMENTED in Tk and Curses UIs (src/ui/tk_ui.py:1305, src/ui/curses_ui.py:479)
+- ✅ **Smart Insert Line (Ctrl+I)**: IMPLEMENTED in Tk UI (src/ui/tk_ui.py:1469, bound at line 284)
+  - Inserts blank line between current and next line
+  - Uses midpoint calculation when space available
+  - Offers to renumber when no space between lines
+- ✅ **Renumber command with dialog**: IMPLEMENTED in Tk, Curses, and Web UIs (src/ui/web/web_ui.py:476)
+- ✅ **Sort button**: IMPLEMENTED in Web UI
+- ❌ **Continuous insertion mode (Option B)**: NOT IMPLEMENTED
+- ❌ **Unnumbered editing mode (Option C)**: NOT IMPLEMENTED
+- ❌ **Smart renumber defaults (Option D enhancements)**: NOT IMPLEMENTED (basic renumber exists)
+
+**This document:** Proposes 4 enhancement options for improving line insertion workflow. Option A (simplified) has been implemented as Ctrl+I. Options B, C, and enhanced Option D remain proposals.
+
+---
 
 ## Problem Statement
 
@@ -196,26 +213,28 @@ User wants to insert 10 lines between 10 and 20. How do they:
 - Doesn't solve "how many lines?" question
 - More UI complexity
 
-## Recommended Approach
+## Recommended Approach (NOT YET IMPLEMENTED)
 
-**Phase 1: Enhanced Renumber (Option D)**
-- Start with current renumber dialog
-- Add smart defaults based on line count
-- Add "Renumber with extra spacing" option (e.g., increment=100 for lots of room)
-- Show preview before applying
-- Document best practices
+This section proposes future enhancements. All items below are TODO.
 
-**Phase 2: Quick Insert (Simplified Option A)**
-- Add "Insert Blank Line" command (Ctrl+Shift+I)
-- Automatically picks line number between current and next
-- User can repeat to insert multiple lines
-- No modal state, just quick insertion
-- If no space, auto-suggests renumber
+**Phase 1: Enhanced Renumber (Option D)** - ⬜ NOT STARTED
+- ✅ Basic renumber dialog EXISTS (src/ui/web/web_ui.py:476, src/ui/curses_ui.py:1848)
+- ⬜ Add smart defaults based on line count (NEW)
+- ⬜ Add "Renumber with extra spacing" option (e.g., increment=100 for lots of room) (NEW)
+- ⬜ Show preview before applying (NEW)
+- ⬜ Document best practices (NEW)
 
-**Phase 3: Consider Option B or C based on user feedback**
-- Gather usage data
-- See if users want continuous insertion mode
-- Evaluate if unnumbered editing makes sense
+**Phase 2: Quick Insert (Simplified Option A)** - ⬜ NOT STARTED
+- ⬜ Add "Insert Blank Line" command (Ctrl+Shift+I)
+- ⬜ Automatically picks line number between current and next
+- ⬜ User can repeat to insert multiple lines
+- ⬜ No modal state, just quick insertion
+- ⬜ If no space, auto-suggests renumber
+
+**Phase 3: Consider Option B or C based on user feedback** - ⬜ NOT STARTED
+- ⬜ Gather usage data
+- ⬜ See if users want continuous insertion mode
+- ⬜ Evaluate if unnumbered editing makes sense
 
 ## Documentation Needed
 
@@ -277,15 +296,56 @@ A: We recommend:
    - When you run out of space, renumber again
 ```
 
-## Implementation Priority
+## Implementation Status and Priority
 
-1. ✅ **Current state**: Manual numbering + Renumber button (DONE)
-2. 📝 **Document current workflow**: Add user guide section (TODO)
-3. 🔧 **Quick enhancements**:
-   - Smarter renumber defaults (analyze line count)
-   - "Insert blank line" quick command
-   - Renumber preview
-4. 🎯 **Future consideration**: Continuous insertion mode (if user feedback supports it)
+### Already Implemented ✅
+
+1. **Basic auto-numbering on Enter** (DONE)
+   - Location: src/ui/tk_ui.py:1305, src/ui/curses_ui.py:479
+   - Behavior: Press Enter after a numbered line, next line gets auto-numbered
+   - Configuration: auto_number_start (default 10), auto_number_increment (default 10)
+
+2. **Smart Insert Line - Ctrl+I** (DONE - Simplified Option A)
+   - Location: src/ui/tk_ui.py:1469 (_smart_insert_line), bound at line 284
+   - Keyboard: Ctrl+I in Tk UI
+   - Behavior:
+     - Inserts blank line between current and next line
+     - Uses midpoint calculation (e.g., between 10 and 20, inserts 15)
+     - If no space available, offers to renumber program
+   - Helper functions: src/ui/ui_helpers.py (calculate_midpoint, needs_renumber_for_insert)
+
+3. **Renumber command with dialog** (DONE)
+   - Location: src/ui/web/web_ui.py:476, src/ui/curses_ui.py:1848, src/editing/manager.py:154
+   - UI: Dialog asking for start line and increment
+   - Shared logic: src/ui/ui_helpers.py:235 (renumber_program_lines)
+
+4. **Sort button** (Web UI only) (DONE)
+   - Location: src/ui/web/web_ui.py
+   - Behavior: Sorts all lines by line number
+
+### Proposed Enhancements (NOT Implemented) ⬜
+
+**Priority 1: Document Current Workflow** - TODO
+- Write user guide explaining existing features (see "Documentation Needed" section below)
+- Add examples of renumber workflow
+- Add tips for managing line numbers
+
+**Priority 2: Enhanced Renumber (Option D enhancements)** - TODO
+- Smart defaults based on line count analysis
+- "Make extra space" option for future insertions
+- Preview mode before applying renumber
+- "Renumber selection only" option
+
+**Priority 3: Quick Insert Command (Option A simplified)** - ✅ DONE (as Ctrl+I)
+- ✅ Ctrl+I to insert blank line with smart numbering (DONE)
+- ✅ No dialog, just immediate insertion (DONE)
+- ✅ Auto-suggest renumber if no space (DONE)
+- Note: Uses Ctrl+I instead of Ctrl+Shift+I
+
+**Priority 4: Continuous Insertion Mode (Option B)** - FUTURE
+- Requires user feedback to determine if needed
+- More complex modal editing state
+- Consider only after other enhancements
 
 ## Open Questions
 
