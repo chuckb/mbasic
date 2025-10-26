@@ -9,6 +9,7 @@ from .base import UIBackend
 from runtime import Runtime
 from interpreter import Interpreter
 from .keybinding_loader import KeybindingLoader
+from immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
 
 
 class TkBackend(UIBackend):
@@ -65,6 +66,12 @@ class TkBackend(UIBackend):
         self.stack_tree = None
         self.stack_visible = False
 
+        # Immediate mode
+        self.immediate_executor = None
+        self.immediate_history = None
+        self.immediate_entry = None
+        self.immediate_status = None
+
         # Tkinter widgets (created in start())
         self.root = None
         self.editor_text = None
@@ -108,7 +115,7 @@ class TkBackend(UIBackend):
         )
         self.editor_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Bottom pane: Output (40% of space)
+        # Middle pane: Output (30% of space)
         output_frame = ttk.Frame(paned)
         paned.add(output_frame, weight=2)
 
@@ -117,11 +124,46 @@ class TkBackend(UIBackend):
             output_frame,
             wrap=tk.WORD,
             width=100,
-            height=15,
+            height=10,
             font=("Courier", 10),
             state=tk.DISABLED
         )
         self.output_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        # Bottom pane: Immediate Mode (30% of space)
+        immediate_frame = ttk.Frame(paned)
+        paned.add(immediate_frame, weight=2)
+
+        # Immediate mode header with status
+        header_frame = ttk.Frame(immediate_frame)
+        header_frame.pack(fill=tk.X, padx=5, pady=5)
+
+        ttk.Label(header_frame, text="Immediate Mode:").pack(side=tk.LEFT)
+        self.immediate_status = ttk.Label(header_frame, text="Ok", foreground="green", font=("Courier", 10, "bold"))
+        self.immediate_status.pack(side=tk.LEFT, padx=10)
+
+        # Immediate mode history (scrollable output)
+        self.immediate_history = scrolledtext.ScrolledText(
+            immediate_frame,
+            wrap=tk.WORD,
+            width=100,
+            height=6,
+            font=("Courier", 10),
+            state=tk.DISABLED
+        )
+        self.immediate_history.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
+
+        # Immediate mode input
+        input_frame = ttk.Frame(immediate_frame)
+        input_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
+
+        ttk.Label(input_frame, text="Ok >", font=("Courier", 10)).pack(side=tk.LEFT, padx=(0, 5))
+        self.immediate_entry = ttk.Entry(input_frame, font=("Courier", 10))
+        self.immediate_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        self.immediate_entry.bind('<Return>', lambda e: self._execute_immediate())
+
+        execute_btn = ttk.Button(input_frame, text="Execute", command=self._execute_immediate)
+        execute_btn.pack(side=tk.LEFT)
 
         # Status bar
         self.status_label = ttk.Label(self.root, text="Ready", relief=tk.SUNKEN, anchor=tk.W)
@@ -312,6 +354,9 @@ class TkBackend(UIBackend):
                 self._add_output(f"\n--- Error at line {line_num}: {error_msg} ---\n")
                 self._set_status("Error")
 
+            # Update immediate mode status
+            self._update_immediate_status()
+
             # Update variables and stack windows if visible
             self._update_variables()
             self._update_stack()
@@ -357,6 +402,7 @@ class TkBackend(UIBackend):
 
             self._add_output("\n--- Program stopped by user ---\n")
             self._set_status("Stopped")
+            self._update_immediate_status()
 
         except Exception as e:
             self._add_output(f"Stop error: {e}\n")
@@ -624,6 +670,7 @@ class TkBackend(UIBackend):
                 self.running = False
                 self._add_output("\n--- Program finished ---\n")
                 self._set_status("Ready")
+                self._update_immediate_status()
 
             elif state.status == 'error':
                 self.running = False
@@ -631,18 +678,21 @@ class TkBackend(UIBackend):
                 line_num = state.error_info.error_line if state.error_info else "?"
                 self._add_output(f"\n--- Runtime error at line {line_num}: {error_msg} ---\n")
                 self._set_status("Error")
+                self._update_immediate_status()
 
             elif state.status == 'at_breakpoint':
                 self.running = False
                 self.paused_at_breakpoint = True
                 self._add_output(f"\n● Breakpoint hit at line {state.current_line}\n")
                 self._set_status(f"Paused at line {state.current_line} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
+                self._update_immediate_status()
 
             elif state.status == 'paused':
                 self.running = False
                 self.paused_at_breakpoint = True
                 self._add_output(f"\n→ Paused at line {state.current_line}\n")
                 self._set_status(f"Paused at line {state.current_line} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
+                self._update_immediate_status()
 
             elif state.status == 'running':
                 # Schedule next tick
@@ -681,6 +731,11 @@ class TkBackend(UIBackend):
             # Set breakpoints if any
             if self.breakpoints:
                 self.interpreter.state.breakpoints = self.breakpoints.copy()
+
+            # Initialize immediate mode executor
+            immediate_io = OutputCapturingIOHandler()
+            self.immediate_executor = ImmediateExecutor(self.runtime, self.interpreter, immediate_io)
+            self._update_immediate_status()
 
             # Start running
             self.running = True
@@ -748,3 +803,74 @@ class TkBackend(UIBackend):
         """Execute CONT command - continue after STOP."""
         # TODO: Implement
         pass
+
+    # Immediate mode methods
+
+    def _update_immediate_status(self):
+        """Update immediate mode panel status based on interpreter state."""
+        import tkinter as tk
+
+        if not self.immediate_executor or not self.immediate_status or not self.immediate_entry:
+            return
+
+        if self.immediate_executor.can_execute_immediate():
+            # Safe to execute - enable input
+            self.immediate_status.config(text="Ok", foreground="green")
+            self.immediate_entry.config(state=tk.NORMAL)
+        else:
+            # Not safe - disable input
+            status = self.interpreter.state.status if hasattr(self.interpreter, 'state') else 'unknown'
+            self.immediate_status.config(text=f"[{status}]", foreground="red")
+            self.immediate_entry.config(state=tk.DISABLED)
+
+    def _execute_immediate(self):
+        """Execute immediate mode command."""
+        import tkinter as tk
+        from tkinter import messagebox
+
+        if not self.immediate_executor or not self.immediate_entry or not self.immediate_history:
+            messagebox.showwarning("Warning", "Immediate mode not initialized")
+            return
+
+        command = self.immediate_entry.get().strip()
+        if not command:
+            return
+
+        # Check if safe to execute
+        if not self.immediate_executor.can_execute_immediate():
+            self._add_immediate_output("Cannot execute while program is running\n")
+            messagebox.showwarning("Warning", "Cannot execute while program is running")
+            return
+
+        # Log the command
+        self._add_immediate_output(f"> {command}\n")
+
+        # Execute
+        success, output = self.immediate_executor.execute(command)
+
+        # Log the result
+        if output:
+            self._add_immediate_output(output)
+
+        if success:
+            self._add_immediate_output("Ok\n")
+        else:
+            messagebox.showerror("Error", "Immediate mode error")
+
+        # Clear input
+        self.immediate_entry.delete(0, tk.END)
+
+        # Update variables/stack windows if they exist
+        if hasattr(self, 'variables_window') and self.variables_window:
+            self._update_variables_window()
+        if hasattr(self, 'stack_window') and self.stack_window:
+            self._update_stack_window()
+
+    def _add_immediate_output(self, text):
+        """Add text to immediate mode history widget."""
+        import tkinter as tk
+
+        self.immediate_history.config(state=tk.NORMAL)
+        self.immediate_history.insert(tk.END, text)
+        self.immediate_history.see(tk.END)
+        self.immediate_history.config(state=tk.DISABLED)

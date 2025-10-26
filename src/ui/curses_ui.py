@@ -21,6 +21,7 @@ from runtime import Runtime
 from interpreter import Interpreter
 from lexer import Lexer
 from parser import Parser
+from immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
 
 
 class TopLeftBox(urwid.WidgetWrap):
@@ -1234,6 +1235,31 @@ class EditorWidget(urwid.Edit):
         return super().keypress(size, key)
 
 
+class ImmediateInput(urwid.Edit):
+    """Custom Edit widget for immediate mode input that handles Enter key."""
+
+    def __init__(self, caption, on_execute_callback):
+        """Initialize immediate input widget.
+
+        Args:
+            caption: Text to display before input (e.g., "Ok > ")
+            on_execute_callback: Function to call when Enter is pressed
+        """
+        super().__init__(caption)
+        self.on_execute_callback = on_execute_callback
+
+    def keypress(self, size, key):
+        """Handle key presses, especially Enter."""
+        if key == 'enter':
+            # Execute the command
+            if self.on_execute_callback:
+                self.on_execute_callback()
+            return None  # Consume the key
+        else:
+            # Let parent handle other keys
+            return super().keypress(size, key)
+
+
 class CursesBackend(UIBackend):
     """Urwid-based curses UI backend.
 
@@ -1276,6 +1302,14 @@ class CursesBackend(UIBackend):
         self.running = False
         self.paused_at_breakpoint = False
         self.output_buffer = []
+
+        # Immediate mode
+        self.immediate_executor = None
+        self.immediate_walker = None
+        self.immediate_window = None
+        self.immediate_input = None
+        self.immediate_status = None
+        self.immediate_frame = None
 
     def start(self):
         """Start the urwid-based curses UI."""
@@ -1396,12 +1430,35 @@ class CursesBackend(UIBackend):
             title="Output"
         )
 
-        # Create layout - menu bar at top, editor, (optional variables), output, status bar at bottom
+        # Create immediate mode window (history + status + input)
+        self.immediate_walker = urwid.SimpleFocusListWalker([])
+        self.immediate_window = urwid.ListBox(self.immediate_walker)
+
+        # Create immediate mode input field with Enter handler
+        self.immediate_input = ImmediateInput("Ok > ", self._execute_immediate)
+
+        # Create immediate mode status indicator
+        self.immediate_status = urwid.Text(('immediate_ok', "Ok"))
+
+        # Create immediate mode panel (status + history + input)
+        immediate_content = urwid.Pile([
+            ('pack', self.immediate_status),
+            ('weight', 1, self.immediate_window),
+            ('pack', self.immediate_input)
+        ])
+
+        self.immediate_frame = TopLeftBox(
+            immediate_content,
+            title="Immediate Mode"
+        )
+
+        # Create layout - menu bar at top, editor, output, immediate, status bar at bottom
         # Store as instance variable so we can modify it when toggling variables window
         self.pile = urwid.Pile([
             ('pack', self.menu_bar),
-            ('weight', 7, self.editor_frame),
+            ('weight', 4, self.editor_frame),
             ('weight', 3, self.output_frame),
+            ('weight', 3, self.immediate_frame),
             ('pack', self.status_bar)
         ])
 
@@ -1433,6 +1490,9 @@ class CursesBackend(UIBackend):
             ('error', 'light red', 'black'),
             # Highlight for active statement during step debugging
             ('active_stmt', 'black', 'light cyan'),
+            # Immediate mode status indicators
+            ('immediate_ok', 'light green,bold', 'black'),
+            ('immediate_disabled', 'light red,bold', 'black'),
         ]
 
     def _handle_input(self, key):
@@ -1577,12 +1637,14 @@ class CursesBackend(UIBackend):
                     self.output_buffer.append(f"→ Paused at line {state.current_line}{stmt_info}")
                     self._update_output()
                     self.status_bar.set_text(f"Paused at line {state.current_line}{stmt_info} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
+                    self._update_immediate_status()
                 elif state.status == 'done':
                     # Clear highlighting when done
                     self.editor._update_display()
                     self.output_buffer.append("Program completed")
                     self._update_output()
                     self.status_bar.set_text("Program completed")
+                    self._update_immediate_status()
                 elif state.status == 'error':
                     # Clear highlighting on error
                     self.editor._update_display()
@@ -1591,6 +1653,7 @@ class CursesBackend(UIBackend):
                     self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
                     self._update_output()
                     self.status_bar.set_text("Error during step")
+                    self._update_immediate_status()
             else:
                 self.status_bar.set_text(f"Cannot step (status: {state.status})")
         except Exception as e:
@@ -1613,6 +1676,7 @@ class CursesBackend(UIBackend):
             self.output_buffer.append("Program stopped by user")
             self._update_output()
             self.status_bar.set_text("Program stopped - Ready")
+            self._update_immediate_status()
         except Exception as e:
             self.status_bar.set_text(f"Stop error: {e}")
 
@@ -2145,6 +2209,11 @@ Run                           Help
             for line_num in self.editor.breakpoints:
                 self.interpreter.set_breakpoint(line_num)
 
+            # Initialize immediate mode executor
+            immediate_io = OutputCapturingIOHandler()
+            self.immediate_executor = ImmediateExecutor(self.runtime, self.interpreter, immediate_io)
+            self._update_immediate_status()
+
             # Start execution
             state = self.interpreter.start()
 
@@ -2207,6 +2276,7 @@ Run                           Help
                 self.output_buffer.append("Ok")
                 self._update_output()
                 self.status_bar.set_text("Ready - Press Ctrl+H for help")
+                self._update_immediate_status()
 
             elif state.status == 'error':
                 # Error occurred - show any output before error
@@ -2238,6 +2308,7 @@ Run                           Help
 
                 self._update_output()
                 self.status_bar.set_text("Error - Press Ctrl+H for help")
+                self._update_immediate_status()
 
             elif state.status == 'paused' or state.status == 'at_breakpoint':
                 # Paused execution (breakpoint hit or stepping)
@@ -2247,6 +2318,7 @@ Run                           Help
                     self.output_buffer.append(f"→ Paused at line {state.current_line}")
                 self._update_output()
                 self.status_bar.set_text(f"Paused at line {state.current_line} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
+                self._update_immediate_status()
 
         except Exception as e:
             import traceback
@@ -2496,6 +2568,63 @@ Run                           Help
         except Exception as e:
             self.output_buffer.append(f"Error loading file: {e}")
             self._update_output()
+
+    # Immediate mode methods
+
+    def _execute_immediate(self):
+        """Execute immediate mode command."""
+        if not self.immediate_executor or not self.immediate_input or not self.immediate_walker:
+            return
+
+        command = self.immediate_input.get_edit_text().strip()
+        if not command:
+            return
+
+        # Check if safe to execute
+        if not self.immediate_executor.can_execute_immediate():
+            self.immediate_walker.append(SelectableText("Cannot execute while program is running"))
+            self.immediate_input.set_edit_text("")
+            return
+
+        # Log the command
+        self.immediate_walker.append(SelectableText(f"> {command}"))
+
+        # Execute
+        success, output = self.immediate_executor.execute(command)
+
+        # Log the result
+        if output:
+            for line in output.rstrip().split('\n'):
+                self.immediate_walker.append(SelectableText(line))
+
+        if success:
+            self.immediate_walker.append(SelectableText("Ok"))
+
+        # Clear input
+        self.immediate_input.set_edit_text("")
+
+        # Scroll to bottom of immediate history
+        if len(self.immediate_walker) > 0:
+            self.immediate_window.set_focus(len(self.immediate_walker) - 1)
+
+        # Update variables/stack windows if visible
+        if self.watch_window_visible:
+            self._update_variables_window()
+        if self.stack_window_visible:
+            self._update_stack_window()
+
+    def _update_immediate_status(self):
+        """Update immediate mode panel status based on interpreter state."""
+        if not self.immediate_executor or not self.immediate_status:
+            return
+
+        if self.immediate_executor.can_execute_immediate():
+            # Safe to execute - show green "Ok"
+            self.immediate_status.set_text(('immediate_ok', "Ok"))
+        else:
+            # Not safe - show red status
+            status = self.interpreter.state.status if hasattr(self.interpreter, 'state') else 'unknown'
+            self.immediate_status.set_text(('immediate_disabled', f"[{status}]"))
 
     # Command implementations (inherited from UIBackend)
 
