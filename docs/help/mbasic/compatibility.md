@@ -192,8 +192,8 @@ MBASIC 5.21 was originally written for ASR33 teletypes and had no built-in termi
 
 This implementation:
 - PRINT uses modern terminal or UI output
-- No cursor positioning (not in original MBASIC 5.21)
-- Screen control is UI-dependent (visual UIs provide editing features)
+- No cursor positioning in program output (not in original MBASIC 5.21)
+- No screen control commands available in BASIC programs
 
 **Width and margins:**
 
