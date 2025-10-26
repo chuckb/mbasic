@@ -492,45 +492,29 @@ class InteractiveMode:
             return
 
         try:
-            # Add .bas extension if not present
-            if not filename.endswith('.bas'):
-                filename += '.bas'
+            # Use ProgramManager's merge_from_file
+            success, errors, lines_added, lines_replaced = self.program.merge_from_file(filename)
 
-            with open(filename, 'r') as f:
-                program_text = f.read()
+            # Show parse errors if any
+            if errors:
+                for line_num, error in errors:
+                    print(f"?Parse error at line {line_num}: {error}")
 
-            # Don't clear current program - that's the difference from LOAD
-            # Parse and merge lines
-            lines_added = 0
-            lines_replaced = 0
+            if success:
+                # Update runtime if it exists (for CONT support)
+                if self.program_runtime:
+                    for line_num in self.program.line_asts:
+                        line_ast = self.program.line_asts[line_num]
+                        self.program_runtime.line_table[line_num] = line_ast
+                        if line_num not in self.program_runtime.line_order:
+                            import bisect
+                            bisect.insort(self.program_runtime.line_order, line_num)
 
-            for line in program_text.split('\n'):
-                line = line.strip()
-                if not line:
-                    continue
-
-                match = re.match(r'^(\d+)\s', line)
-                if match:
-                    line_num = int(match.group(1))
-                    if line_num in self.lines:
-                        lines_replaced += 1
-                    else:
-                        lines_added += 1
-                    self.lines[line_num] = line
-                    # Parse line into AST
-                    line_ast = self.parse_single_line(line)
-                    if line_ast:
-                        self.line_asts[line_num] = line_ast
-                        # Update runtime's line_table if program is running
-                        if self.program_runtime:
-                            self.program_runtime.line_table[line_num] = line_ast
-                            if line_num not in self.program_runtime.line_order:
-                                import bisect
-                                bisect.insort(self.program_runtime.line_order, line_num)
-
-            print(f"Merged from {filename}")
-            print(f"{lines_added} line(s) added, {lines_replaced} line(s) replaced")
-            print("Ready")
+                print(f"Merged from {filename}")
+                print(f"{lines_added} line(s) added, {lines_replaced} line(s) replaced")
+                print("Ready")
+            else:
+                print("?No lines merged")
 
         except FileNotFoundError:
             print(f"?File not found: {filename}")
@@ -688,36 +672,13 @@ class InteractiveMode:
             DELETE -40      - Delete all lines up to and including 40
             DELETE 40-      - Delete from line 40 to end of program
         """
-        from ui.ui_helpers import parse_delete_args
-
-        if not self.lines:
-            print("?No program")
-            return
+        from ui.ui_helpers import delete_lines_from_program
 
         try:
-            # Parse arguments
-            all_line_numbers = sorted(self.lines.keys())
-            start, end = parse_delete_args(args, all_line_numbers)
-
-            # Delete lines in range
-            to_delete = [n for n in self.lines.keys() if start <= n <= end]
-
-            if not to_delete:
-                print(f"?No lines in range {start}-{end}")
-                return
-
-            for line_num in to_delete:
-                del self.lines[line_num]
-                if line_num in self.line_asts:
-                    del self.line_asts[line_num]
-                # Update runtime's line_table if program is running
-                if self.program_runtime and line_num in self.program_runtime.line_table:
-                    del self.program_runtime.line_table[line_num]
-                    if line_num in self.program_runtime.line_order:
-                        self.program_runtime.line_order.remove(line_num)
-
+            deleted = delete_lines_from_program(self, args, self.program_runtime)
+            # Success - deleted will contain list of deleted line numbers
         except ValueError as e:
-            print(f"?Syntax error")
+            print(f"?{e}")
         except Exception as e:
             print(f"?Syntax error")
 
@@ -737,65 +698,20 @@ class InteractiveMode:
             RENUM 100,50    -> 100,50,10 (renumber from line 50 onwards)
             RENUM 100,50,20 -> 100,50,20 (full control)
         """
-        new_start = 10
-        old_start = 0
-        increment = 10
-
-        if args:
-            parts = args.split(',')
-            if parts[0]:
-                new_start = int(parts[0])
-            if len(parts) > 1 and parts[1]:
-                old_start = int(parts[1])
-            if len(parts) > 2 and parts[2]:
-                increment = int(parts[2])
+        from ui.ui_helpers import renum_program
 
         try:
-            # Build mapping from old line numbers to new line numbers
-            old_lines = sorted(self.line_asts.keys())
-            line_map = {}
-
-            # Lines before old_start stay the same
-            for old_num in old_lines:
-                if old_num < old_start:
-                    line_map[old_num] = old_num
-
-            # Lines from old_start onwards get renumbered
-            new_num = new_start
-            for old_num in old_lines:
-                if old_num >= old_start:
-                    line_map[old_num] = new_num
-                    new_num += increment
-
-            # Walk each line AST and update line number references
-            for line_node in self.line_asts.values():
-                # Update line number references in statements
-                for stmt in line_node.statements:
-                    self._renum_statement(stmt, line_map)
-                # Update the line's own number
-                old_line_num = line_node.line_number
-                line_node.line_number = line_map[old_line_num]
-
-            # Rebuild line_asts dict with new line numbers
-            new_line_asts = {}
-            new_lines = {}
-            for old_num in old_lines:
-                new_num = line_map[old_num]
-                line_node = self.line_asts[old_num]
-                new_line_asts[new_num] = line_node
-                new_lines[new_num] = self._serialize_line(line_node)
-
-            # Update the underlying program object (not the properties)
-            self.program.line_asts = new_line_asts
-            self.program.lines = new_lines
-
-            # Update runtime's line_table if program is running
-            if self.program_runtime:
-                self.program_runtime.line_table = self.line_asts
-                self.program_runtime.line_order = sorted(self.line_asts.keys())
-
+            # Use consolidated RENUM implementation
+            old_lines, line_map = renum_program(
+                self.program,
+                args,
+                self._renum_statement,
+                self.program_runtime
+            )
             print("Renumbered")
 
+        except ValueError as e:
+            print(f"?{e}")
         except Exception as e:
             print(f"?Error during renumber: {e}")
 
@@ -1207,38 +1123,24 @@ class InteractiveMode:
         FILES "*.BAS" - List files matching pattern
         FILES "A:*.*" - List files on drive A (not supported, lists current dir)
         """
-        import glob
-        import os
+        from ui.ui_helpers import list_files
 
-        # Default pattern if no argument
-        if not filespec:
-            pattern = "*"
-        else:
-            # Remove quotes if present
-            pattern = filespec.strip().strip('"').strip("'")
-
-            # If pattern is empty after stripping, use default
-            if not pattern:
-                pattern = "*"
-
-        # In MBASIC, FILES shows disk directory. We'll list matching files in current directory
-        # Get matching files
         try:
-            files = sorted(glob.glob(pattern))
+            files = list_files(filespec)
 
             if not files:
+                pattern = filespec if filespec else "*"
                 print(f"No files matching: {pattern}")
                 return
 
             # Display files (MBASIC shows them in columns)
             # Simple format: one per line with size
-            for filename in files:
-                try:
-                    size = os.path.getsize(filename)
-                    # MBASIC shows file sizes in bytes or blocks
-                    # We'll show bytes
+            for filename, size, is_dir in files:
+                if is_dir:
+                    print(f"{filename:<20}      <DIR>")
+                elif size is not None:
                     print(f"{filename:<20} {size:>8} bytes")
-                except OSError:
+                else:
                     print(f"{filename:<20}        ? bytes")
 
             # Show count

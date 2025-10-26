@@ -1855,23 +1855,11 @@ class TkBackend(UIBackend):
         FILES - List all files in current directory
         FILES "*.BAS" - List files matching pattern
         """
-        import glob
-        import os
+        from ui.ui_helpers import list_files
 
-        # Default pattern if no argument
-        if not filespec:
-            pattern = "*"
-        else:
-            # Remove quotes if present
-            pattern = filespec.strip().strip('"').strip("'")
-
-            # If pattern is empty after stripping, use default
-            if not pattern:
-                pattern = "*"
-
-        # Get matching files
         try:
-            files = sorted(glob.glob(pattern))
+            files = list_files(filespec)
+            pattern = filespec if filespec else "*"
 
             if not files:
                 self._add_output(f"No files matching: {pattern}\n")
@@ -1880,14 +1868,12 @@ class TkBackend(UIBackend):
             # Display files (one per line with size)
             self._add_output(f"\nDirectory listing for: {pattern}\n")
             self._add_output("-" * 50 + "\n")
-            for filename in files:
-                try:
-                    if os.path.isfile(filename):
-                        size = os.path.getsize(filename)
-                        self._add_output(f"{filename:<30} {size:>12} bytes\n")
-                    elif os.path.isdir(filename):
-                        self._add_output(f"{filename:<30}        <DIR>\n")
-                except OSError:
+            for filename, size, is_dir in files:
+                if is_dir:
+                    self._add_output(f"{filename:<30}        <DIR>\n")
+                elif size is not None:
+                    self._add_output(f"{filename:<30} {size:>12} bytes\n")
+                else:
                     self._add_output(f"{filename:<30}            ?\n")
 
             self._add_output(f"\n{len(files)} file(s)\n")
@@ -1904,43 +1890,23 @@ class TkBackend(UIBackend):
             DELETE -40      - Delete all lines up to and including 40
             DELETE 40-      - Delete from line 40 to end of program
         """
-        from ui.ui_helpers import parse_delete_args, delete_line_range
-
-        # Get current program lines
-        if not self.program.lines:
-            self._write_output("No program to delete from")
-            return
+        from ui.ui_helpers import delete_lines_from_program
 
         try:
-            # Parse arguments
-            all_line_numbers = sorted(self.program.get_all_line_numbers())
-            start, end = parse_delete_args(args, all_line_numbers)
-
-            # Check if any lines in range exist
-            lines_to_delete = [n for n in all_line_numbers if start <= n <= end]
-
-            if not lines_to_delete:
-                self._write_output(f"No lines in range {start}-{end}")
-                return
-
-            # Delete lines from program
-            for line_num in lines_to_delete:
-                if line_num in self.program.lines:
-                    del self.program.lines[line_num]
-                if line_num in self.program.line_asts:
-                    del self.program.line_asts[line_num]
+            # Delete using consolidated function
+            deleted = delete_lines_from_program(self.program, args, runtime=None)
 
             # Refresh the editor display
             self._refresh_editor()
 
             # Show confirmation
-            if len(lines_to_delete) == 1:
-                self._write_output(f"Deleted line {lines_to_delete[0]}")
+            if len(deleted) == 1:
+                self._write_output(f"Deleted line {deleted[0]}")
             else:
-                self._write_output(f"Deleted {len(lines_to_delete)} lines ({min(lines_to_delete)}-{max(lines_to_delete)})")
+                self._write_output(f"Deleted {len(deleted)} lines ({min(deleted)}-{max(deleted)})")
 
         except ValueError as e:
-            self._write_output(f"?Syntax error: {e}")
+            self._write_output(f"?{e}")
         except Exception as e:
             self._write_output(f"?Error during delete: {e}")
 
@@ -1955,64 +1921,27 @@ class TkBackend(UIBackend):
 
         This ensures AST is the single source of truth.
         """
-        # Parse arguments
-        new_start = 10
-        old_start = 0
-        increment = 10
-
-        if args:
-            parts = args.split(',')
-            if parts[0]:
-                new_start = int(parts[0])
-            if len(parts) > 1 and parts[1]:
-                old_start = int(parts[1])
-            if len(parts) > 2 and parts[2]:
-                increment = int(parts[2])
-
-        # Get current program lines
-        if not self.program.line_asts:
-            self._add_output("No program to renumber\n")
-            return
+        from ui.ui_helpers import renum_program
 
         try:
-            # Import utilities from ui_helpers
-            from ui.ui_helpers import build_line_mapping, serialize_line
-
-            # Build mapping from old line numbers to new line numbers
-            old_lines = sorted(self.program.line_asts.keys())
-            line_map = build_line_mapping(old_lines, new_start, old_start, increment)
-
-            # Walk each line AST and update line number references
-            # Delegate to interpreter's interactive_mode for _renum_statement
-            for line_node in self.program.line_asts.values():
-                # Update line number references in statements
-                for stmt in line_node.statements:
-                    self.interpreter.interactive_mode._renum_statement(stmt, line_map)
-                # Update the line's own number
-                old_line_num = line_node.line_number
-                line_node.line_number = line_map[old_line_num]
-
-            # Rebuild line_asts dict with new line numbers
-            new_line_asts = {}
-            new_lines = {}
-            for old_num in old_lines:
-                new_num = line_map[old_num]
-                line_node = self.program.line_asts[old_num]
-                new_line_asts[new_num] = line_node
-                # Use ui_helpers directly for serialization
-                new_lines[new_num] = serialize_line(line_node)
-
-            # Update the program object
-            self.program.line_asts = new_line_asts
-            self.program.lines = new_lines
+            # Use consolidated RENUM implementation
+            old_lines, line_map = renum_program(
+                self.program,
+                args,
+                self.interpreter.interactive_mode._renum_statement,
+                runtime=None  # Tk UI doesn't have a persistent runtime
+            )
 
             # Refresh the editor display
             self._refresh_editor()
 
             # Calculate range for message
-            final_num = max(new_lines.keys()) if new_lines else new_start
+            final_num = max(self.program.lines.keys()) if self.program.lines else 10
+            new_start = min(self.program.lines.keys()) if self.program.lines else 10
             self._add_output(f"Renumbered ({new_start} to {final_num})\n")
 
+        except ValueError as e:
+            self._add_output(f"?{e}\n")
         except Exception as e:
             import traceback
             self._add_output(f"Error during renumber: {e}\n")

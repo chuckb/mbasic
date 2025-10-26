@@ -493,6 +493,180 @@ def delete_line_range(
     return new_lines
 
 
+def delete_lines_from_program(program_manager, args: str, runtime=None):
+    """Delete lines from program using DELETE command syntax.
+
+    This is the consolidated DELETE command implementation for all UIs.
+
+    Args:
+        program_manager: ProgramManager instance with .lines and .line_asts
+        args: DELETE command arguments (e.g., "40", "40-100", "-40", "40-")
+        runtime: Optional runtime object with line_table and line_order to update
+
+    Returns:
+        List of deleted line numbers, or None if error
+
+    Raises:
+        ValueError: If arguments are invalid
+
+    Examples:
+        >>> deleted = delete_lines_from_program(pm, "40")  # Delete line 40
+        >>> deleted = delete_lines_from_program(pm, "40-100")  # Delete range
+        >>> deleted = delete_lines_from_program(pm, "-40")  # Delete from start
+        >>> deleted = delete_lines_from_program(pm, "40-")  # Delete to end
+    """
+    if not hasattr(program_manager, 'lines') or not program_manager.lines:
+        raise ValueError("No program to delete from")
+
+    # Parse arguments
+    all_line_numbers = sorted(program_manager.lines.keys())
+    start, end = parse_delete_args(args, all_line_numbers)
+
+    # Find lines in range
+    to_delete = [n for n in all_line_numbers if start <= n <= end]
+
+    if not to_delete:
+        raise ValueError(f"No lines in range {start}-{end}")
+
+    # Delete from lines dict
+    for line_num in to_delete:
+        if line_num in program_manager.lines:
+            del program_manager.lines[line_num]
+
+        # Delete from line_asts if present
+        if hasattr(program_manager, 'line_asts') and line_num in program_manager.line_asts:
+            del program_manager.line_asts[line_num]
+
+        # Update runtime if provided
+        if runtime:
+            if hasattr(runtime, 'line_table') and line_num in runtime.line_table:
+                del runtime.line_table[line_num]
+            if hasattr(runtime, 'line_order') and line_num in runtime.line_order:
+                runtime.line_order.remove(line_num)
+
+    return to_delete
+
+
+def list_files(filespec: str = ""):
+    """List files matching filespec (FILES command implementation).
+
+    This is the consolidated FILES command implementation for all UIs.
+
+    Args:
+        filespec: File pattern to match (e.g., "*.BAS", "*.txt")
+                  Empty string means "*" (all files)
+
+    Returns:
+        List of tuples: (filename, size_bytes, is_dir)
+        size_bytes is None if file cannot be accessed
+
+    Examples:
+        >>> files = list_files("*.bas")
+        >>> for name, size, is_dir in files:
+        ...     print(f"{name} - {size} bytes")
+    """
+    import glob
+    import os
+
+    # Default pattern if no argument
+    if not filespec:
+        pattern = "*"
+    else:
+        # Remove quotes if present
+        pattern = filespec.strip().strip('"').strip("'")
+
+        # If pattern is empty after stripping, use default
+        if not pattern:
+            pattern = "*"
+
+    # Get matching files
+    files = sorted(glob.glob(pattern))
+
+    # Build result list
+    result = []
+    for filename in files:
+        try:
+            if os.path.isdir(filename):
+                result.append((filename, None, True))
+            elif os.path.isfile(filename):
+                size = os.path.getsize(filename)
+                result.append((filename, size, False))
+            else:
+                result.append((filename, None, False))
+        except OSError:
+            result.append((filename, None, False))
+
+    return result
+
+
+def renum_program(program_manager, args: str, renum_callback, runtime=None):
+    """Renumber program lines and update GOTO/GOSUB references.
+
+    This is the consolidated RENUM command implementation for all UIs.
+
+    Args:
+        program_manager: ProgramManager instance with .lines and .line_asts
+        args: RENUM command arguments (e.g., "100", "100,0,10", "100,50")
+        renum_callback: Function that takes (stmt, line_map) to update statement references
+                        Should handle GOTO, GOSUB, ON GOTO, ON GOSUB, IF THEN/ELSE line numbers
+        runtime: Optional runtime object to update with new line numbers
+
+    Returns:
+        Tuple of (old_lines, line_mapping) where:
+            old_lines: List of original line numbers in order
+            line_mapping: Dict mapping old line numbers to new line numbers
+
+    Raises:
+        ValueError: If arguments are invalid or program is empty
+
+    Examples:
+        >>> def update_refs(stmt, line_map):
+        ...     # Update statement line number references
+        ...     pass
+        >>> old, mapping = renum_program(pm, "100, 0, 10", update_refs)
+    """
+    if not hasattr(program_manager, 'line_asts') or not program_manager.line_asts:
+        raise ValueError("No program to renumber")
+
+    # Parse arguments using existing helper
+    new_start, old_start, increment = parse_renum_args(args)
+
+    # Build line mapping using existing helper
+    old_lines = sorted(program_manager.line_asts.keys())
+    line_map = build_line_mapping(old_lines, new_start, old_start, increment)
+
+    # Walk each line AST and update line number references
+    for line_node in program_manager.line_asts.values():
+        # Update line number references in statements using callback
+        for stmt in line_node.statements:
+            renum_callback(stmt, line_map)
+        # Update the line's own number
+        line_node.line_number = line_map[line_node.line_number]
+
+    # Rebuild line_asts dict with new line numbers
+    new_line_asts = {}
+    new_lines = {}
+    for old_num in old_lines:
+        new_num = line_map[old_num]
+        line_node = program_manager.line_asts[old_num]
+        new_line_asts[new_num] = line_node
+        # Serialize using ui_helpers
+        new_lines[new_num] = serialize_line(line_node)
+
+    # Update the program manager
+    program_manager.line_asts = new_line_asts
+    program_manager.lines = new_lines
+
+    # Update runtime if provided
+    if runtime:
+        if hasattr(runtime, 'line_table'):
+            runtime.line_table = new_line_asts
+        if hasattr(runtime, 'line_order'):
+            runtime.line_order = sorted(new_line_asts.keys())
+
+    return old_lines, line_map
+
+
 # ============================================================================
 # Error Formatting and Display
 # ============================================================================

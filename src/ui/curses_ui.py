@@ -3017,3 +3017,138 @@ Run                           Debug Windows
     def cmd_load(self, filename):
         """Execute LOAD command."""
         self._load_program_file(filename)
+
+    def cmd_save(self, filename):
+        """Execute SAVE command."""
+        try:
+            if not filename:
+                self._write_output("?Syntax error: filename required\n")
+                return
+
+            # Remove quotes if present
+            filename = filename.strip().strip('"').strip("'")
+
+            # Use program manager's save_to_file
+            self.program.save_to_file(filename)
+            self._write_output(f"Saved to {filename}\n")
+
+        except Exception as e:
+            self._write_output(f"?Error saving file: {e}\n")
+
+    def cmd_delete(self, args):
+        """Execute DELETE command using ui_helpers."""
+        from ui.ui_helpers import delete_lines_from_program
+
+        try:
+            deleted = delete_lines_from_program(self.program, args, runtime=None)
+            self._refresh_editor()
+            if len(deleted) == 1:
+                self._write_output(f"Deleted line {deleted[0]}\n")
+            else:
+                self._write_output(f"Deleted {len(deleted)} lines ({min(deleted)}-{max(deleted)})\n")
+
+        except ValueError as e:
+            self._write_output(f"?{e}\n")
+        except Exception as e:
+            self._write_output(f"?Error during delete: {e}\n")
+
+    def cmd_renum(self, args):
+        """Execute RENUM command using ui_helpers."""
+        from ui.ui_helpers import renum_program
+
+        # Need access to InteractiveMode's _renum_statement
+        # Curses UI has self.interpreter which should have interactive_mode
+        if not hasattr(self, 'interpreter') or not hasattr(self.interpreter, 'interactive_mode'):
+            self._write_output("?RENUM not available in this mode\n")
+            return
+
+        try:
+            old_lines, line_map = renum_program(
+                self.program,
+                args,
+                self.interpreter.interactive_mode._renum_statement,
+                runtime=None
+            )
+            self._refresh_editor()
+            self._write_output("Renumbered\n")
+
+        except ValueError as e:
+            self._write_output(f"?{e}\n")
+        except Exception as e:
+            self._write_output(f"?Error during renumber: {e}\n")
+
+    def cmd_merge(self, filename):
+        """Execute MERGE command using ProgramManager."""
+        try:
+            if not filename:
+                self._write_output("?Syntax error: filename required\n")
+                return
+
+            # Use ProgramManager's merge_from_file
+            success, errors, lines_added, lines_replaced = self.program.merge_from_file(filename)
+
+            # Show parse errors if any
+            if errors:
+                for line_num, error in errors:
+                    self._write_output(f"?Parse error at line {line_num}: {error}\n")
+
+            if success:
+                self._refresh_editor()
+                self._write_output(f"Merged from {filename}\n")
+                self._write_output(f"{lines_added} line(s) added, {lines_replaced} line(s) replaced\n")
+            else:
+                self._write_output("?No lines merged\n")
+
+        except FileNotFoundError:
+            self._write_output(f"?File not found: {filename}\n")
+        except Exception as e:
+            self._write_output(f"?{e}\n")
+
+    def cmd_files(self, filespec=""):
+        """Execute FILES command using ui_helpers."""
+        from ui.ui_helpers import list_files
+
+        try:
+            files = list_files(filespec)
+            pattern = filespec if filespec else "*"
+
+            if not files:
+                self._write_output(f"No files matching: {pattern}\n")
+                return
+
+            self._write_output(f"\nDirectory listing for: {pattern}\n")
+            self._write_output("-" * 50 + "\n")
+            for filename, size, is_dir in files:
+                if is_dir:
+                    self._write_output(f"{filename:<30}        <DIR>\n")
+                elif size is not None:
+                    self._write_output(f"{filename:<30} {size:>12} bytes\n")
+                else:
+                    self._write_output(f"{filename:<30}            ?\n")
+
+            self._write_output(f"\n{len(files)} file(s)\n")
+
+        except Exception as e:
+            self._write_output(f"?Error listing files: {e}\n")
+
+    def cmd_cont(self):
+        """Execute CONT command - continue after STOP."""
+        # Check if runtime exists and is in stopped state
+        if not hasattr(self, 'runtime') or not self.runtime or not self.runtime.stopped:
+            self._write_output("?Can't continue\n")
+            return
+
+        try:
+            # Clear stopped flag
+            self.runtime.stopped = False
+
+            # Restore execution position
+            self.runtime.current_line = self.runtime.stop_line
+            self.runtime.current_stmt_index = self.runtime.stop_stmt_index
+            self.runtime.halted = False
+
+            # Resume execution
+            self._run_program_continue()
+
+        except Exception as e:
+            self._write_output(f"?Error: {e}\n")
