@@ -152,8 +152,12 @@ class TkHelpBrowser(tk.Toplevel):
         """Load and render a help topic."""
         full_path = self.help_root / relative_path
 
+        print(f"DEBUG _load_topic: relative_path = {relative_path}")
+        print(f"DEBUG _load_topic: full_path = {full_path}")
+        print(f"DEBUG _load_topic: exists = {full_path.exists()}")
+
         if not full_path.exists():
-            self._display_error(f"Help topic not found: {relative_path}")
+            self._display_error(f"Help topic not found: {relative_path}\n(Full path: {full_path})")
             return False
 
         try:
@@ -274,6 +278,9 @@ class TkHelpBrowser(tk.Toplevel):
 
     def _follow_link(self, target: str):
         """Follow a link to another help topic."""
+        # Debug: print what we're trying to follow
+        print(f"DEBUG: Following link '{target}' from '{self.current_topic}'")
+
         # Resolve relative path
         current_dir = Path(self.current_topic).parent
         if str(current_dir) == '.':
@@ -281,17 +288,25 @@ class TkHelpBrowser(tk.Toplevel):
         else:
             new_topic_path = current_dir / target
 
+        print(f"DEBUG: new_topic_path = {new_topic_path}")
+
         # Normalize path (resolve .. and .)
         # Convert to absolute, resolve, then make relative to help_root
         abs_path = (self.help_root / new_topic_path).resolve()
+        print(f"DEBUG: abs_path = {abs_path}")
+        print(f"DEBUG: help_root.resolve() = {self.help_root.resolve()}")
+
         try:
             new_topic = str(abs_path.relative_to(self.help_root.resolve()))
-        except ValueError:
+        except ValueError as e:
             # Path is outside help_root, use as-is
+            print(f"DEBUG: ValueError: {e}, using new_topic_path as-is")
             new_topic = str(new_topic_path)
 
         # Normalize path separators
         new_topic = new_topic.replace('\\', '/')
+
+        print(f"DEBUG: Final new_topic = {new_topic}")
 
         # Save current topic to history
         self.history.append(self.current_topic)
