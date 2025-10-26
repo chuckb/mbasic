@@ -324,19 +324,36 @@ class Interpreter:
                         try:
                             self.state.line_index = self.runtime.line_order.index(target_line)
                             next_line_node = self.runtime.line_table[target_line]
-                            self.state.current_line = target_line
-                            self.runtime.current_line = next_line_node
-                            self.runtime.current_stmt_index = target_stmt_index
-                            self.state.current_statement_index = target_stmt_index
-                            # Highlight the specific statement we're jumping to
-                            if target_stmt_index < len(next_line_node.statements):
+
+                            # Check if stmt_index is past end of line (e.g., RETURN after GOSUB at end of line)
+                            if target_stmt_index >= len(next_line_node.statements):
+                                # Advance to next line
+                                self.state.line_index += 1
+                                self.runtime.current_stmt_index = 0
+                                self.state.current_statement_index = 0
+                                # Update to show first statement of next line
+                                if self.state.line_index < len(self.runtime.line_order):
+                                    next_line_number = self.runtime.line_order[self.state.line_index]
+                                    next_line_node = self.runtime.line_table[next_line_number]
+                                    self.state.current_line = next_line_number
+                                    self.runtime.current_line = next_line_node
+                                    if len(next_line_node.statements) > 0:
+                                        next_stmt = next_line_node.statements[0]
+                                        self.state.current_statement_char_start = getattr(next_stmt, 'char_start', 0)
+                                        self.state.current_statement_char_end = getattr(next_stmt, 'char_end', 0)
+                                else:
+                                    # Past end of program
+                                    self.state.current_statement_char_start = 0
+                                    self.state.current_statement_char_end = 0
+                            else:
+                                # Highlight the specific statement we're jumping to
+                                self.state.current_line = target_line
+                                self.runtime.current_line = next_line_node
+                                self.runtime.current_stmt_index = target_stmt_index
+                                self.state.current_statement_index = target_stmt_index
                                 next_stmt = next_line_node.statements[target_stmt_index]
                                 self.state.current_statement_char_start = getattr(next_stmt, 'char_start', 0)
                                 self.state.current_statement_char_end = getattr(next_stmt, 'char_end', 0)
-                            else:
-                                # Past end of line - no specific statement to highlight
-                                self.state.current_statement_char_start = 0
-                                self.state.current_statement_char_end = 0
                         except ValueError:
                             self.state.status = 'error'
                             self.state.error_info = ErrorInfo(
@@ -431,23 +448,40 @@ class Interpreter:
                         self.runtime.next_stmt_index = None
                     else:
                         stmt_index = 0
-                    self.runtime.current_stmt_index = stmt_index
-                    self.state.current_statement_index = stmt_index
 
                     if self.state.line_index < len(self.runtime.line_order):
                         next_line_number = self.runtime.line_order[self.state.line_index]
                         next_line_node = self.runtime.line_table[next_line_number]
-                        self.state.current_line = next_line_number
-                        self.runtime.current_line = next_line_node
-                        # Highlight the specific statement we're about to execute
-                        if stmt_index < len(next_line_node.statements):
+
+                        # Check if stmt_index is past end of line (e.g., RETURN after GOSUB at end of line)
+                        if stmt_index >= len(next_line_node.statements):
+                            # Advance to next line
+                            self.state.line_index += 1
+                            self.runtime.current_stmt_index = 0
+                            self.state.current_statement_index = 0
+                            # Update to show first statement of next line
+                            if self.state.line_index < len(self.runtime.line_order):
+                                next_line_number = self.runtime.line_order[self.state.line_index]
+                                next_line_node = self.runtime.line_table[next_line_number]
+                                self.state.current_line = next_line_number
+                                self.runtime.current_line = next_line_node
+                                if len(next_line_node.statements) > 0:
+                                    next_stmt = next_line_node.statements[0]
+                                    self.state.current_statement_char_start = getattr(next_stmt, 'char_start', 0)
+                                    self.state.current_statement_char_end = getattr(next_stmt, 'char_end', 0)
+                            else:
+                                # Past end of program
+                                self.state.current_statement_char_start = 0
+                                self.state.current_statement_char_end = 0
+                        else:
+                            # Highlight the specific statement we're about to execute
+                            self.state.current_line = next_line_number
+                            self.runtime.current_line = next_line_node
+                            self.runtime.current_stmt_index = stmt_index
+                            self.state.current_statement_index = stmt_index
                             next_stmt = next_line_node.statements[stmt_index]
                             self.state.current_statement_char_start = getattr(next_stmt, 'char_start', 0)
                             self.state.current_statement_char_end = getattr(next_stmt, 'char_end', 0)
-                        else:
-                            # Past end of line - no specific statement to highlight
-                            self.state.current_statement_char_start = 0
-                            self.state.current_statement_char_end = 0
                     self.state.status = 'paused'
                     return self.state
 
