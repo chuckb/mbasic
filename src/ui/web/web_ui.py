@@ -598,7 +598,9 @@ class MBasicWebIDE:
             if result == 'BREAK':
                 # Hit breakpoint
                 self.paused_at_breakpoint = True
-                self.status_label.text = f'Paused at breakpoint (line {self.interpreter.current_line_number})'
+                state = self.interpreter.state
+                stmt_info = f' statement {state.current_statement_index + 1}' if state.current_statement_index > 0 else ''
+                self.status_label.text = f'Paused at breakpoint (line {self.interpreter.current_line_number}{stmt_info})'
                 ui.notify(f'Breakpoint at line {self.interpreter.current_line_number}', type='info')
                 self.running = False
                 self.update_immediate_status()
@@ -613,7 +615,10 @@ class MBasicWebIDE:
                 self.update_immediate_status()
                 return
 
-            # Continue execution
+            # Continue execution - show current position
+            state = self.interpreter.state
+            stmt_info = f' [stmt {state.current_statement_index + 1}]' if state.current_statement_index > 0 else ''
+            self.status_label.text = f'Running... line {self.interpreter.current_line_number}{stmt_info}'
             ui.timer(0.01, self.execute_ticks, once=True)
 
         except Exception as e:
@@ -638,13 +643,16 @@ class MBasicWebIDE:
             self.update_variables_window()
             self.update_stack_window()
 
+            state = self.interpreter.state
+            stmt_info = f' statement {state.current_statement_index + 1}' if state.current_statement_index > 0 else ''
+
             if result == 'DONE':
                 self.status_label.text = 'Program completed'
                 ui.notify('Program completed', type='positive')
             elif result == 'BREAK':
-                self.status_label.text = f'Breakpoint at line {self.interpreter.current_line_number}'
+                self.status_label.text = f'Breakpoint at line {self.interpreter.current_line_number}{stmt_info}'
             else:
-                self.status_label.text = f'Line {self.interpreter.current_line_number}'
+                self.status_label.text = f'Paused at line {self.interpreter.current_line_number}{stmt_info}'
 
         except Exception as e:
             error_msg = f'Error: {str(e)}'
