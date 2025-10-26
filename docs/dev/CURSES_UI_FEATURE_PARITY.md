@@ -373,6 +373,46 @@ self.variables_sort_mode = 'name'  # 'name', 'accessed', 'written', 'read', 'typ
 self.variables_sort_reverse = False  # False=ascending, True=descending
 ```
 
+## Known Issues to Check
+
+### Line Number Formatting and Statement Highlighting
+
+**Issue discovered in Tk UI (2025-10-26)**: Statement highlighting was off by one character because the code was trying to add leading spaces formatting to line numbers, which breaks MBASIC compatibility.
+
+**What was wrong in Tk UI**:
+- Attempted to format lines with leading spaces: `f"{line_num:>5} {code}"`
+- Example: "20 PRINT I" → "   20 PRINT I" (added 3 leading spaces)
+- This broke:
+  1. Compatibility with real MBASIC (saved files would have wrong spacing)
+  2. Consistency across UIs (different UIs would display differently)
+  3. Loop indent nesting (would look different with artificial spacing)
+  4. Statement highlighting (char positions didn't account for leading spaces)
+
+**Correct approach**:
+- Store lines exactly as entered: "20 PRINT I" (no leading spaces)
+- Display lines exactly as stored: "20 PRINT I"
+- char_start/char_end from parser are relative to the stored text
+- Don't add any formatting that changes line structure
+
+**TODO for Curses UI**: ⬜ NOT CHECKED YET
+- [ ] Verify curses UI doesn't add leading spaces to line numbers
+- [ ] Check if statement highlighting works correctly
+- [ ] Test with breakpoints - does highlighting show correct characters?
+- [ ] Verify lines saved from curses UI load correctly in real MBASIC
+- [ ] Check consistency: curses display = stored text = saved file
+
+**Location to check**: `src/ui/curses_ui.py`
+- ProgramEditorWidget - line formatting/display
+- Statement highlighting code
+- Line saving/loading code
+
+**Test case**:
+1. Enter "20 PRINT I" in curses UI
+2. Set breakpoint and run
+3. When stopped, verify "PRINT I" is highlighted (not "RINT I" or wrong chars)
+4. Save program and verify no extra leading spaces in file
+5. Load file in real MBASIC and verify it looks the same
+
 ## Future Enhancements
 
 ### Advanced Sorting
