@@ -283,7 +283,8 @@ class TkBackend(UIBackend):
 
         # Additional keyboard shortcuts not in config
         self.root.bind('<Control-b>', lambda e: self._toggle_breakpoint())
-        self.root.bind('<Control-i>', lambda e: (self._smart_insert_line(), 'break')[1])
+        # Ctrl+I must be bound to text widget to prevent tab insertion
+        self.editor_text.text.bind('<Control-i>', lambda e: self._on_ctrl_i())
 
     def _create_toolbar(self):
         """Create toolbar with common actions."""
@@ -1468,6 +1469,14 @@ class TkBackend(UIBackend):
             f'{current_line_index}.0',
             f'{current_line_index}.end'
         )
+
+    def _on_ctrl_i(self):
+        """Handle Ctrl+I - smart insert line.
+
+        Returns 'break' to prevent tab insertion.
+        """
+        self._smart_insert_line()
+        return 'break'
 
     def _smart_insert_line(self):
         """Smart insert - insert blank line between current and next line.
