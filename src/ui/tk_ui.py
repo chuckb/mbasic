@@ -1190,12 +1190,21 @@ class TkBackend(UIBackend):
         This makes line numbers copyable with the code.
         """
         import tkinter as tk
+        import re
 
         self.editor_text.text.delete(1.0, tk.END)
         for line_num, line_text in self.program.get_lines():
             # line_text already includes the line number
-            # Just ensure consistent formatting
-            self.editor_text.text.insert(tk.END, line_text + "\n")
+            # Format with right-aligned 5-digit line number for consistency
+            # Extract code after line number
+            match = re.match(r'^\s*\d+\s*(.*)', line_text)
+            if match:
+                code = match.group(1)
+                formatted_line = f"{line_num:>5} {code}"
+            else:
+                # Fallback if parse fails
+                formatted_line = line_text
+            self.editor_text.text.insert(tk.END, formatted_line + "\n")
 
         # Clear error indicators
         self.editor_text.clear_all_errors()
@@ -1210,16 +1219,18 @@ class TkBackend(UIBackend):
         # Parse each line from editor and track errors
         editor_content = self.editor_text.text.get(1.0, tk.END)
         for line in editor_content.split('\n'):
-            line = line.strip()
-            if not line:
+            line_stripped = line.strip()
+            if not line_stripped:
                 continue
 
-            # Try to parse line number
+            # Try to parse line number from stripped version
             import re
-            match = re.match(r'^(\d+)(?:\s|$)', line)  # Whitespace or end of string
+            match = re.match(r'^(\d+)(?:\s|$)', line_stripped)  # Whitespace or end of string
             if match:
                 line_num = int(match.group(1))
-                success, error = self.program.add_line(line_num, line)
+                # Save the original line (with formatting), not stripped
+                # This preserves trailing spaces for blank lines like "25 "
+                success, error = self.program.add_line(line_num, line.rstrip('\r\n'))
                 if not success:
                     self._add_output(f"Parse error at line {line_num}: {error}\n")
                     # Mark line as having error
