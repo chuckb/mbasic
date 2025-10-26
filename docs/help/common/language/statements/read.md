@@ -1,8 +1,18 @@
 ---
 category: data
-description: NEEDS_DESCRIPTION
+description: To read values from a DATA statement and assign them to variables
 keywords:
-- NEEDS_KEYWORDS
+- array
+- command
+- data
+- error
+- for
+- if
+- line
+- next
+- number
+- print
+syntax: READ <list of variables>
 title: READ
 type: statement
 ---

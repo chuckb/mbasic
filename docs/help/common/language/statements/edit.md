@@ -1,8 +1,18 @@
 ---
 category: editing
-description: NEEDS_DESCRIPTION
+description: To enter Edit Mode at the specified line
 keywords:
-- NEEDS_KEYWORDS
+- close
+- command
+- edit
+- error
+- execute
+- for
+- function
+- if
+- line
+- next
+syntax: EDIT <line number>
 title: EDIT
 type: statement
 ---

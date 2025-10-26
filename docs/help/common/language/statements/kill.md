@@ -1,8 +1,18 @@
 ---
 category: file-management
-description: NEEDS_DESCRIPTION
+description: To delete a file from disk
 keywords:
-- NEEDS_KEYWORDS
+- command
+- data
+- error
+- file
+- for
+- if
+- kill
+- open
+- program
+- read
+syntax: KILL <filename>
 title: KILL
 type: statement
 ---

@@ -1,8 +1,18 @@
 ---
 category: system
-description: NEEDS_DESCRIPTION
+description: To trace the execution of program statements
 keywords:
-- NEEDS_KEYWORDS
+- close
+- command
+- execute
+- for
+- line
+- next
+- number
+- print
+- program
+- statement
+syntax: TRON
 title: TRON/TROFF
 type: statement
 ---

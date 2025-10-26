@@ -1,8 +1,16 @@
 ---
 category: mathematical
-description: NEEDS_DESCRIPTION
+description: Returns the truncated integer part of X
 keywords:
-- NEEDS_KEYWORDS
+- fix
+- for
+- function
+- if
+- next
+- number
+- print
+- return
+syntax: FIX(X)
 title: FIX
 type: function
 ---

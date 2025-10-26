@@ -1,8 +1,19 @@
 ---
 category: file-io
-description: NEEDS_DESCRIPTION
+description: With random disk files, LOC returns the next record number to be used
+  if a GET or PUT (without a record number)   is executed
 keywords:
-- NEEDS_KEYWORDS
+- execute
+- file
+- function
+- get
+- if
+- loc
+- next
+- number
+- open
+- put
+syntax: LOC«file number»
 title: LOC
 type: function
 ---

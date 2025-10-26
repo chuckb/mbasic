@@ -1,8 +1,18 @@
 ---
 category: functions
-description: NEEDS_DESCRIPTION
+description: To define and name a function that is written by the user
 keywords:
-- NEEDS_KEYWORDS
+- command
+- def
+- error
+- execute
+- for
+- function
+- if
+- line
+- program
+- return
+syntax: DEF FN<name>[«parameter list>}]=<function definition>
 title: DEF FN
 type: statement
 ---

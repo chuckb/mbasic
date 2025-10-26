@@ -1,8 +1,17 @@
 ---
 category: file-management
-description: NEEDS_DESCRIPTION
+description: To save a program file on disk
 keywords:
-- NEEDS_KEYWORDS
+- command
+- file
+- for
+- if
+- program
+- read
+- save
+- statement
+- string
+syntax: SAVE <filename> [,A   I ,P]
 title: SAVE
 type: statement
 ---

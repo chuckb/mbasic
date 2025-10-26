@@ -1,8 +1,17 @@
 ---
 category: system
-description: NEEDS_DESCRIPTION
+description: Returns the byte read from port I
 keywords:
-- NEEDS_KEYWORDS
+- complementary
+- for
+- function
+- if
+- inp
+- out
+- read
+- return
+- statement
+syntax: INP (I)
 title: INP
 type: function
 ---

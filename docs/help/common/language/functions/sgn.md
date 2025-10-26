@@ -2,7 +2,13 @@
 category: mathematical
 description: NEEDS_DESCRIPTION
 keywords:
-- NEEDS_KEYWORDS
+- branch
+- function
+- goto
+- if
+- return
+- sgn
+syntax: SGN(X)
 title: SGN
 type: function
 ---

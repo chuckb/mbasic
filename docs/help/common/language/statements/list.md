@@ -1,8 +1,18 @@
 ---
 category: editing
-description: NEEDS_DESCRIPTION
+description: To list all or part of the program currently            in memory at
+  the terminal
 keywords:
-- NEEDS_KEYWORDS
+- command
+- execute
+- for
+- if
+- line
+- list
+- number
+- program
+- return
+- statement
 title: LIST
 type: statement
 ---

@@ -1,8 +1,18 @@
 ---
 category: file-io
-description: NEEDS_DESCRIPTION
+description: To conclude I/O to a disk file
 keywords:
-- NEEDS_KEYWORDS
+- close
+- command
+- file
+- for
+- if
+- number
+- open
+- put
+- statement
+- then
+syntax: CLOSE[[#]<file number>[,[#]<file number ••• >]]
 title: CLOSE
 type: statement
 ---

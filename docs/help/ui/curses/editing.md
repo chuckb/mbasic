@@ -1,7 +1,16 @@
 ---
 description: NEEDS_DESCRIPTION
 keywords:
-- NEEDS_KEYWORDS
+- command
+- curses
+- editing
+- execute
+- file
+- for
+- if
+- line
+- next
+- number
 title: Editing Programs in Curses UI
 type: guide
 ---

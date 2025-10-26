@@ -1,8 +1,13 @@
 ---
 category: string
-description: NEEDS_DESCRIPTION
+description: Returns the number of      characters   in   X$
 keywords:
-- NEEDS_KEYWORDS
+- function
+- len
+- number
+- print
+- return
+syntax: LEN (X$)
 title: LEN
 type: function
 ---

@@ -1,8 +1,19 @@
 ---
 category: NEEDS_CATEGORIZATION
-description: NEEDS_DESCRIPTION
+description: Convert numeric values to string values
 keywords:
-- NEEDS_KEYWORDS
+- complementary
+- field
+- file
+- for
+- function
+- mkd
+- mki
+- mks
+- number
+- poke
+syntax: MKI$«integer expression» MKS$«single precision expression» MKD$«double precision
+  expression» OCT$ (X) PEEK (I)
 title: MKI$, MKS$, MKD$
 type: function
 ---

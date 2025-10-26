@@ -1,8 +1,18 @@
 ---
 category: string
-description: NEEDS_DESCRIPTION
+description: Returns a numerical value that is the ASCII code of the first character
+  of the string X$
 keywords:
-- NEEDS_KEYWORDS
+- asc
+- error
+- for
+- function
+- if
+- illegal
+- print
+- return
+- string
+syntax: ASC (X$)
 title: ASC
 type: function
 ---

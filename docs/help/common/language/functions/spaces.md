@@ -1,8 +1,15 @@
 ---
 category: NEEDS_CATEGORIZATION
-description: NEEDS_DESCRIPTION
+description: Returns a string of spaces of length X
 keywords:
-- NEEDS_KEYWORDS
+- for
+- function
+- next
+- print
+- return
+- spaces
+- string
+syntax: SPACE$(X)
 title: SPACES
 type: function
 ---

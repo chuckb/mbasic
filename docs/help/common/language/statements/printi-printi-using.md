@@ -1,8 +1,18 @@
 ---
 category: file-io
-description: NEEDS_DESCRIPTION
+description: To write data to a sequential disk file
 keywords:
-- NEEDS_KEYWORDS
+- command
+- data
+- field
+- file
+- for
+- if
+- input
+- line
+- number
+- open
+syntax: PRINTt<filenumb~r>,[USING<string      exp>;]<list of exps>
 title: PRINTi AND PRINTi USING
 type: statement
 ---

@@ -1,8 +1,19 @@
 ---
 category: data
-description: NEEDS_DESCRIPTION
+description: To store the numeric and string constants that are accessed by the program~s
+  READ statement(s)
 keywords:
-- NEEDS_KEYWORDS
+- command
+- data
+- for
+- if
+- line
+- number
+- program
+- read
+- statement
+- string
+syntax: DATA <list of constants>
 title: DATA
 type: statement
 ---

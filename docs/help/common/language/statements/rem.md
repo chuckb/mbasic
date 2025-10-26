@@ -1,8 +1,18 @@
 ---
 category: system
-description: NEEDS_DESCRIPTION
+description: To allow explanatory remarks to be inserted in a program
 keywords:
-- NEEDS_KEYWORDS
+- branch
+- command
+- execute
+- for
+- gosub
+- goto
+- line
+- next
+- program
+- put
+syntax: REM <remark>
 title: REM
 type: statement
 ---

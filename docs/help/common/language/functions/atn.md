@@ -1,8 +1,15 @@
 ---
 category: mathematical
-description: NEEDS_DESCRIPTION
+description: Returns the arctangent of X in radians
 keywords:
-- NEEDS_KEYWORDS
+- atn
+- for
+- function
+- input
+- print
+- put
+- return
+syntax: ATN(X)
 title: ATN
 type: function
 ---

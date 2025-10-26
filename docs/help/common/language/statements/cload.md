@@ -1,8 +1,17 @@
 ---
 category: NEEDS_CATEGORIZATION
-description: NEEDS_DESCRIPTION
+description: To load a program or an array from cassette tape into memory
 keywords:
-- NEEDS_KEYWORDS
+- array
+- cload
+- command
+- data
+- dec
+- dim
+- execute
+- file
+- for
+- if
 title: CLOAD THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION
 type: statement
 ---

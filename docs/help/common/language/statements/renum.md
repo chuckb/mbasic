@@ -1,8 +1,18 @@
 ---
 category: editing
-description: NEEDS_DESCRIPTION
+description: To renumber program lines
 keywords:
-- NEEDS_KEYWORDS
+- command
+- data
+- error
+- execute
+- for
+- function
+- gosub
+- goto
+- if
+- line
+syntax: RENUM [[<new number>] [,[<old number>] [,<increment>]]]
 title: RENUM
 type: statement
 ---

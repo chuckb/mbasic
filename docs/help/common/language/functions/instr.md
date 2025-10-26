@@ -1,8 +1,19 @@
 ---
 category: string
-description: NEEDS_DESCRIPTION
+description: Searches for the first occurrence of string Y$ in X$ and returns the
+  position at which the match is found
 keywords:
-- NEEDS_KEYWORDS
+- error
+- for
+- function
+- if
+- instr
+- line
+- number
+- print
+- return
+- string
+syntax: INSTR ( [I, ] X$, Y$)
 title: INSTR
 type: function
 ---

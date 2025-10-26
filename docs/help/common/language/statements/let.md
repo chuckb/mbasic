@@ -1,8 +1,12 @@
 ---
 category: variables
-description: NEEDS_DESCRIPTION
+description: To assign     the   value   of   an   expression   to   a variable
 keywords:
-- NEEDS_KEYWORDS
+- command
+- let
+- statement
+- variable
+syntax: '[LET] <variable>=<expression>'
 title: LET
 type: statement
 ---

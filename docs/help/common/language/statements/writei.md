@@ -1,8 +1,18 @@
 ---
 category: input-output
-description: NEEDS_DESCRIPTION
+description: To write data to a sequential file
 keywords:
-- NEEDS_KEYWORDS
+- array
+- branch
+- close
+- command
+- condition
+- data
+- dim
+- else
+- error
+- execute
+syntax: WRITEi<fi1e number>,<list of expressions>
 title: WRITEi
 type: statement
 ---

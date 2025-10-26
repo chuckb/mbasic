@@ -1,8 +1,14 @@
 ---
 category: system
-description: NEEDS_DESCRIPTION
+description: Arguments to FRE are dummy arguments
 keywords:
-- NEEDS_KEYWORDS
+- for
+- fre
+- function
+- number
+- print
+- return
+syntax: FRE(O) FRE (X$)
 title: FRE
 type: function
 ---

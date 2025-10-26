@@ -1,8 +1,15 @@
 ---
 category: NEEDS_CATEGORIZATION
-description: NEEDS_DESCRIPTION
+description: Returns a string whose one element has ASCII code I
 keywords:
-- NEEDS_KEYWORDS
+- crr
+- error
+- for
+- function
+- print
+- return
+- string
+syntax: CHR$(I)
 title: CRR$
 type: function
 ---

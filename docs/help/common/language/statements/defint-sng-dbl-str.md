@@ -1,8 +1,19 @@
 ---
 category: NEEDS_CATEGORIZATION
-description: NEEDS_DESCRIPTION
+description: To declare variable types as integer,        single precision, double
+  precision, or string
 keywords:
-- NEEDS_KEYWORDS
+- command
+- dbl
+- defint
+- for
+- if
+- number
+- program
+- sng
+- statement
+- str
+syntax: DEF<type> <range(s) of letters>
 title: DEFINT/SNG/DBL/STR
 type: statement
 ---

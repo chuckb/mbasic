@@ -1,7 +1,16 @@
 ---
 description: NEEDS_DESCRIPTION
 keywords:
-- NEEDS_KEYWORDS
+- condition
+- data
+- else
+- error
+- expressions
+- for
+- function
+- goto
+- if
+- number
 title: Operators and Expressions
 type: guide
 ---

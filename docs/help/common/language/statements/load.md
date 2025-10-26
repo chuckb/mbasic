@@ -1,8 +1,18 @@
 ---
 category: file-management
-description: NEEDS_DESCRIPTION
+description: To load a file from disk into memory
 keywords:
-- NEEDS_KEYWORDS
+- close
+- command
+- data
+- file
+- for
+- if
+- line
+- load
+- open
+- program
+syntax: LOAD <filename>[,R]
 title: LOAD
 type: statement
 ---

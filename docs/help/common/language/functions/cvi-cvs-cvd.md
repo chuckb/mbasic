@@ -1,8 +1,18 @@
 ---
 category: NEEDS_CATEGORIZATION
-description: NEEDS_DESCRIPTION
+description: Convert string values     to   numeric   values
 keywords:
-- NEEDS_KEYWORDS
+- cvd
+- cvi
+- cvs
+- field
+- file
+- function
+- get
+- number
+- read
+- string
+syntax: CVI«2-byte string» CVS«4-byte string» CVD«8-byte string»
 title: CVI, CVS, CVD
 type: function
 ---

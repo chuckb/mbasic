@@ -1,8 +1,19 @@
 ---
 category: control-flow
-description: NEEDS_DESCRIPTION
+description: To branch to one of several specified line numbers, depending on the
+  value returned when an expression is evaluated
 keywords:
-- NEEDS_KEYWORDS
+- branch
+- command
+- error
+- for
+- function
+- gosub
+- goto
+- if
+- line
+- next
+syntax: ON <expression> GOTO <list of line numbers>
 title: ON ••• GOSUB AND ON ••• GOTO
 type: statement
 ---

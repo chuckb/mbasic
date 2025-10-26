@@ -1,8 +1,19 @@
 ---
 category: NEEDS_CATEGORIZATION
-description: NEEDS_DESCRIPTION
+description: To read data items from a sequential disk    file and assign them to
+  program variables
 keywords:
-- NEEDS_KEYWORDS
+- command
+- data
+- file
+- for
+- if
+- input
+- line
+- number
+- open
+- print
+syntax: INPUT#<file number>,<variable list>
 title: INPUT#
 type: statement
 ---

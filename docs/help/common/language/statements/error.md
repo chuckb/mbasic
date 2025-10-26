@@ -1,8 +1,19 @@
 ---
 category: error-handling
-description: NEEDS_DESCRIPTION
+description: 1) To simulate the occurrence of a BASIC-80 error1   or 2) to allow error
+  codes to be defined by the user
 keywords:
-- NEEDS_KEYWORDS
+- command
+- error
+- for
+- goto
+- if
+- input
+- line
+- print
+- put
+- read
+syntax: ERROR <integer expression>
 title: ERROR
 type: statement
 ---

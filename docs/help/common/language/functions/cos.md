@@ -1,8 +1,15 @@
 ---
 category: mathematical
-description: NEEDS_DESCRIPTION
+description: Returns the cosine of X in radians
 keywords:
-- NEEDS_KEYWORDS
+- cos
+- data
+- for
+- function
+- number
+- print
+- return
+syntax: COS (X) CSNG (X)
 title: COS
 type: function
 ---

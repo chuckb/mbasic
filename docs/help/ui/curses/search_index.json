@@ -51,18 +51,71 @@
     }
   ],
   "keywords": {
-    "needs_keywords": [
+    "command": [
       "editing.md",
       "files.md",
       "keyboard-commands.md"
     ],
+    "curses": [
+      "editing.md",
+      "files.md",
+      "keyboard-commands.md",
+      "getting-started.md"
+    ],
+    "editing": [
+      "editing.md"
+    ],
+    "execute": [
+      "editing.md",
+      "running.md"
+    ],
+    "file": [
+      "editing.md",
+      "files.md",
+      "keyboard-commands.md"
+    ],
+    "for": [
+      "editing.md",
+      "files.md",
+      "keyboard-commands.md"
+    ],
+    "if": [
+      "editing.md",
+      "files.md"
+    ],
+    "line": [
+      "editing.md",
+      "files.md",
+      "keyboard-commands.md"
+    ],
+    "next": [
+      "editing.md",
+      "files.md",
+      "keyboard-commands.md"
+    ],
+    "number": [
+      "editing.md",
+      "files.md"
+    ],
+    "error": [
+      "files.md",
+      "keyboard-commands.md"
+    ],
+    "operations": [
+      "files.md"
+    ],
+    "commands": [
+      "keyboard-commands.md",
+      "quick-reference.md"
+    ],
+    "function": [
+      "keyboard-commands.md"
+    ],
     "keyboard": [
+      "keyboard-commands.md",
       "quick-reference.md"
     ],
     "shortcuts": [
-      "quick-reference.md"
-    ],
-    "commands": [
       "quick-reference.md"
     ],
     "ctrl": [
@@ -98,9 +151,6 @@
     "run": [
       "running.md"
     ],
-    "execute": [
-      "running.md"
-    ],
     "output": [
       "running.md"
     ],
@@ -129,9 +179,6 @@
       "getting-started.md"
     ],
     "hello world": [
-      "getting-started.md"
-    ],
-    "curses": [
       "getting-started.md"
     ]
   },

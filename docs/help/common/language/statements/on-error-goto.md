@@ -1,8 +1,19 @@
 ---
 category: error-handling
-description: NEEDS_DESCRIPTION
+description: To enable error trapping and specify the   first line of the error handling
+  subroutine
 keywords:
-- NEEDS_KEYWORDS
+- command
+- error
+- execute
+- for
+- goto
+- if
+- line
+- number
+- print
+- statement
+syntax: ON ERROR GOTO <line number>
 title: ON ERROR GOTO
 type: statement
 ---

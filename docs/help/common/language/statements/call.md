@@ -1,8 +1,18 @@
 ---
 category: hardware
-description: NEEDS_DESCRIPTION
+description: To call an assembly language subroutine
 keywords:
-- NEEDS_KEYWORDS
+- array
+- call
+- command
+- execute
+- for
+- function
+- program
+- statement
+- subroutine
+- variable
+syntax: CALL <variable name>[«argument list»]
 title: CALL
 type: statement
 ---

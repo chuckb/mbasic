@@ -1,8 +1,12 @@
 ---
 category: string
-description: NEEDS_DESCRIPTION
+description: Prints I blanks on the terminal
 keywords:
-- NEEDS_KEYWORDS
+- function
+- print
+- spc
+- statement
+syntax: SPC (I)
 title: SPC
 type: function
 ---

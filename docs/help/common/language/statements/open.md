@@ -1,8 +1,18 @@
 ---
 category: file-io
-description: NEEDS_DESCRIPTION
+description: To allow I/O to a disk file
 keywords:
-- NEEDS_KEYWORDS
+- command
+- file
+- for
+- if
+- input
+- number
+- open
+- put
+- statement
+- string
+syntax: OPEN <mode>, [#]<file number>,<filename>, [<reclen>]
 title: OPEN
 type: statement
 ---

@@ -1,8 +1,12 @@
 ---
 category: NEEDS_CATEGORIZATION
-description: NEEDS_DESCRIPTION
+description: Converts X to a double precision number
 keywords:
-- NEEDS_KEYWORDS
+- cobl
+- function
+- number
+- print
+syntax: COBL(X)
 title: COBL
 type: function
 ---

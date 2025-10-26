@@ -1,8 +1,18 @@
 ---
 category: file-management
-description: NEEDS_DESCRIPTION
+description: To merge a specified disk file into the      program currently in memory
 keywords:
-- NEEDS_KEYWORDS
+- command
+- error
+- file
+- for
+- if
+- line
+- merge
+- number
+- program
+- return
+syntax: MERGE <filename>
 title: MERGE
 type: statement
 ---

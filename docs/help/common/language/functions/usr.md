@@ -1,8 +1,15 @@
 ---
 category: system
-description: NEEDS_DESCRIPTION
+description: Calls the user's assembly language subroutine with the argument X
 keywords:
-- NEEDS_KEYWORDS
+- execute
+- for
+- function
+- if
+- return
+- statement
+- subroutine
+- usr
 title: USR
 type: function
 ---

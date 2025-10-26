@@ -1,8 +1,17 @@
 ---
 category: NEEDS_CATEGORIZATION
-description: NEEDS_DESCRIPTION
+description: Spaces to position I on the terminal
 keywords:
-- NEEDS_KEYWORDS
+- data
+- function
+- if
+- line
+- next
+- print
+- read
+- statement
+- tab
+syntax: TAB (I)
 title: TAB
 type: function
 ---

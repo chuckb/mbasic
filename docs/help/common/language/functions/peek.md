@@ -1,8 +1,19 @@
 ---
 category: system
-description: NEEDS_DESCRIPTION
+description: Returns the byte (decimal integer in the range 0 to 255) read from memory
+  location I
 keywords:
-- NEEDS_KEYWORDS
+- complementary
+- for
+- function
+- gosub
+- if
+- number
+- peek
+- program
+- read
+- return
+syntax: PEEK(I)
 title: PEEK
 type: function
 ---

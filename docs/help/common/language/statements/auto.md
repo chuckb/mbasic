@@ -1,8 +1,18 @@
 ---
 category: editing
-description: NEEDS_DESCRIPTION
+description: To generate a line number   automatically     after every carriage return
 keywords:
-- NEEDS_KEYWORDS
+- auto
+- command
+- for
+- if
+- input
+- line
+- next
+- number
+- print
+- put
+syntax: AUTO [<line number>[,<increment>]]
 title: AUTO
 type: statement
 ---

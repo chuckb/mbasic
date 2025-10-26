@@ -1,8 +1,19 @@
 ---
 category: program-control
-description: NEEDS_DESCRIPTION
+description: To continue program execution after a Control-C has been typed, or a
+  STOP or END statement has been executed
 keywords:
-- NEEDS_KEYWORDS
+- command
+- cont
+- end
+- error
+- execute
+- for
+- goto
+- if
+- input
+- line
+syntax: CONT
 title: CONT
 type: statement
 ---

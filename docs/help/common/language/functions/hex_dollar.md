@@ -1,8 +1,17 @@
 ---
 category: string
-description: NEEDS_DESCRIPTION
+description: Returns    a  string   which   represents   the hexadecimal value of
+  the decimal argument
 keywords:
-- NEEDS_KEYWORDS
+- for
+- function
+- hex
+- input
+- print
+- put
+- return
+- string
+syntax: HEX$ (X) Versionsr     Extended, Disk
 title: HEX$
 type: function
 ---

@@ -1,8 +1,17 @@
 ---
 category: arrays
-description: NEEDS_DESCRIPTION
+description: To declare      the     minimum   value   for   array subscripts
 keywords:
-- NEEDS_KEYWORDS
+- array
+- base
+- command
+- execute
+- for
+- if
+- option
+- statement
+- the
+syntax: OPTION BASE n
 title: OPTION BASE
 type: statement
 ---

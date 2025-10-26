@@ -1,8 +1,19 @@
 ---
 category: hardware
-description: NEEDS_DESCRIPTION
+description: To suspend program execution while      monitoring the status of a machine
+  input port
 keywords:
-- NEEDS_KEYWORDS
+- command
+- data
+- for
+- if
+- input
+- loop
+- next
+- number
+- program
+- put
+syntax: WAIT <port number>, • I[,J]
 title: WAIT
 type: statement
 ---

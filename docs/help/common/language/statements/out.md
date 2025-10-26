@@ -1,8 +1,15 @@
 ---
 category: hardware
-description: NEEDS_DESCRIPTION
+description: To send a byte to a machine output port
 keywords:
-- NEEDS_KEYWORDS
+- command
+- data
+- for
+- number
+- out
+- put
+- statement
+syntax: OUT I,J
 title: OUT
 type: statement
 ---

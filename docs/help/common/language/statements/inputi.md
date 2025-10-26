@@ -1,8 +1,19 @@
 ---
 category: file-io
-description: NEEDS_DESCRIPTION
+description: To read an entire line (up to 254 characters), without delimiters, from
+  a sequential disk data file to a string variable
 keywords:
-- NEEDS_KEYWORDS
+- close
+- command
+- data
+- field
+- file
+- for
+- if
+- input
+- inputi
+- line
+syntax: LINE INPUTi<file number>,<string variable>
 title: ~ INPUTi
 type: statement
 ---

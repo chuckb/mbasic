@@ -1,8 +1,18 @@
 ---
 category: string
-description: NEEDS_DESCRIPTION
+description: Returns the numerical value of string X$
 keywords:
-- NEEDS_KEYWORDS
+- for
+- function
+- if
+- line
+- print
+- read
+- return
+- string
+- then
+- val
+syntax: VAL (X$)
 title: VAL
 type: function
 ---

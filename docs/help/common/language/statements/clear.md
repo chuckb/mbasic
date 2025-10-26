@@ -1,8 +1,17 @@
 ---
 category: program-control
-description: NEEDS_DESCRIPTION
+description: To set all numeric variables to zero and all string variables to null;
+  and, optionally, 'to set the end of memory and the amount of stack space
 keywords:
-- NEEDS_KEYWORDS
+- clear
+- command
+- error
+- for
+- if
+- statement
+- string
+- variable
+syntax: CLEAR [,[<expressionl>] [,<expression2>]]
 title: CLEAR
 type: statement
 ---

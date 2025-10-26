@@ -1,8 +1,17 @@
 ---
 category: strings
-description: NEEDS_DESCRIPTION
+description: To replace a portion of one string with    another string
 keywords:
-- NEEDS_KEYWORDS
+- command
+- function
+- if
+- mid
+- number
+- print
+- return
+- statement
+- string
+syntax: MID$«string expl>,n[,m])=<string exp2>
 title: MID$
 type: statement
 ---

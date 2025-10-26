@@ -1,8 +1,13 @@
 ---
 category: mathematical
-description: NEEDS_DESCRIPTION
+description: Returns e to the power of X
 keywords:
-- NEEDS_KEYWORDS
+- error
+- exp
+- if
+- print
+- return
+syntax: EXP(X)
 title: EXP
 type: function
 ---

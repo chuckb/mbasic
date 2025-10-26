@@ -1,8 +1,18 @@
 ---
 category: file-io
-description: NEEDS_DESCRIPTION
+description: To read a record from a random disk file into    a random buffer
 keywords:
-- NEEDS_KEYWORDS
+- command
+- file
+- get
+- if
+- input
+- line
+- next
+- number
+- open
+- put
+syntax: GET [#]<file number>[,<record number>]
 title: GET
 type: statement
 ---

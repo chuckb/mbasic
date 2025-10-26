@@ -1,7 +1,16 @@
 ---
 description: NEEDS_DESCRIPTION
 keywords:
-- NEEDS_KEYWORDS
+- command
+- commands
+- curses
+- error
+- file
+- for
+- function
+- keyboard
+- line
+- next
 title: Curses UI Keyboard Commands
 type: guide
 ---

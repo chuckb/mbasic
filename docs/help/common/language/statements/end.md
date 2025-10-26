@@ -1,8 +1,19 @@
 ---
 category: program-control
-description: NEEDS_DESCRIPTION
+description: To terminate program execution, close all   files and return to command
+  level
 keywords:
-- NEEDS_KEYWORDS
+- close
+- command
+- else
+- end
+- execute
+- file
+- goto
+- if
+- print
+- program
+syntax: END
 title: END
 type: statement
 ---

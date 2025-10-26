@@ -1,7 +1,16 @@
 ---
 description: NEEDS_DESCRIPTION
 keywords:
-- NEEDS_KEYWORDS
+- architecture
+- array
+- branch
+- command
+- compiler
+- condition
+- dim
+- error
+- execute
+- file
 title: 'MBASIC Architecture: Interpreter and Compiler'
 type: guide
 ---

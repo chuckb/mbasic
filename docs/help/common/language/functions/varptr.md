@@ -1,8 +1,30 @@
 ---
 category: system
-description: NEEDS_DESCRIPTION
+description: 'Format 1: Returns the address of the first byte of data identified with
+  <variable name>'
 keywords:
-- NEEDS_KEYWORDS
+- array
+- branch
+- close
+- command
+- condition
+- data
+- dim
+- else
+- error
+- execute
+syntax: 'FILES[<filename>] Purpose:     To print the names   of   files   residing   on   the
+  current disk. Remarks:     If <filename> is omitted, all the files on the currently   selected   drive   will
+  be listed. <filename> is a string formula which may contain question marks (?) to
+  match any character in the filename or extension. An asterisk (*)   as the first
+  character of the filename or extension will match any file or any extension. Examples:    FILES
+  FILES "*.BAS" FILES "B:*.*" FILES "TEST?BAS" D.4   RESET COMMAND RESET Purpose:     To
+  close all disk files and write the directory information to a diskette before it
+  is removed ,from a disk drive. Remarks:     Always execute a RESET command before
+  removing a diskette from a disk drive. Otherwise, when the diskette is used again,
+  it will not have the current directory information written on the directory track.
+  RES~T closes all open files on all drives and writes the directory track to every
+  diskette with open files. Page 0-4 0.5   LOF FUNCTION LOF«file number»'
 title: VARPTR
 type: function
 ---

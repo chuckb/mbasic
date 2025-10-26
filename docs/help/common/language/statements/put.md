@@ -1,8 +1,18 @@
 ---
 category: file-io
-description: NEEDS_DESCRIPTION
+description: To write a record from   a   random   buffer   to   a random
 keywords:
-- NEEDS_KEYWORDS
+- command
+- error
+- field
+- file
+- for
+- if
+- next
+- number
+- open
+- print
+syntax: PUT (#]<file number>(,<record number>]
 title: PUT
 type: statement
 ---

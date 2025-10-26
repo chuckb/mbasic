@@ -1,8 +1,18 @@
 ---
 category: file-io
-description: NEEDS_DESCRIPTION
+description: Returns -1 (true) if the end of a sequential file has been reached
 keywords:
-- NEEDS_KEYWORDS
+- data
+- eof
+- error
+- file
+- for
+- function
+- goto
+- if
+- input
+- number
+syntax: EOF«file number»
 title: EOF
 type: function
 ---

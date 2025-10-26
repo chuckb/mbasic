@@ -1,8 +1,14 @@
 ---
 category: file-management
-description: NEEDS_DESCRIPTION
+description: To change the name of a disk file
 keywords:
-- NEEDS_KEYWORDS
+- command
+- error
+- file
+- for
+- name
+- statement
+syntax: NAME <old filename> AS <new filename>
 title: NAME
 type: statement
 ---

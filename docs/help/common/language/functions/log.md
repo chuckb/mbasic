@@ -1,8 +1,12 @@
 ---
 category: mathematical
-description: NEEDS_DESCRIPTION
+description: Returns the-natural logarithm of X
 keywords:
-- NEEDS_KEYWORDS
+- function
+- log
+- print
+- return
+syntax: LOG (X)
 title: LOG
 type: function
 ---

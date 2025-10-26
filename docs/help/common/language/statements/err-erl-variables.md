@@ -2,7 +2,11 @@
 category: NEEDS_CATEGORIZATION
 description: NEEDS_DESCRIPTION
 keywords:
-- NEEDS_KEYWORDS
+- erl
+- err
+- statement
+- variable
+- variables
 title: ERR AND ERL VARIABLES
 type: statement
 ---

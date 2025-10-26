@@ -1,8 +1,19 @@
 ---
 category: program-control
-description: NEEDS_DESCRIPTION
+description: To call a program and pass variables to it            from the current
+  program
 keywords:
-- NEEDS_KEYWORDS
+- chain
+- command
+- file
+- for
+- function
+- if
+- line
+- number
+- open
+- program
+syntax: CHAIN [MERGE] <filename>[,[<line number exp>]
 title: CHAIN
 type: statement
 ---

@@ -1,8 +1,19 @@
 ---
 category: system
-description: NEEDS_DESCRIPTION
+description: To set the printed line width in number        of characters for the
+  terminal or line printer
 keywords:
-- NEEDS_KEYWORDS
+- command
+- for
+- function
+- if
+- line
+- number
+- print
+- return
+- statement
+- width
+syntax: WIDTH [LPRINT] <integer expression>
 title: WIDTH
 type: statement
 ---

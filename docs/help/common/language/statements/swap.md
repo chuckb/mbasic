@@ -1,8 +1,16 @@
 ---
 category: variables
-description: NEEDS_DESCRIPTION
+description: To exchange the values of two variables
 keywords:
-- NEEDS_KEYWORDS
+- command
+- error
+- for
+- print
+- statement
+- string
+- swap
+- variable
+syntax: SWAP <variab1e>,<variab1e>
 title: SWAP
 type: statement
 ---

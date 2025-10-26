@@ -1,8 +1,18 @@
 ---
 category: hardware
-description: NEEDS_DESCRIPTION
+description: To write a byte into a memory location
 keywords:
-- NEEDS_KEYWORDS
+- command
+- data
+- for
+- function
+- if
+- number
+- poke
+- put
+- read
+- statement
+syntax: POKE I,J
 title: POKE
 type: statement
 ---

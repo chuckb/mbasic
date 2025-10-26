@@ -1,8 +1,12 @@
 ---
 category: mathematical
-description: NEEDS_DESCRIPTION
+description: Returns the sine of X in radians
 keywords:
-- NEEDS_KEYWORDS
+- function
+- print
+- return
+- sin
+syntax: SIN(X)
 title: SIN
 type: function
 ---

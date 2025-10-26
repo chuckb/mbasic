@@ -1,8 +1,18 @@
 ---
 category: editing
-description: NEEDS_DESCRIPTION
+description: To delete program lines
 keywords:
-- NEEDS_KEYWORDS
+- command
+- delete
+- error
+- execute
+- function
+- if
+- line
+- number
+- program
+- return
+syntax: DELETE[<line number>] [-<line number>]
 title: DELETE
 type: statement
 ---

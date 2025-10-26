@@ -1,8 +1,13 @@
 ---
 category: mathematical
-description: NEEDS_DESCRIPTION
+description: Returns the tangent of X in radians
 keywords:
-- NEEDS_KEYWORDS
+- error
+- function
+- if
+- return
+- tan
+syntax: TAN (X)
 title: TAN
 type: function
 ---

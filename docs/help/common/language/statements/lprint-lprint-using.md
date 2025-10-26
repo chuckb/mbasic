@@ -1,8 +1,18 @@
 ---
 category: NEEDS_CATEGORIZATION
-description: NEEDS_DESCRIPTION
+description: To print data at the line printer
 keywords:
-- NEEDS_KEYWORDS
+- command
+- data
+- field
+- file
+- for
+- function
+- if
+- line
+- lprint
+- print
+syntax: LPRINT [<list of expressions>]
 title: LPRINT AND LPRINT USING
 type: statement
 ---

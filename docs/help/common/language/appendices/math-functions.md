@@ -1,7 +1,15 @@
 ---
 description: NEEDS_DESCRIPTION
 keywords:
-- NEEDS_KEYWORDS
+- for
+- function
+- functions
+- input
+- mathematical
+- operator
+- print
+- put
+- statement
 title: Mathematical Functions
 type: reference
 ---

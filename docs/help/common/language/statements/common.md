@@ -1,8 +1,15 @@
 ---
 category: program-control
-description: NEEDS_DESCRIPTION
+description: To pass variables to a CHAINed program
 keywords:
-- NEEDS_KEYWORDS
+- array
+- command
+- common
+- if
+- program
+- statement
+- variable
+syntax: COMMON <list of variables>
 title: COMMON
 type: statement
 ---

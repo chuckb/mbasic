@@ -1,8 +1,16 @@
 ---
 category: file-io
-description: NEEDS_DESCRIPTION
+description: Returns the current position of the line printer print head within the
+  line printer buffer
 keywords:
-- NEEDS_KEYWORDS
+- function
+- if
+- line
+- lpos
+- print
+- return
+- then
+syntax: LPOS(X)
 title: LPOS
 type: function
 ---

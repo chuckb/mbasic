@@ -85,7 +85,34 @@
     "error handling": [
       "features.md"
     ],
-    "needs_keywords": [
+    "architecture": [
+      "architecture.md"
+    ],
+    "array": [
+      "architecture.md"
+    ],
+    "branch": [
+      "architecture.md"
+    ],
+    "command": [
+      "architecture.md"
+    ],
+    "compiler": [
+      "architecture.md"
+    ],
+    "condition": [
+      "architecture.md"
+    ],
+    "dim": [
+      "architecture.md"
+    ],
+    "error": [
+      "architecture.md"
+    ],
+    "execute": [
+      "architecture.md"
+    ],
+    "file": [
       "architecture.md"
     ]
   },

@@ -1,8 +1,16 @@
 ---
 category: mathematical
-description: NEEDS_DESCRIPTION
+description: Returns a random number between 0 and 1
 keywords:
-- NEEDS_KEYWORDS
+- for
+- function
+- next
+- number
+- print
+- program
+- return
+- rnd
+syntax: RND [ (X) ]
 title: RND
 type: function
 ---

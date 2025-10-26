@@ -1,8 +1,19 @@
 ---
 category: system
-description: NEEDS_DESCRIPTION
+description: Returns either a one-character string cont~ining a character read from
+  the terminal or a null string if no character is pending at          the terminal
 keywords:
-- NEEDS_KEYWORDS
+- for
+- function
+- if
+- inkey
+- input
+- next
+- program
+- put
+- read
+- return
+syntax: INKEY$
 title: INKEY$
 type: function
 ---

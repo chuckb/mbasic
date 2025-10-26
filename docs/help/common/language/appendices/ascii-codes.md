@@ -1,7 +1,16 @@
 ---
 description: NEEDS_DESCRIPTION
 keywords:
-- NEEDS_KEYWORDS
+- ascii
+- character
+- codes
+- data
+- file
+- for
+- function
+- get
+- if
+- input
 title: ASCII Character Codes
 type: reference
 ---

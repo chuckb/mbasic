@@ -1,8 +1,18 @@
 ---
 category: system
-description: NEEDS_DESCRIPTION
+description: To set the number of nulls to be printed at   the end of each line
 keywords:
-- NEEDS_KEYWORDS
+- command
+- for
+- goto
+- if
+- input
+- line
+- 'null'
+- number
+- print
+- put
+syntax: NULL <integer expression>
 title: 'NULL'
 type: statement
 ---

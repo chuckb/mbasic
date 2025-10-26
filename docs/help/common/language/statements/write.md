@@ -1,8 +1,18 @@
 ---
 category: input-output
-description: NEEDS_DESCRIPTION
+description: To output data at the terminal
 keywords:
-- NEEDS_KEYWORDS
+- command
+- data
+- for
+- if
+- line
+- print
+- put
+- return
+- statement
+- string
+syntax: WRITE[<list of expressions»
 title: WRITE
 type: statement
 ---

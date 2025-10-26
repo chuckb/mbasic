@@ -1,8 +1,17 @@
 ---
 category: type-conversion
-description: NEEDS_DESCRIPTION
+description: Converts X to an integer by rounding         the fractional portion
 keywords:
-- NEEDS_KEYWORDS
+- cint
+- data
+- error
+- for
+- function
+- if
+- number
+- print
+- return
+syntax: CINT(X)
 title: CINT
 type: function
 ---

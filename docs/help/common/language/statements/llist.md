@@ -1,8 +1,19 @@
 ---
 category: editing
-description: NEEDS_DESCRIPTION
+description: To list all or part of the program currently     in memory at the line
+  printer
 keywords:
-- NEEDS_KEYWORDS
+- command
+- execute
+- for
+- line
+- llist
+- number
+- print
+- program
+- return
+- statement
+syntax: LLIST [<line number>[-[<line number>]]]
 title: LLIST
 type: statement
 ---

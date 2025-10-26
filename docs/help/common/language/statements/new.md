@@ -1,8 +1,16 @@
 ---
 category: program-control
-description: NEEDS_DESCRIPTION
+description: To delete the program currently   in   memory   and clear all variables
 keywords:
-- NEEDS_KEYWORDS
+- command
+- execute
+- for
+- new
+- program
+- return
+- statement
+- variable
+syntax: NEW
 title: NEW
 type: statement
 ---

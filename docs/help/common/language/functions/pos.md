@@ -1,8 +1,14 @@
 ---
 category: file-io
-description: NEEDS_DESCRIPTION
+description: Returns the current cursor     position
 keywords:
-- NEEDS_KEYWORDS
+- function
+- if
+- pos
+- print
+- return
+- then
+syntax: POS (I)
 title: POS
 type: function
 ---

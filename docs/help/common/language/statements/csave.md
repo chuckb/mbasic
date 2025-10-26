@@ -1,8 +1,18 @@
 ---
 category: NEEDS_CATEGORIZATION
-description: NEEDS_DESCRIPTION
+description: To save the program or an       array   currently     in memory on cassette
+  tape
 keywords:
-- NEEDS_KEYWORDS
+- array
+- command
+- csave
+- dec
+- dim
+- execute
+- file
+- for
+- if
+- included
 title: CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION
 type: statement
 ---

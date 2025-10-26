@@ -1,8 +1,18 @@
 ---
 category: error-handling
-description: NEEDS_DESCRIPTION
+description: To continue program execution after an          error recovery procedure
+  has been performed
 keywords:
-- NEEDS_KEYWORDS
+- close
+- command
+- data
+- error
+- execute
+- file
+- for
+- goto
+- if
+- line
 title: RESUME
 type: statement
 ---

@@ -1,8 +1,18 @@
 ---
 category: file-io
-description: NEEDS_DESCRIPTION
+description: To allocate space for variables in a random file buffer
 keywords:
-- NEEDS_KEYWORDS
+- command
+- data
+- error
+- execute
+- field
+- file
+- for
+- get
+- if
+- input
+syntax: FIELD[i]<file number>,<field width> AS <string variable> •••
 title: FIELD
 type: statement
 ---

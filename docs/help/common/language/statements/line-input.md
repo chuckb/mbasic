@@ -1,8 +1,19 @@
 ---
 category: NEEDS_CATEGORIZATION
-description: NEEDS_DESCRIPTION
+description: To input an entire line (up to 254 characters) to   a string variable,
+  without the use of delimiters
 keywords:
-- NEEDS_KEYWORDS
+- command
+- for
+- if
+- input
+- line
+- print
+- put
+- return
+- statement
+- string
+syntax: LINE INPUT[i] [<"prompt string">i]<string variable>
 title: LINE INPUT
 type: statement
 ---

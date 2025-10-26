@@ -1,7 +1,16 @@
 ---
 description: NEEDS_DESCRIPTION
 keywords:
-- NEEDS_KEYWORDS
+- command
+- curses
+- error
+- file
+- for
+- if
+- line
+- next
+- number
+- operations
 title: File Operations in Curses UI
 type: guide
 ---

@@ -1,7 +1,16 @@
 ---
 description: NEEDS_DESCRIPTION
 keywords:
-- NEEDS_KEYWORDS
+- array
+- codes
+- command
+- condition
+- data
+- dim
+- else
+- error
+- execute
+- field
 title: Error Codes and Messages
 type: reference
 ---

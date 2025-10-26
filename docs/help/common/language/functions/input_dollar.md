@@ -1,8 +1,19 @@
 ---
 category: file-io
-description: NEEDS_DESCRIPTION
+description: Returns a string of X characters, read from the terminal or from file
+  number Y
 keywords:
-- NEEDS_KEYWORDS
+- data
+- else
+- file
+- for
+- function
+- goto
+- if
+- input
+- number
+- open
+syntax: INPUT$(X[,[#]Y])
 title: INPUT$
 type: function
 ---

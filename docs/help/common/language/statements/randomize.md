@@ -1,8 +1,18 @@
 ---
 category: system
-description: NEEDS_DESCRIPTION
+description: To reseed the random number generator
 keywords:
-- NEEDS_KEYWORDS
+- command
+- for
+- function
+- if
+- next
+- number
+- print
+- program
+- randomize
+- return
+syntax: RANDOMIZE [<expression>]
 title: RANDOMIZE
 type: statement
 ---

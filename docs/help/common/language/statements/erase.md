@@ -1,8 +1,18 @@
 ---
 category: arrays
-description: NEEDS_DESCRIPTION
+description: To eliminate arrays from a program
 keywords:
-- NEEDS_KEYWORDS
+- array
+- command
+- dim
+- erase
+- error
+- for
+- if
+- program
+- statement
+- variable
+syntax: .       ERASE <list of array variables>
 title: ERASE
 type: statement
 ---

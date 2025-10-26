@@ -1,8 +1,12 @@
 ---
 category: string
-description: NEEDS_DESCRIPTION
+description: Returns a string of length I whose characters all have ASCII code J or
+  the first character of X$
 keywords:
-- NEEDS_KEYWORDS
+- function
+- print
+- return
+- string
 title: STRING$
 type: function
 ---

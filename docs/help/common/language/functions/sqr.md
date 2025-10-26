@@ -1,8 +1,14 @@
 ---
 category: mathematical
-description: NEEDS_DESCRIPTION
+description: Returns the square root of X
 keywords:
-- NEEDS_KEYWORDS
+- for
+- function
+- next
+- print
+- return
+- sqr
+syntax: SQR(X)
 title: SQR
 type: function
 ---

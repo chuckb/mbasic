@@ -1,8 +1,18 @@
 ---
 category: program-control
-description: NEEDS_DESCRIPTION
+description: To terminate program      execution   and    return   to command level
 keywords:
-- NEEDS_KEYWORDS
+- close
+- command
+- execute
+- file
+- input
+- line
+- print
+- program
+- put
+- return
+syntax: STOP
 title: STOP
 type: statement
 ---
