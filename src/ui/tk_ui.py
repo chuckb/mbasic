@@ -666,7 +666,11 @@ class TkBackend(UIBackend):
                 current_str = str(int(current)) if isinstance(current, (int, float)) and current == int(current) else str(current)
                 end_str = str(int(end)) if isinstance(end, (int, float)) and end == int(end) else str(end)
                 step_str = str(int(step)) if isinstance(step, (int, float)) and step == int(step) else str(step)
-                details = f"{var} = {current_str} TO {end_str} STEP {step_str}"
+                # Only show STEP if it's not the default value of 1
+                if step == 1:
+                    details = f"{var} = {current_str} TO {end_str}"
+                else:
+                    details = f"{var} = {current_str} TO {end_str} STEP {step_str}"
             elif entry['type'] == 'WHILE':
                 text = f"{indent}WHILE"
                 details = f"at line {entry['line']}"
