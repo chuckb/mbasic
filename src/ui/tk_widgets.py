@@ -14,9 +14,9 @@ except ImportError:
 
 
 class LineNumberedText(tk.Frame if tk else object):
-    """Text widget with line numbers and status column.
+    """Text widget with status column.
 
-    Layout: [Status (●/?/ )][Line Number (5 digits)][Separator][ Code ]
+    Layout: [Status (●/?/ )][ Code with line numbers ]
 
     Status symbols:
     - ● : Breakpoint set on this line
@@ -26,6 +26,9 @@ class LineNumberedText(tk.Frame if tk else object):
     Status priority (when both error and breakpoint):
     - ? takes priority (error shown)
     - After fixing error, ● becomes visible
+
+    Note: Line numbers should be part of the text content (not drawn separately).
+    This requires Phase 2 refactoring to integrate line numbers into text.
     """
 
     def __init__(self, parent, **kwargs):
@@ -44,11 +47,11 @@ class LineNumberedText(tk.Frame if tk else object):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
-        # Create canvas for line numbers and status
-        # Width: 1 char (status) + 5 chars (line number) = 6 chars * ~10px = 60px
+        # Create canvas for status symbols only
+        # Width: ~20px for one status character (●, ?, or space)
         self.canvas = tk.Canvas(
             self,
-            width=70,
+            width=20,
             bg='#e0e0e0',
             highlightthickness=0
         )
@@ -121,7 +124,11 @@ class LineNumberedText(tk.Frame if tk else object):
         self._redraw()
 
     def _redraw(self):
-        """Redraw line numbers and status column."""
+        """Redraw status column (●=breakpoint, ?=error).
+
+        Note: Line numbers are no longer drawn in canvas - they should be
+        part of the text content itself (Phase 2 of editor refactoring).
+        """
         self.canvas.delete('all')
 
         # Get visible line range
@@ -151,27 +158,13 @@ class LineNumberedText(tk.Frame if tk else object):
             else:
                 status = ' '
 
-            # Draw status symbol (column 0)
+            # Draw status symbol centered in narrow canvas
             self.canvas.create_text(
                 10, y,
                 anchor='nw',
                 text=status,
                 font=self.text_font,
                 fill='red' if status == '?' else 'blue' if status == '●' else 'gray'
-            )
-
-            # Draw BASIC line number (right-aligned in 5-char field)
-            if basic_line_num:
-                line_num_text = f'{basic_line_num:>5}'
-            else:
-                line_num_text = '     '
-
-            self.canvas.create_text(
-                20, y,
-                anchor='nw',
-                text=line_num_text,
-                font=self.text_font,
-                fill='gray'
             )
 
     def _parse_line_number(self, line_text):
