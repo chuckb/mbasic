@@ -243,6 +243,80 @@ class MBasicWebIDE:
         self.update_line_numbers()
         self._validate_editor_syntax()
 
+        # Set up keyboard shortcuts
+        self._setup_keyboard_shortcuts()
+
+    def _setup_keyboard_shortcuts(self):
+        """Set up global keyboard shortcuts for the web UI."""
+        async def handle_keydown(e):
+            """Handle keyboard shortcuts."""
+            key = e.key
+            ctrl = e.modifiers.get('ctrl', False) or e.modifiers.get('ctrlKey', False)
+
+            # Ignore if typing in input fields
+            if e.sender and hasattr(e.sender, 'tag') and e.sender.tag in ['input', 'textarea']:
+                # Allow shortcuts in editor, but not in other inputs
+                if e.sender != self.editor:
+                    return
+
+            # Ctrl+R - Run
+            if ctrl and key.lower() == 'r':
+                e.handled = True
+                await self.menu_run()
+
+            # Ctrl+T - Step
+            elif ctrl and key.lower() == 't':
+                e.handled = True
+                self.menu_step()
+
+            # Ctrl+G - Continue
+            elif ctrl and key.lower() == 'g':
+                e.handled = True
+                self.menu_continue()
+
+            # Ctrl+Q - Stop
+            elif ctrl and key.lower() == 'q':
+                e.handled = True
+                self.menu_stop()
+
+            # Ctrl+B - Toggle breakpoint (show notification)
+            elif ctrl and key.lower() == 'b':
+                e.handled = True
+                self.toggle_breakpoint()
+
+            # Ctrl+V - Variables window
+            elif ctrl and key.lower() == 'v':
+                e.handled = True
+                self.toggle_variables()
+
+            # Ctrl+K - Stack window
+            elif ctrl and key.lower() == 'k':
+                e.handled = True
+                self.toggle_stack()
+
+            # Ctrl+N - New program
+            elif ctrl and key.lower() == 'n':
+                e.handled = True
+                self.menu_new()
+
+            # Ctrl+S - Save
+            elif ctrl and key.lower() == 's':
+                e.handled = True
+                self.menu_save()
+
+            # Ctrl+O - Open
+            elif ctrl and key.lower() == 'o':
+                e.handled = True
+                await self.menu_open()
+
+            # Ctrl+E - Renumber
+            elif ctrl and key.lower() == 'e':
+                e.handled = True
+                self.renumber_program()
+
+        # Register keyboard handler
+        ui.keyboard(on_key=handle_keydown)
+
     def update_line_numbers(self, e=None):
         """Update line numbers display based on editor content."""
         if not self.editor or not self.line_numbers:

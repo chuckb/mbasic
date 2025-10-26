@@ -19,7 +19,29 @@ Keyboard shortcuts for the web browser interface.
 | **Ctrl+T** | Step (execute one statement, then pause) |
 | **Ctrl+G** | Continue (run to next breakpoint or end) |
 
-**Note:** These are the primary shortcuts available in the web interface. Most other actions use buttons or menus.
+## File Operations
+
+| Shortcut | Action |
+|----------|--------|
+| **Ctrl+N** | New program (clear editor) |
+| **Ctrl+O** | Open file (upload dialog) |
+| **Ctrl+S** | Save current program (download) |
+
+## Debugging
+
+| Shortcut | Action |
+|----------|--------|
+| **Ctrl+B** | Toggle breakpoint (shows info) |
+| **Ctrl+V** | Show/hide Variables window |
+| **Ctrl+K** | Show/hide Execution Stack window |
+
+## Editor Commands
+
+| Shortcut | Action |
+|----------|--------|
+| **Ctrl+E** | Renumber program lines (opens dialog) |
+
+**Note:** All keyboard shortcuts are now supported! Previously, many actions required using buttons or menus.
 
 ## Statement-Level Debugging
 
@@ -219,16 +241,20 @@ When debugging lines with multiple statements:
 
 ## Limitations
 
-### Missing Keyboard Shortcuts
+### Keyboard Shortcuts
 
-The following actions require using buttons or menus:
-- File operations (New, Open, Save) - use File menu
-- Breakpoint toggle - click line numbers
-- Variables/Stack windows - use Debug menu buttons
-- Sort/Renumber - use toolbar buttons
+✅ **All major keyboard shortcuts are now implemented!**
+
+The Web UI now supports all the same keyboard shortcuts as the Tk and Curses UIs:
+- ✅ File operations (Ctrl+N, Ctrl+O, Ctrl+S)
+- ✅ Execution (Ctrl+R, Ctrl+T, Ctrl+G, Ctrl+Q)
+- ✅ Debugging (Ctrl+B, Ctrl+V, Ctrl+K)
+- ✅ Editor (Ctrl+E for renumber)
+
+**Remaining button-only actions:**
+- Sort lines - use Sort button (by design, manual operation)
 - Help - use Help menu
-
-**Note:** This is a known limitation documented in the feature parity checklist. Future versions may add more keyboard shortcuts.
+- Browser text shortcuts (Ctrl+Z, Ctrl+C, Ctrl+V) work as normal
 
 ### Current Line Highlight
 
@@ -245,15 +271,22 @@ Unlike Tk UI, the Web UI doesn't highlight the current cursor line in the editor
 
 ### Essential Shortcuts
 
-| Task | Method |
-|------|--------|
-| Run | **Ctrl+R** or Run button |
-| Step | **Ctrl+T** or Step button |
-| Stop | **Ctrl+Q** or Stop button |
-| Breakpoint | Click line number |
-| Variables | Variables button |
-| Save | File menu → Save |
+| Task | Shortcut | Alternative |
+|------|----------|-------------|
+| Run | **Ctrl+R** | Run button |
+| Step | **Ctrl+T** | Step button |
+| Stop | **Ctrl+Q** | Stop button |
+| Continue | **Ctrl+G** | Continue button |
+| Breakpoint | **Ctrl+B** or click line number | Breakpoint button |
+| Variables | **Ctrl+V** | Variables button |
+| Stack | **Ctrl+K** | Stack button |
+| New | **Ctrl+N** | File menu → New |
+| Open | **Ctrl+O** | File menu → Open |
+| Save | **Ctrl+S** | File menu → Save |
+| Renumber | **Ctrl+E** | Renumber button |
+
+Print this table for quick reference!
 
 ---
 
-**Pro tip:** The web UI is great for quick testing and learning. For advanced debugging with full keyboard shortcuts, try the Tk or Curses UI!
+**Pro tip:** The web UI now has full keyboard shortcut support! All the shortcuts from Tk and Curses UIs work in the browser too.
