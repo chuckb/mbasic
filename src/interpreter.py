@@ -234,8 +234,8 @@ class Interpreter:
                 self.runtime.current_line = line_node
                 self.state.current_line = line_number
 
-                # Check for breakpoint
-                if line_number in self.state.breakpoints:
+                # Check for breakpoint (skip in step modes - we're intentionally stepping through)
+                if mode == 'run' and line_number in self.state.breakpoints:
                     self.state.status = 'at_breakpoint'
                     return self.state
 
