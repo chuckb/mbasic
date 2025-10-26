@@ -389,6 +389,9 @@ class TkBackend(UIBackend):
             self._set_status("No program running")
             return
 
+        # Clear paused state to allow stepping through breakpoints
+        self.paused_at_breakpoint = False
+
         try:
             state = self.interpreter.tick(mode='step_line', max_statements=100)
 
@@ -396,6 +399,9 @@ class TkBackend(UIBackend):
             if state.status == 'paused' or state.status == 'at_breakpoint':
                 self._add_output(f"→ Paused at line {state.current_line}\n")
                 self._set_status(f"Paused at line {state.current_line}")
+                # Set breakpoint flag if we hit one
+                if state.status == 'at_breakpoint':
+                    self.paused_at_breakpoint = True
                 # Highlight current statement
                 if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
                     self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
@@ -427,6 +433,9 @@ class TkBackend(UIBackend):
             self._set_status("No program running")
             return
 
+        # Clear paused state to allow stepping through breakpoints
+        self.paused_at_breakpoint = False
+
         try:
             state = self.interpreter.tick(mode='step_statement', max_statements=1)
 
@@ -435,6 +444,9 @@ class TkBackend(UIBackend):
                 stmt_info = f" statement {state.current_statement_index + 1}" if state.current_statement_index > 0 else ""
                 self._add_output(f"→ Paused at line {state.current_line}{stmt_info}\n")
                 self._set_status(f"Paused at line {state.current_line}{stmt_info}")
+                # Set breakpoint flag if we hit one
+                if state.status == 'at_breakpoint':
+                    self.paused_at_breakpoint = True
                 # Highlight current statement
                 if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
                     self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
