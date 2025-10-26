@@ -1943,6 +1943,11 @@ class Interpreter:
             self.io.output("Goodbye")
             sys.exit(0)
 
+    def execute_limits(self, stmt):
+        """Execute LIMITS statement - display resource usage"""
+        report = self.limits.get_usage_report()
+        self.io.output(report)
+
     def execute_merge(self, stmt):
         """Execute MERGE statement"""
         # Evaluate filename expression

@@ -446,6 +446,8 @@ class Parser:
             return self.parse_cls()
         elif token.type == TokenType.SYSTEM:
             return self.parse_system()
+        elif token.type == TokenType.LIMITS:
+            return self.parse_limits()
         elif token.type == TokenType.RUN:
             return self.parse_run()
         elif token.type == TokenType.LOAD:
@@ -1458,6 +1460,15 @@ class Parser:
         token = self.advance()
 
         return SystemStatementNode(
+            line_num=token.line,
+            column=token.column
+        )
+
+    def parse_limits(self) -> LimitsStatementNode:
+        """Parse LIMITS statement"""
+        token = self.advance()
+
+        return LimitsStatementNode(
             line_num=token.line,
             column=token.column
         )

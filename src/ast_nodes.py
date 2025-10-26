@@ -494,6 +494,19 @@ class SystemStatementNode:
 
 
 @dataclass
+class LimitsStatementNode:
+    """LIMITS statement - display resource usage information
+
+    Syntax:
+        LIMITS    - Display current resource usage and limits
+
+    Shows memory usage, stack depths, execution time, and other resource information.
+    """
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
 class RunStatementNode:
     """RUN statement - execute program or line
 
