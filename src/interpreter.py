@@ -2046,25 +2046,25 @@ class Interpreter:
 
     def execute_renum(self, stmt):
         """Execute RENUM statement"""
-        # Evaluate new_start and increment expressions
+        # Evaluate new_start, old_start, and increment expressions
         new_start = 10
+        old_start = 0
         increment = 10
 
         if stmt.new_start:
             new_start = int(self.evaluate_expression(stmt.new_start))
+
+        if stmt.old_start:
+            old_start = int(self.evaluate_expression(stmt.old_start))
 
         if stmt.increment:
             increment = int(self.evaluate_expression(stmt.increment))
 
         # Delegate to interactive mode if available
         if hasattr(self, 'interactive_mode') and self.interactive_mode:
-            # Build args string for cmd_renum
-            if stmt.new_start and stmt.increment:
-                args = f"{new_start},{increment}"
-            elif stmt.new_start:
-                args = str(new_start)
-            else:
-                args = ""
+            # Build args string for cmd_renum in format: "new_start,old_start,increment"
+            # Always include all three parameters to match ui_helpers.parse_renum_args()
+            args = f"{new_start},{old_start},{increment}"
             self.interactive_mode.cmd_renum(args)
         else:
             raise RuntimeError("RENUM not available in this context")

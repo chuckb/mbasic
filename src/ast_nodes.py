@@ -594,11 +594,17 @@ class RenumStatementNode:
     """RENUM statement - renumber program lines
 
     Syntax:
-        RENUM                     - Renumber starting at 10, increment 10
-        RENUM new_start           - Renumber starting at new_start, increment 10
-        RENUM new_start,increment - Renumber starting at new_start with increment
+        RENUM                              - Renumber starting at 10, increment 10
+        RENUM new_start                    - Renumber starting at new_start, increment 10
+        RENUM new_start,old_start          - Renumber from old_start onwards
+        RENUM new_start,old_start,increment - Full control over renumbering
+
+    Parameters can be omitted using commas:
+        RENUM 100,,20  - new_start=100, old_start=0 (default), increment=20
+        RENUM ,50,20   - new_start=10 (default), old_start=50, increment=20
     """
     new_start: 'ExpressionNode' = None  # New starting line number (default 10)
+    old_start: 'ExpressionNode' = None  # First old line to renumber (default 0)
     increment: 'ExpressionNode' = None  # Increment (default 10)
     line_num: int = 0
     column: int = 0

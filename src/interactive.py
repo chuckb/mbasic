@@ -706,15 +706,23 @@ class InteractiveMode:
             print(f"?Syntax error")
 
     def cmd_renum(self, args):
-        """RENUM [new_start][,increment] - Renumber program lines and update references
+        """RENUM [new_start][,[old_start][,increment]] - Renumber program lines and update references
 
         Uses AST-based approach:
         1. Parse program to AST
         2. Build line number mapping (old -> new)
         3. Walk AST and update all line number references
         4. Serialize AST back to source
+
+        Args format: "new_start,old_start,increment"
+        Examples:
+            RENUM           -> 10,0,10 (renumber all from line 10)
+            RENUM 100       -> 100,0,10 (renumber all from line 100)
+            RENUM 100,50    -> 100,50,10 (renumber from line 50 onwards)
+            RENUM 100,50,20 -> 100,50,20 (full control)
         """
         new_start = 10
+        old_start = 0
         increment = 10
 
         if args:
@@ -722,17 +730,26 @@ class InteractiveMode:
             if parts[0]:
                 new_start = int(parts[0])
             if len(parts) > 1 and parts[1]:
-                increment = int(parts[1])
+                old_start = int(parts[1])
+            if len(parts) > 2 and parts[2]:
+                increment = int(parts[2])
 
         try:
             # Build mapping from old line numbers to new line numbers
             old_lines = sorted(self.line_asts.keys())
             line_map = {}
 
+            # Lines before old_start stay the same
+            for old_num in old_lines:
+                if old_num < old_start:
+                    line_map[old_num] = old_num
+
+            # Lines from old_start onwards get renumbered
             new_num = new_start
             for old_num in old_lines:
-                line_map[old_num] = new_num
-                new_num += increment
+                if old_num >= old_start:
+                    line_map[old_num] = new_num
+                    new_num += increment
 
             # Walk each line AST and update line number references
             for line_node in self.line_asts.values():
@@ -752,8 +769,9 @@ class InteractiveMode:
                 new_line_asts[new_num] = line_node
                 new_lines[new_num] = self._serialize_line(line_node)
 
-            self.line_asts = new_line_asts
-            self.lines = new_lines
+            # Update the underlying program object (not the properties)
+            self.program.line_asts = new_line_asts
+            self.program.lines = new_lines
 
             # Update runtime's line_table if program is running
             if self.program_runtime:

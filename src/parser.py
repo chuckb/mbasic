@@ -1754,28 +1754,43 @@ class Parser:
         """Parse RENUM statement
 
         Syntax:
-            RENUM                     - Renumber starting at 10, increment 10
-            RENUM new_start           - Renumber starting at new_start, increment 10
-            RENUM new_start,increment - Renumber starting at new_start with increment
+            RENUM                              - Renumber starting at 10, increment 10
+            RENUM new_start                    - Renumber starting at new_start, increment 10
+            RENUM new_start,old_start          - Renumber from old_start onwards
+            RENUM new_start,old_start,increment - Full control over renumbering
+
+        Parameters can be omitted using commas:
+            RENUM 100,,20  - new_start=100, old_start=0 (default), increment=20
+            RENUM ,50,20   - new_start=10 (default), old_start=50, increment=20
         """
         token = self.advance()
 
         new_start = None
+        old_start = None
         increment = None
 
         # Check if there are arguments
         if not self.at_end_of_line() and not self.match(TokenType.COLON):
-            # Parse new_start
-            new_start = self.parse_expression()
+            # Parse new_start (unless leading comma)
+            if not self.match(TokenType.COMMA):
+                new_start = self.parse_expression()
 
-            # Check for comma and increment
+            # Check for comma and old_start
             if self.match(TokenType.COMMA):
                 self.advance()
-                if not self.at_end_of_line() and not self.match(TokenType.COLON):
-                    increment = self.parse_expression()
+                # Parse old_start (unless another comma or end of line)
+                if not self.at_end_of_line() and not self.match(TokenType.COLON) and not self.match(TokenType.COMMA):
+                    old_start = self.parse_expression()
+
+                # Check for comma and increment
+                if self.match(TokenType.COMMA):
+                    self.advance()
+                    if not self.at_end_of_line() and not self.match(TokenType.COLON):
+                        increment = self.parse_expression()
 
         return RenumStatementNode(
             new_start=new_start,
+            old_start=old_start,
             increment=increment,
             line_num=token.line,
             column=token.column
