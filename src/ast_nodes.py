@@ -49,6 +49,7 @@ class LineNode:
     """A single line in a BASIC program (line_number + statements)"""
     line_number: int
     statements: List['StatementNode']
+    source_text: str = ""  # Original source line for statement highlighting
     line_num: int = 0
     column: int = 0
 
@@ -62,6 +63,8 @@ class StatementNode:
     """Base class for all statements"""
     line_num: int = 0
     column: int = 0
+    char_start: int = 0  # Character offset from start of line for highlighting
+    char_end: int = 0    # Character offset end position for highlighting
 
 
 @dataclass
