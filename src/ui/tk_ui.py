@@ -227,7 +227,9 @@ class TkBackend(UIBackend):
         menubar.add_cascade(label="Run", menu=run_menu)
         run_menu.add_command(label="Run Program", command=self._menu_run,
                             accelerator=self.keybindings.get_tk_accelerator('menu', 'run_program'))
-        run_menu.add_command(label="Step", command=self._menu_step)
+        run_menu.add_separator()
+        run_menu.add_command(label="Step Line", command=self._menu_step_line)
+        run_menu.add_command(label="Step Statement", command=self._menu_step)
         run_menu.add_command(label="Continue", command=self._menu_continue)
         run_menu.add_command(label="Stop", command=self._menu_stop)
         run_menu.add_separator()
@@ -268,17 +270,28 @@ class TkBackend(UIBackend):
         toolbar = ttk.Frame(self.root)
         toolbar.pack(side=tk.TOP, fill=tk.X)
 
+        # File group
         ttk.Button(toolbar, text="New", command=self._menu_new).pack(side=tk.LEFT, padx=2, pady=2)
         ttk.Button(toolbar, text="Open", command=self._menu_open).pack(side=tk.LEFT, padx=2, pady=2)
         ttk.Button(toolbar, text="Save", command=self._menu_save).pack(side=tk.LEFT, padx=2, pady=2)
         ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
 
-        # Get run key from config for toolbar label
+        # Execution group
         run_key = self.keybindings.get_tk_accelerator('menu', 'run_program') or 'F5'
-        ttk.Button(toolbar, text=f"Run ({run_key})", command=self._menu_run).pack(side=tk.LEFT, padx=2, pady=2)
-        ttk.Button(toolbar, text="List", command=self._menu_list).pack(side=tk.LEFT, padx=2, pady=2)
+        ttk.Button(toolbar, text=f"Run", command=self._menu_run).pack(side=tk.LEFT, padx=2, pady=2)
+        ttk.Button(toolbar, text="Stop", command=self._menu_stop).pack(side=tk.LEFT, padx=2, pady=2)
         ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
-        ttk.Button(toolbar, text="Clear Output", command=self._menu_clear_output).pack(side=tk.LEFT, padx=2, pady=2)
+
+        # Stepping group
+        ttk.Button(toolbar, text="Step", command=self._menu_step_line).pack(side=tk.LEFT, padx=2, pady=2)
+        ttk.Button(toolbar, text="Stmt", command=self._menu_step).pack(side=tk.LEFT, padx=2, pady=2)
+        ttk.Button(toolbar, text="Cont", command=self._menu_continue).pack(side=tk.LEFT, padx=2, pady=2)
+        ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
+
+        # Utility group
+        ttk.Button(toolbar, text="List", command=self._menu_list).pack(side=tk.LEFT, padx=2, pady=2)
+        ttk.Button(toolbar, text="Clear Prog", command=self._menu_new).pack(side=tk.LEFT, padx=2, pady=2)
+        ttk.Button(toolbar, text="Clear Out", command=self._menu_clear_output).pack(side=tk.LEFT, padx=2, pady=2)
 
     # Menu handlers
 
@@ -345,14 +358,47 @@ class TkBackend(UIBackend):
         """Run > List Program"""
         self.cmd_list()
 
-    def _menu_step(self):
-        """Run > Step (execute one statement)"""
+    def _menu_step_line(self):
+        """Run > Step Line (execute all statements on current line)"""
         if not self.interpreter:
             self._set_status("No program running")
             return
 
         try:
-            state = self.interpreter.tick(mode='step', max_statements=1)
+            state = self.interpreter.tick(mode='step_line', max_statements=100)
+
+            # Handle state
+            if state.status == 'paused' or state.status == 'at_breakpoint':
+                self._add_output(f"→ Paused at line {state.current_line}\n")
+                self._set_status(f"Paused at line {state.current_line}")
+            elif state.status == 'done':
+                self._add_output("\n--- Program finished ---\n")
+                self._set_status("Ready")
+            elif state.status == 'error':
+                error_msg = state.error_info.error_message if state.error_info else "Unknown error"
+                line_num = state.error_info.error_line if state.error_info else "?"
+                self._add_output(f"\n--- Error at line {line_num}: {error_msg} ---\n")
+                self._set_status("Error")
+
+            # Update immediate mode status
+            self._update_immediate_status()
+
+            # Update variables and stack windows if visible
+            self._update_variables()
+            self._update_stack()
+
+        except Exception as e:
+            self._add_output(f"Step error: {e}\n")
+            self._set_status("Error")
+
+    def _menu_step(self):
+        """Run > Step Statement (execute one statement)"""
+        if not self.interpreter:
+            self._set_status("No program running")
+            return
+
+        try:
+            state = self.interpreter.tick(mode='step_statement', max_statements=1)
 
             # Handle state
             if state.status == 'paused' or state.status == 'at_breakpoint':
