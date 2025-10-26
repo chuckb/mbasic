@@ -483,14 +483,17 @@ class TkBackend(UIBackend):
 
         # Create Treeview
         tree = ttk.Treeview(self.variables_window, columns=('Type', 'Value'), show='tree headings')
-        # Variable column cycles through: accessed → written → read → name
-        tree.heading('#0', text='Variable (Last Accessed ↓)', command=lambda: self._cycle_variable_sort())
-        tree.heading('Type', text='Type', command=lambda: self._sort_variables_by('type'))
-        tree.heading('Value', text='Value', command=lambda: self._sort_variables_by('value'))
+        # Set initial heading text with arrows
+        tree.heading('#0', text='↓ Variable (Last Accessed)')
+        tree.heading('Type', text='  Type')
+        tree.heading('Value', text='  Value')
         tree.column('#0', width=180)
         tree.column('Type', width=80)
         tree.column('Value', width=140)
         tree.pack(fill=tk.BOTH, expand=True)
+
+        # Bind click handler for heading clicks
+        tree.bind('<Button-1>', self._on_variable_heading_click)
 
         self.variables_tree = tree
 
@@ -518,8 +521,55 @@ class TkBackend(UIBackend):
         self.variables_window.withdraw()
         self.variables_visible = False
 
+    def _on_variable_heading_click(self, event):
+        """Handle clicks on variable list column headings.
+
+        Arrow area (left ~15 pixels): Toggle sort direction
+        Rest of heading: Cycle sort column (for Variable) or set column (for Type/Value)
+        """
+        # Identify which part of the tree was clicked
+        region = self.variables_tree.identify_region(event.x, event.y)
+
+        if region != 'heading':
+            return  # Not a heading click, let normal handling continue
+
+        # Identify which column heading was clicked
+        column = self.variables_tree.identify_column(event.x)
+
+        # Determine if clicking the arrow (left ~15 pixels) or the text
+        # Get the x-coordinate relative to the column
+        if column == '#1':  # This is column #0 (the tree column)
+            col_x = event.x
+        elif column == '#2':  # Type column
+            col_x = event.x - self.variables_tree.column('#0', 'width')
+        elif column == '#3':  # Value column
+            col_x = event.x - self.variables_tree.column('#0', 'width') - self.variables_tree.column('Type', 'width')
+        else:
+            return
+
+        # Click on arrow area (left 15 pixels) = toggle sort direction
+        # Click on rest = cycle/set sort column
+        if col_x < 15:
+            self._toggle_variable_sort_direction()
+        else:
+            if column == '#1':  # Variable column
+                self._cycle_variable_sort()
+            elif column == '#2':  # Type column
+                self._sort_variables_by('type')
+            elif column == '#3':  # Value column
+                self._sort_variables_by('value')
+
+    def _toggle_variable_sort_direction(self):
+        """Toggle sort direction (ascending/descending) without changing column."""
+        self.variables_sort_reverse = not self.variables_sort_reverse
+        self._update_variable_headings()
+        self._update_variables()
+
     def _cycle_variable_sort(self):
-        """Cycle through variable sort modes: accessed → written → read → name."""
+        """Cycle through variable sort modes: accessed → written → read → name.
+
+        Does not change sort direction - use arrow click for that.
+        """
         cycle_order = ['accessed', 'written', 'read', 'name']
         try:
             current_idx = cycle_order.index(self.variables_sort_column)
@@ -528,44 +578,51 @@ class TkBackend(UIBackend):
             next_idx = 0  # Default to accessed if current column not in cycle
 
         self.variables_sort_column = cycle_order[next_idx]
-        # Start with descending for timestamp sorts, ascending for name
-        self.variables_sort_reverse = (self.variables_sort_column != 'name')
 
-        # Update header text
-        sort_labels = {
-            'accessed': 'Last Accessed',
-            'written': 'Last Written',
-            'read': 'Last Read',
-            'name': 'Name'
-        }
-        arrow = ' ↓' if self.variables_sort_reverse else ' ↑'
-        self.variables_tree.heading('#0', text=f'Variable ({sort_labels[self.variables_sort_column]}{arrow})')
-
-        # Update the display with new sort
+        # Update headers and display
+        self._update_variable_headings()
         self._update_variables()
 
     def _sort_variables_by(self, column):
-        """Handle column header click to sort variables.
+        """Set the sort column to the specified column.
+
+        Does not change sort direction - use arrow click for that.
 
         Args:
-            column: 'name', 'type', or 'value'
+            column: 'type' or 'value'
         """
-        # Toggle sort direction if clicking the same column
-        if self.variables_sort_column == column:
-            self.variables_sort_reverse = not self.variables_sort_reverse
-        else:
-            # New column - start with ascending
-            self.variables_sort_column = column
-            self.variables_sort_reverse = False
+        # Just set the column, don't change direction
+        self.variables_sort_column = column
 
-        # Update column headers to show sort indicator
-        arrow = ' ↓' if self.variables_sort_reverse else ' ↑'
-        self.variables_tree.heading('#0', text='Variable' + (arrow if column == 'name' else ''))
-        self.variables_tree.heading('Type', text='Type' + (arrow if column == 'type' else ''))
-        self.variables_tree.heading('Value', text='Value' + (arrow if column == 'value' else ''))
-
-        # Update the display with new sort
+        # Update headers and display
+        self._update_variable_headings()
         self._update_variables()
+
+    def _update_variable_headings(self):
+        """Update all variable window column headings to show current sort state."""
+        # Determine arrow character based on sort direction
+        arrow = '↓' if self.variables_sort_reverse else '↑'
+
+        # Update Variable column heading (shows which sub-field we're sorting by)
+        if self.variables_sort_column in ['accessed', 'written', 'read', 'name']:
+            sort_labels = {
+                'accessed': 'Last Accessed',
+                'written': 'Last Written',
+                'read': 'Last Read',
+                'name': 'Name'
+            }
+            var_text = f'{arrow} Variable ({sort_labels[self.variables_sort_column]})'
+            self.variables_tree.heading('#0', text=var_text)
+            self.variables_tree.heading('Type', text='  Type')
+            self.variables_tree.heading('Value', text='  Value')
+        elif self.variables_sort_column == 'type':
+            self.variables_tree.heading('#0', text='  Variable')
+            self.variables_tree.heading('Type', text=f'{arrow} Type')
+            self.variables_tree.heading('Value', text='  Value')
+        elif self.variables_sort_column == 'value':
+            self.variables_tree.heading('#0', text='  Variable')
+            self.variables_tree.heading('Type', text='  Type')
+            self.variables_tree.heading('Value', text=f'{arrow} Value')
 
     def _update_variables(self):
         """Update variables window from runtime."""
