@@ -31,7 +31,9 @@ Press **{{kbd:help}}** anytime to open help.
 
 ### Following Links
 
-Links appear in brackets like this: `[text](destination)`.
+Links appear with text in square brackets followed by URL in parentheses.
+
+**Format:** Square brackets around text, then parentheses around destination
 
 1. Use **Tab** to move to next link
 2. Press **Enter** to follow the link
