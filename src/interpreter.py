@@ -318,18 +318,25 @@ class Interpreter:
                     if mode == 'step_statement' and self.runtime.next_line is not None:
                         # Statement caused a jump, update state to show target
                         target_line = self.runtime.next_line
+                        target_stmt_index = self.runtime.next_stmt_index if self.runtime.next_stmt_index is not None else 0
                         self.runtime.next_line = None
+                        self.runtime.next_stmt_index = None
                         try:
                             self.state.line_index = self.runtime.line_order.index(target_line)
                             next_line_node = self.runtime.line_table[target_line]
                             self.state.current_line = target_line
                             self.runtime.current_line = next_line_node
-                            self.runtime.current_stmt_index = 0
-                            self.state.current_statement_index = 0
-                            if len(next_line_node.statements) > 0:
-                                next_stmt = next_line_node.statements[0]
+                            self.runtime.current_stmt_index = target_stmt_index
+                            self.state.current_statement_index = target_stmt_index
+                            # Highlight the specific statement we're jumping to
+                            if target_stmt_index < len(next_line_node.statements):
+                                next_stmt = next_line_node.statements[target_stmt_index]
                                 self.state.current_statement_char_start = getattr(next_stmt, 'char_start', 0)
                                 self.state.current_statement_char_end = getattr(next_stmt, 'char_end', 0)
+                            else:
+                                # Past end of line - no specific statement to highlight
+                                self.state.current_statement_char_start = 0
+                                self.state.current_statement_char_end = 0
                         except ValueError:
                             self.state.status = 'error'
                             self.state.error_info = ErrorInfo(
@@ -417,18 +424,30 @@ class Interpreter:
 
                 # Handle step_line mode
                 if mode == 'step_line':
-                    # Update state to point to NEXT line we're about to execute
-                    self.runtime.current_stmt_index = 0
-                    self.state.current_statement_index = 0
+                    # Update state to point to NEXT statement we're about to execute
+                    # Check if next_stmt_index was set (e.g., by RETURN for mid-line continuation)
+                    if self.runtime.next_stmt_index is not None:
+                        stmt_index = self.runtime.next_stmt_index
+                        self.runtime.next_stmt_index = None
+                    else:
+                        stmt_index = 0
+                    self.runtime.current_stmt_index = stmt_index
+                    self.state.current_statement_index = stmt_index
+
                     if self.state.line_index < len(self.runtime.line_order):
                         next_line_number = self.runtime.line_order[self.state.line_index]
                         next_line_node = self.runtime.line_table[next_line_number]
                         self.state.current_line = next_line_number
                         self.runtime.current_line = next_line_node
-                        if len(next_line_node.statements) > 0:
-                            next_stmt = next_line_node.statements[0]
+                        # Highlight the specific statement we're about to execute
+                        if stmt_index < len(next_line_node.statements):
+                            next_stmt = next_line_node.statements[stmt_index]
                             self.state.current_statement_char_start = getattr(next_stmt, 'char_start', 0)
                             self.state.current_statement_char_end = getattr(next_stmt, 'char_end', 0)
+                        else:
+                            # Past end of line - no specific statement to highlight
+                            self.state.current_statement_char_start = 0
+                            self.state.current_statement_char_end = 0
                     self.state.status = 'paused'
                     return self.state
 
