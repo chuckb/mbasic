@@ -281,6 +281,7 @@ class TkBackend(UIBackend):
 
         # Additional keyboard shortcuts not in config
         self.root.bind('<Control-b>', lambda e: self._toggle_breakpoint())
+        self.root.bind('<Control-i>', lambda e: self._smart_insert_line())
 
     def _create_toolbar(self):
         """Create toolbar with common actions."""
@@ -1464,6 +1465,95 @@ class TkBackend(UIBackend):
             f'{current_line_index}.0',
             f'{current_line_index}.end'
         )
+
+    def _smart_insert_line(self):
+        """Smart insert - insert blank line between current and next line.
+
+        Uses ui_helpers to calculate appropriate line number:
+        - If gap exists, inserts at midpoint
+        - If no gap, offers to renumber
+
+        Triggered by Ctrl+I keyboard shortcut.
+        """
+        import tkinter as tk
+        from tkinter import messagebox
+        from ui.ui_helpers import calculate_midpoint, find_insert_line_number, needs_renumber_for_insert
+        import re
+
+        # Get current line
+        current_pos = self.editor_text.text.index(tk.INSERT)
+        current_line_index = int(current_pos.split('.')[0])
+        current_line_text = self.editor_text.text.get(
+            f'{current_line_index}.0',
+            f'{current_line_index}.end'
+        )
+
+        # Parse current line number
+        match = re.match(r'^\s*(\d+)', current_line_text)
+        if not match:
+            messagebox.showinfo("Smart Insert", "Current line has no line number.\nAdd a line number first.")
+            return
+
+        current_line_num = int(match.group(1))
+
+        # Get all line numbers sorted
+        all_line_numbers = sorted(self.program.get_all_line_numbers())
+
+        if not all_line_numbers:
+            messagebox.showinfo("Smart Insert", "No program lines found.")
+            return
+
+        # Find the next line after current
+        next_line_num = None
+        for line_num in all_line_numbers:
+            if line_num > current_line_num:
+                next_line_num = line_num
+                break
+
+        # Calculate insertion point
+        if next_line_num is None:
+            # At end of program - use standard increment
+            insert_num = current_line_num + self.auto_number_increment
+        else:
+            # Between two lines - try midpoint
+            midpoint = calculate_midpoint(current_line_num, next_line_num)
+            if midpoint is not None:
+                insert_num = midpoint
+            else:
+                # No room - offer to renumber
+                response = messagebox.askyesno(
+                    "No Room",
+                    f"No room between lines {current_line_num} and {next_line_num}.\n\n"
+                    f"Would you like to renumber the program to make room?"
+                )
+                if response:
+                    # Renumber from current line onwards to make room
+                    self.cmd_renum(f"1000,{current_line_num + 1},10")
+                return
+
+        # Insert blank line at calculated position
+        # Find where to insert in editor
+        insert_index = None
+        for i, line_num in enumerate(all_line_numbers):
+            if line_num == current_line_num:
+                # Insert after current line in editor
+                insert_index = current_line_index + 1
+                break
+
+        if insert_index is not None:
+            # Insert the new blank line
+            new_line_text = f'{insert_num} \n'
+            self.editor_text.text.insert(f'{insert_index}.0', new_line_text)
+
+            # Move cursor to new line, after the line number
+            self.editor_text.text.mark_set(tk.INSERT, f'{insert_index}.{len(str(insert_num)) + 1}')
+
+            # Trigger save and sort
+            self._save_editor_to_program()
+            self._refresh_editor()
+
+            # Show confirmation
+            self._write_output(f"Inserted blank line {insert_num}")
 
     def _scroll_to_line(self, line_number):
         """Scroll editor to show the specified BASIC line number.

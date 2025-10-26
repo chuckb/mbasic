@@ -51,11 +51,35 @@ Complete reference for all keyboard shortcuts in the Tk graphical interface.
 
 | Shortcut | Action |
 |----------|--------|
+| **Ctrl+I** | Smart insert - insert blank line at midpoint between current and next line |
 | **Ctrl+E** | Renumber program lines (opens dialog) |
 | **Ctrl+F** | Find text in editor |
 | **Ctrl+H** | Find and replace |
 | **Ctrl+Z** | Undo last edit |
 | **Ctrl+Y** | Redo undone edit |
+
+### Smart Insert (Ctrl+I)
+
+Intelligently inserts a blank line between the current line and the next line:
+
+- **With gap**: Inserts at midpoint (e.g., line 15 between 10 and 20)
+- **No gap**: Offers to renumber program to make room
+- **At end**: Uses standard increment from current line
+
+Example usage:
+```basic
+10 PRINT "START"
+20 PRINT "END"
+
+' Cursor on line 10, press Ctrl+I
+' Inserts: 15 (cursor positioned after line number)
+
+10 PRINT "START"
+15
+20 PRINT "END"
+```
+
+Perfect for adding code between existing lines without manual line number calculation!
 
 ### Standard Text Editing
 
@@ -171,6 +195,7 @@ Step 4: Advances to next line
 | Step | **Ctrl+T** |
 | Breakpoint | **Ctrl+B** (or click line number) |
 | Variables | **Ctrl+V** |
+| Smart Insert | **Ctrl+I** |
 | Save | **Ctrl+S** |
 | Help | **F1** |
 
