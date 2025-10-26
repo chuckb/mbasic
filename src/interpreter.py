@@ -314,6 +314,34 @@ class Interpreter:
                     if self.state.status == 'waiting_for_input':
                         return self.state
 
+                    # Handle step_statement mode with jump
+                    if mode == 'step_statement' and self.runtime.next_line is not None:
+                        # Statement caused a jump, update state to show target
+                        target_line = self.runtime.next_line
+                        self.runtime.next_line = None
+                        try:
+                            self.state.line_index = self.runtime.line_order.index(target_line)
+                            next_line_node = self.runtime.line_table[target_line]
+                            self.state.current_line = target_line
+                            self.runtime.current_line = next_line_node
+                            self.runtime.current_stmt_index = 0
+                            self.state.current_statement_index = 0
+                            if len(next_line_node.statements) > 0:
+                                next_stmt = next_line_node.statements[0]
+                                self.state.current_statement_char_start = getattr(next_stmt, 'char_start', 0)
+                                self.state.current_statement_char_end = getattr(next_stmt, 'char_end', 0)
+                        except ValueError:
+                            self.state.status = 'error'
+                            self.state.error_info = ErrorInfo(
+                                error_code=8,  # Undefined line number
+                                error_line=line_number,
+                                error_message=f"Undefined line number: {target_line}"
+                            )
+                            self._restore_break_handler()
+                            raise RuntimeError(f"Undefined line number: {target_line}")
+                        self.state.status = 'paused'
+                        return self.state
+
                     # Check if we need to jump
                     if self.runtime.next_line is not None:
                         break
