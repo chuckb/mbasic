@@ -617,11 +617,13 @@ class TkBackend(UIBackend):
 
     def _update_stack(self):
         """Update execution stack window from runtime."""
+        print(f"DEBUG _update_stack: stack_visible={self.stack_visible}")
         if not self.stack_visible:
             return
 
         # Get runtime - prefer interpreter.runtime if available (for tick-based execution)
         runtime = self.interpreter.runtime if (self.interpreter and hasattr(self.interpreter, 'runtime')) else self.runtime
+        print(f"DEBUG _update_stack: runtime={runtime}")
         if not runtime:
             return
 
@@ -631,6 +633,7 @@ class TkBackend(UIBackend):
 
         # Get stack from runtime
         stack = runtime.get_execution_stack()
+        print(f"DEBUG _update_stack: stack={stack}, len={len(stack)}")
 
         # Add to tree with indentation for nesting
         for i, entry in enumerate(stack):
