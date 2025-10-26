@@ -1727,6 +1727,17 @@ class Interpreter:
     def _read_line_from_file(self, file_num):
         """Read a line from file, respecting ^Z as EOF (CP/M style)
 
+        CP/M Background:
+        On CP/M 1.x and 2.x, files were stored in 128-byte sectors. When a text
+        file didn't end on a sector boundary, a ^Z (Control-Z, ASCII 26) character
+        was used to mark the actual end of file.
+
+        Behavior:
+        - Byte value 26 (^Z) triggers EOF immediately
+        - If ^Z is mid-line, returns partial line up to ^Z
+        - Data after ^Z is never read
+        - Matches MBASIC 5.21 behavior exactly (tested with tnylpo)
+
         Returns: line string or None if EOF
         """
         file_info = self.runtime.files[file_num]
@@ -1754,11 +1765,20 @@ class Interpreter:
                     return line_bytes.decode('latin-1', errors='replace').rstrip('\r\n')
                 return None
             elif b == 10:  # LF
-                # End of line
-                return line_bytes.decode('latin-1', errors='replace').rstrip('\r\n')
+                # End of line - LF or CRLF (CR already consumed)
+                return line_bytes.decode('latin-1', errors='replace')
             elif b == 13:  # CR
-                # Skip CR (will handle CRLF properly)
-                continue
+                # Peek ahead to see if next byte is LF
+                next_byte = file_handle.read(1)
+                if next_byte and next_byte[0] == 10:  # LF
+                    # CRLF sequence - return line, LF already consumed
+                    return line_bytes.decode('latin-1', errors='replace')
+                else:
+                    # CR alone (old Mac format) - return line
+                    # Put back the peeked byte if it exists
+                    if next_byte:
+                        file_handle.seek(-1, 1)  # Seek back one byte from current position
+                    return line_bytes.decode('latin-1', errors='replace')
             else:
                 line_bytes.append(b)
 

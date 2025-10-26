@@ -62,6 +62,22 @@ This interpreter provides **100% compatibility** for standard MBASIC 5.21 progra
 - LINE INPUT #1, string$
 - CLOSE #1
 
+**Line ending support:** More permissive than MBASIC 5.21
+- CP/M MBASIC 5.21: Only recognizes CRLF (`\r\n`)
+- This implementation: Recognizes CRLF, LF (`\n`), and CR (`\r`)
+- CRLF treated as one line ending (not two)
+- Empty lines preserved (e.g., `\n\n` = two lines)
+- Cross-platform: Reads files from Linux, Windows, Mac
+
+**CP/M ^Z EOF handling:** Exactly matches MBASIC 5.21
+- ^Z (Control-Z, ASCII 26) marks end of file
+- Reading stops at first ^Z encountered
+- Partial lines before ^Z are returned
+- Data after ^Z is ignored
+- Tested and verified against real MBASIC 5.21
+
+See [Sequential Files Guide](../../user/sequential-files.md) for complete details.
+
 **Random access files:** Fully compatible
 - OPEN "R", #1, "FILE.DAT", record_length
 - FIELD #1, width AS field$, ...
