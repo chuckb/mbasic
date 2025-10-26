@@ -12,32 +12,38 @@ Command-line interface for MBASIC 5.21. Type `HELP <topic>` for specific help or
 
 ## 📘 CLI Interface
 
-How to use the command-line interface:
+The CLI provides a classic MBASIC command-line interface with direct mode and program mode.
 
-- [Commands](commands.md) - All CLI commands (LIST, RUN, LOAD, SAVE, etc.)
-- [Line Editing](editing.md) - AUTO, DELETE, EDIT, RENUM
-- [Running Programs](running.md) - Direct mode and program mode
-- [File Operations](files.md) - Loading and saving programs
+**Common Commands:**
+- LIST - Show program
+- RUN - Execute program
+- LOAD "file.bas" - Load program
+- SAVE "file.bas" - Save program
+- NEW - Clear program
+- AUTO - Auto line numbering
+- RENUM - Renumber lines
+- SYSTEM - Exit MBASIC
 
 ## 📗 MBASIC Interpreter
 
 About the BASIC interpreter:
 
+- [MBASIC Index](../../mbasic/index.md) - Overview and navigation
 - [Getting Started](../../mbasic/getting-started.md) - Your first BASIC program
-- [Architecture](../../mbasic/architecture.md) - How MBASIC works
 - [Features](../../mbasic/features.md) - What's implemented
 - [Compatibility](../../mbasic/compatibility.md) - MBASIC 5.21 differences
-- [Examples](../../mbasic/examples/index.md) - Sample programs
+- [Architecture](../../mbasic/architecture.md) - How MBASIC works
 
 ## 📕 BASIC-80 Language Reference
 
 Complete BASIC language documentation:
 
-- [Language Overview](../../language/index.md)
-- [Statements](../../language/statements/index.md) - All 63 statements
-- [Functions](../../language/functions/index.md) - All 40 functions
-- [Operators](../../language/operators.md)
-- [Appendices](../../language/appendices/index.md) - Error codes, ASCII, math functions
+- [Language Overview](../../common/language/index.md)
+- [Statements](../../common/language/statements/index.md) - All 63 statements
+- [Functions](../../common/language/functions/index.md) - All 40 functions
+- [Operators](../../common/language/operators.md)
+- [Error Codes](../../common/language/appendices/error-codes.md) - All 68 error codes
+- [ASCII Table](../../common/language/appendices/ascii-codes.md) - Character codes
 
 ---
 

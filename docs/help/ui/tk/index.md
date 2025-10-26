@@ -12,43 +12,42 @@ Graphical user interface for MBASIC 5.21. Press F1 for context-sensitive help or
 
 ## 📘 Tkinter GUI
 
-Using the graphical interface:
+The Tkinter GUI provides a graphical interface for MBASIC programming.
 
-- [Getting Started](getting-started.md) - First steps with the GUI
-- [Menu Reference](menu-reference.md) - All menu commands
-- [Toolbar](toolbar.md) - Toolbar buttons and actions
-- [Editor](editor.md) - Text editor features
-- [Visual Debugger](debugger.md) - Debugging tools and breakpoints
-- [File Operations](files.md) - Opening and saving programs
-- [Preferences](preferences.md) - Customizing the interface
+**Key Features:**
+- Syntax highlighting for BASIC keywords
+- Visual debugger with breakpoints
+- Variable watch window
+- Split editor/output view
+- Menu bar and toolbar
+- Context-sensitive help (F1)
 
 ## 📗 MBASIC Interpreter
 
 About the BASIC interpreter:
 
+- [MBASIC Index](../../mbasic/index.md) - Overview and navigation
 - [Getting Started](../../mbasic/getting-started.md) - Your first BASIC program
-- [Architecture](../../mbasic/architecture.md) - How MBASIC works
 - [Features](../../mbasic/features.md) - What's implemented
 - [Compatibility](../../mbasic/compatibility.md) - MBASIC 5.21 differences
-- [Not Implemented](../../mbasic/not-implemented.md) - What doesn't work
-- [Examples](../../mbasic/examples/index.md) - Sample programs
+- [Architecture](../../mbasic/architecture.md) - How MBASIC works
 
 ## 📕 BASIC-80 Language Reference
 
 Complete BASIC language documentation:
 
-- [Language Overview](../../language/index.md) - Introduction to BASIC-80
-- [Operators](../../language/operators.md) - Arithmetic, logical, relational
+- [Language Overview](../../common/language/index.md) - Introduction to BASIC-80
+- [Operators](../../common/language/operators.md) - Arithmetic, logical, relational
 - **Statements** - All 63 BASIC-80 statements
-  - [Statements Index](../../language/statements/index.md)
+  - [Statements Index](../../common/language/statements/index.md)
   - Organized by category: input-output, control-flow, file-io
 - **Functions** - All 40 BASIC-80 functions
-  - [Functions Index](../../language/functions/index.md)
+  - [Functions Index](../../common/language/functions/index.md)
   - Organized by category: mathematical, string, type-conversion
 - **Appendices** - Reference materials
-  - [Error Codes](../../language/appendices/error-codes.md)
-  - [ASCII Table](../../language/appendices/ascii-codes.md)
-  - [Math Functions](../../language/appendices/math-functions.md)
+  - [Error Codes](../../common/language/appendices/error-codes.md)
+  - [ASCII Table](../../common/language/appendices/ascii-codes.md)
+  - [Math Functions](../../common/language/appendices/math-functions.md)
 
 ---
 

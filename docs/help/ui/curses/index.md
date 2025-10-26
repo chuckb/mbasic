@@ -19,7 +19,6 @@ Learn how to use the terminal interface:
 - [Keyboard Commands](keyboard-commands.md) - Complete keyboard reference
 - [Editing Programs](editing.md) - How to write and edit programs
 - [Running Programs](running.md) - Execute and debug your code
-- [Debugger](debugger.md) - Breakpoints, stepping, and variables
 - [File Operations](files.md) - Save and load your programs
 - [Help Navigation](help-navigation.md) - How to use this help system
 
@@ -27,30 +26,28 @@ Learn how to use the terminal interface:
 
 About this BASIC interpreter:
 
+- [MBASIC Index](../../mbasic/index.md) - Overview and navigation
 - [Getting Started](../../mbasic/getting-started.md) - Your first BASIC program
-- [Architecture](../../mbasic/architecture.md) - Interpreter vs compiler design
 - [Features](../../mbasic/features.md) - What's implemented
 - [Compatibility](../../mbasic/compatibility.md) - MBASIC 5.21 differences
-- [Not Implemented](../../mbasic/not-implemented.md) - What doesn't work
-- [File Formats](../../mbasic/file-formats.md) - .BAS files and encoding
-- [Examples](../../mbasic/examples/index.md) - Sample programs
+- [Architecture](../../mbasic/architecture.md) - Interpreter vs compiler design
 
 ## 📕 BASIC-80 Language Reference
 
 Complete BASIC-80 language documentation:
 
-- [Language Overview](../../language/index.md) - Introduction to BASIC-80
-- [Operators](../../language/operators.md) - Arithmetic, logical, and relational operators
+- [Language Overview](../../common/language/index.md) - Introduction to BASIC-80
+- [Operators](../../common/language/operators.md) - Arithmetic, logical, and relational operators
 - **Statements** - All 63 BASIC-80 statements
-  - [Statements Index](../../language/statements/index.md) - Browse all statements
+  - [Statements Index](../../common/language/statements/index.md) - Browse all statements
   - Organized by category: input-output, control-flow, file-io, arrays, etc.
 - **Functions** - All 40 BASIC-80 functions
-  - [Functions Index](../../language/functions/index.md) - Browse all functions
+  - [Functions Index](../../common/language/functions/index.md) - Browse all functions
   - Organized by category: mathematical, string, type-conversion, etc.
 - **Appendices** - Reference materials
-  - [Error Codes](../../language/appendices/error-codes.md) - All 68 error codes
-  - [ASCII Table](../../language/appendices/ascii-codes.md) - Character codes
-  - [Math Functions](../../language/appendices/math-functions.md) - Derived functions
+  - [Error Codes](../../common/language/appendices/error-codes.md) - All 68 error codes
+  - [ASCII Table](../../common/language/appendices/ascii-codes.md) - Character codes
+  - [Math Functions](../../common/language/appendices/math-functions.md) - Derived functions
 
 ---
 

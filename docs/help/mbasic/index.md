@@ -46,14 +46,14 @@ Looking to understand or modify the MBASIC interpreter?
 - [UI Guides](../ui/curses/index.md) → How to use the interface
 
 **Language Reference**
-- [Statements](../language/statements/index.md) → BASIC-80 statements
-- [Functions](../language/functions/index.md) → Built-in functions
-- [Operators](../language/operators.md) → Arithmetic, logical, relational
+- [Statements](../common/language/statements/index.md) → BASIC-80 statements
+- [Functions](../common/language/functions/index.md) → Built-in functions
+- [Operators](../common/language/operators.md) → Arithmetic, logical, relational
 
 **Advanced Topics**
 - [Architecture](architecture.md) → How it works
-- [File I/O](../language/statements/open.md) → Working with files
-- [Error Handling](../language/statements/on-error-goto.md) → ON ERROR GOTO/RESUME
+- [File I/O](../common/language/statements/open.md) → Working with files
+- [Error Handling](../common/language/statements/on-error-goto.md) → ON ERROR GOTO/RESUME
 
 ## About This Implementation
 
@@ -80,7 +80,7 @@ This documentation is organized in three tiers:
    - What features are supported
    - Compatibility information
 
-2. **📕 BASIC-80 Language Reference**
+2. **📕 BASIC-80 Language Reference** ([Language Docs](../common/language/index.md))
    - Language syntax and semantics
    - Statements and functions
    - Common to all MBASIC interpreters
@@ -99,7 +99,7 @@ This is an open-source project. For contributing:
 
 ## See Also
 
-- **[BASIC-80 Language Reference](../language/statements/index.md)** - The BASIC language itself
+- **[BASIC-80 Language Reference](../common/language/index.md)** - The BASIC language itself
 - **[Curses UI Guide](../ui/curses/index.md)** - Full-screen terminal interface
 - **[CLI Guide](../ui/cli/index.md)** - Classic command-line interface
 - **[Tk GUI Guide](../ui/tk/index.md)** - Graphical interface
