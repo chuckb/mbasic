@@ -1184,27 +1184,16 @@ class TkBackend(UIBackend):
     def _refresh_editor(self):
         """Load program into editor widget.
 
-        Line numbers are formatted as part of the text content:
-        "   10 PRINT" (5-digit right-aligned line number + space + code)
-
-        This makes line numbers copyable with the code.
+        Line numbers are part of the text content as entered by user.
+        No formatting is applied to preserve compatibility with real MBASIC.
         """
         import tkinter as tk
-        import re
 
         self.editor_text.text.delete(1.0, tk.END)
         for line_num, line_text in self.program.get_lines():
-            # line_text already includes the line number
-            # Format with right-aligned 5-digit line number for consistency
-            # Extract code after line number
-            match = re.match(r'^\s*\d+\s*(.*)', line_text)
-            if match:
-                code = match.group(1)
-                formatted_line = f"{line_num:>5} {code}"
-            else:
-                # Fallback if parse fails
-                formatted_line = line_text
-            self.editor_text.text.insert(tk.END, formatted_line + "\n")
+            # Insert line exactly as stored - no formatting
+            # This preserves compatibility with real MBASIC
+            self.editor_text.text.insert(tk.END, line_text + "\n")
 
         # Clear error indicators
         self.editor_text.clear_all_errors()
@@ -1670,19 +1659,12 @@ class TkBackend(UIBackend):
             import re
             match = re.match(r'^\s*(\d+)', line_text)
             if match and int(match.group(1)) == line_number:
-                # Found the line - calculate position
-                # The line format is: "   20 PRINT I" (formatted with spaces)
-                # char_start and char_end are relative to the original source "20 PRINT I"
-                # We need to adjust for the formatting prefix in the editor
+                # Found the line - use char positions directly
+                # Lines are displayed exactly as stored, so char_start/char_end
+                # are relative to the line as displayed
 
-                # Find where the line number starts in the editor
-                line_num_start = match.start(1)  # Position of first digit
-                # The original source starts at "20 PRINT I", so position 0 is '2'
-                # In editor "   20 PRINT I", the '2' is at position 3
-                # So we add line_num_start to char positions
-
-                start_idx = f"{editor_line_idx}.{line_num_start + char_start}"
-                end_idx = f"{editor_line_idx}.{line_num_start + char_end}"
+                start_idx = f"{editor_line_idx}.{char_start}"
+                end_idx = f"{editor_line_idx}.{char_end}"
 
                 try:
                     self.editor_text.text.tag_add('current_statement', start_idx, end_idx)
