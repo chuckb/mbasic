@@ -337,8 +337,9 @@ class Parser:
                     stmt_end_col = stmt_start_col + 1
 
                 # Set character positions on statement for highlighting
-                stmt.char_start = stmt_start_col
-                stmt.char_end = stmt_end_col
+                # Convert from 1-based column to 0-based array index
+                stmt.char_start = stmt_start_col - 1 if stmt_start_col > 0 else 0
+                stmt.char_end = stmt_end_col - 1 if stmt_end_col > 0 else 0
 
                 statements.append(stmt)
 
