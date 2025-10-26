@@ -676,6 +676,9 @@ class TkBackend(UIBackend):
         self.output_text.see(tk.END)
         self.output_text.config(state=tk.DISABLED)
 
+        # Force Tk to process the update immediately
+        self.output_text.update_idletasks()
+
     def _set_status(self, text):
         """Set status bar text."""
         self.status_label.config(text=text)

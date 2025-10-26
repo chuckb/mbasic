@@ -16,13 +16,31 @@ type: reference
 
 # Mathematical Functions
 
-Derived mathematical functions that can be calculated using BASIC-80's intrinsic functions.
+## Built-In Mathematical Functions
 
-## Trigonometric Functions
+MBASIC 5.21 provides the following built-in mathematical functions:
 
-### Basic Trigonometric Functions
+### Trigonometric Functions
+- [SIN](../functions/sin.md) - Sine
+- [COS](../functions/cos.md) - Cosine
+- [TAN](../functions/tan.md) - Tangent
+- [ATN](../functions/atn.md) - Arctangent
 
-BASIC-80 provides: [SIN](../functions/sin.md), [COS](../functions/cos.md), [TAN](../functions/tan.md), [ATN](../functions/atn.md)
+### Exponential and Logarithmic
+- [EXP](../functions/exp.md) - Exponential (e^x)
+- [LOG](../functions/log.md) - Natural logarithm
+
+### Other Math Functions
+- [ABS](../functions/abs.md) - Absolute value
+- [SQR](../functions/sqr.md) - Square root
+- [SGN](../functions/sgn.md) - Sign (-1, 0, or 1)
+- [INT](../functions/int.md) - Integer part (floor)
+- [FIX](../functions/fix.md) - Truncate to integer
+- [RND](../functions/rnd.md) - Random number
+
+## Derived Mathematical Functions
+
+The following functions are NOT built-in but can be calculated using the intrinsic functions above.
 
 ### Derived Trigonometric Functions
 
