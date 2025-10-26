@@ -154,6 +154,10 @@ class TkBackend(UIBackend):
         )
         self.immediate_history.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
 
+        # Add right-click context menus for copy functionality
+        self._setup_output_context_menu()
+        self._setup_immediate_context_menu()
+
         # Immediate mode input
         input_frame = ttk.Frame(immediate_frame)
         input_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
@@ -907,6 +911,110 @@ class TkBackend(UIBackend):
         self.immediate_history.insert(tk.END, text)
         self.immediate_history.see(tk.END)
         self.immediate_history.config(state=tk.DISABLED)
+
+    def _setup_output_context_menu(self):
+        """Setup right-click context menu for output text widget."""
+        import tkinter as tk
+
+        def show_context_menu(event):
+            menu = tk.Menu(self.output_text, tearoff=0)
+
+            # Check if there's a selection
+            try:
+                if self.output_text.tag_ranges(tk.SEL):
+                    menu.add_command(label="Copy", command=self._copy_output_selection)
+                    menu.add_separator()
+            except tk.TclError:
+                pass
+
+            # Always offer select all
+            menu.add_command(label="Select All", command=self._select_all_output)
+
+            # Dismissal
+            def dismiss_menu():
+                try:
+                    menu.unpost()
+                except:
+                    pass
+
+            try:
+                menu.tk_popup(event.x_root, event.y_root)
+            finally:
+                menu.grab_release()
+
+            menu.bind("<FocusOut>", lambda e: dismiss_menu())
+            menu.bind("<Escape>", lambda e: dismiss_menu())
+
+        self.output_text.bind("<Button-3>", show_context_menu)
+
+    def _setup_immediate_context_menu(self):
+        """Setup right-click context menu for immediate history widget."""
+        import tkinter as tk
+
+        def show_context_menu(event):
+            menu = tk.Menu(self.immediate_history, tearoff=0)
+
+            # Check if there's a selection
+            try:
+                if self.immediate_history.tag_ranges(tk.SEL):
+                    menu.add_command(label="Copy", command=self._copy_immediate_selection)
+                    menu.add_separator()
+            except tk.TclError:
+                pass
+
+            # Always offer select all
+            menu.add_command(label="Select All", command=self._select_all_immediate)
+
+            # Dismissal
+            def dismiss_menu():
+                try:
+                    menu.unpost()
+                except:
+                    pass
+
+            try:
+                menu.tk_popup(event.x_root, event.y_root)
+            finally:
+                menu.grab_release()
+
+            menu.bind("<FocusOut>", lambda e: dismiss_menu())
+            menu.bind("<Escape>", lambda e: dismiss_menu())
+
+        self.immediate_history.bind("<Button-3>", show_context_menu)
+
+    def _copy_output_selection(self):
+        """Copy selected text from output widget to clipboard."""
+        import tkinter as tk
+        try:
+            selected_text = self.output_text.get(tk.SEL_FIRST, tk.SEL_LAST)
+            self.root.clipboard_clear()
+            self.root.clipboard_append(selected_text)
+        except tk.TclError:
+            pass  # No selection
+
+    def _select_all_output(self):
+        """Select all text in output widget."""
+        import tkinter as tk
+        self.output_text.tag_add(tk.SEL, "1.0", tk.END)
+        self.output_text.mark_set(tk.INSERT, "1.0")
+        self.output_text.see(tk.INSERT)
+
+    def _copy_immediate_selection(self):
+        """Copy selected text from immediate history widget to clipboard."""
+        import tkinter as tk
+        try:
+            selected_text = self.immediate_history.get(tk.SEL_FIRST, tk.SEL_LAST)
+            self.root.clipboard_clear()
+            self.root.clipboard_append(selected_text)
+        except tk.TclError:
+            pass  # No selection
+
+    def _select_all_immediate(self):
+        """Select all text in immediate history widget."""
+        import tkinter as tk
+        self.immediate_history.tag_add(tk.SEL, "1.0", tk.END)
+        self.immediate_history.mark_set(tk.INSERT, "1.0")
+        self.immediate_history.see(tk.INSERT)
 
 
 class TkIOHandler(IOHandler):

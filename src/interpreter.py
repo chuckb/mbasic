@@ -1243,14 +1243,20 @@ class Interpreter:
             var_list = stmt.variables
         else:
             # NEXT without variable - use innermost loop
-            if not self.runtime.for_loops:
+            if not self.runtime.for_loop_vars:
                 raise RuntimeError("NEXT without FOR")
             var_list = []  # Will process one loop below
 
         # If no variables specified, process innermost loop only
         if not var_list:
-            var_name = list(self.runtime.for_loops.keys())[-1]
-            self._execute_next_single(var_name, var_node=None)
+            # Find the innermost FOR loop (highest index in execution_stack)
+            innermost_var = None
+            innermost_index = -1
+            for var_name, index in self.runtime.for_loop_vars.items():
+                if index > innermost_index:
+                    innermost_index = index
+                    innermost_var = var_name
+            self._execute_next_single(innermost_var, var_node=None)
         else:
             # Process each variable in order
             for var_node in var_list:
