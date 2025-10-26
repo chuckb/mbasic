@@ -1,0 +1,178 @@
+# MBASIC 5.21 Documentation
+
+Welcome to the complete documentation for MBASIC 5.21, a Python implementation of Microsoft BASIC-80 for CP/M.
+
+## What is MBASIC?
+
+MBASIC 5.21 is a classic BASIC dialect from the CP/M era (late 1970s - early 1980s). This interpreter provides 100% compatibility with MBASIC 5.21 programs while offering modern user interfaces and cross-platform support.
+
+## Quick Links
+
+<div class="grid cards" markdown>
+
+-   :material-rocket-launch:{ .lg .middle } __Getting Started__
+
+    ---
+
+    Install MBASIC and write your first program in minutes
+
+    [:octicons-arrow-right-24: Installation Guide](help/mbasic/getting-started.md)
+
+-   :material-book-open-variant:{ .lg .middle } __Language Reference__
+
+    ---
+
+    Complete BASIC-80 language documentation with all 63 statements and 40 functions
+
+    [:octicons-arrow-right-24: Language Reference](help/common/language/index.md)
+
+-   :material-monitor:{ .lg .middle } __User Interfaces__
+
+    ---
+
+    Choose your interface: Curses (terminal), CLI (command-line), or Tkinter (GUI)
+
+    [:octicons-arrow-right-24: UI Guides](help/ui/curses/index.md)
+
+-   :material-cog:{ .lg .middle } __Implementation Details__
+
+    ---
+
+    Learn about the interpreter architecture, features, and compatibility
+
+    [:octicons-arrow-right-24: MBASIC Docs](help/mbasic/index.md)
+
+</div>
+
+## Key Features
+
+- ✅ **100% MBASIC 5.21 Compatibility** - Run authentic MBASIC programs
+- ✅ **Multiple User Interfaces** - CLI, Curses terminal, or Tkinter GUI
+- ✅ **Cross-Platform** - Linux, macOS, Windows
+- ✅ **Zero Dependencies** - Pure Python, no external libraries required for core functionality
+- ✅ **Advanced Optimizations** - Semantic analyzer with 18 compiler optimizations
+- ✅ **Complete Documentation** - Comprehensive help for every feature
+
+## Documentation Structure
+
+This documentation is organized into three tiers:
+
+### 1. User Interfaces (📘)
+
+Interface-specific documentation for each UI:
+
+- **[Curses UI](help/ui/curses/index.md)** - Full-screen terminal interface
+- **[CLI](help/ui/cli/index.md)** - Classic command-line REPL
+- **[Tkinter GUI](help/ui/tk/index.md)** - Graphical interface
+
+### 2. MBASIC Interpreter (📗)
+
+Implementation-specific documentation:
+
+- **[Getting Started](help/mbasic/getting-started.md)** - Installation and first steps
+- **[Features](help/mbasic/features.md)** - What's implemented
+- **[Compatibility](help/mbasic/compatibility.md)** - Differences from CP/M MBASIC
+- **[Architecture](help/mbasic/architecture.md)** - How it works
+
+### 3. BASIC-80 Language (📕)
+
+Complete language reference:
+
+- **[Statements](help/common/language/statements/index.md)** - All 63 BASIC-80 statements
+- **[Functions](help/common/language/functions/index.md)** - All 40 built-in functions
+- **[Operators](help/common/language/operators.md)** - Arithmetic, logical, relational
+- **[Appendices](help/common/language/appendices/error-codes.md)** - Error codes, ASCII table
+
+## Quick Start
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/avwohl/mbasic.git
+cd mbasic
+
+# Create virtual environment (recommended)
+python3 -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Install optional dependencies
+pip install -r requirements.txt
+```
+
+### Your First Program
+
+Start the Curses UI:
+
+```bash
+python3 mbasic.py
+```
+
+Type your program:
+
+```basic
+10 PRINT "Hello, World!"
+20 END
+```
+
+Press **Ctrl+R** to run!
+
+## Example Programs
+
+### Classic "Hello, World!"
+
+```basic
+10 PRINT "Hello, World!"
+20 END
+```
+
+### FOR Loop
+
+```basic
+10 FOR I = 1 TO 10
+20   PRINT I; "squared is"; I * I
+30 NEXT I
+40 END
+```
+
+### User Input
+
+```basic
+10 INPUT "What is your name"; N$
+20 PRINT "Hello, "; N$; "!"
+30 END
+```
+
+### File I/O
+
+```basic
+10 OPEN "O", #1, "output.txt"
+20 PRINT #1, "This is a test"
+30 CLOSE #1
+40 PRINT "File written!"
+50 END
+```
+
+## Platform Support
+
+- **Linux** - Ubuntu, Debian, Fedora, Arch
+- **macOS** - 10.14+
+- **Windows** - 10, 11, WSL
+- **Python** - 3.8+ (3.10+ recommended)
+
+## Contributing
+
+MBASIC is open source! Contributions are welcome:
+
+- Report issues on [GitHub](https://github.com/avwohl/mbasic/issues)
+- Submit pull requests
+- Improve documentation
+- Share example programs
+
+## License
+
+See the project repository for license information.
+
+---
+
+**Ready to get started?** Head to the [Installation Guide](help/mbasic/getting-started.md) or browse the [Language Reference](help/common/language/index.md)!

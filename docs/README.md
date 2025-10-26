@@ -57,9 +57,48 @@ Documentation for external formats, protocols, and standards.
 - CP/M compatibility notes
 - MBASIC 5.21 reference materials
 
+## Web Deployment
+
+Documentation is automatically deployed to GitHub Pages using MkDocs:
+
+- **Live Site:** https://avwohl.github.io/mbasic
+- **Configuration:** `../mkdocs.yml` (project root)
+- **Workflow:** `../.github/workflows/docs.yml`
+
+### Local Preview
+
+```bash
+# Install dependencies
+pip install mkdocs mkdocs-material mkdocs-awesome-pages-plugin
+
+# Start development server
+mkdocs serve
+
+# Open http://127.0.0.1:8000
+```
+
+### Manual Deployment
+
+```bash
+# Build static site
+mkdocs build
+
+# Deploy to GitHub Pages
+mkdocs gh-deploy
+```
+
+### Adding Documentation
+
+1. Create markdown file in appropriate `help/` subdirectory
+2. Add YAML front matter (title, type, category, keywords, description)
+3. Rebuild search index: `python3 utils/frontmatter_utils.py docs/help/common/language -o docs/help/common/language/search_index.json`
+4. Update `mkdocs.yml` navigation if needed
+5. Test: `python3 utils/test_help_integration.py`
+
 ## Quick Links
 
+- **[Web Documentation](https://avwohl.github.io/mbasic)** - Live documentation site
 - [Quick Reference](user/QUICK_REFERENCE.md) - Fast command reference
-- [Help System Index](help/common/index.md) - Main help system entry
+- [Language Reference](help/common/language/index.md) - BASIC-80 language
+- [MBASIC Documentation](help/mbasic/index.md) - Interpreter docs
 - [Development Status](dev/STATUS.md) - Current project status
-- [Help System Design](help/README.md) - In-UI help system documentation

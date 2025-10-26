@@ -36,3 +36,7 @@ test_latest*.txt
 .DS_Store
 Thumbs.db
 tests/data/
+
+# MkDocs generated files
+/site/
+.cache/
