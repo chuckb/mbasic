@@ -61,6 +61,8 @@ class TkBackend(UIBackend):
         self.variables_window = None
         self.variables_tree = None
         self.variables_visible = False
+        self.variables_sort_column = 'accessed'  # Current sort column: 'accessed', 'written', 'read', 'name', 'type', or 'value'
+        self.variables_sort_reverse = True  # Sort direction: False=ascending, True=descending (default descending for timestamps)
 
         # Execution stack window state
         self.stack_window = None
@@ -481,12 +483,13 @@ class TkBackend(UIBackend):
 
         # Create Treeview
         tree = ttk.Treeview(self.variables_window, columns=('Type', 'Value'), show='tree headings')
-        tree.heading('#0', text='Variable')
-        tree.heading('Type', text='Type')
-        tree.heading('Value', text='Value')
-        tree.column('#0', width=100)
-        tree.column('Type', width=100)
-        tree.column('Value', width=200)
+        # Variable column cycles through: accessed → written → read → name
+        tree.heading('#0', text='Variable (Last Accessed ↓)', command=lambda: self._cycle_variable_sort())
+        tree.heading('Type', text='Type', command=lambda: self._sort_variables_by('type'))
+        tree.heading('Value', text='Value', command=lambda: self._sort_variables_by('value'))
+        tree.column('#0', width=180)
+        tree.column('Type', width=80)
+        tree.column('Value', width=140)
         tree.pack(fill=tk.BOTH, expand=True)
 
         self.variables_tree = tree
@@ -514,6 +517,55 @@ class TkBackend(UIBackend):
         """Close variables window (called from X button)."""
         self.variables_window.withdraw()
         self.variables_visible = False
+
+    def _cycle_variable_sort(self):
+        """Cycle through variable sort modes: accessed → written → read → name."""
+        cycle_order = ['accessed', 'written', 'read', 'name']
+        try:
+            current_idx = cycle_order.index(self.variables_sort_column)
+            next_idx = (current_idx + 1) % len(cycle_order)
+        except ValueError:
+            next_idx = 0  # Default to accessed if current column not in cycle
+
+        self.variables_sort_column = cycle_order[next_idx]
+        # Start with descending for timestamp sorts, ascending for name
+        self.variables_sort_reverse = (self.variables_sort_column != 'name')
+
+        # Update header text
+        sort_labels = {
+            'accessed': 'Last Accessed',
+            'written': 'Last Written',
+            'read': 'Last Read',
+            'name': 'Name'
+        }
+        arrow = ' ↓' if self.variables_sort_reverse else ' ↑'
+        self.variables_tree.heading('#0', text=f'Variable ({sort_labels[self.variables_sort_column]}{arrow})')
+
+        # Update the display with new sort
+        self._update_variables()
+
+    def _sort_variables_by(self, column):
+        """Handle column header click to sort variables.
+
+        Args:
+            column: 'name', 'type', or 'value'
+        """
+        # Toggle sort direction if clicking the same column
+        if self.variables_sort_column == column:
+            self.variables_sort_reverse = not self.variables_sort_reverse
+        else:
+            # New column - start with ascending
+            self.variables_sort_column = column
+            self.variables_sort_reverse = False
+
+        # Update column headers to show sort indicator
+        arrow = ' ↓' if self.variables_sort_reverse else ' ↑'
+        self.variables_tree.heading('#0', text='Variable' + (arrow if column == 'name' else ''))
+        self.variables_tree.heading('Type', text='Type' + (arrow if column == 'type' else ''))
+        self.variables_tree.heading('Value', text='Value' + (arrow if column == 'value' else ''))
+
+        # Update the display with new sort
+        self._update_variables()
 
     def _update_variables(self):
         """Update variables window from runtime."""
@@ -553,8 +605,45 @@ class TkBackend(UIBackend):
             '#': 'Double'
         }
 
+        # Sort variables based on current sort settings
+        if self.variables_sort_column == 'name':
+            sort_key = lambda v: v['name'].lower()
+        elif self.variables_sort_column == 'type':
+            sort_key = lambda v: v['type_suffix']
+        elif self.variables_sort_column == 'accessed':
+            # Sort by most recent access (read or write)
+            def accessed_sort_key(v):
+                read_ts = v['last_read']['timestamp'] if v.get('last_read') else 0
+                write_ts = v['last_write']['timestamp'] if v.get('last_write') else 0
+                return max(read_ts, write_ts)
+            sort_key = accessed_sort_key
+        elif self.variables_sort_column == 'written':
+            # Sort by most recent write
+            sort_key = lambda v: v['last_write']['timestamp'] if v.get('last_write') else 0
+        elif self.variables_sort_column == 'read':
+            # Sort by most recent read
+            sort_key = lambda v: v['last_read']['timestamp'] if v.get('last_read') else 0
+        elif self.variables_sort_column == 'value':
+            # For value sorting, handle arrays specially (sort them last)
+            # For scalars, sort by numeric value or string value
+            def value_sort_key(v):
+                if v['is_array']:
+                    return (2, 0, '')  # Arrays sort last
+                elif v['type_suffix'] == '$':
+                    return (1, 0, str(v['value']).lower())  # Strings sort alphabetically
+                else:
+                    try:
+                        return (0, float(v['value']), '')  # Numbers sort numerically
+                    except (ValueError, TypeError):
+                        return (0, 0, '')
+            sort_key = value_sort_key
+        else:
+            sort_key = lambda v: v['name'].lower()
+
+        sorted_variables = sorted(variables, key=sort_key, reverse=self.variables_sort_reverse)
+
         # Add to tree
-        for var in sorted(variables, key=lambda v: v['name']):
+        for var in sorted_variables:
             name = var['name'] + var['type_suffix']
             type_name = type_map.get(var['type_suffix'], 'Unknown')
 
