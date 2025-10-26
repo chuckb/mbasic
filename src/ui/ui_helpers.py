@@ -789,3 +789,321 @@ def extract_error_location(error_str: str) -> Tuple[Optional[int], Optional[int]
         return (int(match.group(1)), None)
 
     return (None, None)
+
+
+# ============================================================================
+# AST Serialization
+# ============================================================================
+
+def serialize_line(line_node):
+    """Serialize a LineNode back to source text, preserving indentation.
+
+    Args:
+        line_node: LineNode AST to serialize
+
+    Returns:
+        str: Source text for the line
+
+    Example:
+        >>> from parser import Parser
+        >>> from lexer import Lexer
+        >>> line = "20   PRINT I"
+        >>> lexer = Lexer(line)
+        >>> tokens = lexer.tokenize()
+        >>> parser = Parser(tokens, {}, source=line)
+        >>> ast = parser.parse_line()
+        >>> serialize_line(ast)
+        '20   PRINT i'
+    """
+    # Start with line number
+    line_num_str = str(line_node.line_number)
+    parts = [line_num_str]
+
+    # Preserve RELATIVE indentation (spaces after line number) from original source
+    # This ensures indentation survives RENUM when line numbers change width
+    if line_node.statements:
+        # Try to calculate relative indentation from source_text if available
+        relative_indent = 1  # Default: single space
+
+        if hasattr(line_node, 'source_text') and line_node.source_text:
+            # Extract original line number and count spaces after it
+            match = re.match(r'^(\d+)(\s+)', line_node.source_text)
+            if match:
+                # Spaces after line number in original
+                relative_indent = len(match.group(2))
+
+        # Apply the relative indentation
+        parts.append(' ' * relative_indent)
+
+        # Serialize each statement
+        for i, stmt in enumerate(line_node.statements):
+            stmt_text = serialize_statement(stmt)
+            if i == 0:
+                parts.append(stmt_text)
+            else:
+                # Check if this is an inline comment (REM or apostrophe)
+                # Comments should have spacing before them, not colon separator
+                if type(stmt).__name__ == 'RemarkStatementNode':
+                    # Inline comment - preserve spacing, no colon
+                    # Use 4 spaces before comment as default
+                    parts.append('    ' + stmt_text)
+                else:
+                    parts.append(' : ' + stmt_text)
+
+    return ''.join(parts)
+
+
+def serialize_statement(stmt):
+    """Serialize a statement node back to source text.
+
+    Args:
+        stmt: Statement AST node to serialize
+
+    Returns:
+        str: Source text for the statement
+
+    Example:
+        >>> # Assume we have a PrintStatementNode
+        >>> serialize_statement(print_stmt)
+        'PRINT "HELLO"'
+    """
+    stmt_type = type(stmt).__name__
+
+    if stmt_type == 'PrintStatementNode':
+        parts = ['PRINT']
+        for i, expr in enumerate(stmt.expressions):
+            if i > 0 and i <= len(stmt.separators):
+                # Add separator from previous expression
+                sep = stmt.separators[i-1] if i-1 < len(stmt.separators) else ''
+                if sep:
+                    parts.append(sep)
+            parts.append(' ' if not parts[-1].endswith(' ') else '')
+            parts.append(serialize_expression(expr))
+        return ''.join(parts)
+
+    elif stmt_type == 'GotoStatementNode':
+        return f"GOTO {stmt.line_number}"
+
+    elif stmt_type == 'GosubStatementNode':
+        return f"GOSUB {stmt.line_number}"
+
+    elif stmt_type == 'LetStatementNode':
+        var_text = serialize_variable(stmt.variable)
+        expr_text = serialize_expression(stmt.expression)
+        return f"{var_text} = {expr_text}"
+
+    elif stmt_type == 'EndStatementNode':
+        return "END"
+
+    elif stmt_type == 'ReturnStatementNode':
+        return "RETURN"
+
+    elif stmt_type == 'StopStatementNode':
+        return "STOP"
+
+    elif stmt_type == 'RemarkStatementNode':
+        # Preserve comments using original syntax (REM or ')
+        # Note: REMARK is converted to REM for consistency
+        if stmt.comment_type == "APOSTROPHE":
+            return f"' {stmt.text}"
+        else:  # REM, REMARK, or default
+            return f"REM {stmt.text}"
+
+    elif stmt_type == 'IfStatementNode':
+        parts = ['IF ', serialize_expression(stmt.condition)]
+        if stmt.then_line_number is not None:
+            parts.append(f' THEN {stmt.then_line_number}')
+        elif stmt.then_statements:
+            parts.append(' THEN ')
+            parts.append(' : '.join(serialize_statement(s) for s in stmt.then_statements))
+        if stmt.else_line_number is not None:
+            parts.append(f' ELSE {stmt.else_line_number}')
+        elif stmt.else_statements:
+            parts.append(' ELSE ')
+            parts.append(' : '.join(serialize_statement(s) for s in stmt.else_statements))
+        return ''.join(parts)
+
+    elif stmt_type == 'ForStatementNode':
+        var = serialize_variable(stmt.variable)
+        start = serialize_expression(stmt.start_expr)
+        end = serialize_expression(stmt.end_expr)
+        parts = [f"FOR {var} = {start} TO {end}"]
+        if stmt.step_expr:
+            step = serialize_expression(stmt.step_expr)
+            parts.append(f" STEP {step}")
+        return ''.join(parts)
+
+    elif stmt_type == 'NextStatementNode':
+        if stmt.variables:
+            vars_text = ', '.join(serialize_variable(v) for v in stmt.variables)
+            return f"NEXT {vars_text}"
+        return "NEXT"
+
+    elif stmt_type == 'OnGotoStatementNode':
+        expr = serialize_expression(stmt.expression)
+        lines = ','.join(str(line) for line in stmt.line_numbers)
+        return f"ON {expr} GOTO {lines}"
+
+    elif stmt_type == 'OnGosubStatementNode':
+        expr = serialize_expression(stmt.expression)
+        lines = ','.join(str(line) for line in stmt.line_numbers)
+        return f"ON {expr} GOSUB {lines}"
+
+    elif stmt_type == 'OnErrorStatementNode':
+        if stmt.line_number is not None:
+            return f"ON ERROR GOTO {stmt.line_number}"
+        else:
+            return "ON ERROR GOTO 0"
+
+    elif stmt_type == 'ErrorStatementNode':
+        error_code = serialize_expression(stmt.error_code)
+        return f"ERROR {error_code}"
+
+    elif stmt_type == 'WhileStatementNode':
+        cond = serialize_expression(stmt.condition)
+        return f"WHILE {cond}"
+
+    elif stmt_type == 'WendStatementNode':
+        return "WEND"
+
+    # For other statement types, use a generic approach
+    # This is a fallback - ideally all statement types should be handled explicitly
+    else:
+        # Try to reconstruct from the original source if possible
+        # For now, return a placeholder
+        return f"REM {stmt_type}"
+
+
+def serialize_variable(var):
+    """Serialize a variable reference.
+
+    Args:
+        var: VariableNode to serialize
+
+    Returns:
+        str: Variable reference text
+
+    Example:
+        >>> # Assume we have a VariableNode for "X$"
+        >>> serialize_variable(var_node)
+        'x$'
+    """
+    text = var.name
+    if var.type_suffix:
+        text += var.type_suffix
+    if var.subscripts:
+        subs = ','.join(serialize_expression(sub) for sub in var.subscripts)
+        text += f"({subs})"
+    return text
+
+
+def token_to_operator(token_type):
+    """Convert a TokenType operator to its string representation.
+
+    Args:
+        token_type: TokenType enum value
+
+    Returns:
+        str: Operator string
+
+    Example:
+        >>> from tokens import TokenType
+        >>> token_to_operator(TokenType.PLUS)
+        '+'
+    """
+    from tokens import TokenType
+
+    operator_map = {
+        TokenType.PLUS: '+',
+        TokenType.MINUS: '-',
+        TokenType.MULTIPLY: '*',
+        TokenType.DIVIDE: '/',
+        TokenType.POWER: '^',
+        TokenType.EQUAL: '=',
+        TokenType.NOT_EQUAL: '<>',
+        TokenType.LESS_THAN: '<',
+        TokenType.LESS_EQUAL: '<=',
+        TokenType.GREATER_THAN: '>',
+        TokenType.GREATER_EQUAL: '>=',
+        TokenType.AND: 'AND',
+        TokenType.OR: 'OR',
+        TokenType.NOT: 'NOT',
+        TokenType.MOD: 'MOD',
+        TokenType.BACKSLASH: '\\',
+    }
+
+    return operator_map.get(token_type, str(token_type))
+
+
+def serialize_expression(expr):
+    """Serialize an expression node to source text.
+
+    Args:
+        expr: Expression AST node to serialize
+
+    Returns:
+        str: Expression source text
+
+    Example:
+        >>> # Assume we have a NumberNode with value 100
+        >>> serialize_expression(num_node)
+        '100'
+    """
+    expr_type = type(expr).__name__
+
+    if expr_type == 'NumberNode':
+        # Preserve integer vs float representation
+        # If the value is a whole number, show it without decimal point
+        if isinstance(expr.value, float) and expr.value.is_integer():
+            return str(int(expr.value))
+        else:
+            return str(expr.value)
+
+    elif expr_type == 'StringNode':
+        return f'"{expr.value}"'
+
+    elif expr_type == 'VariableNode':
+        return serialize_variable(expr)
+
+    elif expr_type == 'BinaryOpNode':
+        left = serialize_expression(expr.left)
+        right = serialize_expression(expr.right)
+        # Convert TokenType operator to string
+        op_str = token_to_operator(expr.operator)
+        return f"{left} {op_str} {right}"
+
+    elif expr_type == 'UnaryOpNode':
+        operand = serialize_expression(expr.operand)
+        op_str = token_to_operator(expr.operator) if hasattr(expr.operator, 'name') else str(expr.operator)
+        return f"{op_str}{operand}"
+
+    elif expr_type == 'FunctionCallNode':
+        # ERR and ERL are special - they're not functions and don't use ()
+        if expr.name in ('ERR', 'ERL') and len(expr.arguments) == 0:
+            return expr.name
+        args = ','.join(serialize_expression(arg) for arg in expr.arguments)
+        return f"{expr.name}({args})"
+
+    else:
+        return "?"
+
+
+def serialize_program(line_asts: Dict[int, 'LineNode']) -> Dict[int, str]:
+    """Serialize all lines of a program from AST to text.
+
+    Args:
+        line_asts: Dictionary of line_number -> LineNode
+
+    Returns:
+        Dictionary of line_number -> line_text
+
+    Example:
+        >>> serialized = serialize_program(program.line_asts)
+        >>> for line_num in sorted(serialized.keys()):
+        ...     print(serialized[line_num])
+    """
+    result = {}
+    for line_num in sorted(line_asts.keys()):
+        line_node = line_asts[line_num]
+        result[line_num] = serialize_line(line_node)
+    return result
