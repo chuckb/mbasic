@@ -497,65 +497,46 @@ class MBasicWebIDE:
 
         dialog.open()
 
-    def _apply_renumber(self, start: int, increment: int, dialog):
-        """Apply renumbering to program."""
+    def _apply_renumber(self, start: int, increment: int, dialog, old_start: int = 0):
+        """Apply renumbering to program using shared ui_helpers module."""
         import re
+        from ui.ui_helpers import parse_line_number, renumber_program_lines
 
         lines = self.editor.value.split('\n')
 
         # Parse lines with line numbers
-        numbered_lines = []
+        lines_dict = {}
         unnumbered_lines = []
 
-        line_num_pattern = re.compile(r'^\s*(\d+)\s+(.*)$')
-
         for line in lines:
-            match = line_num_pattern.match(line)
-            if match:
-                old_num = int(match.group(1))
-                code = match.group(2)
-                numbered_lines.append((old_num, code))
+            line_num = parse_line_number(line)
+            if line_num is not None:
+                lines_dict[line_num] = line
             else:
                 # Keep unnumbered lines (comments, blank lines)
                 if line.strip():
                     unnumbered_lines.append(line)
 
-        # Sort by original line number
-        numbered_lines.sort(key=lambda x: x[0])
+        if not lines_dict:
+            ui.notify('No numbered lines to renumber', type='warning')
+            dialog.close()
+            return
 
-        # Create mapping from old to new line numbers for GOTO/GOSUB updates
-        line_mapping = {}
-        new_num = start
-        for old_num, _ in numbered_lines:
-            line_mapping[old_num] = new_num
-            new_num += increment
+        # Use shared renumber logic from ui_helpers
+        new_lines, line_mapping = renumber_program_lines(lines_dict, start, old_start, increment)
 
-        # Renumber lines and update GOTO/GOSUB/THEN/ELSE references
-        renumbered_lines = []
-        new_num = start
-
-        goto_pattern = re.compile(r'\b(GOTO|GOSUB|THEN|ELSE|ON\s+\w+\s+GOTO|ON\s+\w+\s+GOSUB)\s+(\d+)', re.IGNORECASE)
-
-        for old_num, code in numbered_lines:
-            # Update GOTO/GOSUB references in the code
-            def replace_line_ref(match):
-                keyword = match.group(1)
-                old_target = int(match.group(2))
-                new_target = line_mapping.get(old_target, old_target)
-                return f'{keyword} {new_target}'
-
-            updated_code = goto_pattern.sub(replace_line_ref, code)
-
-            # Format with new line number
-            renumbered_lines.append(f'{new_num:>5} {updated_code}')
-            new_num += increment
+        # Format lines with right-alignment (Web UI style)
+        formatted_lines = [f'{num:>5} {line.split(None, 1)[1] if len(line.split(None, 1)) > 1 else ""}'
+                          for num, line in sorted(new_lines.items())]
 
         # Rebuild program
-        self.editor.value = '\n'.join(renumbered_lines + unnumbered_lines)
+        self.editor.value = '\n'.join(formatted_lines + unnumbered_lines)
         self.update_line_numbers()
         self._validate_editor_syntax()
 
-        ui.notify(f'Program renumbered ({start} to {new_num - increment})', type='positive')
+        # Calculate final line number for notification
+        final_num = max(new_lines.keys()) if new_lines else start
+        ui.notify(f'Program renumbered ({start} to {final_num})', type='positive')
         dialog.close()
 
     # File operations

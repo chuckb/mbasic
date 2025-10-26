@@ -1730,9 +1730,42 @@ class TkBackend(UIBackend):
         pass
 
     def cmd_renum(self, args: str) -> None:
-        """Execute RENUM command - renumber lines."""
-        # TODO: Implement
-        pass
+        """Execute RENUM command - renumber lines using ui_helpers."""
+        from ui.ui_helpers import parse_renum_args, renumber_program_lines
+
+        # Parse arguments
+        new_start, old_start, increment = parse_renum_args(args)
+
+        # Get current program lines
+        if not self.program.lines:
+            self._write_output("No program to renumber")
+            return
+
+        try:
+            # Use shared renumber logic
+            new_lines, line_mapping = renumber_program_lines(
+                self.program.lines, new_start, old_start, increment
+            )
+
+            # Update program by reparsing all renumbered lines
+            # This ensures ASTs are correctly updated
+            self.program.lines.clear()
+            self.program.line_asts.clear()
+
+            for line_num, line_text in sorted(new_lines.items()):
+                success, error = self.program.add_line(line_num, line_text)
+                if not success:
+                    self._write_output(f"Warning: Error parsing line {line_num}: {error}")
+
+            # Refresh the editor display
+            self._refresh_editor()
+
+            # Calculate range for message
+            final_num = max(new_lines.keys()) if new_lines else new_start
+            self._write_output(f"Renumbered ({new_start} to {final_num})")
+
+        except Exception as e:
+            self._write_output(f"Error during renumber: {e}")
 
     def cmd_cont(self) -> None:
         """Execute CONT command - continue after STOP."""
