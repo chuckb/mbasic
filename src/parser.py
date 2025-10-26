@@ -36,9 +36,11 @@ class Parser:
     2. parse_program() - Parse program with global type information
     """
 
-    def __init__(self, tokens: List[Token], def_type_map: Dict[str, str] = None):
+    def __init__(self, tokens: List[Token], def_type_map: Dict[str, str] = None, source: str = ""):
         self.tokens = tokens
         self.position = 0
+        self.source = source  # Original source code for statement highlighting
+        self.source_lines = source.split('\n') if source else []  # Split into lines for easy access
 
         # Global type mapping from DEF statements
         # Maps first letter (a-z) to type (INTEGER, SINGLE, DOUBLE, STRING)
@@ -286,6 +288,11 @@ class Parser:
         line_num_token = self.advance()
         line_number = int(line_num_token.value)
 
+        # Get source text for this line (for statement highlighting)
+        line_source_text = ""
+        if self.source_lines and 0 < line_num_token.line <= len(self.source_lines):
+            line_source_text = self.source_lines[line_num_token.line - 1]
+
         # Parse statements on this line
         statements: List[StatementNode] = []
 
@@ -295,8 +302,30 @@ class Parser:
                 self.advance()
                 continue
 
+            # Track statement start position (column of first token)
+            stmt_start_token = self.current()
+            stmt_start_col = stmt_start_token.column if stmt_start_token else 0
+
             stmt = self.parse_statement()
+
             if stmt:
+                # Track statement end position (column after last token consumed)
+                # Use the position before we advance to the colon/newline
+                prev_pos = self.position - 1
+                if prev_pos >= 0 and prev_pos < len(self.tokens):
+                    last_token = self.tokens[prev_pos]
+                    # Estimate end position as start + length of token value
+                    if hasattr(last_token, 'value') and last_token.value:
+                        stmt_end_col = last_token.column + len(str(last_token.value))
+                    else:
+                        stmt_end_col = last_token.column + 1
+                else:
+                    stmt_end_col = stmt_start_col + 1
+
+                # Set character positions on statement for highlighting
+                stmt.char_start = stmt_start_col
+                stmt.char_end = stmt_end_col
+
                 statements.append(stmt)
 
             # Check for statement separator
@@ -327,6 +356,7 @@ class Parser:
         return LineNode(
             line_number=line_number,
             statements=statements,
+            source_text=line_source_text,
             line_num=line_num_token.line,
             column=line_num_token.column
         )

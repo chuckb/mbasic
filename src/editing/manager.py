@@ -293,7 +293,7 @@ class ProgramManager:
             from parser import Parser
 
             tokens = list(tokenize(line_text))
-            parser = Parser(tokens, self.def_type_map)
+            parser = Parser(tokens, self.def_type_map, source=line_text)
             line_node = parser.parse_line()
             return (line_node, None)
 
