@@ -79,6 +79,11 @@ class TkBackend(UIBackend):
         self.last_edited_line_index = None  # Last editor line index (1-based)
         self.last_edited_line_text = None   # Content of last edited line
 
+        # Editor auto-numbering configuration
+        self.auto_number_enabled = True      # Enable auto-numbering
+        self.auto_number_start = 10          # Starting line number
+        self.auto_number_increment = 10      # Increment between lines
+
         # Tkinter widgets (created in start())
         self.root = None
         self.editor_text = None
@@ -129,6 +134,9 @@ class TkBackend(UIBackend):
         self.editor_text.text.bind('<KeyRelease-Next>', self._on_cursor_move)   # Page Down
         self.editor_text.text.bind('<Button-1>', self._on_mouse_click, add='+')
         self.editor_text.text.bind('<FocusOut>', self._on_focus_out)
+
+        # Bind Enter key for auto-numbering
+        self.editor_text.text.bind('<Return>', self._on_enter_key)
 
         # Set up editor context menu
         self._setup_editor_context_menu()
@@ -998,6 +1006,67 @@ class TkBackend(UIBackend):
     def _on_focus_out(self, event):
         """Handle focus leaving editor - check for line change."""
         self._check_line_change()
+
+    def _on_enter_key(self, event):
+        """Handle Enter key - implement auto-numbering.
+
+        Returns:
+            'break' to prevent default Enter behavior, None to allow it
+        """
+        import tkinter as tk
+        import re
+
+        if not self.auto_number_enabled:
+            return None  # Allow default behavior
+
+        # Get current line
+        current_pos = self.editor_text.text.index(tk.INSERT)
+        current_line_index = int(current_pos.split('.')[0])
+        current_line_text = self.editor_text.text.get(
+            f'{current_line_index}.0',
+            f'{current_line_index}.end'
+        )
+
+        # Parse line number from current line
+        match = re.match(r'^\s*(\d+)', current_line_text)
+        if not match:
+            # No line number on current line - use default start
+            next_num = self.auto_number_start
+        else:
+            current_line_num = int(match.group(1))
+
+            # Calculate next number
+            next_num = current_line_num + self.auto_number_increment
+
+            # Get all existing line numbers from program
+            existing_nums = set(self.program.get_all_line_numbers())
+
+            # Find next available number
+            # If there's a line after current, don't exceed it
+            sorted_nums = sorted(existing_nums)
+            try:
+                current_idx = sorted_nums.index(current_line_num)
+                if current_idx + 1 < len(sorted_nums):
+                    max_allowed = sorted_nums[current_idx + 1]
+                else:
+                    max_allowed = 99999
+            except ValueError:
+                max_allowed = 99999
+
+            # Skip conflicts
+            while next_num in existing_nums or next_num >= max_allowed:
+                next_num += self.auto_number_increment
+                if next_num >= 99999:
+                    # Ran out of numbers - use current + 1
+                    next_num = current_line_num + 1
+                    break
+
+        # Insert new line with auto-generated number
+        # Format: right-aligned 5 digits + space
+        new_line_text = f'\n{next_num:>5} '
+        self.editor_text.text.insert(tk.INSERT, new_line_text)
+
+        return 'break'  # Prevent default Enter behavior
 
     def _check_line_change(self):
         """Check if cursor moved off a line and trigger auto-sort if line number changed."""
