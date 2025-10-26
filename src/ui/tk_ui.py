@@ -524,7 +524,7 @@ class TkBackend(UIBackend):
     def _on_variable_heading_click(self, event):
         """Handle clicks on variable list column headings.
 
-        Arrow area (left ~15 pixels): Toggle sort direction
+        Arrow area (left ~20 pixels): Toggle sort direction
         Rest of heading: Cycle sort column (for Variable) or set column (for Type/Value)
         """
         # Identify which part of the tree was clicked
@@ -536,27 +536,28 @@ class TkBackend(UIBackend):
         # Identify which column heading was clicked
         column = self.variables_tree.identify_column(event.x)
 
-        # Determine if clicking the arrow (left ~15 pixels) or the text
-        # Get the x-coordinate relative to the column
-        if column == '#1':  # This is column #0 (the tree column)
+        # Calculate x-coordinate relative to the start of the clicked column
+        # to determine if we're clicking the arrow or the text
+        if column == '#0':  # Tree column (Variable)
             col_x = event.x
-        elif column == '#2':  # Type column
+        elif column == '#1':  # Type column
             col_x = event.x - self.variables_tree.column('#0', 'width')
-        elif column == '#3':  # Value column
+        elif column == '#2':  # Value column
             col_x = event.x - self.variables_tree.column('#0', 'width') - self.variables_tree.column('Type', 'width')
         else:
             return
 
-        # Click on arrow area (left 15 pixels) = toggle sort direction
+        # Click on arrow area (left 20 pixels) = toggle sort direction
         # Click on rest = cycle/set sort column
-        if col_x < 15:
+        ARROW_CLICK_WIDTH = 20
+        if col_x < ARROW_CLICK_WIDTH:
             self._toggle_variable_sort_direction()
         else:
-            if column == '#1':  # Variable column
+            if column == '#0':  # Variable column
                 self._cycle_variable_sort()
-            elif column == '#2':  # Type column
+            elif column == '#1':  # Type column
                 self._sort_variables_by('type')
-            elif column == '#3':  # Value column
+            elif column == '#2':  # Value column
                 self._sort_variables_by('value')
 
     def _toggle_variable_sort_direction(self):
