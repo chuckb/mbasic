@@ -438,10 +438,19 @@ class TkBackend(UIBackend):
 
         # Create window
         self.variables_window = tk.Toplevel(self.root)
-        self.variables_window.title("Variables")
-        self.variables_window.geometry("400x300")
+        self.variables_window.title("Variables & Resources")
+        self.variables_window.geometry("400x400")
         self.variables_window.protocol("WM_DELETE_WINDOW", lambda: self._toggle_variables())
         self.variables_window.withdraw()  # Hidden initially
+
+        # Create resource usage frame at top
+        resource_frame = tk.Frame(self.variables_window, relief=tk.SUNKEN, borderwidth=1)
+        resource_frame.pack(fill=tk.X, padx=5, pady=5)
+
+        # Resource usage label
+        self.resource_label = tk.Label(resource_frame, text="Resource Usage: --",
+                                       font=("Courier", 9), justify=tk.LEFT, anchor=tk.W)
+        self.resource_label.pack(fill=tk.X, padx=5, pady=5)
 
         # Create Treeview
         tree = ttk.Treeview(self.variables_window, columns=('Type', 'Value'), show='tree headings')
@@ -469,6 +478,24 @@ class TkBackend(UIBackend):
         """Update variables window from runtime."""
         if not self.variables_visible or not self.runtime:
             return
+
+        # Update resource usage
+        if self.interpreter and hasattr(self.interpreter, 'limits'):
+            limits = self.interpreter.limits
+
+            # Format memory usage
+            mem_pct = (limits.current_memory_usage / limits.max_total_memory * 100) if limits.max_total_memory > 0 else 0
+            mem_text = f"Mem: {limits.current_memory_usage:,} / {limits.max_total_memory:,} ({mem_pct:.1f}%)"
+
+            # Format stack depths
+            gosub_text = f"GOSUB: {limits.current_gosub_depth}/{limits.max_gosub_depth}"
+            for_text = f"FOR: {limits.current_for_depth}/{limits.max_for_depth}"
+            while_text = f"WHILE: {limits.current_while_depth}/{limits.max_while_depth}"
+
+            resource_text = f"{mem_text}\n{gosub_text}  {for_text}  {while_text}"
+            self.resource_label.config(text=resource_text)
+        else:
+            self.resource_label.config(text="Resource Usage: --")
 
         # Clear tree
         for item in self.variables_tree.get_children():

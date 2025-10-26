@@ -261,7 +261,7 @@ class Runtime:
         # Return value
         return self._variables[full_name]['value']
 
-    def set_variable(self, name, type_suffix, value, def_type_map=None, token=None, debugger_set=False):
+    def set_variable(self, name, type_suffix, value, def_type_map=None, token=None, debugger_set=False, limits=None):
         """
         Set variable value for program execution, tracking write access.
 
@@ -275,6 +275,7 @@ class Runtime:
             def_type_map: Optional DEF type mapping
             token: REQUIRED (unless debugger_set=True) - Token with line and position
             debugger_set: True if this set is from debugger, not program execution
+            limits: Optional ResourceLimits object for tracking
 
         Raises:
             ValueError: If token is None and debugger_set is False
@@ -283,7 +284,17 @@ class Runtime:
             raise ValueError("set_variable() requires token parameter. Use debugger_set=True for debugger writes.")
 
         # Resolve full variable name
-        full_name, _ = self._resolve_variable_name(name, type_suffix, def_type_map)
+        full_name, resolved_suffix = self._resolve_variable_name(name, type_suffix, def_type_map)
+
+        # Check string length limit if limits provided and it's a string
+        if limits and resolved_suffix == '$' and isinstance(value, str):
+            limits.check_string_length(value)
+
+        # Track variable memory if limits provided
+        if limits and not debugger_set:
+            from ast_nodes import TypeInfo
+            var_type = TypeInfo.from_suffix(resolved_suffix)
+            limits.allocate_variable(full_name, value, var_type)
 
         # Initialize variable entry if needed
         if full_name not in self._variables:

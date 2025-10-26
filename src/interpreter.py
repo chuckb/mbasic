@@ -894,7 +894,8 @@ class Interpreter:
                 stmt.variable.name,
                 stmt.variable.type_suffix,
                 value,
-                token=self._make_token_info(stmt.variable)
+                token=self._make_token_info(stmt.variable),
+                limits=self.limits
             )
 
     def execute_swap(self, stmt):
@@ -930,7 +931,8 @@ class Interpreter:
                 stmt.var1.name,
                 stmt.var1.type_suffix,
                 value2,
-                token=self._make_token_info(stmt.var1)
+                token=self._make_token_info(stmt.var1),
+                limits=self.limits
             )
 
         if stmt.var2.subscripts:
@@ -946,7 +948,8 @@ class Interpreter:
                 stmt.var2.name,
                 stmt.var2.type_suffix,
                 value1,
-                token=self._make_token_info(stmt.var2)
+                token=self._make_token_info(stmt.var2),
+                limits=self.limits
             )
 
     def execute_print(self, stmt):
@@ -1212,7 +1215,7 @@ class Interpreter:
 
         # Set loop variable to start
         var_name = stmt.variable.name + (stmt.variable.type_suffix or "")
-        self.runtime.set_variable(stmt.variable.name, stmt.variable.type_suffix, start, token=self._make_token_info(stmt.variable))
+        self.runtime.set_variable(stmt.variable.name, stmt.variable.type_suffix, start, token=self._make_token_info(stmt.variable), limits=self.limits)
 
         # Check resource limits
         self.limits.push_for_loop(var_name)
@@ -1310,7 +1313,7 @@ class Interpreter:
                 raise RuntimeError(f"NEXT error: FOR statement in line {return_line} no longer exists")
 
             # Continue loop - update variable and jump to statement AFTER the FOR
-            self.runtime.set_variable(base_name, type_suffix, new_value, token=token)
+            self.runtime.set_variable(base_name, type_suffix, new_value, token=token, limits=self.limits)
             self.runtime.next_line = return_line
             # Resume at the statement AFTER the FOR statement
             self.runtime.next_stmt_index = return_stmt + 1
@@ -1496,7 +1499,7 @@ class Interpreter:
                 subscripts = [int(self.evaluate_expression(sub)) for sub in var_node.subscripts]
                 self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, value, token=self._make_token_info(var_node))
             else:
-                self.runtime.set_variable(var_node.name, var_node.type_suffix, value, token=self._make_token_info(var_node))
+                self.runtime.set_variable(var_node.name, var_node.type_suffix, value, token=self._make_token_info(var_node), limits=self.limits)
 
     def execute_restore(self, stmt):
         """Execute RESTORE statement"""
@@ -1693,7 +1696,7 @@ class Interpreter:
                 subscripts = [int(self.evaluate_expression(sub)) for sub in var_node.subscripts]
                 self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, value, token=self._make_token_info(var_node))
             else:
-                self.runtime.set_variable(var_node.name, var_node.type_suffix, value, token=self._make_token_info(var_node))
+                self.runtime.set_variable(var_node.name, var_node.type_suffix, value, token=self._make_token_info(var_node), limits=self.limits)
 
         # Clear input state after successful completion
         self.state.input_variables = []
@@ -1787,7 +1790,7 @@ class Interpreter:
             subscripts = [int(self.evaluate_expression(sub)) for sub in var_node.subscripts]
             self.runtime.set_array_element(var_node.name, var_node.type_suffix, subscripts, line, token=self._make_token_info(var_node))
         else:
-            self.runtime.set_variable(var_node.name, var_node.type_suffix, line, token=self._make_token_info(var_node))
+            self.runtime.set_variable(var_node.name, var_node.type_suffix, line, token=self._make_token_info(var_node), limits=self.limits)
 
         # Clear input state after successful completion
         self.state.input_variables = []
@@ -2452,7 +2455,8 @@ class Interpreter:
                     var_node.name,
                     var_node.type_suffix,
                     modified_value,
-                    token=self._make_token_info(var_node)
+                    token=self._make_token_info(var_node),
+                    limits=self.limits
                 )
         else:
             # If it's a more complex expression, we can't modify it in-place
@@ -2710,7 +2714,7 @@ class Interpreter:
             saved_vars[param_name] = self.runtime.get_variable_for_debugger(param.name, param.type_suffix)
             if i < len(args):
                 # Set parameter to argument value - this is part of function call
-                self.runtime.set_variable(param.name, param.type_suffix, args[i], token=call_token)
+                self.runtime.set_variable(param.name, param.type_suffix, args[i], token=call_token, limits=self.limits)
 
         # Evaluate function expression
         result = self.evaluate_expression(func_def.expression)

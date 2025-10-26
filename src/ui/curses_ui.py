@@ -2017,6 +2017,22 @@ Run                           Help
         # Clear current display
         self.variables_walker.clear()
 
+        # Add resource usage header
+        if self.interpreter and hasattr(self.interpreter, 'limits'):
+            limits = self.interpreter.limits
+
+            # Format memory usage
+            mem_pct = (limits.current_memory_usage / limits.max_total_memory * 100) if limits.max_total_memory > 0 else 0
+            mem_line = f"Memory: {limits.current_memory_usage:,} / {limits.max_total_memory:,} ({mem_pct:.1f}%)"
+
+            # Format stack depths
+            stack_line = f"Stacks: GOSUB={limits.current_gosub_depth}/{limits.max_gosub_depth} FOR={limits.current_for_depth}/{limits.max_for_depth} WHILE={limits.current_while_depth}/{limits.max_while_depth}"
+
+            # Add resource lines with divider
+            self.variables_walker.append(make_output_line(mem_line, attr='highlight'))
+            self.variables_walker.append(make_output_line(stack_line, attr='highlight'))
+            self.variables_walker.append(make_output_line("─" * 40))
+
         # Get all variables from runtime
         variables = self.runtime.get_all_variables()
 
