@@ -564,8 +564,25 @@ class TkHelpBrowser(tk.Toplevel):
         # Get the URL from our stored mapping
         url = self.link_urls.get(link_tag)
         if url:
-            # Create new browser window with the linked topic
-            new_browser = TkHelpBrowser(self.master, str(self.help_root), url)
+            # Resolve the relative path based on current topic
+            current_dir = Path(self.current_topic).parent
+            if str(current_dir) == '.':
+                new_topic_path = Path(url)
+            else:
+                new_topic_path = current_dir / url
+
+            # Convert to absolute path and back to relative from help_root
+            abs_path = (self.help_root / new_topic_path).resolve()
+            try:
+                resolved_url = str(abs_path.relative_to(self.help_root.resolve()))
+            except ValueError:
+                # If it can't be made relative, use the original
+                resolved_url = str(new_topic_path)
+
+            resolved_url = resolved_url.replace('\\', '/')
+
+            # Create new browser window with the resolved topic
+            new_browser = TkHelpBrowser(self.master, str(self.help_root), resolved_url)
 
     def _format_table_row(self, line: str) -> str:
         """Format a markdown table row for display."""
