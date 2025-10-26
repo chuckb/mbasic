@@ -71,7 +71,7 @@ class InterpreterState:
 class Interpreter:
     """Execute MBASIC AST with tick-based execution for UI integration"""
 
-    def __init__(self, runtime, io_handler=None, breakpoint_callback=None):
+    def __init__(self, runtime, io_handler=None, breakpoint_callback=None, filesystem_provider=None):
         self.runtime = runtime
         self.builtins = BuiltinFunctions(runtime)
 
@@ -80,6 +80,12 @@ class Interpreter:
             from iohandler.console import ConsoleIOHandler
             io_handler = ConsoleIOHandler(debug_enabled=False)
         self.io = io_handler
+
+        # Filesystem provider (defaults to real filesystem if not provided)
+        if filesystem_provider is None:
+            from filesystem import RealFileSystemProvider
+            filesystem_provider = RealFileSystemProvider()
+        self.fs = filesystem_provider
 
         # Breakpoint callback - called when a breakpoint is hit
         # Callback should take (line_number, statement_index) and return True to continue, False to stop
@@ -2073,24 +2079,20 @@ class Interpreter:
         if file_num in self.runtime.files:
             raise RuntimeError(f"File #{file_num} already open")
 
-        # Open file with appropriate mode
+        # Open file with appropriate mode using filesystem provider
         try:
             if mode == "I":
                 # Open for input - binary mode so we can detect ^Z
-                file_handle = open(filename, "rb")
+                file_handle = self.fs.open(filename, "r", binary=True)
             elif mode == "O":
                 # Open for output
-                file_handle = open(filename, "w")
+                file_handle = self.fs.open(filename, "w", binary=False)
             elif mode == "A":
                 # Open for append
-                file_handle = open(filename, "a")
+                file_handle = self.fs.open(filename, "a", binary=False)
             elif mode == "R":
                 # Random access - open for both read and write
-                # Create file if it doesn't exist
-                try:
-                    file_handle = open(filename, "r+b")
-                except FileNotFoundError:
-                    file_handle = open(filename, "w+b")
+                file_handle = self.fs.open(filename, "r+", binary=True)
             else:
                 raise RuntimeError(f"Invalid OPEN mode: {mode}")
 
@@ -2102,8 +2104,8 @@ class Interpreter:
                 'eof': False
             }
 
-        except (OSError, IOError) as e:
-            raise RuntimeError(f"Cannot open {filename}: {e.strerror}")
+        except (OSError, IOError, PermissionError) as e:
+            raise RuntimeError(f"Cannot open {filename}: {str(e)}")
 
     def execute_close(self, stmt):
         """Execute CLOSE statement - close file(s)
@@ -2136,6 +2138,9 @@ class Interpreter:
         for file_num in list(self.runtime.files.keys()):
             self.runtime.files[file_num]['handle'].close()
             del self.runtime.files[file_num]
+
+        # Reset filesystem provider
+        self.fs.reset()
 
     def execute_field(self, stmt):
         """Execute FIELD statement - define random-access file buffer

@@ -29,6 +29,7 @@ from lexer import Lexer
 from parser import Parser
 from interpreter import Interpreter
 from runtime import Runtime
+from filesystem import SandboxedFileSystemProvider
 
 
 class MBasicWebIDE:
@@ -388,12 +389,18 @@ class MBasicWebIDE:
             parser = Parser(tokens)
             ast = parser.parse()
 
+            # Get user session ID for filesystem isolation
+            user_id = app.storage.browser.get('id', 'default-user')
+
+            # Create sandboxed filesystem for this user
+            filesystem = SandboxedFileSystemProvider(user_id=user_id, max_files=20, max_file_size=512*1024)
+
             # Create I/O handler and runtime
             self.io_handler = WebIOHandler(self.output_log)
-            self.runtime = Runtime(self.io_handler)
+            self.runtime = Runtime(ast)
 
-            # Create interpreter with program
-            self.interpreter = Interpreter(ast, self.runtime)
+            # Create interpreter with program and sandboxed filesystem
+            self.interpreter = Interpreter(self.runtime, self.io_handler, filesystem_provider=filesystem)
 
             # Set breakpoints
             self.interpreter.breakpoints = self.breakpoints.copy()
@@ -785,9 +792,16 @@ def create_app():
 
 # Run the app
 if __name__ in {"__main__", "__mp_main__"}:
+    import secrets
+
+    # Generate a storage secret for session security
+    # In production, use environment variable or config file
+    storage_secret = secrets.token_urlsafe(32)
+
     ui.run(
         title='MBASIC 5.21 Web IDE',
         port=8080,
         reload=False,
         show=False,  # Don't auto-open browser
+        storage_secret=storage_secret,  # Required for app.storage.user
     )
