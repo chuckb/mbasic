@@ -1361,22 +1361,19 @@ class TkBackend(UIBackend):
                     next_num = current_line_num + 1
                     break
 
-        # Check if cursor is at the end of the file (last line)
-        # Only create a new auto-numbered line if we're at the end
-        total_lines = int(self.editor_text.text.index(tk.END).split('.')[0]) - 1
-        is_last_line = (current_line_index == total_lines)
-
         # Save current line to program first (so it's included in sort)
         self._save_editor_to_program()
 
         # Refresh editor to sort lines by number
         self._refresh_editor()
 
-        # Only create a new auto-numbered line if we were editing the last line
-        if is_last_line:
-            # Now calculate next line number based on ALL lines including the one we just saved
-            all_nums = set(self.program.get_all_line_numbers())
+        # Check if the line we just edited has the HIGHEST line number
+        # Only create a new auto-numbered line if this was the highest numbered line
+        all_nums = set(self.program.get_all_line_numbers())
+        is_highest_line = (current_line_num == max(all_nums)) if all_nums else True
 
+        # Only create a new auto-numbered line if we were editing the highest numbered line
+        if is_highest_line:
             # Calculate next number using standard increment
             next_num = current_line_num + self.auto_number_increment
 
