@@ -475,15 +475,19 @@ Full array viewer/editor:
 - ✅ Tk UI: Edit dialog for array elements (commit 301c02f)
 - ✅ Curses UI: Key binding (Enter/'e') (commit fcedd97)
 - ✅ Curses UI: Edit prompt (commit fcedd97)
-- ⬜ Web UI: Click handler
-- ⬜ Web UI: Edit dialog
+- ✅ Web UI: Table selection and "Edit Selected" button
+- ✅ Web UI: Double-click on row to edit
+- ✅ Web UI: Edit dialog with type-based inputs
+- ✅ Web UI: Simple variable editing
+- ✅ Web UI: Array element editing
 - ⬜ Testing: Manual testing with real programs
 - ✅ Documentation: Quick reference updated
 
-**Status**: Tk and Curses UIs complete! Web UI pending.
+**Status**: All UIs complete! (Tk, Curses, and Web)
 
 ## References
 
 - Variables window: `src/ui/tk_ui.py:696-786` (Tk)
 - Variables window: `src/ui/curses_ui.py:2036-2088` (Curses)
+- Variables window: `src/ui/web/web_ui.py:571-805` (Web)
 - Runtime: `src/runtime.py`

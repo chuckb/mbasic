@@ -576,9 +576,10 @@ class MBasicWebIDE:
                 with ui.row().classes('items-center mb-2'):
                     ui.label('Variables').classes('text-h6')
                     ui.space()
+                    ui.button('Edit Selected', on_click=self.edit_selected_variable, icon='edit').props('outline')
                     ui.button(icon='close', on_click=lambda: self.close_variables()).props('flat')
 
-                # Variables table
+                # Variables table with selection enabled
                 self.variables_table = ui.table(
                     columns=[
                         {'name': 'name', 'label': 'Name', 'field': 'name', 'align': 'left'},
@@ -586,8 +587,12 @@ class MBasicWebIDE:
                         {'name': 'value', 'label': 'Value', 'field': 'value', 'align': 'left'},
                     ],
                     rows=[],
-                    row_key='name'
+                    row_key='name',
+                    selection='single'
                 ).classes('w-full')
+
+                # Enable double-click to edit
+                self.variables_table.on('rowDblclick', lambda e: self.edit_variable_by_name(e.args[1]['name']))
 
         self.variables_visible = True
         dialog.open()
@@ -624,6 +629,180 @@ class MBasicWebIDE:
 
         self.variables_table.rows = rows
         self.variables_table.update()
+
+    def edit_selected_variable(self):
+        """Edit the currently selected variable."""
+        if not self.variables_table or not self.variables_table.selected:
+            ui.notify('No variable selected', type='warning')
+            return
+
+        # Get selected row
+        selected = self.variables_table.selected[0] if self.variables_table.selected else None
+        if not selected:
+            ui.notify('No variable selected', type='warning')
+            return
+
+        var_name = selected['name']
+        self.edit_variable_by_name(var_name)
+
+    def edit_variable_by_name(self, var_name: str):
+        """Edit a variable by name."""
+        if not self.runtime:
+            ui.notify('No program running', type='warning')
+            return
+
+        # Get variable from runtime
+        if var_name not in self.runtime.variables:
+            ui.notify(f'Variable {var_name} not found', type='warning')
+            return
+
+        value = self.runtime.variables[var_name]
+
+        # Determine type suffix
+        if var_name.endswith('$'):
+            type_suffix = '$'
+            base_name = var_name[:-1]
+        elif var_name.endswith('%'):
+            type_suffix = '%'
+            base_name = var_name[:-1]
+        elif var_name.endswith('!'):
+            type_suffix = '!'
+            base_name = var_name[:-1]
+        elif var_name.endswith('#'):
+            type_suffix = '#'
+            base_name = var_name[:-1]
+        else:
+            type_suffix = ''
+            base_name = var_name
+
+        # Check if array
+        if hasattr(value, 'dimensions'):
+            # Array variable - edit last accessed element
+            access_info = self.runtime.variable_accessed.get(var_name, {})
+            last_subscripts = access_info.get('last_accessed_subscripts')
+            last_value = access_info.get('last_accessed_value')
+
+            if last_subscripts is not None:
+                self._edit_array_element(base_name, type_suffix, last_subscripts, last_value)
+            else:
+                ui.notify('Array not accessed yet - no element to edit', type='warning')
+        else:
+            # Simple variable
+            self._edit_simple_variable(base_name, type_suffix, value)
+
+    def _edit_simple_variable(self, base_name: str, type_suffix: str, current_value):
+        """Edit a simple (non-array) variable."""
+        var_display = f'{base_name}{type_suffix}'
+
+        # Create edit dialog based on type
+        with ui.dialog() as dialog, ui.card():
+            ui.label(f'Edit Variable: {var_display}').classes('text-h6 mb-2')
+            ui.label(f'Current value: {current_value}').classes('text-sm text-grey-7 mb-4')
+
+            # Input based on type
+            if type_suffix == '$':
+                # String variable
+                new_value_input = ui.input(
+                    label='New value',
+                    value=str(current_value).strip('"'),
+                    placeholder='Enter string value'
+                ).classes('w-full')
+            elif type_suffix == '%':
+                # Integer variable
+                new_value_input = ui.number(
+                    label='New value',
+                    value=int(current_value),
+                    format='%.0f'
+                ).classes('w-full')
+            else:
+                # Float variable (single or double precision)
+                new_value_input = ui.number(
+                    label='New value',
+                    value=float(current_value)
+                ).classes('w-full')
+
+            with ui.row().classes('w-full gap-2 mt-4'):
+                ui.button('Cancel', on_click=dialog.close).props('flat')
+                ui.button(
+                    'Apply',
+                    on_click=lambda: self._apply_simple_variable_edit(base_name, type_suffix, new_value_input.value, dialog)
+                ).props('color=primary')
+
+        dialog.open()
+
+    def _apply_simple_variable_edit(self, base_name: str, type_suffix: str, new_value, dialog):
+        """Apply the edit to a simple variable."""
+        try:
+            # Set the variable in runtime
+            self.runtime.set_variable(base_name, type_suffix, new_value, debugger_set=True)
+
+            # Update display
+            self.update_variables_window()
+
+            ui.notify(f'Variable {base_name}{type_suffix} updated', type='positive')
+            dialog.close()
+
+        except Exception as e:
+            ui.notify(f'Error updating variable: {str(e)}', type='negative')
+
+    def _edit_array_element(self, base_name: str, type_suffix: str, subscripts, current_value):
+        """Edit an array element."""
+        var_display = f'{base_name}{type_suffix}'
+        subscripts_str = ','.join(str(s) for s in subscripts)
+        element_display = f'{var_display}({subscripts_str})'
+
+        # Create edit dialog
+        with ui.dialog() as dialog, ui.card():
+            ui.label(f'Edit Array Element: {element_display}').classes('text-h6 mb-2')
+            ui.label(f'Current value: {current_value}').classes('text-sm text-grey-7 mb-4')
+
+            # Input based on type
+            if type_suffix == '$':
+                # String array
+                new_value_input = ui.input(
+                    label='New value',
+                    value=str(current_value).strip('"'),
+                    placeholder='Enter string value'
+                ).classes('w-full')
+            elif type_suffix == '%':
+                # Integer array
+                new_value_input = ui.number(
+                    label='New value',
+                    value=int(current_value),
+                    format='%.0f'
+                ).classes('w-full')
+            else:
+                # Float array
+                new_value_input = ui.number(
+                    label='New value',
+                    value=float(current_value)
+                ).classes('w-full')
+
+            with ui.row().classes('w-full gap-2 mt-4'):
+                ui.button('Cancel', on_click=dialog.close).props('flat')
+                ui.button(
+                    'Apply',
+                    on_click=lambda: self._apply_array_edit(base_name, type_suffix, subscripts, new_value_input.value, dialog)
+                ).props('color=primary')
+
+        dialog.open()
+
+    def _apply_array_edit(self, base_name: str, type_suffix: str, subscripts, new_value, dialog):
+        """Apply the edit to an array element."""
+        try:
+            # Set the array element in runtime
+            # Note: token=None for debugger-initiated changes
+            self.runtime.set_array_element(base_name, type_suffix, subscripts, new_value, token=None)
+
+            # Update display
+            self.update_variables_window()
+
+            subscripts_str = ','.join(str(s) for s in subscripts)
+            ui.notify(f'Array element {base_name}{type_suffix}({subscripts_str}) updated', type='positive')
+            dialog.close()
+
+        except Exception as e:
+            ui.notify(f'Error updating array element: {str(e)}', type='negative')
 
     def toggle_stack(self):
         """Toggle execution stack window."""
