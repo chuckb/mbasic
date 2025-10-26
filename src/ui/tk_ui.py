@@ -251,6 +251,9 @@ class TkBackend(UIBackend):
         self.keybindings.bind_all_to_tk(self.root, 'menu', 'run_program', lambda e: self._menu_run())
         self.keybindings.bind_all_to_tk(self.root, 'menu', 'help_topics', lambda e: self._menu_help())
 
+        # Additional keyboard shortcuts not in config
+        self.root.bind('<Control-b>', lambda e: self._toggle_breakpoint())
+
     def _create_toolbar(self):
         """Create toolbar with common actions."""
         import tkinter as tk
@@ -719,6 +722,10 @@ class TkBackend(UIBackend):
                 self._add_output(f"\n● Breakpoint hit at line {state.current_line}\n")
                 self._set_status(f"Paused at line {state.current_line} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
                 self._update_immediate_status()
+                if self.stack_visible:
+                    self._update_stack()
+                if self.variables_visible:
+                    self._update_variables_window()
 
             elif state.status == 'paused':
                 self.running = False
@@ -726,6 +733,10 @@ class TkBackend(UIBackend):
                 self._add_output(f"\n→ Paused at line {state.current_line}\n")
                 self._set_status(f"Paused at line {state.current_line} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
                 self._update_immediate_status()
+                if self.stack_visible:
+                    self._update_stack()
+                if self.variables_visible:
+                    self._update_variables_window()
 
             elif state.status == 'running':
                 # Schedule next tick
@@ -900,8 +911,8 @@ class TkBackend(UIBackend):
         # Update variables/stack windows if they exist
         if hasattr(self, 'variables_window') and self.variables_window:
             self._update_variables_window()
-        if hasattr(self, 'stack_window') and self.stack_window:
-            self._update_stack_window()
+        if hasattr(self, 'stack_window') and self.stack_window and self.stack_visible:
+            self._update_stack()
 
     def _add_immediate_output(self, text):
         """Add text to immediate mode history widget."""
