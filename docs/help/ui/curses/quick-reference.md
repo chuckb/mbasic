@@ -21,9 +21,9 @@ Quick reference for the curses text UI.
 
 | Key | Action |
 |-----|--------|
-| **Ctrl+Q** / **Ctrl+C** | Quit |
+| **{{kbd:quit}}** | Quit |
 | **Ctrl+U** | Show menu |
-| **Ctrl+H** | Help (with search) |
+| **{{kbd:help}}** | Help (with search) |
 | **Ctrl+W** | Toggle variables watch window |
 | **Ctrl+K** | Toggle execution stack window |
 
@@ -31,17 +31,17 @@ Quick reference for the curses text UI.
 
 | Key | Action |
 |-----|--------|
-| **Ctrl+R** | Run program |
+| **{{kbd:run}}** | Run program |
 | **Ctrl+L** | List program |
-| **Ctrl+N** | New program |
-| **Ctrl+S** | Save program |
+| **{{kbd:new}}** | New program |
+| **{{kbd:save}}** | Save program |
 | **Ctrl+O** | Open/Load program |
 
 ## Editing
 
 | Key | Action |
 |-----|--------|
-| **Ctrl+B** | Toggle breakpoint on current line |
+| **{{kbd:toggle_breakpoint}}** | Toggle breakpoint on current line |
 | **Ctrl+D** | Delete current line |
 | **Ctrl+E** | Renumber all lines (RENUM) |
 
@@ -49,8 +49,8 @@ Quick reference for the curses text UI.
 
 | Key | Action |
 |-----|--------|
-| **Ctrl+G** | Continue execution (Go) |
-| **Ctrl+T** | Step - execute one line (sTep) |
+| **{{kbd:goto_line}}** | Continue execution (Go) |
+| **{{kbd:step}}** | Step - execute one line (sTep) |
 | **Ctrl+X** | Stop execution (eXit) |
 | **Ctrl+W** | Show/hide variables window |
 | **Ctrl+K** | Show/hide execution stack window |

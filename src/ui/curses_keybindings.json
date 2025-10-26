@@ -1,0 +1,96 @@
+{
+  "editor": {
+    "help": {
+      "keys": ["Ctrl+H"],
+      "primary": "Ctrl+H",
+      "description": "Open help browser"
+    },
+    "load": {
+      "keys": ["Ctrl+L"],
+      "primary": "Ctrl+L",
+      "description": "Load BASIC file"
+    },
+    "new": {
+      "keys": ["Ctrl+N"],
+      "primary": "Ctrl+N",
+      "description": "New program"
+    },
+    "run": {
+      "keys": ["Ctrl+R"],
+      "primary": "Ctrl+R",
+      "description": "Run program"
+    },
+    "save": {
+      "keys": ["Ctrl+S"],
+      "primary": "Ctrl+S",
+      "description": "Save program"
+    },
+    "parse": {
+      "keys": ["Ctrl+P"],
+      "primary": "Ctrl+P",
+      "description": "Parse program"
+    },
+    "goto_line": {
+      "keys": ["Ctrl+G"],
+      "primary": "Ctrl+G",
+      "description": "Go to line"
+    },
+    "toggle_breakpoint": {
+      "keys": ["Ctrl+B"],
+      "primary": "Ctrl+B",
+      "description": "Toggle breakpoint"
+    },
+    "step": {
+      "keys": ["Ctrl+T"],
+      "primary": "Ctrl+T",
+      "description": "Step execution"
+    },
+    "continue": {
+      "keys": ["Ctrl+C"],
+      "primary": "Ctrl+C",
+      "description": "Continue execution"
+    },
+    "quit": {
+      "keys": ["Ctrl+Q"],
+      "primary": "Ctrl+Q",
+      "description": "Quit"
+    }
+  },
+  "help_browser": {
+    "search": {
+      "keys": ["/"],
+      "primary": "/",
+      "description": "Search help"
+    },
+    "back": {
+      "keys": ["U"],
+      "primary": "U",
+      "description": "Navigate back"
+    },
+    "quit": {
+      "keys": ["ESC", "Q"],
+      "primary": "ESC",
+      "description": "Close help browser"
+    },
+    "next_link": {
+      "keys": ["Tab"],
+      "primary": "Tab",
+      "description": "Next link"
+    },
+    "follow_link": {
+      "keys": ["Enter"],
+      "primary": "Enter",
+      "description": "Follow link"
+    },
+    "scroll_up": {
+      "keys": ["↑", "k"],
+      "primary": "↑",
+      "description": "Scroll up"
+    },
+    "scroll_down": {
+      "keys": ["↓", "j"],
+      "primary": "↓",
+      "description": "Scroll down"
+    }
+  }
+}

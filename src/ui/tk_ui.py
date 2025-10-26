@@ -182,6 +182,8 @@ class TkBackend(UIBackend):
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label="Help Topics", command=self._menu_help, accelerator="Ctrl+?")
+        help_menu.add_separator()
         help_menu.add_command(label="About", command=self._menu_about)
 
         # Bind keyboard shortcuts
@@ -196,6 +198,8 @@ class TkBackend(UIBackend):
         self.root.bind("<Control-k>", lambda e: self._toggle_stack())
         # Note: Ctrl+X conflicts with Cut, so we'll check in the handler
         self.root.bind("<F5>", lambda e: self._menu_run())
+        self.root.bind("<Control-question>", lambda e: self._menu_help())  # Ctrl+?
+        self.root.bind("<Control-slash>", lambda e: self._menu_help())      # Ctrl+/ (alternative)
 
     def _create_toolbar(self):
         """Create toolbar with common actions."""
@@ -519,6 +523,17 @@ class TkBackend(UIBackend):
         self.output_text.delete(1.0, tk.END)
         self.output_text.config(state=tk.DISABLED)
 
+    def _menu_help(self):
+        """Help > Help Topics (F1)"""
+        from pathlib import Path
+        from .tk_help_browser import TkHelpBrowser
+
+        # Get help root directory
+        help_root = Path(__file__).parent.parent.parent / "docs" / "help"
+
+        # Create and show help browser window
+        TkHelpBrowser(self.root, str(help_root), "ui/tk/index.md")
+
     def _menu_about(self):
         """Help > About"""
         import tkinter as tk
@@ -528,7 +543,8 @@ class TkBackend(UIBackend):
             "About MBASIC 5.21",
             "MBASIC 5.21 Interpreter\n\n"
             "A Python implementation of Microsoft BASIC 5.21\n\n"
-            "Tkinter GUI Backend"
+            "Tkinter GUI Backend\n\n"
+            "Press Ctrl+? or Ctrl+/ for help"
         )
 
     # Helper methods

@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import List, Tuple, Optional, Dict
 import json
 from .markdown_renderer import MarkdownRenderer
+from .help_macros import HelpMacros
 
 
 class HelpWidget(urwid.WidgetWrap):
@@ -29,6 +30,7 @@ class HelpWidget(urwid.WidgetWrap):
         """
         self.help_root = Path(help_root)
         self.renderer = MarkdownRenderer()
+        self.macros = HelpMacros('curses', help_root)
 
         # Navigation state
         self.current_topic = initial_topic
@@ -251,6 +253,9 @@ class HelpWidget(urwid.WidgetWrap):
         try:
             with open(full_path, 'r') as f:
                 markdown = f.read()
+
+            # Expand macros before rendering
+            markdown = self.macros.expand(markdown)
 
             lines, links = self.renderer.render(markdown)
 

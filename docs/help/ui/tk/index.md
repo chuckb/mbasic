@@ -8,7 +8,7 @@ keywords: [help, tk, tkinter, gui, graphical, interface]
 
 # MBASIC Tkinter GUI Help
 
-Graphical user interface for MBASIC 5.21. Press F1 for context-sensitive help or use the Help menu.
+Graphical user interface for MBASIC 5.21. Press {{kbd:help_topics}} for help or use the Help menu.
 
 ## 📘 Tkinter GUI
 
@@ -20,7 +20,7 @@ The Tkinter GUI provides a graphical interface for MBASIC programming.
 - Variable watch window
 - Split editor/output view
 - Menu bar and toolbar
-- Context-sensitive help (F1)
+- Integrated help system ({{kbd:help_topics}})
 
 ## 📗 MBASIC Interpreter
 
@@ -65,7 +65,7 @@ python3 mbasic.py --ui tk
 4. Run → Run Program (or F5)
 
 **Get help:**
-- Press **F1** for context-sensitive help
+- Press **{{kbd:help_topics}}** for help topics
 - Help → Help Topics for full help
 - Help → About for version information
 
@@ -80,4 +80,4 @@ python3 mbasic.py --ui tk
 
 ---
 
-Press **F1** for context-sensitive help or use the Help menu to browse topics.
+Press **{{kbd:help_topics}}** for help or use the Help menu to browse topics.

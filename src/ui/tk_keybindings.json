@@ -1,0 +1,47 @@
+{
+  "menu": {
+    "file_new": {
+      "keys": ["Ctrl+N"],
+      "primary": "Ctrl+N",
+      "description": "New file"
+    },
+    "file_open": {
+      "keys": ["Ctrl+O"],
+      "primary": "Ctrl+O",
+      "description": "Open file"
+    },
+    "file_save": {
+      "keys": ["Ctrl+S"],
+      "primary": "Ctrl+S",
+      "description": "Save file"
+    },
+    "file_save_as": {
+      "keys": ["Ctrl+Shift+S"],
+      "primary": "Ctrl+Shift+S",
+      "description": "Save file as"
+    },
+    "file_quit": {
+      "keys": ["Ctrl+Q"],
+      "primary": "Ctrl+Q",
+      "description": "Quit application"
+    },
+    "run_program": {
+      "keys": ["F5"],
+      "primary": "F5",
+      "description": "Run program",
+      "note": "Exception to no-function-keys rule: F5 is standard IDE convention"
+    },
+    "help_topics": {
+      "keys": ["Ctrl+?", "Ctrl+/"],
+      "primary": "Ctrl+?",
+      "description": "Open help topics"
+    }
+  },
+  "help_browser": {
+    "search": {
+      "keys": ["Return"],
+      "primary": "Return",
+      "description": "Execute search (when in search box)"
+    }
+  }
+}
