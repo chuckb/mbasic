@@ -317,3 +317,15 @@ class LineNumberedText(tk.Frame if tk else object):
     def focus_set(self):
         """Set focus to text widget."""
         self.text.focus_set()
+
+    def event_generate(self, event, **kwargs):
+        """Generate an event on the text widget."""
+        return self.text.event_generate(event, **kwargs)
+
+    def clipboard_clear(self):
+        """Clear clipboard."""
+        return self.text.clipboard_clear()
+
+    def clipboard_append(self, text):
+        """Append to clipboard."""
+        return self.text.clipboard_append(text)

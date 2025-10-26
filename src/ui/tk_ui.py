@@ -116,6 +116,9 @@ class TkBackend(UIBackend):
         )
         self.editor_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
+        # Set up editor context menu
+        self._setup_editor_context_menu()
+
         # Middle pane: Output (30% of space)
         output_frame = ttk.Frame(paned)
         paned.add(output_frame, weight=2)
@@ -945,6 +948,52 @@ class TkBackend(UIBackend):
         self.immediate_history.insert(tk.END, text)
         self.immediate_history.see(tk.END)
         self.immediate_history.config(state=tk.DISABLED)
+
+    def _setup_editor_context_menu(self):
+        """Setup right-click context menu for editor text widget."""
+        import tkinter as tk
+
+        def show_context_menu(event):
+            menu = tk.Menu(self.editor_text, tearoff=0)
+
+            # Check if there's a selection
+            try:
+                if self.editor_text.text.tag_ranges(tk.SEL):
+                    menu.add_command(label="Cut", command=self._menu_cut)
+                    menu.add_command(label="Copy", command=self._menu_copy)
+                    menu.add_separator()
+            except tk.TclError:
+                pass
+
+            # Always offer paste and select all
+            menu.add_command(label="Paste", command=self._menu_paste)
+            menu.add_separator()
+            menu.add_command(label="Select All", command=self._select_all_editor)
+
+            # Dismissal
+            def dismiss_menu():
+                try:
+                    menu.unpost()
+                except:
+                    pass
+
+            try:
+                menu.tk_popup(event.x_root, event.y_root)
+            finally:
+                menu.grab_release()
+
+            menu.bind("<FocusOut>", lambda e: dismiss_menu())
+            menu.bind("<Escape>", lambda e: dismiss_menu())
+
+        # Bind to the inner text widget
+        self.editor_text.text.bind("<Button-3>", show_context_menu)
+
+    def _select_all_editor(self):
+        """Select all text in editor."""
+        import tkinter as tk
+        self.editor_text.text.tag_add(tk.SEL, "1.0", tk.END)
+        self.editor_text.text.mark_set(tk.INSERT, "1.0")
+        self.editor_text.text.see(tk.INSERT)
 
     def _setup_output_context_menu(self):
         """Setup right-click context menu for output text widget."""
