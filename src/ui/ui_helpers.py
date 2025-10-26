@@ -8,6 +8,8 @@ Functions for:
 - Line renumbering with GOTO/GOSUB reference updates
 - Smart line insertion with gap calculation
 - Line number validation and utilities
+- Error message formatting and display
+- Position calculations and conversions
 """
 
 from typing import Dict, List, Tuple, Optional, Set
@@ -489,3 +491,301 @@ def delete_line_range(
         if not (start <= line_num <= end):
             new_lines[line_num] = line_text
     return new_lines
+
+
+# ============================================================================
+# Error Formatting and Display
+# ============================================================================
+
+def format_error_message(
+    message: str,
+    line_number: Optional[int] = None,
+    line_text: Optional[str] = None,
+    column: Optional[int] = None,
+    mbasic_style: bool = True
+) -> str:
+    """Format an error message with optional line context and position indicator.
+
+    Args:
+        message: Error message text
+        line_number: BASIC line number where error occurred
+        line_text: Full text of the line with error
+        column: Column position of error (1-indexed, absolute position)
+        mbasic_style: If True, prefix with "?" like MBASIC 5.21
+
+    Returns:
+        Formatted error message string
+
+    Examples:
+        >>> format_error_message("Division by zero", 100)
+        '?Error in 100: Division by zero'
+
+        >>> format_error_message("Syntax error", 20, "20 PRINT X Y", 12)
+        '''?Syntax error in 20
+        20 PRINT X Y
+                   ^'''
+    """
+    parts = []
+
+    # Build error line
+    if mbasic_style:
+        parts.append("?")
+
+    if line_number is not None:
+        parts.append(f"{message} in {line_number}")
+    else:
+        parts.append(message)
+
+    result = ''.join(parts)
+
+    # Add line context and position indicator if available
+    if line_text and column is not None:
+        result += f"\n{line_text}"
+        # Add caret indicator at error position
+        # Column is 1-indexed, so adjust for 0-indexed string
+        if column > 0:
+            result += f"\n{' ' * (column - 1)}^"
+
+    return result
+
+
+def format_syntax_error(
+    line_number: int,
+    line_text: str,
+    column: Optional[int] = None,
+    specific_message: Optional[str] = None
+) -> str:
+    """Format a syntax error with line context.
+
+    Args:
+        line_number: BASIC line number with error
+        line_text: Full line text
+        column: Optional column position of error
+        specific_message: Optional specific error detail
+
+    Returns:
+        Formatted error message
+
+    Example:
+        >>> format_syntax_error(100, "100 PRINT X Y", 13, "Expected : or newline")
+        '''?Syntax error in 100: Expected : or newline
+        100 PRINT X Y
+                    ^'''
+    """
+    if specific_message:
+        message = f"Syntax error: {specific_message}"
+    else:
+        message = "Syntax error"
+
+    return format_error_message(message, line_number, line_text, column)
+
+
+def format_runtime_error(
+    error_code: int,
+    error_message: str,
+    line_number: Optional[int] = None
+) -> str:
+    """Format a runtime error in MBASIC style.
+
+    Args:
+        error_code: Error code number (e.g., 11 for division by zero)
+        error_message: Human-readable error description
+        line_number: Line where error occurred
+
+    Returns:
+        Formatted error message
+
+    Example:
+        >>> format_runtime_error(11, "Division by zero", 250)
+        '?11 Error in 250: Division by zero'
+    """
+    if line_number is not None:
+        return f"?{error_code} Error in {line_number}: {error_message}"
+    else:
+        return f"?{error_code} Error: {error_message}"
+
+
+def get_relative_column(line_text: str, absolute_column: int) -> int:
+    """Convert absolute column position to relative (after line number).
+
+    Args:
+        line_text: Full line text with line number
+        absolute_column: Absolute column position (1-indexed)
+
+    Returns:
+        Relative column position (spaces after line number)
+
+    Example:
+        >>> get_relative_column("10 PRINT X", 4)
+        1
+        >>> get_relative_column("100 PRINT X", 5)
+        1
+    """
+    # Extract line number
+    match = re.match(r'^(\d+)(\s+)', line_text)
+    if match:
+        line_num_len = len(match.group(1))
+        spaces_len = len(match.group(2))
+        # Relative position = absolute - line_num_len - 1
+        # (subtract 1 because columns are 1-indexed)
+        return absolute_column - line_num_len - 1
+    else:
+        # No line number, absolute = relative
+        return absolute_column
+
+
+def get_absolute_column(line_text: str, relative_column: int) -> int:
+    """Convert relative column position to absolute.
+
+    Args:
+        line_text: Full line text with line number
+        relative_column: Relative column position (spaces after line number)
+
+    Returns:
+        Absolute column position (1-indexed)
+
+    Example:
+        >>> get_absolute_column("10 PRINT X", 1)
+        4
+        >>> get_absolute_column("100 PRINT X", 1)
+        5
+    """
+    # Extract line number
+    match = re.match(r'^(\d+)(\s+)', line_text)
+    if match:
+        line_num_len = len(match.group(1))
+        # Absolute = line_num_len + relative + 1
+        # (add 1 because columns are 1-indexed)
+        return line_num_len + relative_column + 1
+    else:
+        # No line number, relative = absolute
+        return relative_column
+
+
+def create_error_indicator(
+    line_text: str,
+    column: int,
+    length: int = 1,
+    indicator_char: str = '^'
+) -> str:
+    """Create a visual error indicator line.
+
+    Args:
+        line_text: The line with the error
+        column: Column position of error (1-indexed)
+        length: Number of characters to underline
+        indicator_char: Character to use for indicator (default: ^)
+
+    Returns:
+        String with spaces and indicator characters
+
+    Examples:
+        >>> create_error_indicator("10 PRINT X", 10, 1)
+        '         ^'
+        >>> create_error_indicator("10 PRINT HELLO", 10, 5, '~')
+        '         ~~~~~'
+    """
+    if column < 1:
+        column = 1
+
+    # Create indicator: spaces up to column, then indicator chars
+    spaces = ' ' * (column - 1)
+    indicators = indicator_char * max(1, length)
+
+    return spaces + indicators
+
+
+def format_parse_error_with_context(
+    line_text: str,
+    error_message: str,
+    column: Optional[int] = None,
+    token_length: Optional[int] = None
+) -> str:
+    """Format a parse error with line context and visual indicator.
+
+    Args:
+        line_text: The line being parsed
+        error_message: Error description
+        column: Column where error occurred
+        token_length: Length of problematic token (for multi-char underline)
+
+    Returns:
+        Multi-line formatted error message
+
+    Example:
+        >>> format_parse_error_with_context(
+        ...     "100 PRINT X Y",
+        ...     "Expected : or newline",
+        ...     13
+        ... )
+        '''Parse error: Expected : or newline
+        100 PRINT X Y
+                    ^'''
+    """
+    result = f"Parse error: {error_message}\n{line_text}"
+
+    if column is not None:
+        length = token_length if token_length else 1
+        indicator = create_error_indicator(line_text, column, length)
+        result += f"\n{indicator}"
+
+    return result
+
+
+def standardize_error_format(error_str: str) -> str:
+    """Standardize error message format across different sources.
+
+    Converts various error formats to consistent MBASIC-style format.
+
+    Args:
+        error_str: Raw error message
+
+    Returns:
+        Standardized error message
+
+    Examples:
+        >>> standardize_error_format("Syntax error")
+        '?Syntax error'
+        >>> standardize_error_format("Parse error at line 1, column 5: Expected :")
+        '?Parse error: Expected :'
+    """
+    # Already in MBASIC format
+    if error_str.startswith('?'):
+        return error_str
+
+    # Remove "Parse error at line X, column Y:" prefix
+    error_str = re.sub(r'^Parse error at line \d+, column \d+:\s*', '', error_str)
+
+    # Remove "Parse error:" prefix if present
+    error_str = re.sub(r'^Parse error:\s*', '', error_str)
+
+    # Add ? prefix for MBASIC style
+    return f"?{error_str}"
+
+
+def extract_error_location(error_str: str) -> Tuple[Optional[int], Optional[int]]:
+    """Extract line and column numbers from error message.
+
+    Args:
+        error_str: Error message that may contain position info
+
+    Returns:
+        Tuple of (line_number, column_number) or (None, None)
+
+    Examples:
+        >>> extract_error_location("Parse error at line 5, column 10: message")
+        (5, 10)
+        >>> extract_error_location("?Syntax error in 100")
+        (100, None)
+    """
+    # Try "Parse error at line X, column Y" format
+    match = re.search(r'line (\d+), column (\d+)', error_str)
+    if match:
+        return (int(match.group(1)), int(match.group(2)))
+
+    # Try "in line X" or "in X" format (BASIC line number)
+    match = re.search(r'in (?:line )?(\d+)', error_str)
+    if match:
+        return (int(match.group(1)), None)
+
+    return (None, None)
