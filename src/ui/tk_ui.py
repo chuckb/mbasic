@@ -1589,9 +1589,6 @@ class TkBackend(UIBackend):
                 self.editor_text.text.see(f'{text_line_num}.0')  # Scroll to show it
                 break
 
-        # Show confirmation
-        self._add_output(f"Inserted blank line {insert_num}\n")
-
     def _scroll_to_line(self, line_number):
         """Scroll editor to show the specified BASIC line number.
 
