@@ -275,14 +275,23 @@ class TkHelpBrowser(tk.Toplevel):
     def _follow_link(self, target: str):
         """Follow a link to another help topic."""
         # Resolve relative path
-        current_dir = str(Path(self.current_topic).parent)
-        if current_dir == '.':
-            new_topic = target
+        current_dir = Path(self.current_topic).parent
+        if str(current_dir) == '.':
+            new_topic_path = Path(target)
         else:
-            new_topic = str(Path(current_dir) / target)
+            new_topic_path = current_dir / target
 
-        # Normalize path
-        new_topic = str(Path(new_topic))
+        # Normalize path (resolve .. and .)
+        # Convert to absolute, resolve, then make relative to help_root
+        abs_path = (self.help_root / new_topic_path).resolve()
+        try:
+            new_topic = str(abs_path.relative_to(self.help_root.resolve()))
+        except ValueError:
+            # Path is outside help_root, use as-is
+            new_topic = str(new_topic_path)
+
+        # Normalize path separators
+        new_topic = new_topic.replace('\\', '/')
 
         # Save current topic to history
         self.history.append(self.current_topic)
@@ -501,10 +510,22 @@ class TkHelpBrowser(tk.Toplevel):
             # Always offer select all
             menu.add_command(label="Select All", command=self._select_all)
 
+            # Allow menu to be dismissed
+            def dismiss_menu():
+                try:
+                    menu.unpost()
+                except:
+                    pass
+
             try:
                 menu.tk_popup(event.x_root, event.y_root)
             finally:
+                # Release grab after a short delay to allow menu interaction
                 menu.grab_release()
+
+            # Bind ESC and clicks outside to dismiss
+            menu.bind("<FocusOut>", lambda e: dismiss_menu())
+            menu.bind("<Escape>", lambda e: dismiss_menu())
 
         self.text_widget.bind("<Button-3>", show_context_menu)  # Right-click
 
