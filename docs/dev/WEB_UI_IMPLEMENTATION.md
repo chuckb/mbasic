@@ -140,28 +140,48 @@ Press Ctrl+C in terminal
 
 ## Features Implemented
 
-- ✅ Code editor (basic textarea)
-- ✅ Program execution
+### Core Features
+- ✅ Code editor with line numbers
+- ✅ Breakpoint support (click line numbers)
+- ✅ Program execution with tick-based interpreter
 - ✅ PRINT output to log
 - ✅ INPUT via dialogs
-- ✅ Error display
-- ✅ Example programs
+- ✅ Error display with notifications
+- ✅ Example programs (6 built-in examples)
 - ✅ Clear output
 - ✅ New program
 - ✅ Syntax error handling
 - ✅ Runtime error handling
 
+### File Operations
+- ✅ Upload from computer (.BAS files)
+- ✅ Browse and load from server (with search)
+- ✅ Download/save files
+
+### Debugger
+- ✅ Breakpoints (visual indicators in line numbers)
+- ✅ Run, Step, Continue, Stop controls
+- ✅ Variables watch window (real-time updates)
+- ✅ Execution stack window (FOR loops, GOSUB stack)
+- ✅ Status display (current line, breakpoint status)
+
+### UI/UX
+- ✅ Menu system (File, Run, Debug, Help)
+- ✅ Toolbar with quick actions
+- ✅ Split-pane layout
+- ✅ Monospace font for code
+- ✅ Breakpoint highlighting
+- ✅ Help and About dialogs
+
 ## Features Not Yet Implemented
 
-- ❌ File save/load
-- ❌ Monaco/CodeMirror editor integration
+- ❌ Monaco/CodeMirror editor integration (using textarea)
 - ❌ Syntax highlighting
-- ❌ Line numbers in editor
-- ❌ Stop button functionality (program interruption)
 - ❌ Multi-user sessions
-- ❌ File browser for .BAS files
 - ❌ Sharing programs via URL
-- ❌ Debugger UI (breakpoints, variables)
+- ❌ Keyboard shortcuts (planned: Ctrl+R, Ctrl+T, etc.)
+- ❌ Mobile responsive design
+- ❌ Dark mode toggle
 
 ## Technical Details
 
