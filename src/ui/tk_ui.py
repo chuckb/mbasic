@@ -283,7 +283,7 @@ class TkBackend(UIBackend):
 
         # Additional keyboard shortcuts not in config
         self.root.bind('<Control-b>', lambda e: self._toggle_breakpoint())
-        self.root.bind('<Control-i>', lambda e: self._smart_insert_line())
+        self.root.bind('<Control-i>', lambda e: (self._smart_insert_line(), 'break')[1])
 
     def _create_toolbar(self):
         """Create toolbar with common actions."""
@@ -1498,8 +1498,15 @@ class TkBackend(UIBackend):
 
         current_line_num = int(match.group(1))
 
-        # Get all line numbers sorted
-        all_line_numbers = sorted(self.program.get_all_line_numbers())
+        # Get all line numbers sorted - parse directly from editor text
+        all_line_numbers = []
+        editor_content = self.editor_text.text.get('1.0', 'end')
+        for line in editor_content.split('\n'):
+            line_match = re.match(r'^\s*(\d+)', line)
+            if line_match:
+                all_line_numbers.append(int(line_match.group(1)))
+
+        all_line_numbers = sorted(set(all_line_numbers))  # Remove duplicates and sort
 
         if not all_line_numbers:
             messagebox.showinfo("Smart Insert", "No program lines found.")
