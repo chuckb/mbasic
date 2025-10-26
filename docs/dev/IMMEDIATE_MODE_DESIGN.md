@@ -347,15 +347,95 @@ async def execute_immediate(self):
 
 ### When Can Immediate Mode Execute?
 
-| Program State | Immediate Mode Behavior |
-|---------------|------------------------|
-| **No program loaded** | Can execute any immediate command, but no program variables exist |
-| **Program loaded, not run** | Can execute commands, but variables not initialized |
-| **Program running** | Immediate mode **disabled** (program has control) |
-| **Program stopped (Ctrl+Q)** | Can execute, accesses current runtime state |
-| **Breakpoint hit** | Can execute, accesses current runtime state (IDEAL) |
-| **Program ended** | Can execute, runtime state preserved |
-| **Error occurred** | Can execute, runtime state preserved |
+**CRITICAL FOR TICK-BASED EXECUTION**: Visual UIs use tick-based execution where the interpreter processes one statement at a time. Immediate mode must ONLY execute when the interpreter is in a safe state.
+
+| Interpreter State | Safe? | Immediate Mode Behavior |
+|-------------------|-------|------------------------|
+| **'idle'** | ✅ YES | No program loaded - can execute, but no program variables exist |
+| **'paused'** | ✅ YES | User hit Ctrl+Q (stop) - can execute, accesses current runtime state |
+| **'at_breakpoint'** | ✅ YES | Hit breakpoint - can execute, accesses current runtime state (IDEAL) |
+| **'done'** | ✅ YES | Program finished - can execute, runtime state preserved |
+| **'error'** | ✅ YES | Program encountered error - can execute, runtime state preserved |
+| **'running'** | ❌ NO | Program is executing tick() - **MUST NOT EXECUTE** (will corrupt state) |
+| **'waiting_for_input'** | ❌ NO | Program waiting for INPUT - use normal input mechanism instead |
+
+### Implementation Requirements
+
+**All visual UIs MUST**:
+
+1. **Check state before execution**:
+   ```python
+   if executor.can_execute_immediate():
+       success, output = executor.execute(command)
+   ```
+
+2. **Disable input when unsafe**:
+   - Gray out immediate mode input field
+   - Show status: "Immediate mode disabled (program running)"
+   - Prevent Enter key from executing
+
+3. **Enable input when safe**:
+   - Enable immediate mode input field
+   - Show status: "Ok" or "Ready"
+   - Allow command execution
+
+4. **Update on state changes**:
+   - After every tick() call, check interpreter.state.status
+   - Enable/disable immediate panel accordingly
+
+### Tick-Based Execution Workflow
+
+**Example: Curses UI with tick() loop**:
+
+```python
+# Main UI loop
+while True:
+    # Check keyboard input
+    key = self.screen.getch()
+
+    if key == ord('r'):  # Run program
+        interpreter.start()
+
+    # Execute one tick if program running
+    if interpreter.state.status == 'running':
+        interpreter.tick()
+
+        # After tick, update immediate panel state
+        if executor.can_execute_immediate():
+            immediate_panel.enable()
+        else:
+            immediate_panel.disable()
+
+    # Handle immediate mode input
+    if immediate_panel.has_input():
+        if executor.can_execute_immediate():
+            command = immediate_panel.get_command()
+            success, output = executor.execute(command)
+            immediate_panel.show_result(output)
+        else:
+            immediate_panel.show_error("Program is running")
+```
+
+**State Transitions**:
+
+```
+User presses Run (Ctrl+R):
+  interpreter.state.status: 'idle' → 'running'
+  immediate_panel: ENABLED → DISABLED
+
+Program hits breakpoint:
+  interpreter.state.status: 'running' → 'at_breakpoint'
+  immediate_panel: DISABLED → ENABLED
+  User can now execute immediate commands
+
+User presses Continue (Ctrl+G):
+  interpreter.state.status: 'at_breakpoint' → 'running'
+  immediate_panel: ENABLED → DISABLED
+
+Program finishes:
+  interpreter.state.status: 'running' → 'done'
+  immediate_panel: DISABLED → ENABLED
+```
 
 ### Use Cases
 

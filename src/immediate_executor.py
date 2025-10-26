@@ -22,10 +22,25 @@ class ImmediateExecutor:
     users can execute BASIC statements without line numbers, accessing and
     modifying the current program state.
 
+    IMPORTANT: For tick-based execution (visual UIs), only execute immediate
+    mode when the interpreter is in a safe state:
+    - 'idle' - No program loaded
+    - 'paused' - User hit Ctrl+Q (stop)
+    - 'at_breakpoint' - Hit breakpoint
+    - 'done' - Program finished
+    - 'error' - Program encountered error
+
+    DO NOT execute when status is:
+    - 'running' - Program is executing (tick() is running)
+    - 'waiting_for_input' - Program is waiting for INPUT (use normal input instead)
+
     Usage:
         executor = ImmediateExecutor(runtime, interpreter, io_handler)
-        success, output = executor.execute("PRINT X")
-        success, output = executor.execute("X = 100")
+
+        # Check if safe to execute
+        if executor.can_execute_immediate():
+            success, output = executor.execute("PRINT X")
+            success, output = executor.execute("X = 100")
     """
 
     def __init__(self, runtime=None, interpreter=None, io_handler=None):
@@ -47,6 +62,29 @@ class ImmediateExecutor:
         for letter in 'abcdefghijklmnopqrstuvwxyz':
             self.def_type_map[letter] = TypeInfo.SINGLE
 
+    def can_execute_immediate(self):
+        """
+        Check if immediate mode execution is safe.
+
+        For tick-based interpreters, we must check the interpreter state.
+
+        Returns:
+            bool: True if safe to execute immediate mode, False otherwise
+        """
+        # If no interpreter, we'll create a temporary one - always safe
+        if self.interpreter is None:
+            return True
+
+        # Check interpreter state
+        if hasattr(self.interpreter, 'state'):
+            status = self.interpreter.state.status
+            # Safe states: idle, paused, at_breakpoint, done, error
+            safe_states = {'idle', 'paused', 'at_breakpoint', 'done', 'error'}
+            return status in safe_states
+
+        # No state attribute - assume safe (non-tick-based)
+        return True
+
     def set_context(self, runtime, interpreter):
         """
         Update the execution context.
@@ -65,6 +103,10 @@ class ImmediateExecutor:
         """
         Execute an immediate mode statement.
 
+        IMPORTANT: For tick-based interpreters, this should only be called when
+        can_execute_immediate() returns True. Calling during 'running' state
+        may corrupt the interpreter state.
+
         Args:
             statement: BASIC statement without line number (e.g., "PRINT X", "X=5")
 
@@ -74,7 +116,8 @@ class ImmediateExecutor:
                 - output: Output text or error message
 
         Examples:
-            >>> executor.execute("PRINT 2 + 2")
+            >>> if executor.can_execute_immediate():
+            ...     success, output = executor.execute("PRINT 2 + 2")
             (True, " 4\\n")
 
             >>> executor.execute("X = 100")
@@ -86,6 +129,11 @@ class ImmediateExecutor:
             >>> executor.execute("SYNTAX ERROR")
             (False, "Syntax error\\n")
         """
+        # Check if safe to execute (for tick-based interpreters)
+        if not self.can_execute_immediate():
+            status = self.interpreter.state.status if hasattr(self.interpreter, 'state') else 'unknown'
+            return (False, f"Cannot execute immediate mode while program is {status}\n")
+
         # Special case: empty statement
         statement = statement.strip()
         if not statement:
