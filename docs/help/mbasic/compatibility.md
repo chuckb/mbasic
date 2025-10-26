@@ -15,7 +15,9 @@ description: Complete guide to MBASIC 5.21 compatibility and differences from CP
 
 # MBASIC Compatibility Guide
 
-This document describes compatibility with MBASIC 5.21 for CP/M and differences from the original.
+## Our MBASIC vs Original 8080 MBASIC-80
+
+This document describes compatibility between this MBASIC implementation and the original MBASIC 5.21 for CP/M-80 (Intel 8080/Z80).
 
 ## Compatibility Level
 
