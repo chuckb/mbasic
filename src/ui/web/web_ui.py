@@ -57,6 +57,7 @@ class MBasicWebIDE:
         self.running = False
         self.paused_at_breakpoint = False
         self.breakpoints: Set[int] = set()
+        self.line_errors: Set[int] = set()  # Track lines with parse errors
         self.tick_timer = None
 
         # Variables window
@@ -103,6 +104,10 @@ class MBasicWebIDE:
         }
         .breakpoint-line {
             background-color: #ffebee;
+        }
+        .error-line {
+            background-color: #ffcccc;
+            color: #c00;
         }
         </style>
         ''')
@@ -234,8 +239,9 @@ class MBasicWebIDE:
         with ui.footer():
             self.status_label = ui.label('Ready').classes('text-sm')
 
-        # Initialize line numbers
+        # Initialize line numbers and validate syntax
         self.update_line_numbers()
+        self._validate_editor_syntax()
 
     def update_line_numbers(self, e=None):
         """Update line numbers display based on editor content."""
@@ -246,13 +252,34 @@ class MBasicWebIDE:
         self.line_numbers.clear()
 
         for i, line in enumerate(lines, 1):
-            # Check if line has breakpoint
-            has_breakpoint = i in self.breakpoints
-            bg_color = '#ffebee' if has_breakpoint else 'transparent'
+            # Extract BASIC line number from this editor line
+            import re
+            match = re.match(r'^\s*(\d+)', line)
+            basic_line_num = int(match.group(1)) if match else None
+
+            # Determine status with priority: error > breakpoint > normal
+            has_error = basic_line_num in self.line_errors if basic_line_num else False
+            has_breakpoint = basic_line_num in self.breakpoints if basic_line_num else False
+
+            if has_error:
+                # Error marker - red background
+                bg_color = '#ffcccc'
+                text_color = '#c00'
+                marker = '? '
+            elif has_breakpoint:
+                # Breakpoint - light red background
+                bg_color = '#ffebee'
+                text_color = 'inherit'
+                marker = '● '
+            else:
+                # Normal line
+                bg_color = 'transparent'
+                text_color = 'inherit'
+                marker = ''
 
             with self.line_numbers:
-                ui.label(str(i)).classes('text-right').style(
-                    f'width: 100%; padding: 2px 4px; background-color: {bg_color}; cursor: pointer'
+                ui.label(marker + str(i)).classes('text-right').style(
+                    f'width: 100%; padding: 2px 4px; background-color: {bg_color}; color: {text_color}; cursor: pointer'
                 ).on('click', lambda line_num=i: self.toggle_breakpoint_at_line(line_num))
 
     def toggle_breakpoint_at_line(self, line_num: int):
@@ -270,6 +297,70 @@ class MBasicWebIDE:
         # For now, just show a dialog to enter line number
         # In future, could track cursor position
         ui.notify('Click on line numbers to toggle breakpoints', type='info')
+
+    def _check_line_syntax(self, code_text: str) -> tuple[bool, Optional[str]]:
+        """Check if a line of BASIC code has valid syntax.
+
+        Args:
+            code_text: The BASIC code to check (without line number)
+
+        Returns:
+            Tuple of (is_valid, error_message)
+            - is_valid: True if syntax is valid, False otherwise
+            - error_message: Error description if invalid, None if valid
+        """
+        if not code_text or not code_text.strip():
+            return (True, None)
+
+        try:
+            # Try to parse the line
+            lexer = Lexer(code_text)
+            tokens = lexer.tokenize()
+
+            # Create a minimal parser to check syntax
+            # Note: We don't have def_type_map here, but that's okay for basic syntax checking
+            parser = Parser(tokens, {}, source=code_text)
+            parser.parse_line()
+
+            return (True, None)
+
+        except Exception as e:
+            import re
+            error_msg = str(e)
+            # Clean up error message (remove "Parse error at line N, " prefix)
+            error_msg = re.sub(r'^Parse error at line \d+, ', '', error_msg)
+            return (False, error_msg)
+
+    def _validate_editor_syntax(self):
+        """Validate syntax of all lines in the editor and update error markers."""
+        import re
+
+        if not self.editor or not self.editor.value:
+            return
+
+        # Clear all previous errors
+        self.line_errors.clear()
+
+        lines = self.editor.value.split('\n')
+
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+
+            # Extract line number and code
+            match = re.match(r'^(\d+)\s+(.+)', line)
+            if match:
+                line_num = int(match.group(1))
+                code = match.group(2)
+
+                # Check syntax
+                is_valid, error_msg = self._check_line_syntax(code)
+                if not is_valid:
+                    self.line_errors.add(line_num)
+
+        # Update display
+        self.update_line_numbers()
 
     def sort_program_lines(self):
         """Sort program lines by line number."""
@@ -305,6 +396,7 @@ class MBasicWebIDE:
 
         self.editor.value = '\n'.join(sorted_lines)
         self.update_line_numbers()
+        self._validate_editor_syntax()
         ui.notify('Program lines sorted', type='positive')
 
     def renumber_program(self):
@@ -387,6 +479,7 @@ class MBasicWebIDE:
         # Rebuild program
         self.editor.value = '\n'.join(renumbered_lines + unnumbered_lines)
         self.update_line_numbers()
+        self._validate_editor_syntax()
 
         ui.notify(f'Program renumbered ({start} to {new_num - increment})', type='positive')
         dialog.close()
@@ -398,6 +491,7 @@ class MBasicWebIDE:
         self.current_file = 'untitled.bas'
         self.current_path = None
         self.breakpoints.clear()
+        self.line_errors.clear()
         self.update_line_numbers()
         ui.notify('New program created')
 
@@ -424,6 +518,8 @@ class MBasicWebIDE:
             self.editor.value = content
             self.current_file = e.name
             self.current_path = None
+            self.update_line_numbers()
+            self._validate_editor_syntax()
             dialog.close()
             ui.notify(f'Loaded {e.name}', type='positive')
         except Exception as ex:
@@ -490,7 +586,9 @@ class MBasicWebIDE:
             self.current_file = file_name
             self.current_path = None
             self.breakpoints.clear()
+            self.line_errors.clear()
             self.update_line_numbers()
+            self._validate_editor_syntax()
             dialog.close()
             ui.notify(f'Loaded {file_name}', type='positive')
         except Exception as ex:
@@ -1271,7 +1369,9 @@ for CP/M systems, running in your web browser.
         self.editor.value = code
         self.current_file = 'example.bas'
         self.breakpoints.clear()
+        self.line_errors.clear()
         self.update_line_numbers()
+        self._validate_editor_syntax()
         ui.notify('Example loaded')
         dialog.close()
 
