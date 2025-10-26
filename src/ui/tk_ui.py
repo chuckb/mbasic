@@ -138,6 +138,9 @@ class TkBackend(UIBackend):
         # Bind Enter key for auto-numbering
         self.editor_text.text.bind('<Return>', self._on_enter_key)
 
+        # Bind Ctrl+I for smart insert line (must be on text widget to prevent tab)
+        self.editor_text.text.bind('<Control-i>', lambda e: self._on_ctrl_i())
+
         # Set up editor context menu
         self._setup_editor_context_menu()
 
@@ -283,8 +286,7 @@ class TkBackend(UIBackend):
 
         # Additional keyboard shortcuts not in config
         self.root.bind('<Control-b>', lambda e: self._toggle_breakpoint())
-        # Ctrl+I must be bound to text widget to prevent tab insertion
-        self.editor_text.text.bind('<Control-i>', lambda e: self._on_ctrl_i())
+        # Note: Ctrl+I is bound in start() after editor is created
 
     def _create_toolbar(self):
         """Create toolbar with common actions."""
