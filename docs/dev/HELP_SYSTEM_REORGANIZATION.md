@@ -489,6 +489,17 @@ help_browser = HelpBrowser(
 - Easy to update language reference (one place)
 - Easy to document new features (implementation tier)
 
+### Web Deployment Ready
+
+- **Already web-compatible**: All markdown files work on web as-is
+- **No changes needed**: Standard markdown with relative links
+- **MkDocs integration**: Add mkdocs.yml for professional website
+- **GitHub Pages**: Free hosting with automatic deployment
+- **Search**: Full-text search on web (via MkDocs)
+- **Same content**: Single source for in-UI and web docs
+
+See [HELP_SYSTEM_WEB_DEPLOYMENT.md](HELP_SYSTEM_WEB_DEPLOYMENT.md) for details.
+
 ## Open Questions
 
 1. **Should we use explicit context syntax (`language:functions/print.md`) or relative paths (`../../language/functions/print.md`)?**
