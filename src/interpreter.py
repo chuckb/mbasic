@@ -536,7 +536,7 @@ class Interpreter:
         self.runtime.current_line = line_node
 
         # Check for breakpoint BEFORE executing
-        if line_number in self.breakpoints:
+        if line_number in self.state.breakpoints:
             return {
                 'status': 'breakpoint',
                 'line': line_number,
@@ -631,9 +631,9 @@ class Interpreter:
             import os
             if os.environ.get('DEBUG_BP'):
                 import sys
-                print(f"[BP_CHECK] Line {line_number}: breakpoints={self.breakpoints}, step_mode={step_mode}, has_callback={self.breakpoint_callback is not None}", file=sys.stderr)
+                print(f"[BP_CHECK] Line {line_number}: breakpoints={self.state.breakpoints}, step_mode={step_mode}, has_callback={self.breakpoint_callback is not None}", file=sys.stderr)
 
-            if (line_number in self.breakpoints or step_mode) and self.breakpoint_callback:
+            if (line_number in self.state.breakpoints or step_mode) and self.breakpoint_callback:
                 # Debug: breakpoint hit
                 if os.environ.get('DEBUG_BP'):
                     print(f"[BP_HIT] Calling breakpoint callback for line {line_number}", file=sys.stderr)

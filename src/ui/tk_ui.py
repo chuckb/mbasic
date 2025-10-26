@@ -1902,9 +1902,39 @@ class TkBackend(UIBackend):
             self._write_output(f"Error during renumber: {e}")
 
     def cmd_cont(self) -> None:
-        """Execute CONT command - continue after STOP."""
-        # TODO: Implement
-        pass
+        """Execute CONT command - continue after STOP.
+
+        Resumes execution after:
+        - STOP statement
+        - Ctrl+C/Break
+        - END statement (in some cases)
+
+        Invalid if program was edited after stopping.
+        """
+        # Check if runtime exists and is in stopped state
+        if not self.runtime or not self.runtime.stopped:
+            self._write_output("?Can't continue")
+            return
+
+        try:
+            # Clear stopped flag
+            self.runtime.stopped = False
+
+            # Restore execution position
+            self.runtime.current_line = self.runtime.stop_line
+            self.runtime.current_stmt_index = self.runtime.stop_stmt_index
+            self.runtime.halted = False
+
+            # Resume tick-based execution
+            # The interpreter will continue from the saved position
+            if self.interpreter:
+                # Start ticking again
+                self.is_running = True
+                self._set_status("Running")
+                self._tick()
+
+        except Exception as e:
+            self._write_output(f"?Error continuing: {e}")
 
     # Immediate mode methods
 
