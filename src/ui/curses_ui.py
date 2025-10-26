@@ -1289,6 +1289,8 @@ class CursesBackend(UIBackend):
         self.variables_walker = None
         self.variables_window = None
         self.watch_window_visible = False
+        self.variables_sort_mode = 'name'  # 'name', 'accessed', 'written', 'read', 'type', 'value'
+        self.variables_sort_reverse = False  # False=ascending, True=descending
         self.stack_walker = None
         self.stack_window = None
         self.stack_window_visible = False
@@ -1558,6 +1560,14 @@ class CursesBackend(UIBackend):
         elif key == STACK_KEY:
             # Toggle execution stack window
             self._toggle_stack_window()
+
+        elif key == 's' and self.watch_window_visible:
+            # Cycle sort mode in variables window
+            self._cycle_variables_sort_mode()
+
+        elif key == 'd' and self.watch_window_visible:
+            # Toggle sort direction in variables window
+            self._toggle_variables_sort_direction()
 
         elif key == DELETE_LINE_KEY:
             # Delete current line
@@ -2064,28 +2074,138 @@ Run                           Help
             self.variables_walker.append(make_output_line("(no variables yet)"))
             return
 
-        # Sort by name for consistent display
-        variables.sort(key=lambda v: v['name'] + v['type_suffix'])
+        # Sort variables based on current sort mode
+        if self.variables_sort_mode == 'name':
+            sort_key = lambda v: v['name'] + v['type_suffix']
+        elif self.variables_sort_mode == 'accessed':
+            # Sort by most recent access (read or write)
+            def accessed_key(v):
+                read_ts = v['last_read']['timestamp'] if v.get('last_read') else 0
+                write_ts = v['last_write']['timestamp'] if v.get('last_write') else 0
+                return max(read_ts, write_ts)
+            sort_key = accessed_key
+        elif self.variables_sort_mode == 'written':
+            sort_key = lambda v: v['last_write']['timestamp'] if v.get('last_write') else 0
+        elif self.variables_sort_mode == 'read':
+            sort_key = lambda v: v['last_read']['timestamp'] if v.get('last_read') else 0
+        elif self.variables_sort_mode == 'type':
+            sort_key = lambda v: v['type_suffix']
+        elif self.variables_sort_mode == 'value':
+            def value_key(v):
+                if v['is_array']:
+                    return (2, 0, '')  # Arrays sort last
+                elif v['type_suffix'] == '$':
+                    return (1, 0, str(v['value']).lower())  # Strings alphabetically
+                else:
+                    try:
+                        return (0, float(v['value']), '')  # Numbers numerically
+                    except (ValueError, TypeError):
+                        return (0, 0, '')
+            sort_key = value_key
+        else:
+            sort_key = lambda v: v['name'] + v['type_suffix']
+
+        variables.sort(key=sort_key, reverse=self.variables_sort_reverse)
 
         # Display each variable
         for var in variables:
             name = var['name'] + var['type_suffix']
 
             if var['is_array']:
-                # Array: show dimensions
+                # Array: show dimensions and last accessed cell if available
                 dims = 'x'.join(str(d) for d in var['dimensions'])
-                line = f"{name:12} = Array({dims})"
+
+                # Check if we have last accessed info
+                if var.get('last_accessed_subscripts') and var.get('last_accessed_value') is not None:
+                    subs = var['last_accessed_subscripts']
+                    last_val = var['last_accessed_value']
+
+                    # Format value naturally
+                    if var['type_suffix'] != '$' and isinstance(last_val, (int, float)) and last_val == int(last_val):
+                        last_val_str = str(int(last_val))
+                    elif var['type_suffix'] == '$':
+                        last_val_str = f'"{last_val}"'
+                    else:
+                        last_val_str = str(last_val)
+
+                    subs_str = ','.join(str(s) for s in subs)
+                    line = f"{name:12} = Array({dims}) [{subs_str}]={last_val_str}"
+                else:
+                    line = f"{name:12} = Array({dims})"
             else:
                 # Scalar: show value
                 value = var['value']
-                if var['type_suffix'] == '$':
+                # Format numbers naturally - show integers without decimals
+                if var['type_suffix'] != '$' and isinstance(value, (int, float)) and value == int(value):
+                    value = str(int(value))
+                elif var['type_suffix'] == '$':
                     # String: show with quotes
-                    line = f"{name:12} = \"{value}\""
-                else:
-                    # Numeric: show as-is
-                    line = f"{name:12} = {value}"
+                    value = f'"{value}"'
+
+                line = f"{name:12} = {value}"
 
             self.variables_walker.append(make_output_line(line))
+
+    def _cycle_variables_sort_mode(self):
+        """Cycle through variable sort modes (triggered by 's' key)."""
+        modes = ['name', 'accessed', 'written', 'read', 'type', 'value']
+        try:
+            current_idx = modes.index(self.variables_sort_mode)
+            next_idx = (current_idx + 1) % len(modes)
+        except ValueError:
+            next_idx = 0
+
+        self.variables_sort_mode = modes[next_idx]
+
+        mode_names = {
+            'name': 'Name',
+            'accessed': 'Last Accessed',
+            'written': 'Last Written',
+            'read': 'Last Read',
+            'type': 'Type',
+            'value': 'Value'
+        }
+
+        # Update window title
+        arrow = '↓' if self.variables_sort_reverse else '↑'
+        self.variables_frame.set_title(f"Variables (Sort: {mode_names[self.variables_sort_mode]} {arrow}) - s=mode d=dir Ctrl+W=toggle")
+
+        # Update variables display
+        self._update_variables_window()
+
+        # Show status
+        self.status_bar.set_text(f"Sorting variables by: {mode_names[self.variables_sort_mode]} {arrow}")
+
+        # Redraw screen
+        if hasattr(self, 'loop') and self.loop:
+            self.loop.draw_screen()
+
+    def _toggle_variables_sort_direction(self):
+        """Toggle variable sort direction (triggered by 'd' key)."""
+        self.variables_sort_reverse = not self.variables_sort_reverse
+
+        # Update window title
+        mode_names = {
+            'name': 'Name',
+            'accessed': 'Last Accessed',
+            'written': 'Last Written',
+            'read': 'Last Read',
+            'type': 'Type',
+            'value': 'Value'
+        }
+        arrow = '↓' if self.variables_sort_reverse else '↑'
+        self.variables_frame.set_title(f"Variables (Sort: {mode_names[self.variables_sort_mode]} {arrow}) - s=mode d=dir Ctrl+W=toggle")
+
+        # Update variables display
+        self._update_variables_window()
+
+        # Show status
+        direction = "descending ↓" if self.variables_sort_reverse else "ascending ↑"
+        self.status_bar.set_text(f"Sort direction: {direction}")
+
+        # Redraw screen
+        if hasattr(self, 'loop') and self.loop:
+            self.loop.draw_screen()
 
     def _toggle_stack_window(self):
         """Toggle visibility of the execution stack window."""

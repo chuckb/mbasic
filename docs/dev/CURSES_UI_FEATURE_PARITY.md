@@ -184,16 +184,16 @@ Like Tk toolbar but text-based:
 **Status Legend**: ⬜ Not Started | 🟨 In Progress | ✅ Completed
 
 #### Phase 1: Variables Window Enhancement
-- ⬜ 1.1 Add sort mode state variables
-- ⬜ 1.2 Implement sort mode cycling (key: 's')
-- ⬜ 1.3 Add sort direction toggle (key: 'd')
-- ⬜ 1.4 Implement accessed timestamp sort
-- ⬜ 1.5 Implement written timestamp sort
-- ⬜ 1.6 Implement read timestamp sort
-- ⬜ 1.7 Implement type sort
-- ⬜ 1.8 Implement value sort
-- ⬜ 1.9 Add last accessed array cell display
-- ⬜ 1.10 Update window header to show sort mode/direction
+- ✅ 1.1 Add sort mode state variables
+- ✅ 1.2 Implement sort mode cycling (key: 's')
+- ✅ 1.3 Add sort direction toggle (key: 'd')
+- ✅ 1.4 Implement accessed timestamp sort
+- ✅ 1.5 Implement written timestamp sort
+- ✅ 1.6 Implement read timestamp sort
+- ✅ 1.7 Implement type sort
+- ✅ 1.8 Implement value sort
+- ✅ 1.9 Add last accessed array cell display
+- ✅ 1.10 Update window header to show sort mode/direction
 
 #### Phase 2: Debugger Controls
 - ⬜ 2.1 Add Ctrl+L keybinding for Step Line
