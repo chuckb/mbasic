@@ -615,6 +615,123 @@ def _on_stack_click(self, event):
 
 ---
 
+## Variable Editing and Array Cell Inspection
+
+**Feature Request (2025-10-26):**
+
+Add capability to edit variable values and inspect/edit array cells from the variables window.
+
+### Variable Value Editing
+
+**Goal:** Allow editing scalar variable values during debugging
+
+**Interaction:**
+- Double-click on a variable in the variables window
+- Opens edit dialog showing current value
+- User enters new value
+- Value is validated and applied to runtime
+- Variables window refreshes to show new value
+
+**Implementation:**
+```python
+def _on_variable_double_click(self, event):
+    """Handle double-click on variable to edit value."""
+    item = self.variables_tree.selection()
+    if not item:
+        return
+
+    # Get variable info
+    var_name = self.variables_tree.item(item[0])['text']
+    current_value = self.variables_tree.item(item[0])['values'][1]
+
+    # Show edit dialog
+    new_value = self._show_variable_edit_dialog(var_name, current_value)
+    if new_value is not None:
+        # Update runtime (using set_variable_raw to avoid tracking)
+        self.runtime.set_variable_raw(var_name, new_value)
+        # Refresh display
+        self._update_variables()
+```
+
+**Dialog Requirements:**
+- Show variable name and type
+- Input field with current value pre-filled
+- Type validation (numeric for %/!/# , string for $)
+- OK/Cancel buttons
+- Error handling for invalid input
+
+### Array Cell Selector
+
+**Goal:** Browse and edit any cell in an array, not just the last accessed one
+
+**Interaction:**
+- Right-click on array variable → "Inspect Array..."
+- Opens array inspector dialog
+- Shows array dimensions and current cell selector
+- User enters subscripts (e.g., "3,2" for 2D array)
+- Shows value of that cell
+- User can edit the value
+- Changes are applied to runtime
+
+**Implementation:**
+```python
+def _on_array_right_click(self, event):
+    """Handle right-click on array to inspect cells."""
+    item = self.variables_tree.identify_row(event.y)
+    if not item:
+        return
+
+    # Get array info
+    var_name = self.variables_tree.item(item)['text']
+    # Check if it's an array
+    if not self._is_array_variable(var_name):
+        return
+
+    # Show array inspector dialog
+    self._show_array_inspector(var_name)
+```
+
+**Array Inspector Dialog:**
+
+```
+┌─────────────────────────────────────┐
+│ Array Inspector: A%(10,5)           │
+├─────────────────────────────────────┤
+│ Dimensions: 10 x 5 (base 0)         │
+│                                      │
+│ Subscripts: [3] [2]                 │
+│             ▼   ▼                    │
+│                                      │
+│ Current Value: 42                    │
+│                                      │
+│ [ Edit Value... ]                   │
+│                                      │
+│ Last Accessed: [5,4] = 99           │
+│                                      │
+│      [Close]                         │
+└─────────────────────────────────────┘
+```
+
+**Features:**
+- Spinboxes or entry fields for each dimension
+- Range validation (0 to dim for base 0, 1 to dim for base 1)
+- Live value display as subscripts change
+- Edit button to modify cell value
+- Shows last accessed cell for reference
+- Limit to 4 dimensions for usability
+
+**Benefits:**
+- Debug array contents without adding PRINT statements
+- Fix wrong values during debugging session
+- Inspect arrays systematically
+- Understand array state at breakpoints
+
+**Status:** TODO - Not yet implemented
+
+**Priority:** Medium - useful for debugging but arrays can be inspected via immediate mode
+
+---
+
 **Status:** Plan complete, implementation blocked by environment constraints
 
 **Next Steps:** Implement on machine with GUI environment, test thoroughly
