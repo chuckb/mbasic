@@ -1512,57 +1512,68 @@ class TkBackend(UIBackend):
             messagebox.showinfo("Smart Insert", "No program lines found.")
             return
 
-        # Find the next line after current
-        next_line_num = None
-        for line_num in all_line_numbers:
-            if line_num > current_line_num:
-                next_line_num = line_num
+        # Find the previous line before current (to insert between prev and current)
+        prev_line_num = None
+        for line_num in reversed(all_line_numbers):
+            if line_num < current_line_num:
+                prev_line_num = line_num
                 break
 
-        # Calculate insertion point
-        if next_line_num is None:
-            # At end of program - use standard increment
-            insert_num = current_line_num + self.auto_number_increment
+        # Calculate insertion point (insert BEFORE current line)
+        if prev_line_num is None:
+            # At beginning of program - use current minus increment
+            insert_num = max(1, current_line_num - self.auto_number_increment)
+            # Make sure we don't conflict with current
+            if insert_num >= current_line_num:
+                insert_num = current_line_num - 1 if current_line_num > 1 else 1
         else:
-            # Between two lines - try midpoint
-            midpoint = calculate_midpoint(current_line_num, next_line_num)
+            # Between previous and current lines - try midpoint
+            midpoint = calculate_midpoint(prev_line_num, current_line_num)
             if midpoint is not None:
                 insert_num = midpoint
             else:
                 # No room - offer to renumber
                 response = messagebox.askyesno(
                     "No Room",
-                    f"No room between lines {current_line_num} and {next_line_num}.\n\n"
+                    f"No room between lines {prev_line_num} and {current_line_num}.\n\n"
                     f"Would you like to renumber the program to make room?"
                 )
                 if response:
-                    # Renumber from current line onwards to make room
-                    self.cmd_renum(f"1000,{current_line_num + 1},10")
+                    # Renumber to make room
+                    self._save_editor_to_program()
+                    self.cmd_renum(f"10,0,10")
+                    self._refresh_editor()
                 return
 
-        # Insert blank line at calculated position
-        # Find where to insert in editor
-        insert_index = None
-        for i, line_num in enumerate(all_line_numbers):
-            if line_num == current_line_num:
-                # Insert after current line in editor
-                insert_index = current_line_index + 1
+        # Insert blank line BEFORE current line (at current line's position)
+        # The new line will be inserted at the current line's text position,
+        # pushing the current line down
+        insert_index = current_line_index
+
+        # Insert the new blank line
+        new_line_text = f'{insert_num} \n'
+        self.editor_text.text.insert(f'{insert_index}.0', new_line_text)
+
+        # Trigger save and sort (this will reorder all lines by line number)
+        self._save_editor_to_program()
+        self._refresh_editor()
+
+        # After refresh, find where the new line ended up and position cursor there
+        # Search for the line with our inserted line number
+        editor_content = self.editor_text.text.get('1.0', 'end')
+        lines = editor_content.split('\n')
+        for idx, line in enumerate(lines):
+            line_match = re.match(r'^\s*(\d+)', line)
+            if line_match and int(line_match.group(1)) == insert_num:
+                # Found our inserted line, position cursor after the line number
+                text_line_num = idx + 1  # Tk uses 1-based line numbers
+                cursor_col = len(str(insert_num)) + 1  # After line number and space
+                self.editor_text.text.mark_set(tk.INSERT, f'{text_line_num}.{cursor_col}')
+                self.editor_text.text.see(f'{text_line_num}.0')  # Scroll to show it
                 break
 
-        if insert_index is not None:
-            # Insert the new blank line
-            new_line_text = f'{insert_num} \n'
-            self.editor_text.text.insert(f'{insert_index}.0', new_line_text)
-
-            # Move cursor to new line, after the line number
-            self.editor_text.text.mark_set(tk.INSERT, f'{insert_index}.{len(str(insert_num)) + 1}')
-
-            # Trigger save and sort
-            self._save_editor_to_program()
-            self._refresh_editor()
-
-            # Show confirmation
-            self._add_output(f"Inserted blank line {insert_num}\n")
+        # Show confirmation
+        self._add_output(f"Inserted blank line {insert_num}\n")
 
     def _scroll_to_line(self, line_number):
         """Scroll editor to show the specified BASIC line number.
