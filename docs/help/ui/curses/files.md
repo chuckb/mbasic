@@ -127,4 +127,4 @@ Each line must start with a line number.
 ## See Also
 
 - [Editing Programs](editing.md)
-- [BASIC Language Reference](../../language/statements/index.md)
+- [BASIC Language Reference](../../common/language/statements/index.md)

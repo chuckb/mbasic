@@ -80,8 +80,8 @@ Now that you've run your first program:
 
 Or jump to the BASIC language:
 
-- [Getting Started with BASIC](../../getting-started.md) - Language basics
-- [BASIC Statements](../../language/statements/index.md) - Full reference
+- [Getting Started with BASIC](../../common/getting-started.md) - Language basics
+- [BASIC Statements](../../common/language/statements/index.md) - Full reference
 
 ## Tips
 

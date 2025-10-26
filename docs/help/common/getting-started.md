@@ -84,7 +84,7 @@ See: [FOR-NEXT loops](language/statements/for-next.md)
 20 IF N > 10 THEN PRINT "Big!" ELSE PRINT "Small"
 ```
 
-See: [IF-THEN-ELSE](language/statements/if-then.md)
+See: [IF-THEN-ELSE](language/statements/if-then-else-if-goto.md)
 
 ## Next Steps
 

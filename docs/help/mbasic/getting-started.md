@@ -137,7 +137,7 @@ python3 mbasic.py --backend tk
 
 ## Next Steps
 
-- **Learn the language:** See [Language Reference](../language/statements/index.md)
+- **Learn the language:** See [Language Reference](../common/language/statements/index.md)
 - **Choose your UI:** [CLI](../ui/cli/index.md), [Curses](../ui/curses/index.md), or [Tk](../ui/tk/index.md)
 - **Explore features:** [MBASIC Features](features.md)
 - **Check compatibility:** [Compatibility Guide](compatibility.md)
@@ -169,5 +169,5 @@ python3 mbasic.py                # Interactive mode
 ## Getting Help
 
 - Press **Ctrl+H** in any UI for built-in help
-- See [Language Reference](../language/statements/index.md) for statement syntax
+- See [Language Reference](../common/language/statements/index.md) for statement syntax
 - Visit [UI-specific guides](../ui/curses/index.md) for interface help

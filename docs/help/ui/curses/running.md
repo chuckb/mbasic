@@ -90,7 +90,7 @@ Check your BASIC syntax:
 - Commands must be valid BASIC keywords
 - Strings need quotes
 
-See: [BASIC Language Reference](../../language/statements/index.md)
+See: [BASIC Language Reference](../../common/language/statements/index.md)
 
 ### "Runtime Error"
 
@@ -112,4 +112,4 @@ Check if:
 
 - [Editing Programs](editing.md) - Write code
 - [Keyboard Commands](keyboard-commands.md) - All shortcuts
-- [BASIC Statements](../../language/statements/index.md) - Language reference
+- [BASIC Statements](../../common/language/statements/index.md) - Language reference

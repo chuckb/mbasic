@@ -262,4 +262,4 @@ See [Compatibility Guide](compatibility.md) for complete details.
 - [Getting Started](getting-started.md) - Installation and first steps
 - [Compatibility Guide](compatibility.md) - What works, what doesn't
 - [Architecture](architecture.md) - How MBASIC works internally
-- [Language Reference](../language/statements/index.md) - BASIC-80 language
+- [Language Reference](../common/language/statements/index.md) - BASIC-80 language

@@ -31,7 +31,7 @@ Press **{{kbd:help}}** anytime to open help.
 
 ### Following Links
 
-Links appear in brackets like [this](link).
+Links appear in brackets like this: `[text](destination)`.
 
 1. Use **Tab** to move to next link
 2. Press **Enter** to follow the link
@@ -84,9 +84,9 @@ Commands specific to this interface:
 ### Language Reference
 
 BASIC language (same for all UIs):
-- [Getting Started](../../getting-started.md) - BASIC basics
-- [Statements](../../language/statements/index.md) - Language reference
-- [Functions](../../language/functions/index.md) - Built-in functions
+- [Getting Started](../../common/getting-started.md) - BASIC basics
+- [Statements](../../common/language/statements/index.md) - Language reference
+- [Functions](../../common/language/functions/index.md) - Built-in functions
 
 ### Examples
 

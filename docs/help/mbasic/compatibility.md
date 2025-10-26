@@ -333,4 +333,4 @@ Both MBASIC 5.21 and this implementation:
 - [Features](features.md) - Complete feature list
 - [Getting Started](getting-started.md) - Installation and setup
 - [Architecture](architecture.md) - Implementation details
-- [Language Reference](../language/statements/index.md) - BASIC-80 language syntax
+- [Language Reference](../common/language/statements/index.md) - BASIC-80 language syntax

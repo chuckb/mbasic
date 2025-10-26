@@ -28,7 +28,7 @@ type: function
 
 **Note**: Cannot read actual memory addresses (not applicable in Python interpreter). For memory-mapped I/O operations, this implementation will not work correctly.
 
-**Recommendation**: Use [RANDOMIZE](randomize.md) and [RND](rnd.md) instead of PEEK for random number generation.
+**Recommendation**: Use [RANDOMIZE](../statements/randomize.md) and [RND](rnd.md) instead of PEEK for random number generation.
 
 ---
 

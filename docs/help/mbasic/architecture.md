@@ -400,7 +400,7 @@ The semantic analyzer is production-ready and can be used for:
 - [Features](features.md) - What's implemented in the interpreter
 - [Compatibility](compatibility.md) - Differences from MBASIC 5.21
 - [Not Implemented](not-implemented.md) - What doesn't work
-- [Language Reference](../language/index.md) - BASIC-80 syntax
+- [Language Reference](../common/language/index.md) - BASIC-80 syntax
 
 ## Technical Documentation
 
