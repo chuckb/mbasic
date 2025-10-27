@@ -1,13 +1,30 @@
 # Notes for Claude
 
 ## Workflow
-- Always commit and push changes when you stop to talk to me
 - Track all installed dependencies and update documentation
-- **CRITICAL: Increment VERSION in src/version.py before every commit**
-  - Version appears in debug output so we can verify user has latest code
-  - Format: "X.Y.Z" where Z increments each commit
-  - Example: 1.0.0 → 1.0.1 → 1.0.2
 - **Check `docs/dev/WORK_IN_PROGRESS.md` on EVERY startup** - contains current task that may be incomplete
+
+## Git Commit and Push Workflow
+
+**FOLLOW THESE STEPS FOR EVERY COMMIT:**
+
+1. **First: Increment VERSION in src/version.py**
+   ```bash
+   # Edit src/version.py - increment the last number
+   # 1.0.5 → 1.0.6 → 1.0.7, etc.
+   ```
+   - Version appears in debug output so we know user has latest code
+   - Format: "X.Y.Z" where Z increments each commit
+   - **DO NOT SKIP THIS STEP** - without it, we can't verify user's code version
+
+2. **Then: git add, commit, push**
+   ```bash
+   git add -A
+   git commit -m "Your commit message"
+   git push
+   ```
+
+3. **Always commit and push changes when you stop to talk to me**
 
 ## Work-in-Progress Tracking
 
