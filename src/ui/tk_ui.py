@@ -187,7 +187,9 @@ class TkBackend(UIBackend):
         input_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         input_frame.pack_propagate(False)  # Force frame to maintain its height
 
-        tk.Label(input_frame, text="Ok >", font=("Courier", 10), fg="green").pack(side=tk.LEFT, padx=(0, 5))
+        # Create the "Ok >" prompt label (saved to update color based on program state)
+        self.immediate_prompt_label = tk.Label(input_frame, text="Ok >", font=("Courier", 10), fg="green")
+        self.immediate_prompt_label.pack(side=tk.LEFT, padx=(0, 5))
         # Use tk.Entry instead of ttk.Entry for better input reliability
         # Explicitly set state, takefocus, and exportselection to ensure entry accepts input
         self.immediate_entry = tk.Entry(input_frame, font=("Courier", 10),
@@ -2839,32 +2841,32 @@ class TkBackend(UIBackend):
         """Update immediate mode panel status based on interpreter state."""
         import tkinter as tk
 
-        if not self.immediate_executor or not self.immediate_status or not self.immediate_entry:
+        if not self.immediate_executor or not self.immediate_entry or not self.immediate_prompt_label:
             return
 
         if self.immediate_executor.can_execute_immediate():
             # Safe to execute - enable input
-            # Show current state: Ok, Breakpoint, Error, etc.
+            # Update prompt label color based on current state
             if hasattr(self.interpreter, 'state') and self.interpreter.state:
                 status = self.interpreter.state.status
                 if status == 'at_breakpoint':
-                    self.immediate_status.config(text="Breakpoint", foreground="orange")
+                    self.immediate_prompt_label.config(text="Breakpoint >", fg="orange")
                 elif status == 'error':
-                    self.immediate_status.config(text="Error", foreground="red")
+                    self.immediate_prompt_label.config(text="Error >", fg="red")
                 elif status == 'paused':
-                    self.immediate_status.config(text="Paused", foreground="orange")
+                    self.immediate_prompt_label.config(text="Paused >", fg="orange")
                 elif self.paused_at_breakpoint:
                     # Might be paused after error/breakpoint but status changed
-                    self.immediate_status.config(text="Paused", foreground="orange")
+                    self.immediate_prompt_label.config(text="Paused >", fg="orange")
                 else:
-                    self.immediate_status.config(text="Ok", foreground="green")
+                    self.immediate_prompt_label.config(text="Ok >", fg="green")
             else:
-                self.immediate_status.config(text="Ok", foreground="green")
+                self.immediate_prompt_label.config(text="Ok >", fg="green")
             self.immediate_entry.config(state=tk.NORMAL)
         else:
             # Not safe - disable input
             status = self.interpreter.state.status if hasattr(self.interpreter, 'state') else 'unknown'
-            self.immediate_status.config(text=f"[{status}]", foreground="red")
+            self.immediate_prompt_label.config(text=f"[{status}] >", fg="red")
             self.immediate_entry.config(state=tk.DISABLED)
 
     def _execute_immediate(self):
