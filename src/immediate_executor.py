@@ -176,11 +176,25 @@ class ImmediateExecutor:
                         state = ui.interpreter.state
                         if (state.status in ('error', 'paused', 'at_breakpoint') and
                             hasattr(state, 'current_line') and state.current_line):
-                            # Restore the highlight
+                            # Recalculate char positions from statement index (more robust when line is edited)
                             if hasattr(ui, '_highlight_current_statement'):
-                                char_start = getattr(state, 'current_statement_char_start', 0)
-                                char_end = getattr(state, 'current_statement_char_end', 0)
-                                ui._highlight_current_statement(state.current_line, char_start, char_end)
+                                # Get the updated line from runtime
+                                line_num = state.current_line
+                                stmt_idx = getattr(state, 'current_statement_index', 0)
+
+                                # Get char positions from the newly parsed line
+                                if line_num in ui.runtime.line_table:
+                                    line_node = ui.runtime.line_table[line_num]
+                                    if stmt_idx < len(line_node.statements):
+                                        stmt = line_node.statements[stmt_idx]
+                                        char_start = getattr(stmt, 'char_start', 0)
+                                        char_end = getattr(stmt, 'char_end', 0)
+
+                                        # Update state with new char positions
+                                        state.current_statement_char_start = char_start
+                                        state.current_statement_char_end = char_end
+
+                                        ui._highlight_current_statement(line_num, char_start, char_end)
 
                     return (True, "")
 
