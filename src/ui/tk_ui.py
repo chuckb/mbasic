@@ -671,22 +671,31 @@ class TkBackend(UIBackend):
             if self.interpreter.state.status == 'error':
                 self._add_output("\n--- Re-parsing program after edit ---\n")
 
+                # Clear all error markers first
+                self.editor_text.clear_all_errors()
+
                 # Get current editor text
                 program_text = self.editor_text.get("1.0", tk.END)
 
                 # Parse the updated program
                 from src.parser import Parser
                 from src.lexer import Lexer
-                lexer = Lexer(program_text)
-                tokens = lexer.tokenize()
-                parser = Parser(tokens)
-                program = parser.parse()
+                try:
+                    lexer = Lexer(program_text)
+                    tokens = lexer.tokenize()
+                    parser = Parser(tokens)
+                    program = parser.parse()
+                except Exception as parse_error:
+                    self._add_output(f"Parse error: {parse_error}\n")
+                    self._add_output("Fix the syntax error and try again.\n")
+                    self._set_status("Parse error - fix and retry")
+                    return
 
                 # Update the interpreter's runtime with new program
                 self.interpreter.runtime.line_table = program.line_table
                 self.interpreter.runtime.line_order = program.line_order
 
-                # Clear error state
+                # Clear error state and set to paused
                 self.interpreter.state.status = 'paused'
                 self.interpreter.state.error_info = None
 
@@ -701,7 +710,9 @@ class TkBackend(UIBackend):
             self.tick_timer_id = self.root.after(10, self._execute_tick)
 
         except Exception as e:
+            import traceback
             self._add_output(f"Continue error: {e}\n")
+            self._add_output(f"Traceback: {traceback.format_exc()}\n")
             self._set_status("Error")
 
     def _menu_stop(self):
@@ -2197,6 +2208,12 @@ class TkBackend(UIBackend):
                 self._add_output("(Edit the line and click Continue to retry, or Stop to end)\n")
                 self._set_status(f"Error at line {line_num} - Edit and Continue, or Stop")
                 self._update_immediate_status()
+                # Mark the error line with red ? indicator
+                if line_num and line_num != "?":
+                    try:
+                        self.editor_text.set_error(int(line_num), True, error_msg)
+                    except (ValueError, AttributeError, TypeError):
+                        pass
                 # Update stack and variables to show state at error
                 if self.stack_visible:
                     self._update_stack()
