@@ -1121,6 +1121,9 @@ class TkBackend(UIBackend):
         dialog.title(f"Edit Array Element: {variable_name}")
         dialog.geometry("450x280")
         dialog.transient(self.variables_window)
+
+        # Wait for window to be visible before grabbing
+        dialog.update_idletasks()
         dialog.grab_set()
 
         # Array info label
