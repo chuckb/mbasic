@@ -1734,13 +1734,6 @@ class TkBackend(UIBackend):
             if match:
                 line_num = int(match.group(1))
 
-                # Check if there's any content after the line number
-                # Skip lines that are just a number (e.g., "20 " or "20")
-                content_match = re.match(r'^\d+\s+(.+)', line_stripped)
-                if not content_match or not content_match.group(1).strip():
-                    # No content after line number - skip this line
-                    continue
-
                 # Save the original line (with formatting), not stripped
                 success, error = self.program.add_line(line_num, line.rstrip('\r\n'))
                 if not success:
@@ -2372,36 +2365,14 @@ class TkBackend(UIBackend):
         new_line_text = f'{insert_num} \n'
         self.editor_text.text.insert(f'{insert_index}.0', new_line_text)
 
-        # Trigger save and sort (this will reorder all lines by line number)
-        success = self._save_editor_to_program()
-        if not success:
-            # Parse errors exist - don't refresh to preserve user's work
-            # Just position cursor at the new line we inserted
-            self.editor_text.text.mark_set('insert', f'{insert_index}.end')
-            return
+        # DON'T save to program yet - the line is blank and would be filtered out
+        # Just position the cursor on the new line so user can start typing
+        # The line will be saved when they finish typing and move off it
 
-        self._refresh_editor()
-
-        # After refresh, find where the new line ended up and position cursor there
-        # Search for the line with our inserted line number
-        editor_content = self.editor_text.text.get('1.0', 'end')
-        lines = editor_content.split('\n')
-        for idx, line in enumerate(lines):
-            line_match = re.match(r'^\s*(\d+)', line)
-            if line_match and int(line_match.group(1)) == insert_num:
-                # Found our inserted line, position cursor after the line number AND space
-                text_line_num = idx + 1  # Tk uses 1-based line numbers
-                # Find position after line number and following space
-                # Line format is "   25 " or "   25 PRINT" - find the space after digits
-                after_number_match = re.match(r'^\s*\d+\s+', line)
-                if after_number_match:
-                    cursor_col = len(after_number_match.group(0))
-                else:
-                    # No space after number, position after the number
-                    cursor_col = len(line_match.group(0))
-                self.editor_text.text.mark_set(tk.INSERT, f'{text_line_num}.{cursor_col}')
-                self.editor_text.text.see(f'{text_line_num}.0')  # Scroll to show it
-                break
+        # Position cursor at the end of the line number (ready to type code)
+        col_pos = len(f'{insert_num} ')
+        self.editor_text.text.mark_set('insert', f'{insert_index}.{col_pos}')
+        self.editor_text.text.see(f'{insert_index}.0')
 
     def _scroll_to_line(self, line_number):
         """Scroll editor to show the specified BASIC line number.
