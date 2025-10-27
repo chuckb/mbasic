@@ -237,7 +237,7 @@ Common error codes used with RESUME:
 | 57 | Device I/O error |
 | 62 | Input past end of file |
 
-See [Error Codes](../../appendices/error-codes.md) for complete list.
+See [Error Codes](../appendices/error-codes.md) for complete list.
 
 ## Testing RESUME
 

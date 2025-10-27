@@ -68,123 +68,69 @@ class HelpWidget(urwid.WidgetWrap):
         # Load initial topic
         self._load_topic(initial_topic)
 
-    def _load_search_indexes(self) -> Dict[str, Dict]:
-        """Load all three search indexes (language, mbasic, ui)."""
-        indexes = {}
+    def _load_search_indexes(self) -> Dict:
+        """Load pre-built merged search index for this UI."""
+        merged_index_path = self.help_root / 'ui/curses/merged_index.json'
 
-        # Try to load each search index
-        index_paths = [
-            ('language', self.help_root / 'common/language/search_index.json'),
-            ('mbasic', self.help_root / 'mbasic/search_index.json'),
-            ('ui', self.help_root / 'ui/curses/search_index.json'),
-        ]
+        try:
+            if merged_index_path.exists():
+                with open(merged_index_path, 'r') as f:
+                    return json.load(f)
+        except Exception:
+            pass
 
-        for name, path in index_paths:
-            try:
-                if path.exists():
-                    with open(path, 'r') as f:
-                        indexes[name] = json.load(f)
-            except Exception:
-                # If index can't be loaded, continue without it
-                pass
-
-        return indexes
+        # Return empty index if load fails
+        return {'files': []}
 
     def _search_indexes(self, query: str) -> List[Tuple[str, str, str, str]]:
         """
-        Search across all loaded indexes.
+        Search the merged index.
 
         Returns list of (tier, path, title, description) tuples.
         """
         results = []
         query_lower = query.lower()
 
-        for tier_name, index in self.search_indexes.items():
-            # Map tier names to paths
-            tier_prefix = {
-                'language': 'common/language/',
-                'mbasic': 'mbasic/',
-                'ui': 'ui/curses/',
-            }.get(tier_name, '')
+        # Merged index has pre-built structure with all files and metadata
+        if 'files' not in self.search_indexes:
+            return results
 
-            tier_label = {
-                'language': '📕 Language',
-                'mbasic': '📗 MBASIC',
-                'ui': '📘 UI',
-            }.get(tier_name, tier_name)
+        # Map tier to labels
+        tier_labels = {
+            'language': '📕 Language',
+            'mbasic': '📗 MBASIC',
+        }
 
-            # Search in keywords
-            if 'keywords' in index:
-                for keyword, paths in index['keywords'].items():
-                    if query_lower in keyword.lower():
-                        # Keyword match - add all files with this keyword
-                        if isinstance(paths, list):
-                            for path in paths:
-                                # Find file info
-                                file_info = self._find_file_info(index, path)
-                                if file_info:
-                                    results.append((
-                                        tier_label,
-                                        tier_prefix + path,
-                                        file_info.get('title', path),
-                                        file_info.get('description', '')
-                                    ))
-                        else:
-                            # Single path (alias)
-                            file_info = self._find_file_info(index, paths)
-                            if file_info:
-                                results.append((
-                                    tier_label,
-                                    tier_prefix + paths,
-                                    file_info.get('title', paths),
-                                    file_info.get('description', '')
-                                ))
+        for file_info in self.search_indexes['files']:
+            # Check if query matches title, description, type, or keywords
+            title = file_info.get('title', '').lower()
+            desc = file_info.get('description', '').lower()
+            file_type = file_info.get('type', '').lower()
+            category = file_info.get('category', '').lower()
+            keywords = [kw.lower() for kw in file_info.get('keywords', [])]
 
-            # Search in aliases
-            if 'aliases' in index:
-                for alias, path in index['aliases'].items():
-                    if query_lower in alias.lower():
-                        file_info = self._find_file_info(index, path)
-                        if file_info:
-                            results.append((
-                                tier_label,
-                                tier_prefix + path,
-                                file_info.get('title', path),
-                                file_info.get('description', '')
-                            ))
+            # Match against query
+            if (query_lower in title or
+                query_lower in desc or
+                query_lower in file_type or
+                query_lower in category or
+                any(query_lower in kw for kw in keywords)):
 
-            # Search in titles and descriptions
-            if 'files' in index:
-                for file_info in index['files']:
-                    title = file_info.get('title', '').lower()
-                    desc = file_info.get('description', '').lower()
+                # Determine tier label from tier field or path
+                tier_name = file_info.get('tier', '')
+                if tier_name.startswith('ui/'):
+                    tier_label = '📘 UI'
+                else:
+                    tier_label = tier_labels.get(tier_name, '📙 Other')
 
-                    if query_lower in title or query_lower in desc:
-                        results.append((
-                            tier_label,
-                            tier_prefix + file_info.get('path', ''),
-                            file_info.get('title', ''),
-                            file_info.get('description', '')
-                        ))
+                results.append((
+                    tier_label,
+                    file_info.get('path', ''),
+                    file_info.get('title', ''),
+                    file_info.get('description', '')
+                ))
 
-        # Deduplicate by path (keep first occurrence)
-        seen_paths = set()
-        deduped_results = []
-        for result in results:
-            path = result[1]  # path is the second element
-            if path not in seen_paths:
-                seen_paths.add(path)
-                deduped_results.append(result)
-
-        return deduped_results
-
-    def _find_file_info(self, index: Dict, path: str) -> Optional[Dict]:
-        """Find file info in index by path."""
-        if 'files' in index:
-            for file_info in index['files']:
-                if file_info.get('path') == path:
-                    return file_info
-        return None
+        return results
 
     def _show_search_prompt(self):
         """Show search input prompt."""
