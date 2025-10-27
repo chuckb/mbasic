@@ -2807,7 +2807,7 @@ class TkBackend(UIBackend):
         import tkinter as tk
         from tkinter import messagebox
 
-        if not self.immediate_executor or not self.immediate_entry or not self.immediate_history:
+        if not self.immediate_executor or not self.immediate_entry:
             messagebox.showwarning("Warning", "Immediate mode not initialized")
             return
 
