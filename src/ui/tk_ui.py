@@ -1984,6 +1984,13 @@ class TkBackend(UIBackend):
             # Start with default auto-number or find highest existing line number
             next_line_num = self.auto_number_start
 
+            # Check highest line number in existing program
+            if self.program and self.program.has_lines():
+                existing_lines = self.program.get_all_line_numbers()
+                if existing_lines:
+                    highest_existing = max(existing_lines)
+                    next_line_num = max(next_line_num, highest_existing + self.auto_number_increment)
+
             # First pass - find highest line number in pasted content
             for line in lines:
                 stripped = line.strip()
