@@ -171,6 +171,17 @@ class ImmediateExecutor:
                     if hasattr(ui, '_refresh_editor'):
                         ui._refresh_editor()
 
+                    # Restore yellow highlight if there's a current execution position
+                    if hasattr(ui.interpreter, 'state') and ui.interpreter.state:
+                        state = ui.interpreter.state
+                        if (state.status in ('error', 'paused', 'at_breakpoint') and
+                            hasattr(state, 'current_line') and state.current_line):
+                            # Restore the highlight
+                            if hasattr(ui, '_highlight_current_statement'):
+                                char_start = getattr(state, 'current_statement_char_start', 0)
+                                char_end = getattr(state, 'current_statement_char_end', 0)
+                                ui._highlight_current_statement(state.current_line, char_start, char_end)
+
                     return (True, "")
 
             return (False, "Cannot edit program lines in this mode\n")
