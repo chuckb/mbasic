@@ -24,7 +24,7 @@ This document ensures all three UIs (Tk, Curses, Web) have feature parity. It wa
 | **Multi-line editing** | ✅ | ✅ | ✅ | All support full program editing |
 | **Cut/Copy/Paste** | ✅ | ⚠️ | ✅ | Curses: Terminal-dependent |
 | **Undo/Redo** | ✅ | ❌ | ⚠️ | Tk: Native. Web: Browser-dependent |
-| **Smart Insert Line (Ctrl+I)** | ✅ | ❌ | ❌ | **WORKING 2025-10-26** - Tk only. Inserts line between current/next |
+| **Smart Insert Line (Ctrl+I)** | ✅ | ✅ | ✅ | **COMPLETE 2025-10-26** - All UIs. Inserts line between current/next |
 
 ### Line Numbers
 
@@ -72,7 +72,7 @@ This document ensures all three UIs (Tk, Curses, Web) have feature parity. It wa
 | **Save file** | ✅ | ✅ | ⚠️ | Web: Download, no direct save |
 | **Save As** | ✅ | ✅ | ✅ | Specify filename |
 | **Load from server** | N/A | N/A | ✅ | Web-specific: browse server files |
-| **Recent files** | ❌ | ❌ | ❌ | TODO: None have this |
+| **Recent files** | ❌ | ❌ | ❌ | TODO: Implement for all UIs - High priority workflow improvement |
 | **Auto-save** | ❌ | ❌ | ❌ | TODO: None have this |
 
 ## Execution & Debugging
@@ -158,7 +158,7 @@ This document ensures all three UIs (Tk, Curses, Web) have feature parity. It wa
 | **Help** | Ctrl+H | Ctrl+H | ❌ | Web: Menu only (Help menu available) |
 | **Variables** | Ctrl+V | Ctrl+V | ✅ Ctrl+V | **ADDED 2025-10-26** |
 | **Stack** | Ctrl+K | Ctrl+K | ✅ Ctrl+K | **ADDED 2025-10-26** |
-| **Smart Insert Line** | Ctrl+I | ❌ | ❌ | **ADDED 2025-10-26** - Tk only |
+| **Smart Insert Line** | Ctrl+I | Ctrl+I | Menu | **COMPLETE 2025-10-26** - Tk/Curses use Ctrl+I, Web uses Edit menu |
 
 ### Window Management
 
@@ -230,24 +230,26 @@ This document ensures all three UIs (Tk, Curses, Web) have feature parity. It wa
 
 ## Summary by UI
 
-### Tk UI: 95% Feature Complete
+### Tk UI: 96% Feature Complete
 **Strengths:**
 - Full native GUI features
 - Best text editing experience
 - Auto-sort on save
 - Statement highlighting (visual)
+- Smart Insert Line (Ctrl+I)
 
 **Gaps:**
 - No recent files
 - No auto-save
 - Limited syntax highlighting
 
-### Curses UI: 90% Feature Complete
+### Curses UI: 92% Feature Complete
 **Strengths:**
 - Works remotely (SSH)
 - Compact layout
 - Line-by-line editing mode
-- Already had statement highlighting
+- Statement highlighting (status-based)
+- Smart Insert Line (Ctrl+I)
 
 **Gaps:**
 - Limited copy/paste (terminal-dependent)
@@ -255,7 +257,7 @@ This document ensures all three UIs (Tk, Curses, Web) have feature parity. It wa
 - Mouse support varies
 - Background validation limited
 
-### Web UI: 95% Feature Complete ⬆️ (was 85%)
+### Web UI: 97% Feature Complete ⬆️ (was 95%)
 **Strengths:**
 - No installation needed
 - Server file browser
@@ -263,6 +265,7 @@ This document ensures all three UIs (Tk, Curses, Web) have feature parity. It wa
 - Good for beginners
 - **✅ Full keyboard shortcuts (ADDED 2025-10-26)**
 - Error markers and statement indicators
+- Smart Insert Line (Edit menu dialog)
 
 **Gaps:**
 - No direct file save (download only - by design for web)
