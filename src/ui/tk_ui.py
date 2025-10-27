@@ -1988,9 +1988,16 @@ class TkBackend(UIBackend):
                 return 'break'
 
         # Save current program state
-        self._save_editor_to_program()
+        success = self._save_editor_to_program()
 
-        # Refresh to sort lines
+        # If there were parse errors, don't refresh (keeps error lines visible)
+        if not success:
+            # Don't refresh - let user fix the error
+            # Just move cursor to end of current line
+            self.editor_text.text.mark_set(tk.INSERT, f'{current_line_index}.end')
+            return 'break'
+
+        # Refresh to sort lines (only if no errors)
         self._refresh_editor()
 
         # At this point, the editor contains only the numbered lines (no blank lines)
