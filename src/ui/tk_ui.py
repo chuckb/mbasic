@@ -2001,41 +2001,69 @@ class TkBackend(UIBackend):
         # because _refresh_editor loads from the program, which filters out blank lines
 
         # Find where current_line_num is now in the sorted editor
+        # and find the next line number after it
         editor_content = self.editor_text.text.get('1.0', 'end')
         lines = editor_content.split('\n')
         current_line_text_index = None
-        is_last_line = False
+        next_existing_line_num = None
 
+        # Get all line numbers
+        all_line_nums = []
         for idx, line in enumerate(lines):
             line_match = re.match(r'^\s*(\d+)', line)
-            if line_match and int(line_match.group(1)) == current_line_num:
-                current_line_text_index = idx + 1  # Tk uses 1-based indexing
-                # Check if this is the last program line
-                is_last_line = (idx == len([l for l in lines if l.strip()]) - 1)
-                break
+            if line_match:
+                line_num = int(line_match.group(1))
+                all_line_nums.append(line_num)
+                if line_num == current_line_num:
+                    current_line_text_index = idx + 1  # Tk uses 1-based indexing
 
-        # If we found the line and it's the last line, add a new line number prompt
-        if current_line_text_index is not None and is_last_line:
-            # Calculate the next line number for the prompt
-            next_line_num = current_line_num + self.auto_number_increment
+        # Find the next line number after current
+        if all_line_nums:
+            all_line_nums.sort()
+            for ln in all_line_nums:
+                if ln > current_line_num:
+                    next_existing_line_num = ln
+                    break
 
-            # Check if we're already at the end of a line with content
-            # If the last character is NOT a newline, add one
+        # Calculate what the new line number should be
+        if next_existing_line_num is None:
+            # At end of program - use current + increment
+            new_line_num = current_line_num + self.auto_number_increment
+        else:
+            # In middle - try to use current + increment if it fits
+            tentative = current_line_num + self.auto_number_increment
+            if tentative < next_existing_line_num:
+                new_line_num = tentative
+            else:
+                # No room - try midpoint
+                from ui.ui_helpers import calculate_midpoint
+                midpoint = calculate_midpoint(current_line_num, next_existing_line_num)
+                if midpoint is not None:
+                    new_line_num = midpoint
+                else:
+                    # No room at all - just move to next line
+                    if current_line_text_index is not None:
+                        next_line_index = current_line_text_index + 1
+                        self.editor_text.text.mark_set(tk.INSERT, f'{next_line_index}.0')
+                        self.editor_text.text.see(f'{next_line_index}.0')
+                    return 'break'
+
+        # Insert the new line number
+        if next_existing_line_num is None:
+            # At end - add at bottom
             last_char = self.editor_text.text.get("end-2c", "end-1c")
             if last_char != '\n':
                 self.editor_text.text.insert(tk.END, '\n')
-
-            # Insert the next line number prompt (like classic BASIC)
-            self.editor_text.text.insert(tk.END, f'{next_line_num} ')
-
-            # Move cursor to end (after the line number)
+            self.editor_text.text.insert(tk.END, f'{new_line_num} ')
             self.editor_text.text.mark_set(tk.INSERT, tk.END)
             self.editor_text.text.see(tk.END)
-        elif current_line_text_index is not None:
-            # Not the last line - just move cursor to the next line (or end)
-            next_line_index = current_line_text_index + 1
-            self.editor_text.text.mark_set(tk.INSERT, f'{next_line_index}.0')
-            self.editor_text.text.see(f'{next_line_index}.0')
+        else:
+            # In middle - insert after current line
+            if current_line_text_index is not None:
+                insert_at_index = current_line_text_index + 1
+                self.editor_text.text.insert(f'{insert_at_index}.0', f'{new_line_num} \n')
+                self.editor_text.text.mark_set(tk.INSERT, f'{insert_at_index}.{len(str(new_line_num)) + 1}')
+                self.editor_text.text.see(f'{insert_at_index}.0')
 
         return 'break'  # Prevent default Enter behavior
 
