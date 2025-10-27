@@ -387,8 +387,8 @@ class HelpWidget(urwid.WidgetWrap):
                 _, _, target = self.current_links[self.current_link_index]
 
                 # Check if target is already an absolute path (from search results)
-                # Absolute paths don't start with . or ..
-                if not target.startswith('.'):
+                # Absolute paths don't start with . or .., or start with common/
+                if not target.startswith('.') or target.startswith('common/'):
                     # This is already a help-root-relative path (e.g., from search results)
                     new_topic = target.replace('\\', '/')
                 else:

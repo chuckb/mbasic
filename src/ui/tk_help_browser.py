@@ -275,8 +275,9 @@ class TkHelpBrowser(tk.Toplevel):
     def _follow_link(self, target: str):
         """Follow a link to another help topic."""
         # Check if target is an absolute path (starts with / or contains :/)
+        # OR starts with common/ (common help paths should always be absolute)
         # Absolute paths are relative to help root
-        if target.startswith('/') or ':/' in target or ':\\' in target:
+        if target.startswith('/') or target.startswith('common/') or ':/' in target or ':\\' in target:
             # This is an absolute path relative to help root
             new_topic = target.lstrip('/').replace('\\', '/')
         else:
