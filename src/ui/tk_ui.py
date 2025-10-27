@@ -1701,6 +1701,13 @@ class TkBackend(UIBackend):
         if char_code in (8, 127):  # Backspace (0x08) or Delete (0x7F)
             return None
 
+        # Allow keyboard shortcuts with modifier keys (Control, Alt, etc.) to propagate
+        # This ensures shortcuts like Ctrl+B, Ctrl+S, etc. reach their handlers
+        # event.state contains modifier flags:
+        # 0x0004 = Control, 0x0008 = Alt/Option, 0x0001 = Shift
+        if event.state & 0x000C:  # Control or Alt pressed
+            return None
+
         # Clear parity bit
         from input_sanitizer import clear_parity
         char = clear_parity(event.char)
