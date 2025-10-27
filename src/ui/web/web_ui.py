@@ -69,6 +69,8 @@ class MBasicWebIDE:
         self.variables_dialog = None
         self.variables_table = None
         self.variables_visible = False
+        self.variables_filter_text = ""  # Filter text for variables window
+        self.variables_filter_input = None  # Filter input widget
 
         # Stack window
         self.stack_dialog = None
@@ -1110,6 +1112,15 @@ class MBasicWebIDE:
                     ui.button('Edit Selected', on_click=self.edit_selected_variable, icon='edit').props('outline')
                     ui.button(icon='close', on_click=lambda: self.close_variables()).props('flat')
 
+                # Filter input
+                with ui.row().classes('items-center mb-2 w-full'):
+                    ui.label('Filter:').classes('mr-2')
+                    self.variables_filter_input = ui.input(
+                        placeholder='Search name, value, or type...',
+                        value=self.variables_filter_text
+                    ).classes('flex-grow').on('change', self._on_variables_filter_change)
+                    ui.button('Clear', on_click=self._clear_variables_filter, icon='clear').props('flat')
+
                 # Variables table with selection enabled
                 self.variables_table = ui.table(
                     columns=[
@@ -1135,6 +1146,19 @@ class MBasicWebIDE:
             self.variables_dialog.close()
         self.variables_visible = False
 
+    def _on_variables_filter_change(self):
+        """Handle variable filter text change."""
+        if self.variables_filter_input:
+            self.variables_filter_text = self.variables_filter_input.value
+            self.update_variables_window()
+
+    def _clear_variables_filter(self):
+        """Clear the variable filter."""
+        self.variables_filter_text = ""
+        if self.variables_filter_input:
+            self.variables_filter_input.value = ""
+        self.update_variables_window()
+
     def update_variables_window(self):
         """Update variables window with current state."""
         if not self.variables_visible or not self.variables_table or not self.runtime:
@@ -1157,6 +1181,18 @@ class MBasicWebIDE:
                 'type': var_type,
                 'value': str(value)[:100]  # Limit display length
             })
+
+        # Apply filter if present
+        if self.variables_filter_text:
+            filter_lower = self.variables_filter_text.lower()
+            filtered_rows = []
+            for row in rows:
+                # Check if filter matches name, value, or type
+                if (filter_lower in row['name'].lower() or
+                    filter_lower in row['value'].lower() or
+                    filter_lower in row['type'].lower()):
+                    filtered_rows.append(row)
+            rows = filtered_rows
 
         self.variables_table.rows = rows
         self.variables_table.update()

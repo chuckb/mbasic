@@ -1317,6 +1317,7 @@ class CursesBackend(UIBackend):
         self.watch_window_visible = False
         self.variables_sort_mode = 'name'  # 'name', 'accessed', 'written', 'read', 'type', 'value'
         self.variables_sort_reverse = False  # False=ascending, True=descending
+        self.variables_filter_text = ""  # Filter text for variables window
         self.stack_walker = None
         self.stack_window = None
         self.stack_window_visible = False
@@ -1622,6 +1623,14 @@ class CursesBackend(UIBackend):
         elif key == 'enter' and self.watch_window_visible:
             # Edit selected variable value (Enter key)
             self._edit_selected_variable()
+
+        elif key == 'f' and self.watch_window_visible:
+            # Set filter for variables window
+            self._set_variables_filter()
+
+        elif key == 'c' and self.watch_window_visible:
+            # Clear filter for variables window
+            self._clear_variables_filter()
 
         elif key == DELETE_LINE_KEY:
             # Delete current line
@@ -2346,6 +2355,59 @@ Run                           Debug Windows
 
         variables.sort(key=sort_key, reverse=self.variables_sort_reverse)
 
+        # Store total count before filtering
+        total_count = len(variables)
+
+        # Apply filter if present
+        if self.variables_filter_text:
+            filter_lower = self.variables_filter_text.lower()
+            filtered_variables = []
+
+            # Type map for filtering by type name
+            type_map = {
+                '$': 'string',
+                '%': 'integer',
+                '!': 'single',
+                '#': 'double',
+                '': 'single'  # default
+            }
+
+            for var in variables:
+                name = var['name'] + var['type_suffix']
+                value_str = ""
+
+                # Build value string for matching
+                if var['is_array']:
+                    value_str = f"Array({','.join(str(d) for d in var['dimensions'])})"
+                else:
+                    value_str = str(var['value'])
+
+                # Check if filter matches name, value, or type
+                if (filter_lower in name.lower() or
+                    filter_lower in value_str.lower() or
+                    filter_lower in type_map.get(var['type_suffix'], '').lower()):
+                    filtered_variables.append(var)
+
+            variables = filtered_variables
+
+        # Update window title with counts
+        mode_names = {
+            'name': 'Name',
+            'accessed': 'Last Accessed',
+            'written': 'Last Written',
+            'read': 'Last Read',
+            'type': 'Type',
+            'value': 'Value'
+        }
+        arrow = '↓' if self.variables_sort_reverse else '↑'
+
+        if self.variables_filter_text:
+            title = f"Variables ({len(variables)}/{total_count} filtered: '{self.variables_filter_text}') Sort: {mode_names[self.variables_sort_mode]} {arrow} - s=mode d=dir f=filter e=edit Ctrl+W=toggle"
+        else:
+            title = f"Variables (Sort: {mode_names[self.variables_sort_mode]} {arrow}) - s=mode d=dir f=filter e=edit Ctrl+W=toggle"
+
+        self.variables_frame.set_title(title)
+
         # Display each variable
         for var in variables:
             name = var['name'] + var['type_suffix']
@@ -2396,6 +2458,10 @@ Run                           Debug Windows
 
         self.variables_sort_mode = modes[next_idx]
 
+        # Update variables display (this will also update the title)
+        self._update_variables_window()
+
+        # Show status
         mode_names = {
             'name': 'Name',
             'accessed': 'Last Accessed',
@@ -2404,15 +2470,7 @@ Run                           Debug Windows
             'type': 'Type',
             'value': 'Value'
         }
-
-        # Update window title
         arrow = '↓' if self.variables_sort_reverse else '↑'
-        self.variables_frame.set_title(f"Variables (Sort: {mode_names[self.variables_sort_mode]} {arrow}) - s=mode d=dir e=edit Ctrl+W=toggle")
-
-        # Update variables display
-        self._update_variables_window()
-
-        # Show status
         self.status_bar.set_text(f"Sorting variables by: {mode_names[self.variables_sort_mode]} {arrow}")
 
         # Redraw screen
@@ -2423,19 +2481,7 @@ Run                           Debug Windows
         """Toggle variable sort direction (triggered by 'd' key)."""
         self.variables_sort_reverse = not self.variables_sort_reverse
 
-        # Update window title
-        mode_names = {
-            'name': 'Name',
-            'accessed': 'Last Accessed',
-            'written': 'Last Written',
-            'read': 'Last Read',
-            'type': 'Type',
-            'value': 'Value'
-        }
-        arrow = '↓' if self.variables_sort_reverse else '↑'
-        self.variables_frame.set_title(f"Variables (Sort: {mode_names[self.variables_sort_mode]} {arrow}) - s=mode d=dir e=edit Ctrl+W=toggle")
-
-        # Update variables display
+        # Update variables display (this will also update the title)
         self._update_variables_window()
 
         # Show status
@@ -2574,6 +2620,86 @@ Run                           Debug Windows
 
             except Exception as e:
                 self.status_bar.set_text(f"Error: {e}")
+
+    def _set_variables_filter(self):
+        """Prompt for and set a filter for the variables window."""
+        # Show input dialog for filter text
+        prompt_text = "Enter filter text (search name, value, or type):"
+        current_filter = self.variables_filter_text
+
+        # Create a simple input dialog
+        prompt = urwid.Text(prompt_text)
+        edit = urwid.Edit(caption="Filter: ", edit_text=current_filter)
+
+        def handle_key(key):
+            if key == 'enter':
+                # Set filter
+                self.variables_filter_text = edit.get_edit_text()
+                self._update_variables_window()
+
+                # Close dialog
+                self.loop.widget = self.loop.widget.bottom_w
+
+                # Show status
+                if self.variables_filter_text:
+                    self.status_bar.set_text(f"Filter set: '{self.variables_filter_text}'")
+                else:
+                    self.status_bar.set_text("Filter cleared")
+
+                # Redraw
+                if self.loop_running:
+                    self.loop.draw_screen()
+                return True
+            elif key == 'esc':
+                # Cancel
+                self.loop.widget = self.loop.widget.bottom_w
+                self.status_bar.set_text("Filter cancelled")
+                if self.loop_running:
+                    self.loop.draw_screen()
+                return True
+            return False
+
+        # Create dialog
+        pile = urwid.Pile([
+            ('pack', prompt),
+            ('pack', urwid.Divider()),
+            ('pack', edit),
+            ('pack', urwid.Divider()),
+            ('pack', urwid.Text("Press Enter to apply, ESC to cancel"))
+        ])
+        fill = urwid.Filler(pile, valign='middle')
+        box = urwid.LineBox(fill, title="Filter Variables")
+        overlay = urwid.Overlay(
+            urwid.AttrMap(box, 'body'),
+            self.loop.widget,
+            align='center',
+            width=('relative', 60),
+            valign='middle',
+            height=('relative', 30)
+        )
+
+        # Show dialog with custom key handler
+        self.loop.widget = overlay
+        urwid.connect_signal(edit, 'change', lambda w, t: None)  # dummy handler
+
+        # Override unhandled_input temporarily
+        old_handler = self.loop.unhandled_input
+        def dialog_handler(key):
+            if handle_key(key):
+                # Restore old handler
+                self.loop.unhandled_input = old_handler
+            return True
+        self.loop.unhandled_input = dialog_handler
+
+    def _clear_variables_filter(self):
+        """Clear the filter for variables window."""
+        self.variables_filter_text = ""
+        self._update_variables_window()
+        self.status_bar.set_text("Filter cleared")
+
+        # Redraw
+        if self.loop_running:
+            self.loop.draw_screen()
 
     def _toggle_stack_window(self):
         """Toggle visibility of the execution stack window."""

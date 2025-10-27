@@ -95,6 +95,8 @@ class TkBackend(UIBackend):
         self.output_text = None
         self.status_label = None
         self.recent_files_menu = None  # Recent Files submenu
+        self.variables_search_entry = None  # Variables window search entry
+        self.variables_filter_text = ""  # Current filter text
 
     def start(self) -> None:
         """Start the Tkinter GUI.
@@ -684,6 +686,17 @@ class TkBackend(UIBackend):
                                        font=("Courier", 9), justify=tk.LEFT, anchor=tk.W)
         self.resource_label.pack(fill=tk.X, padx=5, pady=5)
 
+        # Create search/filter frame
+        search_frame = tk.Frame(self.variables_window)
+        search_frame.pack(fill=tk.X, padx=5, pady=5)
+
+        tk.Label(search_frame, text="Filter:").pack(side=tk.LEFT, padx=(0, 5))
+        self.variables_search_entry = tk.Entry(search_frame, font=("Courier", 10))
+        self.variables_search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        self.variables_search_entry.bind('<KeyRelease>', lambda e: self._on_variable_filter_change())
+
+        ttk.Button(search_frame, text="Clear", command=self._clear_variable_filter, width=6).pack(side=tk.LEFT)
+
         # Create Treeview
         tree = ttk.Treeview(self.variables_window, columns=('Value', 'Type'), show='tree headings')
         # Set initial heading text with arrows
@@ -1119,6 +1132,25 @@ class TkBackend(UIBackend):
 
         sorted_variables = sorted(variables, key=sort_key, reverse=self.variables_sort_reverse)
 
+        # Apply filter if present
+        if self.variables_filter_text:
+            filter_lower = self.variables_filter_text.lower()
+            filtered_variables = []
+            for var in sorted_variables:
+                name = var['name'] + var['type_suffix']
+                # Check if filter matches name, value (as string), or type
+                if (filter_lower in name.lower() or
+                    filter_lower in str(var['value']).lower() or
+                    filter_lower in type_map.get(var['type_suffix'], '').lower()):
+                    filtered_variables.append(var)
+            sorted_variables = filtered_variables
+
+        # Update window title with count
+        if self.variables_filter_text:
+            self.variables_window.title(f"Variables & Resources ({len(sorted_variables)}/{len(variables)} filtered)")
+        else:
+            self.variables_window.title(f"Variables & Resources ({len(sorted_variables)} total)")
+
         # Add to tree
         for var in sorted_variables:
             name = var['name'] + var['type_suffix']
@@ -1157,6 +1189,19 @@ class TkBackend(UIBackend):
 
             self.variables_tree.insert('', 'end', text=name,
                                       values=(value, type_name))
+
+    def _on_variable_filter_change(self):
+        """Handle variable filter text change."""
+        if self.variables_search_entry:
+            self.variables_filter_text = self.variables_search_entry.get()
+            self._update_variables()
+
+    def _clear_variable_filter(self):
+        """Clear the variable filter."""
+        if self.variables_search_entry:
+            self.variables_search_entry.delete(0, 'end')
+            self.variables_filter_text = ""
+            self._update_variables()
 
     def _create_stack_window(self):
         """Create execution stack window (Toplevel)."""
