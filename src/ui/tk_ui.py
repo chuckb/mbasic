@@ -662,13 +662,19 @@ class TkBackend(UIBackend):
 
     def _menu_continue(self):
         """Run > Continue (from breakpoint or error)"""
+        from src.debug_logger import debug_log
+
+        debug_log(f"_menu_continue called: interpreter={self.interpreter is not None}, paused={self.paused_at_breakpoint}", level=1)
+
         if not self.interpreter or not self.paused_at_breakpoint:
             self._set_status("Not paused")
+            debug_log(f"Continue rejected: not paused", level=1)
             return
 
         try:
             # If we're continuing from an error, re-parse the program to incorporate edits
             if self.interpreter.state.status == 'error':
+                debug_log(f"Continuing from error state", level=1)
                 self._add_output("\n--- Re-parsing program after edit ---\n")
 
                 # Clear all error markers first
@@ -694,10 +700,12 @@ class TkBackend(UIBackend):
                 # Update the interpreter's runtime with new program
                 self.interpreter.runtime.line_table = program.line_table
                 self.interpreter.runtime.line_order = program.line_order
+                debug_log(f"Updated line_table with {len(program.line_table)} lines", level=1)
 
                 # Clear error state and set to paused
                 self.interpreter.state.status = 'paused'
                 self.interpreter.state.error_info = None
+                debug_log(f"Cleared error state, status now: {self.interpreter.state.status}", level=1)
 
                 self._add_output("--- Program updated, resuming execution ---\n")
 
@@ -705,9 +713,11 @@ class TkBackend(UIBackend):
             self.running = True
             self.paused_at_breakpoint = False
             self._set_status("Continuing...")
+            debug_log(f"Scheduling next tick, running={self.running}", level=1)
 
             # Schedule next tick
             self.tick_timer_id = self.root.after(10, self._execute_tick)
+            debug_log(f"Next tick scheduled with timer_id={self.tick_timer_id}", level=1)
 
         except Exception as e:
             import traceback
@@ -2208,12 +2218,23 @@ class TkBackend(UIBackend):
                 self._add_output("(Edit the line and click Continue to retry, or Stop to end)\n")
                 self._set_status(f"Error at line {line_num} - Edit and Continue, or Stop")
                 self._update_immediate_status()
+
+                # Highlight the error statement (yellow highlight)
+                if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
+                    self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
+
                 # Mark the error line with red ? indicator
                 if line_num and line_num != "?":
                     try:
-                        self.editor_text.set_error(int(line_num), True, error_msg)
-                    except (ValueError, AttributeError, TypeError):
-                        pass
+                        line_num_int = int(line_num)
+                        from src.debug_logger import debug_log
+                        debug_log(f"Setting error marker on line {line_num_int}: {error_msg}", level=2)
+                        self.editor_text.set_error(line_num_int, True, error_msg)
+                        debug_log(f"Error marker set successfully", level=2)
+                    except (ValueError, AttributeError, TypeError) as e:
+                        from src.debug_logger import debug_log
+                        debug_log(f"Failed to set error marker: {e}", level=1)
+
                 # Update stack and variables to show state at error
                 if self.stack_visible:
                     self._update_stack()
