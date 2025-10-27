@@ -143,6 +143,12 @@ class ImmediateExecutor:
         if statement.upper() in ('HELP', 'HELP()', '?HELP'):
             return self._show_help()
 
+        # Special case: Numbered line - this is a program edit, not immediate execution
+        # Check if statement starts with a line number
+        import re
+        if re.match(r'^\d+\s', statement):
+            return (False, "Use the Program Editor to add/edit numbered lines\n")
+
         # Build a minimal program with line 0
         program_text = "0 " + statement
 

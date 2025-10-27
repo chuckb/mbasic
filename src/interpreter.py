@@ -1713,7 +1713,8 @@ class Interpreter:
             self.limits.allocate_array(full_name, dimensions, var_type)
 
             # Proceed with actual allocation, pass token for tracking
-            self.runtime.dimension_array(name, type_suffix, dimensions, token=stmt.token)
+            token = getattr(stmt, 'token', None)
+            self.runtime.dimension_array(name, type_suffix, dimensions, token=token)
 
     def execute_erase(self, stmt):
         """Execute ERASE statement
