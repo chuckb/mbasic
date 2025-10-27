@@ -2054,8 +2054,34 @@ class TkBackend(UIBackend):
             # Sanitize: clear parity bits and filter control characters
             sanitized_text, was_modified = sanitize_and_clear_parity(clipboard_text)
 
-            # Remove blank lines and auto-number lines without line numbers
+            # Check if this is a simple inline paste (no newlines, pasting into existing line)
             import re
+            if '\n' not in sanitized_text:
+                # Single line paste - check if we're in the middle of an existing line
+                current_pos = self.editor_text.text.index(tk.INSERT)
+                current_line_index = int(current_pos.split('.')[0])
+                current_line_text = self.editor_text.text.get(
+                    f'{current_line_index}.0',
+                    f'{current_line_index}.end'
+                ).strip()
+
+                # If current line has content (not blank), do simple inline paste
+                if current_line_text:
+                    # Delete selected text if any
+                    try:
+                        self.editor_text.text.delete(tk.SEL_FIRST, tk.SEL_LAST)
+                    except tk.TclError:
+                        pass
+
+                    # Simple inline paste
+                    self.editor_text.text.insert(tk.INSERT, sanitized_text)
+
+                    if was_modified:
+                        self._set_status("Pasted content was sanitized (control characters removed)")
+
+                    return 'break'
+
+            # Multi-line paste or paste into blank line - use auto-numbering logic
             from lexer import tokenize
             from parser import Parser
 
