@@ -1970,18 +1970,28 @@ class TkBackend(UIBackend):
             # Sanitize: clear parity bits and filter control characters
             sanitized_text, was_modified = sanitize_and_clear_parity(clipboard_text)
 
-            # Remove blank lines (lines with no content or no line number)
+            # Remove blank lines and validate line numbers
+            import re
             lines = sanitized_text.split('\n')
             filtered_lines = []
             removed_blank = False
+            removed_invalid = False
             for line in lines:
                 stripped = line.strip()
-                # Keep line if it has content (not just whitespace)
-                if stripped:
-                    filtered_lines.append(line)
-                elif not stripped and line != lines[-1]:
-                    # Remove blank line (unless it's the trailing newline)
-                    removed_blank = True
+                if not stripped:
+                    # Blank line
+                    if line != lines[-1]:
+                        removed_blank = True
+                    continue
+
+                # Check if line starts with a line number
+                if not re.match(r'^\s*\d+', stripped):
+                    # Line without line number - reject it
+                    removed_invalid = True
+                    continue
+
+                # Valid line - keep it
+                filtered_lines.append(line)
 
             sanitized_text = '\n'.join(filtered_lines)
 
@@ -1989,13 +1999,15 @@ class TkBackend(UIBackend):
             if clipboard_text.endswith('\n'):
                 sanitized_text += '\n'
 
-            if was_modified or removed_blank:
+            if was_modified or removed_blank or removed_invalid:
                 # Show warning that content was modified
                 msg = []
                 if was_modified:
                     msg.append("control characters removed")
                 if removed_blank:
                     msg.append("blank lines removed")
+                if removed_invalid:
+                    msg.append("lines without line numbers removed")
                 self._set_status(f"Pasted content was sanitized ({', '.join(msg)})")
 
             # Insert sanitized text at cursor position
