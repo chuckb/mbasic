@@ -1812,13 +1812,13 @@ class TkBackend(UIBackend):
             return (True, None)
 
         try:
-            from lexer import Lexer
+            from lexer import tokenize
             from parser import Parser
 
-            # Tokenize and parse the code
-            lexer = Lexer(code_text)
-            tokens = lexer.tokenize()
-            parser = Parser(tokens, self.program.def_type_map, source=code_text)
+            # Add a dummy line number for parsing
+            line_with_number = f"1 {code_text}"
+            tokens = list(tokenize(line_with_number))
+            parser = Parser(tokens, self.program.def_type_map, source=line_with_number)
             parser.parse_line()
 
             return (True, None)
