@@ -178,24 +178,13 @@ class TkBackend(UIBackend):
         )
         self.output_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Bottom pane: Immediate Mode (30% of space)
+        # Bottom pane: Immediate Mode - just the input line
         immediate_frame = ttk.Frame(paned)
-        paned.add(immediate_frame, weight=2)
+        paned.add(immediate_frame, weight=1)  # Reduced weight since no history
 
-        # Immediate mode header with status
-        header_frame = ttk.Frame(immediate_frame)
-        header_frame.pack(fill=tk.X, padx=5, pady=5)
-
-        # Use consistent font for both labels
-        header_font = ("TkDefaultFont", 10)
-        ttk.Label(header_frame, text="Immediate Mode:", font=header_font).pack(side=tk.LEFT)
-        self.immediate_status = ttk.Label(header_frame, text="Ok", foreground="green", font=header_font)
-        self.immediate_status.pack(side=tk.LEFT, padx=10)
-
-        # IMPORTANT: Pack input frame FIRST (from bottom) so it gets space allocated
-        # Immediate mode input
+        # Immediate mode input (just the prompt and entry, no header or history)
         input_frame = ttk.Frame(immediate_frame, height=40)
-        input_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=5, pady=(0, 5))
+        input_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         input_frame.pack_propagate(False)  # Force frame to maintain its height
 
         ttk.Label(input_frame, text="Ok >", font=("Courier", 10)).pack(side=tk.LEFT, padx=(0, 5))
@@ -250,25 +239,13 @@ class TkBackend(UIBackend):
         help_hint = ttk.Label(input_frame, text="(Type HELP for commands)", foreground="gray", font=("Courier", 9))
         help_hint.pack(side=tk.LEFT, padx=10)
 
-        # NOW pack history (after input is packed from bottom, so it gets remaining space)
-        # Immediate mode history (scrollable output)
-        self.immediate_history = scrolledtext.ScrolledText(
-            immediate_frame,
-            wrap=tk.WORD,
-            width=100,
-            height=6,
-            font=("Courier", 10),
-            state=tk.DISABLED
-        )
-        # Fill remaining space between header and input frame
-        self.immediate_history.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
+        # Create dummy immediate_history and immediate_status for compatibility
+        # (some code still references these)
+        self.immediate_history = None
+        self.immediate_status = None
 
-        # Add click handler to focus immediate entry when clicking in history
-        self.immediate_history.bind('<Button-1>', lambda e: self._focus_immediate_entry(), add='+')
-
-        # Add right-click context menus for copy functionality
+        # Add right-click context menu for output only
         self._setup_output_context_menu()
-        self._setup_immediate_context_menu()
 
         # Initialize immediate mode entry to be enabled and focused
         # (it will be enabled/disabled later based on program state via _update_immediate_status)
@@ -2873,13 +2850,8 @@ class TkBackend(UIBackend):
             self._update_stack()
 
     def _add_immediate_output(self, text):
-        """Add text to immediate mode history widget."""
-        import tkinter as tk
-
-        self.immediate_history.config(state=tk.NORMAL)
-        self.immediate_history.insert(tk.END, text)
-        self.immediate_history.see(tk.END)
-        self.immediate_history.config(state=tk.DISABLED)
+        """Add text to main output pane (immediate mode has no history widget)."""
+        self._add_output(text)
 
     def _setup_editor_context_menu(self):
         """Setup right-click context menu for editor text widget."""

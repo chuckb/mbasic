@@ -321,12 +321,10 @@ class OutputCapturingIOHandler:
 
     def __init__(self):
         self.output_buffer = []
-        self.output = []  # Compatibility alias for direct access
 
     def clear_output(self):
         """Clear the output buffer."""
         self.output_buffer = []
-        self.output = []
 
     def get_output(self):
         """Get accumulated output as string."""
@@ -347,3 +345,7 @@ class OutputCapturingIOHandler:
     def write(self, text):
         """Write text without newline."""
         self.output_buffer.append(text)
+
+    def output(self, text, end='\n'):
+        """IOHandler-compatible output method."""
+        self.output_buffer.append(str(text) + end)
