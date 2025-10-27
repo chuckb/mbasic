@@ -160,6 +160,9 @@ class TkBackend(UIBackend):
         # Bind key press for input sanitization
         self.editor_text.text.bind('<Key>', self._on_key_press, add='+')
 
+        # Bind text modification to remove blank lines automatically
+        self.editor_text.text.bind('<<Modified>>', self._on_editor_modified, add='+')
+
         # Set up editor context menu
         self._setup_editor_context_menu()
 
@@ -1866,6 +1869,51 @@ class TkBackend(UIBackend):
         self._check_line_change()
         # Validate syntax when leaving editor
         self._validate_editor_syntax()
+
+    def _on_editor_modified(self, event):
+        """Handle editor modification - remove blank lines automatically.
+
+        This ensures the editor can NEVER contain blank lines.
+        """
+        import tkinter as tk
+
+        # Check if modification flag is set
+        if not self.editor_text.text.edit_modified():
+            return
+
+        # Reset the modified flag to prevent infinite loop
+        self.editor_text.text.edit_modified(False)
+
+        # Get current cursor position
+        cursor_pos = self.editor_text.text.index(tk.INSERT)
+
+        # Get all content
+        content = self.editor_text.text.get(1.0, tk.END)
+        lines = content.split('\n')
+
+        # Filter out blank lines (completely empty or only whitespace)
+        # But keep the last line (which is always empty in Tk Text widget)
+        filtered_lines = []
+        for i, line in enumerate(lines):
+            # Keep non-blank lines
+            if line.strip() or i == len(lines) - 1:
+                filtered_lines.append(line)
+
+        # Check if we need to update
+        if len(filtered_lines) != len(lines):
+            # Blank lines were found - remove them
+            new_content = '\n'.join(filtered_lines)
+
+            # Replace content
+            self.editor_text.text.delete(1.0, tk.END)
+            self.editor_text.text.insert(1.0, new_content)
+
+            # Try to restore cursor position
+            try:
+                self.editor_text.text.mark_set(tk.INSERT, cursor_pos)
+            except:
+                # If position no longer exists, move to end
+                self.editor_text.text.mark_set(tk.INSERT, tk.END)
 
     def _on_enter_key(self, event):
         """Handle Enter key - implement auto-numbering.
