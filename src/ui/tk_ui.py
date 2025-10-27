@@ -970,7 +970,7 @@ class TkBackend(UIBackend):
             messagebox.showerror("Error", f"Failed to update variable: {e}")
 
     def _edit_array_element(self, variable_name, type_suffix, value_display):
-        """Edit an array element (last accessed cell).
+        """Edit any array element by typing subscripts.
 
         Args:
             variable_name: Array name with type suffix (e.g., "A%")
@@ -978,95 +978,185 @@ class TkBackend(UIBackend):
             value_display: Display string like "Array(10x10) [5,3]=42"
         """
         import tkinter as tk
-        from tkinter import simpledialog, messagebox
+        from tkinter import messagebox
         import re
 
         if not self.interpreter or not self.interpreter.runtime:
             messagebox.showerror("Error", "No program running")
             return
 
-        # Parse last accessed subscripts and value from display
-        # Format: "Array(10x10) [5,3]=42"
+        # Get array dimensions from display "Array(10x10)"
+        dims_match = re.search(r'Array\(([^)]+)\)', value_display)
+        dimensions_str = dims_match.group(1) if dims_match else "?"
+
+        # Parse last accessed subscripts if available (for default value)
+        default_subscripts = ""
         match = re.search(r'\[([^\]]+)\]=(.+)$', value_display)
-        if not match:
-            messagebox.showwarning("Warning", "No array element accessed yet")
-            return
+        if match:
+            default_subscripts = match.group(1)
 
-        subscripts_str = match.group(1)  # "5,3"
-        value_str = match.group(2).strip()  # "42"
+        # Get array info from runtime
+        base_name = variable_name[:-1] if variable_name[-1] in '$%!#' else variable_name
+        suffix = variable_name[-1] if variable_name[-1] in '$%!#' else None
 
-        # Parse subscripts
         try:
-            subscripts = [int(s.strip()) for s in subscripts_str.split(',')]
-        except ValueError:
-            messagebox.showerror("Error", "Invalid subscripts")
-            return
+            array_var = self.interpreter.runtime.get_variable(base_name, suffix)
+            dimensions = array_var.dimensions if hasattr(array_var, 'dimensions') else []
+        except:
+            dimensions = []
 
-        # Determine dialog type
-        if type_suffix == '$':
-            # String array
-            initial_value = value_str.strip('"')
-            new_value = simpledialog.askstring(
-                "Edit Array Element",
-                f"Enter new value for {variable_name}({subscripts_str}):",
-                initialvalue=initial_value,
-                parent=self.variables_window
-            )
-        elif type_suffix == '%':
-            # Integer array
+        # Create custom dialog
+        dialog = tk.Toplevel(self.variables_window)
+        dialog.title(f"Edit Array Element: {variable_name}")
+        dialog.geometry("450x280")
+        dialog.transient(self.variables_window)
+        dialog.grab_set()
+
+        # Array info label
+        tk.Label(dialog, text=f"Array: {variable_name}({dimensions_str})", font=('TkDefaultFont', 10, 'bold')).pack(pady=(10, 5))
+
+        # Subscripts frame
+        sub_frame = tk.Frame(dialog)
+        sub_frame.pack(fill='x', padx=20, pady=5)
+        tk.Label(sub_frame, text="Subscripts (e.g., 1,2,3):").pack(anchor='w')
+        subscripts_entry = tk.Entry(sub_frame, width=40)
+        subscripts_entry.pack(fill='x')
+        subscripts_entry.insert(0, default_subscripts)
+
+        # Current value label
+        current_value_label = tk.Label(dialog, text="", fg='blue')
+        current_value_label.pack(pady=5)
+
+        # Error label
+        error_label = tk.Label(dialog, text="", fg='red')
+        error_label.pack(pady=2)
+
+        # Value frame
+        value_frame = tk.Frame(dialog)
+        value_frame.pack(fill='x', padx=20, pady=5)
+        tk.Label(value_frame, text="New value:").pack(anchor='w')
+        value_entry = tk.Entry(value_frame, width=40)
+        value_entry.pack(fill='x')
+
+        result = {'cancelled': True}
+
+        def update_current_value(*args):
+            """Show current value when subscripts change."""
+            subscripts_str = subscripts_entry.get().strip()
+            if not subscripts_str:
+                current_value_label.config(text="Enter subscripts above")
+                error_label.config(text="")
+                return
+
             try:
-                initial_value = int(value_str)
+                # Parse subscripts
+                subscripts = [int(s.strip()) for s in subscripts_str.split(',')]
+
+                # Validate dimension count
+                if dimensions and len(subscripts) != len(dimensions):
+                    error_label.config(text=f"Expected {len(dimensions)} subscripts, got {len(subscripts)}")
+                    current_value_label.config(text="")
+                    return
+
+                # Validate bounds
+                for i, sub in enumerate(subscripts):
+                    if dimensions and i < len(dimensions):
+                        if sub < 0 or sub > dimensions[i]:
+                            error_label.config(text=f"Subscript {i} out of bounds: {sub} not in [0, {dimensions[i]}]")
+                            current_value_label.config(text="")
+                            return
+
+                # Get current value
+                array_var = self.interpreter.runtime.get_variable(base_name, suffix)
+
+                # Calculate linear index
+                index = 0
+                multiplier = 1
+                for i in reversed(range(len(subscripts))):
+                    index += subscripts[i] * multiplier
+                    multiplier *= (dimensions[i] + 1)
+
+                current_val = array_var.elements[index]
+                current_value_label.config(text=f"Current value: {current_val}")
+                error_label.config(text="")
+
             except ValueError:
-                initial_value = 0
-            new_value = simpledialog.askinteger(
-                "Edit Array Element",
-                f"Enter new value for {variable_name}({subscripts_str}):",
-                initialvalue=initial_value,
-                parent=self.variables_window
-            )
-        else:
-            # Float array
+                error_label.config(text="Invalid subscripts (must be integers)")
+                current_value_label.config(text="")
+            except Exception as e:
+                error_label.config(text=f"Error: {str(e)}")
+                current_value_label.config(text="")
+
+        # Update current value when subscripts change
+        subscripts_entry.bind('<KeyRelease>', update_current_value)
+
+        # Initial update if we have default subscripts
+        if default_subscripts:
+            update_current_value()
+
+        def on_ok():
+            subscripts_str = subscripts_entry.get().strip()
+            new_value_str = value_entry.get().strip()
+
+            if not subscripts_str:
+                error_label.config(text="Please enter subscripts")
+                return
+
+            if not new_value_str:
+                error_label.config(text="Please enter a new value")
+                return
+
             try:
-                initial_value = float(value_str)
-            except ValueError:
-                initial_value = 0.0
-            new_value = simpledialog.askfloat(
-                "Edit Array Element",
-                f"Enter new value for {variable_name}({subscripts_str}):",
-                initialvalue=initial_value,
-                parent=self.variables_window
-            )
+                # Parse subscripts
+                subscripts = [int(s.strip()) for s in subscripts_str.split(',')]
 
-        if new_value is None:
-            return  # User cancelled
+                # Convert value to appropriate type
+                if type_suffix == '$':
+                    new_value = new_value_str
+                elif type_suffix == '%':
+                    new_value = int(new_value_str)
+                else:
+                    new_value = float(new_value_str)
 
-        # Update array element in runtime
-        try:
-            # Parse array name
-            if variable_name[-1] in '$%!#':
-                base_name = variable_name[:-1]
-                suffix = variable_name[-1]
-            else:
-                base_name = variable_name
-                suffix = None
+                # Update array element
+                self.interpreter.runtime.set_array_element(
+                    base_name,
+                    suffix,
+                    subscripts,
+                    new_value,
+                    token=None
+                )
 
-            # Set array element (token=None means no tracking)
-            self.interpreter.runtime.set_array_element(
-                base_name,
-                suffix,
-                subscripts,
-                new_value,
-                token=None  # No tracking for debugger edits
-            )
+                result['cancelled'] = False
+                result['subscripts'] = subscripts_str
+                result['value'] = new_value
+                dialog.destroy()
 
-            # Refresh variables window
+            except ValueError as e:
+                error_label.config(text=f"Invalid value: {str(e)}")
+            except Exception as e:
+                error_label.config(text=f"Error: {str(e)}")
+
+        def on_cancel():
+            dialog.destroy()
+
+        # Buttons
+        button_frame = tk.Frame(dialog)
+        button_frame.pack(pady=10)
+        tk.Button(button_frame, text="OK", command=on_ok, width=10).pack(side='left', padx=5)
+        tk.Button(button_frame, text="Cancel", command=on_cancel, width=10).pack(side='left', padx=5)
+
+        # Focus on subscripts entry
+        subscripts_entry.focus()
+        subscripts_entry.select_range(0, 'end')
+
+        # Wait for dialog
+        dialog.wait_window()
+
+        # Update display and show confirmation
+        if not result['cancelled']:
             self._update_variables()
-
-            # Show confirmation
-            self.status_label.config(text=f"Array {variable_name}({subscripts_str}) updated to {new_value}")
-
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to update array element: {e}")
+            self.status_label.config(text=f"Array {variable_name}({result['subscripts']}) updated to {result['value']}")
 
     def _toggle_variable_sort_direction(self):
         """Toggle sort direction (ascending/descending) without changing column."""

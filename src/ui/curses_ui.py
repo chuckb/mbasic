@@ -2555,25 +2555,67 @@ Run                           Debug Windows
 
         # Check if array
         if 'Array' in value_part:
-            # Array variable - edit last accessed element
+            # Array variable - let user type any subscripts
+            # Get array dimensions from display
+            dims_match = re.search(r'Array\(([^)]+)\)', value_part)
+            dimensions_str = dims_match.group(1) if dims_match else "?"
+
+            # Get default subscripts from last accessed (if available)
+            default_subscripts = ""
             match = re.search(r'\[([^\]]+)\]=(.+)$', value_part)
-            if not match:
-                self.status_bar.set_text("No array element accessed yet - Press 'e' to edit")
-                return
+            if match:
+                default_subscripts = match.group(1)
 
-            subscripts_str = match.group(1)
-            value_str = match.group(2).strip().strip('"')
+            # Get array info from runtime
+            base_name = variable_name[:-1] if type_suffix else variable_name
+            try:
+                array_var = self.interpreter.runtime.get_variable(base_name, type_suffix)
+                dimensions = array_var.dimensions if hasattr(array_var, 'dimensions') else []
+            except:
+                dimensions = []
 
-            # Parse subscripts
+            # Step 1: Get subscripts from user
+            subscripts_prompt = f"Edit {variable_name}({dimensions_str}) - Enter subscripts (e.g., 1,2,3): "
+            subscripts_str = self._get_input_dialog(subscripts_prompt, initial=default_subscripts)
+
+            if not subscripts_str:
+                return  # User cancelled
+
+            # Parse and validate subscripts
             try:
                 subscripts = [int(s.strip()) for s in subscripts_str.split(',')]
+
+                # Validate dimension count
+                if dimensions and len(subscripts) != len(dimensions):
+                    self.status_bar.set_text(f"Error: Expected {len(dimensions)} subscripts, got {len(subscripts)}")
+                    return
+
+                # Validate bounds
+                for i, sub in enumerate(subscripts):
+                    if dimensions and i < len(dimensions):
+                        if sub < 0 or sub > dimensions[i]:
+                            self.status_bar.set_text(f"Error: Subscript {i} out of bounds: {sub} not in [0, {dimensions[i]}]")
+                            return
+
+                # Get current value at those subscripts
+                index = 0
+                multiplier = 1
+                for i in reversed(range(len(subscripts))):
+                    index += subscripts[i] * multiplier
+                    multiplier *= (dimensions[i] + 1)
+
+                current_val = array_var.elements[index]
+
             except ValueError:
-                self.status_bar.set_text("Invalid array subscripts")
+                self.status_bar.set_text("Invalid subscripts (must be integers)")
+                return
+            except Exception as e:
+                self.status_bar.set_text(f"Error: {e}")
                 return
 
-            # Get new value from user
-            prompt = f"{variable_name}({subscripts_str}) = "
-            new_value_str = self._get_input_dialog(prompt)
+            # Step 2: Show current value and get new value
+            value_prompt = f"{variable_name}({subscripts_str}) = {current_val} → New value: "
+            new_value_str = self._get_input_dialog(value_prompt)
 
             if not new_value_str:
                 return  # User cancelled
@@ -2592,7 +2634,6 @@ Run                           Debug Windows
 
             # Update array element
             try:
-                base_name = variable_name[:-1] if type_suffix else variable_name
                 self.interpreter.runtime.set_array_element(
                     base_name,
                     type_suffix,
@@ -3233,10 +3274,10 @@ Run                           Debug Windows
 
         return result['value']
 
-    def _get_input_dialog(self, prompt):
+    def _get_input_dialog(self, prompt, initial=""):
         """Show input dialog and get user response."""
-        # Create input widget
-        edit = urwid.Edit(caption=prompt)
+        # Create input widget with optional initial value
+        edit = urwid.Edit(caption=prompt, edit_text=initial)
 
         # Create dialog
         fill = urwid.Filler(edit, valign='top')

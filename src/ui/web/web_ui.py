@@ -1313,63 +1313,130 @@ class MBasicWebIDE:
             ui.notify(f'Error updating variable: {str(e)}', type='negative')
 
     def _edit_array_element(self, base_name: str, type_suffix: str, subscripts, current_value):
-        """Edit an array element."""
+        """Edit any array element by typing subscripts."""
         var_display = f'{base_name}{type_suffix}'
-        subscripts_str = ','.join(str(s) for s in subscripts)
-        element_display = f'{var_display}({subscripts_str})'
+        default_subscripts_str = ','.join(str(s) for s in subscripts)
 
-        # Create edit dialog
-        with ui.dialog() as dialog, ui.card():
-            ui.label(f'Edit Array Element: {element_display}').classes('text-h6 mb-2')
-            ui.label(f'Current value: {current_value}').classes('text-sm text-grey-7 mb-4')
+        # Get array dimensions
+        try:
+            array_var = self.runtime.get_variable(base_name, type_suffix)
+            dimensions = array_var.dimensions if hasattr(array_var, 'dimensions') else []
+            dimensions_str = 'x'.join(str(d) for d in dimensions)
+        except:
+            dimensions = []
+            dimensions_str = '?'
 
-            # Input based on type
+        # Create edit dialog with subscripts input
+        with ui.dialog() as dialog, ui.card().classes('w-96'):
+            ui.label(f'Edit Array Element: {var_display}({dimensions_str})').classes('text-h6 mb-2')
+
+            # Subscripts input
+            subscripts_input = ui.input(
+                label='Subscripts (e.g., 1,2,3)',
+                value=default_subscripts_str,
+                placeholder='0,0'
+            ).classes('w-full mb-2')
+
+            # Current value display (updates when subscripts change)
+            current_value_label = ui.label('').classes('text-sm text-blue-7 mb-2')
+            error_label = ui.label('').classes('text-sm text-red-7 mb-2')
+
+            # Value input
+            value_input = None
             if type_suffix == '$':
-                # String array
-                new_value_input = ui.input(
-                    label='New value',
-                    value=str(current_value).strip('"'),
-                    placeholder='Enter string value'
-                ).classes('w-full')
+                value_input = ui.input(label='New value', placeholder='Enter string value').classes('w-full')
             elif type_suffix == '%':
-                # Integer array
-                new_value_input = ui.number(
-                    label='New value',
-                    value=int(current_value),
-                    format='%.0f'
-                ).classes('w-full')
+                value_input = ui.number(label='New value', format='%.0f').classes('w-full')
             else:
-                # Float array
-                new_value_input = ui.number(
-                    label='New value',
-                    value=float(current_value)
-                ).classes('w-full')
+                value_input = ui.number(label='New value').classes('w-full')
+
+            def update_current_value():
+                """Update current value display when subscripts change."""
+                subscripts_str = subscripts_input.value.strip()
+                if not subscripts_str:
+                    current_value_label.text = 'Enter subscripts above'
+                    error_label.text = ''
+                    return
+
+                try:
+                    # Parse subscripts
+                    subs = [int(s.strip()) for s in subscripts_str.split(',')]
+
+                    # Validate dimension count
+                    if dimensions and len(subs) != len(dimensions):
+                        error_label.text = f'Expected {len(dimensions)} subscripts, got {len(subs)}'
+                        current_value_label.text = ''
+                        return
+
+                    # Validate bounds
+                    for i, sub in enumerate(subs):
+                        if dimensions and i < len(dimensions):
+                            if sub < 0 or sub > dimensions[i]:
+                                error_label.text = f'Subscript {i} out of bounds: {sub} not in [0, {dimensions[i]}]'
+                                current_value_label.text = ''
+                                return
+
+                    # Get current value
+                    array_var = self.runtime.get_variable(base_name, type_suffix)
+                    index = 0
+                    multiplier = 1
+                    for i in reversed(range(len(subs))):
+                        index += subs[i] * multiplier
+                        multiplier *= (dimensions[i] + 1)
+
+                    current_val = array_var.elements[index]
+                    current_value_label.text = f'Current value: {current_val}'
+                    error_label.text = ''
+
+                except ValueError:
+                    error_label.text = 'Invalid subscripts (must be integers)'
+                    current_value_label.text = ''
+                except Exception as e:
+                    error_label.text = f'Error: {str(e)}'
+                    current_value_label.text = ''
+
+            # Update on subscripts change
+            subscripts_input.on('blur', update_current_value)
+
+            # Initial update
+            update_current_value()
+
+            def on_apply():
+                """Apply the array element edit."""
+                subscripts_str = subscripts_input.value.strip()
+                if not subscripts_str:
+                    ui.notify('Please enter subscripts', type='warning')
+                    return
+
+                try:
+                    # Parse subscripts
+                    subs = [int(s.strip()) for s in subscripts_str.split(',')]
+
+                    # Get new value
+                    new_value = value_input.value
+                    if new_value is None or new_value == '':
+                        ui.notify('Please enter a new value', type='warning')
+                        return
+
+                    # Update array element
+                    self.runtime.set_array_element(base_name, type_suffix, subs, new_value, token=None)
+
+                    # Update display
+                    self.update_variables_window()
+
+                    ui.notify(f'Array element {var_display}({subscripts_str}) updated', type='positive')
+                    dialog.close()
+
+                except ValueError as e:
+                    ui.notify(f'Invalid value: {str(e)}', type='negative')
+                except Exception as e:
+                    ui.notify(f'Error: {str(e)}', type='negative')
 
             with ui.row().classes('w-full gap-2 mt-4'):
                 ui.button('Cancel', on_click=dialog.close).props('flat')
-                ui.button(
-                    'Apply',
-                    on_click=lambda: self._apply_array_edit(base_name, type_suffix, subscripts, new_value_input.value, dialog)
-                ).props('color=primary')
+                ui.button('Apply', on_click=on_apply).props('color=primary')
 
         dialog.open()
-
-    def _apply_array_edit(self, base_name: str, type_suffix: str, subscripts, new_value, dialog):
-        """Apply the edit to an array element."""
-        try:
-            # Set the array element in runtime
-            # Note: token=None for debugger-initiated changes
-            self.runtime.set_array_element(base_name, type_suffix, subscripts, new_value, token=None)
-
-            # Update display
-            self.update_variables_window()
-
-            subscripts_str = ','.join(str(s) for s in subscripts)
-            ui.notify(f'Array element {base_name}{type_suffix}({subscripts_str}) updated', type='positive')
-            dialog.close()
-
-        except Exception as e:
-            ui.notify(f'Error updating array element: {str(e)}', type='negative')
 
     def toggle_stack(self):
         """Toggle execution stack window."""
