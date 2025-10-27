@@ -1573,12 +1573,12 @@ class TkBackend(UIBackend):
         return not had_errors
 
     def _validate_editor_syntax(self):
-        """Validate syntax of all lines in editor and update error markers."""
+        """Validate syntax of all lines in editor and update error markers.
+
+        Validates each line independently as entered - immediate feedback.
+        """
         import tkinter as tk
         import re
-        from lexer import Lexer
-        from parser import Parser
-        from program import Program
 
         # Get editor content
         editor_content = self.editor_text.text.get(1.0, tk.END)
@@ -1589,22 +1589,7 @@ class TkBackend(UIBackend):
         # Collect errors to show in output
         errors_found = []
 
-        # Parse entire program to get context (variable definitions, etc.)
-        temp_program = Program()
-        for line in editor_content.split('\n'):
-            line_stripped = line.strip()
-            if not line_stripped:
-                continue
-
-            match = re.match(r'^(\d+)\s+(.+)$', line_stripped)
-            if match:
-                line_num = int(match.group(1))
-                try:
-                    temp_program.add_line(line_num, line.rstrip('\r\n'))
-                except:
-                    pass  # Ignore errors during temp parsing
-
-        # Now validate each line with full program context
+        # Check each line independently (immediate per-line validation)
         for line in editor_content.split('\n'):
             line_stripped = line.strip()
             if not line_stripped:
@@ -1616,17 +1601,9 @@ class TkBackend(UIBackend):
                 line_num = int(match.group(1))
                 code = match.group(2)
 
-                # Check syntax with program context
-                try:
-                    lexer = Lexer(code)
-                    tokens = lexer.tokenize()
-                    parser = Parser(tokens, temp_program.def_type_map, source=code)
-                    parser.parse_line()
-                    # Valid - no error
-                except Exception as e:
-                    # Strip "Parse error at line X, " prefix
-                    error_msg = str(e)
-                    error_msg = re.sub(r'^Parse error at line \d+, ', '', error_msg)
+                # Check syntax - each line independently
+                is_valid, error_msg = self._check_line_syntax(code)
+                if not is_valid:
                     self.editor_text.set_error(line_num, True, error_msg)
                     errors_found.append((line_num, error_msg))
 
