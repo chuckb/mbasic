@@ -2662,7 +2662,22 @@ class TkBackend(UIBackend):
 
         if self.immediate_executor.can_execute_immediate():
             # Safe to execute - enable input
-            self.immediate_status.config(text="Ok", foreground="green")
+            # Show current state: Ok, Breakpoint, Error, etc.
+            if hasattr(self.interpreter, 'state') and self.interpreter.state:
+                status = self.interpreter.state.status
+                if status == 'at_breakpoint':
+                    self.immediate_status.config(text="Breakpoint", foreground="orange")
+                elif status == 'error':
+                    self.immediate_status.config(text="Error", foreground="red")
+                elif status == 'paused':
+                    self.immediate_status.config(text="Paused", foreground="orange")
+                elif self.paused_at_breakpoint:
+                    # Might be paused after error/breakpoint but status changed
+                    self.immediate_status.config(text="Paused", foreground="orange")
+                else:
+                    self.immediate_status.config(text="Ok", foreground="green")
+            else:
+                self.immediate_status.config(text="Ok", foreground="green")
             self.immediate_entry.config(state=tk.NORMAL)
         else:
             # Not safe - disable input
