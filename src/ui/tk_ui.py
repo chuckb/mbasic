@@ -2301,11 +2301,7 @@ class TkBackend(UIBackend):
         from debug_logger import debug_log
         import re
 
-        # First, save the editor to program to get rid of any blank numbered lines
-        self._save_editor_to_program()
-        self._refresh_editor()
-
-        # Get current line
+        # Get current line BEFORE refresh
         current_pos = self.editor_text.text.index(tk.INSERT)
         current_line_index = int(current_pos.split('.')[0])
         current_line_text = self.editor_text.text.get(
@@ -2315,7 +2311,7 @@ class TkBackend(UIBackend):
 
         debug_log(f"Smart insert: line_index={current_line_index}, text={repr(current_line_text)}", level=1)
 
-        # Parse current line number
+        # Parse current line number BEFORE refresh
         match = re.match(r'^(\d+)', current_line_text)
         if not match:
             debug_log(f"No match for line number in: {repr(current_line_text)}", level=1)
@@ -2325,13 +2321,27 @@ class TkBackend(UIBackend):
         current_line_num = int(match.group(1))
         debug_log(f"Current line number: {current_line_num}", level=1)
 
-        # Get all line numbers sorted - parse directly from editor text
+        # Save the editor to program to get rid of any blank numbered lines
+        self._save_editor_to_program()
+        self._refresh_editor()
+
+        # Now find the line with current_line_num in the refreshed editor
+        # and move cursor back to it, and build all_line_numbers at the same time
         all_line_numbers = []
+        restored_line_index = None
         editor_content = self.editor_text.text.get('1.0', 'end')
-        for line in editor_content.split('\n'):
+        for idx, line in enumerate(editor_content.split('\n')):
             line_match = re.match(r'^\s*(\d+)', line)
             if line_match:
-                all_line_numbers.append(int(line_match.group(1)))
+                line_num = int(line_match.group(1))
+                all_line_numbers.append(line_num)
+                if line_num == current_line_num:
+                    restored_line_index = idx + 1  # Tk uses 1-based indexing
+
+        # Restore cursor to the original line number
+        if restored_line_index is not None:
+            self.editor_text.text.mark_set(tk.INSERT, f'{restored_line_index}.0')
+            self.editor_text.text.see(f'{restored_line_index}.0')
 
         all_line_numbers = sorted(set(all_line_numbers))  # Remove duplicates and sort
 
