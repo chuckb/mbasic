@@ -1985,8 +1985,8 @@ class TkBackend(UIBackend):
         # At this point, the editor contains only the numbered lines (no blank lines)
         # because _refresh_editor loads from the program, which filters out blank lines
 
-        # Get the last position in the editor
-        last_pos = self.editor_text.text.index(tk.END)
+        # Calculate the next line number for the prompt
+        next_line_num = current_line_num + self.auto_number_increment
 
         # Check if we're already at the end of a line with content
         # If the last character is NOT a newline, add one
@@ -1994,7 +1994,10 @@ class TkBackend(UIBackend):
         if last_char != '\n':
             self.editor_text.text.insert(tk.END, '\n')
 
-        # Move cursor to end
+        # Insert the next line number prompt (like classic BASIC)
+        self.editor_text.text.insert(tk.END, f'{next_line_num} ')
+
+        # Move cursor to end (after the line number)
         self.editor_text.text.mark_set(tk.INSERT, tk.END)
         self.editor_text.text.see(tk.END)
 
