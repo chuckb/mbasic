@@ -160,9 +160,6 @@ class TkBackend(UIBackend):
         # Bind key press for input sanitization
         self.editor_text.text.bind('<Key>', self._on_key_press, add='+')
 
-        # Bind text modification to remove blank lines automatically
-        self.editor_text.text.bind('<<Modified>>', self._on_editor_modified, add='+')
-
         # Set up editor context menu
         self._setup_editor_context_menu()
 
@@ -1870,20 +1867,14 @@ class TkBackend(UIBackend):
         # Validate syntax when leaving editor
         self._validate_editor_syntax()
 
-    def _on_editor_modified(self, event):
-        """Handle editor modification - remove blank lines automatically.
+    def _remove_blank_lines(self):
+        """Remove all blank lines from the editor.
 
         This ensures the editor can NEVER contain blank lines.
+        Called after any modification (typing, pasting, etc.)
         """
         import tkinter as tk
         from debug_logger import debug_log
-
-        # Check if modification flag is set
-        if not self.editor_text.text.edit_modified():
-            return
-
-        # Reset the modified flag to prevent infinite loop
-        self.editor_text.text.edit_modified(False)
 
         # Get current cursor position
         cursor_pos = self.editor_text.text.index(tk.INSERT)
@@ -1892,7 +1883,7 @@ class TkBackend(UIBackend):
         content = self.editor_text.text.get(1.0, tk.END)
         lines = content.split('\n')
 
-        debug_log(f"Editor modified, checking {len(lines)} lines", level=1)
+        debug_log(f"Checking for blank lines in {len(lines)} lines", level=1)
 
         # Filter out blank lines (completely empty or only whitespace)
         # But keep the last line (which is always empty in Tk Text widget)
@@ -1904,11 +1895,11 @@ class TkBackend(UIBackend):
                 filtered_lines.append(line)
             else:
                 removed_count += 1
-                debug_log(f"Removing blank line at index {i}", level=1)
+                debug_log(f"Removing blank line at index {i}: {repr(line)}", level=1)
 
         # Check if we need to update
         if removed_count > 0:
-            debug_log(f"Removed {removed_count} blank lines", level=1)
+            debug_log(f"Removed {removed_count} blank lines total", level=1)
             # Blank lines were found - remove them
             new_content = '\n'.join(filtered_lines)
 
@@ -2174,6 +2165,9 @@ class TkBackend(UIBackend):
         # This prevents the "half yellow line" issue when editing error/breakpoint lines
         if self.paused_at_breakpoint:
             self._clear_statement_highlight()
+
+        # Schedule blank line removal after key is processed
+        self.root.after(10, self._remove_blank_lines)
 
         # Ignore special keys (arrows, function keys, modifiers, etc.)
         if len(event.char) != 1:
