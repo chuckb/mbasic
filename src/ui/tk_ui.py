@@ -209,6 +209,21 @@ class TkBackend(UIBackend):
         # Bind click handler
         self.immediate_entry.bind('<Button-1>', on_entry_click)
 
+        # Add right-click context menu for immediate entry
+        def show_immediate_context_menu(event):
+            menu = tk.Menu(self.immediate_entry, tearoff=0)
+            menu.add_command(label="Cut", command=lambda: self.immediate_entry.event_generate("<<Cut>>"))
+            menu.add_command(label="Copy", command=lambda: self.immediate_entry.event_generate("<<Copy>>"))
+            menu.add_command(label="Paste", command=lambda: self.immediate_entry.event_generate("<<Paste>>"))
+            menu.add_separator()
+            menu.add_command(label="Select All", command=lambda: self.immediate_entry.select_range(0, 'end'))
+            try:
+                menu.tk_popup(event.x_root, event.y_root)
+            finally:
+                menu.grab_release()
+
+        self.immediate_entry.bind('<Button-3>', show_immediate_context_menu)
+
         execute_btn = ttk.Button(input_frame, text="Execute", command=self._execute_immediate)
         execute_btn.pack(side=tk.LEFT)
 
