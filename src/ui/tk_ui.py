@@ -2301,6 +2301,10 @@ class TkBackend(UIBackend):
         from debug_logger import debug_log
         import re
 
+        # First, save the editor to program to get rid of any blank numbered lines
+        self._save_editor_to_program()
+        self._refresh_editor()
+
         # Get current line
         current_pos = self.editor_text.text.index(tk.INSERT)
         current_line_index = int(current_pos.split('.')[0])
@@ -2891,7 +2895,7 @@ class TkBackend(UIBackend):
             old_lines, line_map = renum_program(
                 self.program,
                 args,
-                self.interpreter.interactive_mode._renum_statement,
+                self._renum_statement,
                 runtime=None  # Tk UI doesn't have a persistent runtime
             )
 
@@ -2909,6 +2913,96 @@ class TkBackend(UIBackend):
             import traceback
             self._add_output(f"Error during renumber: {e}\n")
             self._add_output(traceback.format_exc())
+
+    def _renum_statement(self, stmt, line_map):
+        """Recursively update line number references in a statement
+
+        Args:
+            stmt: Statement node to update
+            line_map: dict mapping old line numbers to new line numbers
+        """
+        import ast_nodes
+
+        stmt_type = type(stmt).__name__
+
+        # GOTO statement
+        if stmt_type == 'GotoStatementNode':
+            if stmt.line_number in line_map:
+                stmt.line_number = line_map[stmt.line_number]
+
+        # GOSUB statement
+        elif stmt_type == 'GosubStatementNode':
+            if stmt.line_number in line_map:
+                stmt.line_number = line_map[stmt.line_number]
+
+        # ON...GOTO/GOSUB statement
+        elif stmt_type == 'OnGotoStatementNode' or stmt_type == 'OnGosubStatementNode':
+            stmt.target_lines = [
+                line_map.get(line, line) for line in stmt.target_lines
+            ]
+
+        # IF statement with line number jumps
+        elif stmt_type == 'IfStatementNode':
+            if stmt.then_line_number is not None and stmt.then_line_number in line_map:
+                stmt.then_line_number = line_map[stmt.then_line_number]
+            if stmt.else_line_number is not None and stmt.else_line_number in line_map:
+                stmt.else_line_number = line_map[stmt.else_line_number]
+
+            # Check for "IF ERL = line_number" pattern
+            # According to manual: if ERL is on left side of =, right side is a line number
+            if stmt.condition:
+                self._renum_erl_comparison(stmt.condition, line_map)
+
+            # Also update statements within THEN/ELSE blocks
+            if stmt.then_statements:
+                for then_stmt in stmt.then_statements:
+                    self._renum_statement(then_stmt, line_map)
+            if stmt.else_statements:
+                for else_stmt in stmt.else_statements:
+                    self._renum_statement(else_stmt, line_map)
+
+        # RESTORE statement
+        elif stmt_type == 'RestoreStatementNode':
+            if stmt.line_number_expr and hasattr(stmt.line_number_expr, 'value'):
+                # It's a literal number
+                if stmt.line_number_expr.value in line_map:
+                    stmt.line_number_expr.value = line_map[stmt.line_number_expr.value]
+
+        # RUN statement
+        elif stmt_type == 'RunStatementNode':
+            if hasattr(stmt, 'line_number') and stmt.line_number in line_map:
+                stmt.line_number = line_map[stmt.line_number]
+
+        # ON ERROR GOTO statement
+        elif stmt_type == 'OnErrorStatementNode':
+            if stmt.line_number is not None and stmt.line_number in line_map:
+                stmt.line_number = line_map[stmt.line_number]
+
+    def _renum_erl_comparison(self, expr, line_map):
+        """Handle ERL = line_number patterns in expressions
+
+        According to MBASIC manual: if ERL appears on the left side of =,
+        the number on the right side is treated as a line number reference.
+
+        Also handles: ERL <> line, ERL < line, ERL > line, etc.
+
+        Args:
+            expr: Expression node to check
+            line_map: dict mapping old line numbers to new line numbers
+        """
+        # Check if this is a binary operation (comparison)
+        if type(expr).__name__ != 'BinaryOpNode':
+            return
+
+        # Check if left side is ERL (a VariableNode with name 'ERL')
+        left = expr.left
+        if type(left).__name__ == 'VariableNode' and left.name == 'ERL':
+            # Right side should be renumbered if it's a literal number
+            right = expr.right
+            if type(right).__name__ == 'NumberNode':
+                # Check if this number is a line number in our program
+                if right.value in line_map:
+                    right.value = line_map[right.value]
 
     def cmd_cont(self) -> None:
         """Execute CONT command - continue after STOP.
