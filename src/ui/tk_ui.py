@@ -253,33 +253,35 @@ class TkBackend(UIBackend):
         # Initialize immediate mode entry to be enabled and focused
         # (it will be enabled/disabled later based on program state via _update_immediate_status)
         self.immediate_entry.config(state=tk.NORMAL)
+
+        # Ensure entry is above other widgets
+        self.immediate_entry.lift()
+
         # Give initial focus to immediate entry for convenience
         def set_initial_focus():
             print(f"[DEBUG] Attempting to set focus to immediate_entry", flush=True)
             # Ensure all widgets are fully laid out
             self.root.update_idletasks()
 
-            # Workaround for PanedWindow focus issue:
-            # 1. Click simulation to ensure widget is active
-            # 2. Set cursor position explicitly
-            # 3. Use focus_set (not force) after widget is ready
             try:
+                # Bring entry to front
+                self.immediate_entry.lift()
                 # Place cursor at position 0
                 self.immediate_entry.icursor(0)
-                # Try focus_set instead of focus_force for widgets in containers
-                self.immediate_entry.focus_set()
+                # Insert and delete a character to "wake up" the widget
+                self.immediate_entry.insert(0, " ")
+                self.immediate_entry.delete(0)
+                # Set focus
+                self.immediate_entry.focus_force()
                 focused = self.root.focus_get()
-                print(f"[DEBUG] After focus_set: focused={focused}, entry={self.immediate_entry}", flush=True)
-
-                # If still not focused, try selecting all text (creates focus as side effect)
-                if focused != self.immediate_entry:
-                    self.immediate_entry.selection_range(0, tk.END)
-                    self.immediate_entry.focus_set()
-                    focused = self.root.focus_get()
-                    print(f"[DEBUG] After selection: focused={focused}", flush=True)
+                print(f"[DEBUG] After focus_force with lift: focused={focused}, entry={self.immediate_entry}", flush=True)
+                print(f"[DEBUG] Entry winfo_viewable={self.immediate_entry.winfo_viewable()}", flush=True)
+                print(f"[DEBUG] Entry winfo_ismapped={self.immediate_entry.winfo_ismapped()}", flush=True)
 
             except Exception as e:
                 print(f"[DEBUG] Error setting focus: {e}", flush=True)
+                import traceback
+                traceback.print_exc()
 
         # Try setting focus after a longer delay to ensure window is fully realized
         self.root.after(500, set_initial_focus)
