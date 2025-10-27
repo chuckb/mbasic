@@ -1563,12 +1563,12 @@ class TkBackend(UIBackend):
                 success, error = self.program.add_line(line_num, line.rstrip('\r\n'))
                 if not success:
                     self._add_output(f"Parse error at line {line_num}: {error}\n")
-                    # Mark line as having error
-                    self.editor_text.set_error(line_num, True)
+                    # Mark line as having error with message
+                    self.editor_text.set_error(line_num, True, error)
                     had_errors = True
                 else:
                     # Clear error marker if line is now valid
-                    self.editor_text.set_error(line_num, False)
+                    self.editor_text.set_error(line_num, False, None)
 
         return not had_errors
 
@@ -1598,7 +1598,7 @@ class TkBackend(UIBackend):
                 # Check syntax
                 is_valid, error_msg = self._check_line_syntax(code)
                 if not is_valid:
-                    self.editor_text.set_error(line_num, True)
+                    self.editor_text.set_error(line_num, True, error_msg)
 
     def _check_line_syntax(self, code_text):
         """Check if a line of BASIC code has valid syntax.
@@ -1896,6 +1896,18 @@ class TkBackend(UIBackend):
             f'{current_line_index}.0',
             f'{current_line_index}.end'
         )
+
+        # Check if current line has an error and display message
+        current_line_text = self.editor_text.text.get(
+            f'{current_line_index}.0',
+            f'{current_line_index}.end'
+        )
+        match = re.match(r'^\s*(\d+)', current_line_text)
+        if match:
+            line_num = int(match.group(1))
+            error_msg = self.editor_text.get_error_message(line_num)
+            if error_msg:
+                self._set_status(f"Error on line {line_num}: {error_msg}")
 
     def _on_ctrl_i(self):
         """Handle Ctrl+I - smart insert line.
@@ -2340,8 +2352,8 @@ class TkBackend(UIBackend):
             if errors:
                 for line_num, error in errors:
                     self._add_output(f"Parse error at line {line_num}: {error}\n")
-                    # Mark line as having error
-                    self.editor_text.set_error(line_num, True)
+                    # Mark line as having error with message
+                    self.editor_text.set_error(line_num, True, error)
             if success:
                 self._refresh_editor()
                 # Re-validate to show error markers for loaded lines
@@ -2372,8 +2384,8 @@ class TkBackend(UIBackend):
             if errors:
                 for line_num, error in errors:
                     self._add_output(f"Parse error at line {line_num}: {error}\n")
-                    # Mark line as having error
-                    self.editor_text.set_error(line_num, True)
+                    # Mark line as having error with message
+                    self.editor_text.set_error(line_num, True, error)
             if success:
                 self._refresh_editor()
                 # Re-validate to show error markers for merged lines

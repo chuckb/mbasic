@@ -239,7 +239,8 @@ class LineNumberedText(tk.Frame if tk else object):
             self.line_metadata[line_number] = {
                 'status': ' ',
                 'has_breakpoint': False,
-                'has_error': False
+                'has_error': False,
+                'error_message': None
             }
 
         metadata = self.line_metadata[line_number]
@@ -255,22 +256,25 @@ class LineNumberedText(tk.Frame if tk else object):
 
         self._redraw()
 
-    def set_error(self, line_number, has_error=True):
+    def set_error(self, line_number, has_error=True, error_message=None):
         """Set or clear error indicator on a line.
 
         Args:
             line_number: BASIC line number
             has_error: True to show error, False to clear
+            error_message: Optional error message to display
         """
         if line_number not in self.line_metadata:
             self.line_metadata[line_number] = {
                 'status': ' ',
                 'has_breakpoint': False,
-                'has_error': False
+                'has_error': False,
+                'error_message': None
             }
 
         metadata = self.line_metadata[line_number]
         metadata['has_error'] = has_error
+        metadata['error_message'] = error_message if has_error else None
 
         # Update status symbol (error takes priority)
         if metadata['has_error']:
@@ -282,10 +286,24 @@ class LineNumberedText(tk.Frame if tk else object):
 
         self._redraw()
 
+    def get_error_message(self, line_number):
+        """Get error message for a line.
+
+        Args:
+            line_number: BASIC line number
+
+        Returns:
+            Error message string or None if no error
+        """
+        if line_number in self.line_metadata:
+            return self.line_metadata[line_number].get('error_message')
+        return None
+
     def clear_all_errors(self):
         """Clear all error indicators."""
         for metadata in self.line_metadata.values():
             metadata['has_error'] = False
+            metadata['error_message'] = None
             # Update status (breakpoint may still be there)
             if metadata['has_breakpoint']:
                 metadata['status'] = '●'
