@@ -2067,7 +2067,7 @@ class TkBackend(UIBackend):
                 if self.stack_visible:
                     self._update_stack()
                 if self.variables_visible:
-                    self._update_variables_window()
+                    self._update_variables()
 
             elif state.status == 'paused':
                 self.running = False
@@ -2081,7 +2081,7 @@ class TkBackend(UIBackend):
                 if self.stack_visible:
                     self._update_stack()
                 if self.variables_visible:
-                    self._update_variables_window()
+                    self._update_variables()
 
             elif state.status == 'running':
                 # Highlight current statement while running (brief flash effect)
@@ -2453,7 +2453,7 @@ class TkBackend(UIBackend):
 
         # Update variables/stack windows if they exist
         if hasattr(self, 'variables_window') and self.variables_window:
-            self._update_variables_window()
+            self._update_variables()
         if hasattr(self, 'stack_window') and self.stack_window and self.stack_visible:
             self._update_stack()
 
