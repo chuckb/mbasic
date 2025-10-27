@@ -158,8 +158,11 @@ class ImmediateExecutor:
                 ui = self.interpreter.interactive_mode
                 if hasattr(ui, 'program') and ui.program:
                     if line_content:
-                        # Add/update line
-                        ui.program.add_or_update_line(line_num, line_content)
+                        # Add/update line - add_line expects complete line text with line number
+                        complete_line = f"{line_num} {line_content}"
+                        success, error = ui.program.add_line(line_num, complete_line)
+                        if not success:
+                            return (False, f"Syntax error: {error}\n")
                     else:
                         # Delete line (numbered line with no content)
                         ui.program.delete_line(line_num)
