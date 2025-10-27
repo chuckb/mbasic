@@ -25,6 +25,7 @@ import base64
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from iohandler.web_io import WebIOHandler
+from ui.recent_files import RecentFilesManager
 from lexer import Lexer
 from parser import Parser
 from interpreter import Interpreter
@@ -44,6 +45,9 @@ class MBasicWebIDE:
         self.output_log = None
         self.status_label = None
         self.line_display = None
+
+        # Recent files manager
+        self.recent_files = RecentFilesManager()
 
         # File state
         self.current_file = "untitled.bas"
@@ -125,6 +129,8 @@ class MBasicWebIDE:
                         ui.menu_item('New', on_click=self.menu_new, auto_close=True)
                         ui.menu_item('Open from Computer', on_click=self.menu_open, auto_close=True)
                         ui.menu_item('Open from Server', on_click=self.menu_open_server, auto_close=True)
+                        ui.menu_item('Recent Files...', on_click=self.show_recent_files, auto_close=True)
+                        ui.separator()
                         ui.menu_item('Save', on_click=self.menu_save, auto_close=True)
                         ui.menu_item('Save As', on_click=self.menu_save_as, auto_close=True)
                         ui.separator()
@@ -794,6 +800,9 @@ class MBasicWebIDE:
                 ui.notify('File content was sanitized (control characters removed)', type='info')
 
             self.editor.value = content
+
+            # Add to recent files
+            self.recent_files.add_file(str(file_path))
             self.current_file = file_name
             self.current_path = None
             self.breakpoints.clear()
@@ -804,6 +813,80 @@ class MBasicWebIDE:
             ui.notify(f'Loaded {file_name}', type='positive')
         except Exception as ex:
             ui.notify(f'Error loading file: {str(ex)}', type='negative')
+
+    def show_recent_files(self):
+        """Show dialog with recent files."""
+        from pathlib import Path
+
+        # Get recent files
+        recent_files = self.recent_files.get_recent_files_with_info(max_count=10)
+
+        if not recent_files:
+            ui.notify('No recent files', type='info')
+            return
+
+        # Create dialog with recent files
+        with ui.dialog() as dialog, ui.card().classes('w-full').style('max-width: 600px'):
+            ui.label('Recent Files').classes('text-h6 mb-2')
+
+            # File list
+            with ui.scroll_area().classes('w-full').style('max-height: 400px'):
+                with ui.column().classes('w-full'):
+                    for file_info in recent_files:
+                        filepath = file_info['path']
+                        filename = file_info['filename']
+                        exists = file_info['exists']
+
+                        with ui.row().classes('w-full items-center'):
+                            # Icon based on existence
+                            if exists:
+                                ui.icon('description').classes('text-grey-6')
+                            else:
+                                ui.icon('warning').classes('text-red-6')
+
+                            # File button
+                            if exists:
+                                ui.button(
+                                    filename,
+                                    on_click=lambda p=filepath, n=filename: self.open_recent_file(p, n, dialog)
+                                ).props('flat align=left').classes('flex-grow')
+                            else:
+                                ui.button(
+                                    f'{filename} (not found)',
+                                    on_click=lambda: None
+                                ).props('flat align=left disabled').classes('flex-grow text-grey-6')
+
+            ui.separator()
+
+            # Clear button
+            with ui.row().classes('w-full justify-between'):
+                ui.button(
+                    'Clear Recent Files',
+                    on_click=lambda: self.clear_recent_files(dialog)
+                ).props('flat color=negative')
+                ui.button('Close', on_click=dialog.close).props('flat')
+
+        dialog.open()
+
+    def open_recent_file(self, filepath: str, filename: str, dialog):
+        """Open a file from recent files list."""
+        file_path = Path(filepath)
+
+        if not file_path.exists():
+            ui.notify(f'File not found: {filename}', type='negative')
+            # Remove from recent files
+            self.recent_files.remove_file(filepath)
+            dialog.close()
+            return
+
+        # Load the file using load_server_file logic
+        self.load_server_file(file_path, filename, dialog)
+
+    def clear_recent_files(self, dialog):
+        """Clear the recent files list."""
+        self.recent_files.clear()
+        ui.notify('Recent files cleared', type='positive')
+        dialog.close()
 
     def menu_save(self):
         """Save current program."""

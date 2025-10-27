@@ -18,6 +18,7 @@ from .keybindings import (
 )
 from .markdown_renderer import MarkdownRenderer
 from .help_widget import HelpWidget
+from .recent_files import RecentFilesManager
 from runtime import Runtime
 from interpreter import Interpreter
 from lexer import Lexer
@@ -1301,6 +1302,9 @@ class CursesBackend(UIBackend):
         """
         super().__init__(io_handler, program_manager)
 
+        # Recent files manager
+        self.recent_files = RecentFilesManager()
+
         # UI state
         self.app = None
         self.loop = None
@@ -1578,6 +1582,10 @@ class CursesBackend(UIBackend):
         elif key == OPEN_KEY:
             # Open/Load program
             self._load_program()
+
+        elif key == 'shift ctrl o' or key == 'ctrl O':
+            # Show recent files
+            self._show_recent_files()
 
         elif key == BREAKPOINT_KEY:
             # Toggle breakpoint on current line
@@ -2198,9 +2206,9 @@ File                          Edit
 ────────────────────          ───────────────────────────
   New             Ctrl+N        Delete Line       Ctrl+D
   Open...         Ctrl+O        Insert Line       Ctrl+I
-  Save            Ctrl+S        Renumber...       Ctrl+E
-  Quit            Ctrl+Q        Toggle Break      Ctrl+B
-                                Clear Breaks      Ctrl+Shift+B
+  Recent Files... Ctrl+Shift+O  Renumber...       Ctrl+E
+  Save            Ctrl+S        Toggle Break      Ctrl+B
+  Quit            Ctrl+Q        Clear Breaks      Ctrl+Shift+B
 
 Run                           Debug Windows
 ────────────────────          ────────────────────
@@ -3032,6 +3040,9 @@ Run                           Debug Windows
             # Update editor display
             self.editor.set_edit_text(self._get_editor_text())
 
+            # Add to recent files
+            self.recent_files.add_file(filename)
+
             self.output_buffer.append(f"Loaded {filename}")
             self._update_output()
 
@@ -3063,6 +3074,9 @@ Run                           Debug Windows
                 f.write('\n'.join(lines))
                 f.write('\n')
 
+            # Add to recent files
+            self.recent_files.add_file(filename)
+
             self.output_buffer.append(f"Saved to {filename}")
             self._update_output()
 
@@ -3085,6 +3099,97 @@ Run                           Debug Windows
         except Exception as e:
             self.output_buffer.append(f"Error loading file: {e}")
             self._update_output()
+
+    def _show_recent_files(self):
+        """Show recent files dialog for selection."""
+        from pathlib import Path
+
+        # Get recent files
+        recent = self.recent_files.get_recent_files(max_count=10)
+
+        if not recent:
+            self.output_buffer.append("No recent files")
+            self._update_output()
+            return
+
+        # Build menu text with numbered options
+        menu_lines = [
+            "══════════════════════════════════════════════════════════════",
+            "",
+            "                     RECENT FILES",
+            "",
+            "══════════════════════════════════════════════════════════════",
+            ""
+        ]
+
+        for i, filepath in enumerate(recent, 1):
+            filename = Path(filepath).name
+            menu_lines.append(f"  {i}. {filename}")
+
+        menu_lines.extend([
+            "",
+            "══════════════════════════════════════════════════════════════",
+            "",
+            "     Enter number (1-{}) or ESC to cancel".format(len(recent)),
+            "     'c' to clear recent files",
+            "",
+            "══════════════════════════════════════════════════════════════"
+        ])
+
+        menu_text = '\n'.join(menu_lines)
+
+        # Create menu dialog
+        text = urwid.Text(menu_text)
+        fill = urwid.Filler(text, valign='middle')
+        box = urwid.LineBox(fill, title="Recent Files")
+        overlay = urwid.Overlay(
+            urwid.AttrMap(box, 'body'),
+            self.loop.widget,
+            align='center',
+            width=('relative', 70),
+            valign='middle',
+            height=('relative', 60)
+        )
+
+        # Store original widget
+        main_widget = self.loop.widget
+
+        # Set up keypress handler
+        def handle_selection(key):
+            if key == 'esc':
+                # Cancel
+                self.loop.widget = main_widget
+                self.loop.unhandled_input = self._handle_input
+            elif key == 'c' or key == 'C':
+                # Clear recent files
+                self.recent_files.clear()
+                self.output_buffer.append("Recent files cleared")
+                self._update_output()
+                self.loop.widget = main_widget
+                self.loop.unhandled_input = self._handle_input
+            elif key in '123456789':
+                # Load selected file
+                index = int(key) - 1
+                if index < len(recent):
+                    filepath = recent[index]
+                    # Check if file exists
+                    if not Path(filepath).exists():
+                        self.output_buffer.append(f"File not found: {filepath}")
+                        self.output_buffer.append("Removed from recent files")
+                        self.recent_files.remove_file(filepath)
+                        self._update_output()
+                    else:
+                        try:
+                            self._load_program_file(filepath)
+                        except Exception as e:
+                            self.output_buffer.append(f"Error loading file: {e}")
+                            self._update_output()
+                self.loop.widget = main_widget
+                self.loop.unhandled_input = self._handle_input
+
+        # Show overlay and set handler
+        self.loop.widget = overlay
+        self.loop.unhandled_input = handle_selection
 
     # Immediate mode methods
 
