@@ -662,6 +662,7 @@ class TkBackend(UIBackend):
 
     def _menu_continue(self):
         """Run > Continue (from breakpoint or error)"""
+        import tkinter as tk
         from src.debug_logger import debug_log
 
         debug_log(f"_menu_continue called: interpreter={self.interpreter is not None}, paused={self.paused_at_breakpoint}", level=1)
