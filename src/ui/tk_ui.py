@@ -2220,17 +2220,22 @@ class TkBackend(UIBackend):
                 self._update_immediate_status()
 
                 # Highlight the error statement (yellow highlight)
+                from src.debug_logger import debug_log
+                debug_log(f"Error state: line={state.current_line}, char_start={state.current_statement_char_start}, char_end={state.current_statement_char_end}", level=1)
                 if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
+                    debug_log(f"Highlighting error statement", level=1)
                     self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
+                else:
+                    debug_log(f"NOT highlighting - char positions are 0", level=1)
 
                 # Mark the error line with red ? indicator
                 if line_num and line_num != "?":
                     try:
                         line_num_int = int(line_num)
                         from src.debug_logger import debug_log
-                        debug_log(f"Setting error marker on line {line_num_int}: {error_msg}", level=2)
+                        debug_log(f"Setting error marker on line {line_num_int}: {error_msg}", level=1)
                         self.editor_text.set_error(line_num_int, True, error_msg)
-                        debug_log(f"Error marker set successfully", level=2)
+                        debug_log(f"Error marker set successfully", level=1)
                     except (ValueError, AttributeError, TypeError) as e:
                         from src.debug_logger import debug_log
                         debug_log(f"Failed to set error marker: {e}", level=1)
