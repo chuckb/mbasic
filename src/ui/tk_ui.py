@@ -609,7 +609,10 @@ class TkBackend(UIBackend):
 
     def _menu_run(self):
         """Run > Run Program"""
-        self._save_editor_to_program()
+        success = self._save_editor_to_program()
+        if not success:
+            self._set_status("Cannot run - program has syntax errors")
+            return
         self.cmd_run()
 
     def _menu_list(self):
