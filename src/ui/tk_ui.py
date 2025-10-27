@@ -930,7 +930,7 @@ class TkBackend(UIBackend):
         self.variables_search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
         self.variables_search_entry.bind('<KeyRelease>', lambda e: self._on_variable_filter_change())
 
-        ttk.Button(search_frame, text="Clear", command=self._clear_variable_filter, width=6).pack(side=tk.LEFT)
+        ttk.Button(search_frame, text="Edit", command=self._edit_selected_variable, width=6).pack(side=tk.LEFT)
 
         # Create Treeview
         tree = ttk.Treeview(self.variables_window, columns=('Value', 'Type'), show='tree headings')
@@ -1020,9 +1020,9 @@ class TkBackend(UIBackend):
         from tkinter import simpledialog
         import re
 
-        # Check if we clicked on a row (not heading)
+        # Check if we clicked on a row (accept 'tree' for first column or 'cell' for other columns)
         region = self.variables_tree.identify_region(event.x, event.y)
-        if region != 'cell':
+        if region not in ('cell', 'tree'):
             return
 
         # Get selected item
@@ -1076,7 +1076,7 @@ class TkBackend(UIBackend):
         elif type_suffix == '%':
             # Integer variable
             try:
-                initial_value = int(current_value)
+                initial_value = int(float(current_value))  # Handle both "23" and "23.0"
             except ValueError:
                 initial_value = 0
             new_value = simpledialog.askinteger(
@@ -1087,16 +1087,20 @@ class TkBackend(UIBackend):
             )
         else:
             # Float variable (single or double precision)
-            try:
-                initial_value = float(current_value)
-            except ValueError:
-                initial_value = 0.0
-            new_value = simpledialog.askfloat(
+            # Show the current value as-is (already formatted nicely from display)
+            new_value_str = simpledialog.askstring(
                 "Edit Variable",
                 f"Enter new value for {variable_name}:",
-                initialvalue=initial_value,
+                initialvalue=current_value,
                 parent=self.variables_window
             )
+            if new_value_str is None:
+                return  # User cancelled
+            try:
+                new_value = float(new_value_str)
+            except ValueError:
+                messagebox.showerror("Error", f"Invalid number: {new_value_str}")
+                return
 
         if new_value is None:
             return  # User cancelled
@@ -1541,6 +1545,32 @@ class TkBackend(UIBackend):
             self.variables_search_entry.delete(0, 'end')
             self.variables_filter_text = ""
             self._update_variables()
+
+    def _edit_selected_variable(self):
+        """Edit the currently selected variable (called by Edit button)."""
+        from tkinter import messagebox
+
+        # Get selected item
+        selection = self.variables_tree.selection()
+        if not selection:
+            messagebox.showinfo("Edit Variable", "Please select a variable to edit")
+            return
+
+        item_id = selection[0]
+        item_data = self.variables_tree.item(item_id)
+
+        # Extract variable info from display
+        variable_display = item_data['text']  # From #0 column (Variable)
+        value_display = str(item_data['values'][0])  # Value column - convert to string
+        type_suffix_display = item_data['values'][1]  # Type column
+
+        # Call the appropriate edit function
+        if 'Array' in value_display:
+            # Array variable - edit last accessed element
+            self._edit_array_element(variable_display, type_suffix_display, value_display)
+        else:
+            # Simple variable
+            self._edit_simple_variable(variable_display, type_suffix_display, value_display)
 
     def _create_stack_window(self):
         """Create execution stack window (Toplevel)."""
