@@ -72,8 +72,8 @@ This document ensures all three UIs (Tk, Curses, Web) have feature parity. It wa
 | **Save file** | ✅ | ✅ | ⚠️ | Web: Download, no direct save |
 | **Save As** | ✅ | ✅ | ✅ | Specify filename |
 | **Load from server** | N/A | N/A | ✅ | Web-specific: browse server files |
-| **Recent files** | ❌ | ❌ | ❌ | TODO: Implement for all UIs - High priority workflow improvement |
-| **Auto-save** | ❌ | ❌ | ❌ | TODO: None have this |
+| **Recent files** | ✅ | ✅ | ✅ | **COMPLETE 2025-10-27** - Shared recent_files.py, shows last 10 files |
+| **Auto-save** | ❌ | ❌ | ❌ | TODO: High priority - Prevent data loss |
 
 ## Execution & Debugging
 
@@ -230,34 +230,36 @@ This document ensures all three UIs (Tk, Curses, Web) have feature parity. It wa
 
 ## Summary by UI
 
-### Tk UI: 96% Feature Complete
+### Tk UI: 97% Feature Complete
 **Strengths:**
 - Full native GUI features
 - Best text editing experience
 - Auto-sort on save
 - Statement highlighting (visual)
 - Smart Insert Line (Ctrl+I)
+- Recent Files (submenu with 1-9 shortcuts)
 
 **Gaps:**
-- No recent files
 - No auto-save
 - Limited syntax highlighting
 
-### Curses UI: 92% Feature Complete
+### Curses UI: 94% Feature Complete
 **Strengths:**
 - Works remotely (SSH)
 - Compact layout
 - Line-by-line editing mode
 - Statement highlighting (status-based)
 - Smart Insert Line (Ctrl+I)
+- Recent Files (Ctrl+Shift+O, numbered dialog)
 
 **Gaps:**
 - Limited copy/paste (terminal-dependent)
 - No undo/redo
+- No auto-save
 - Mouse support varies
 - Background validation limited
 
-### Web UI: 97% Feature Complete ⬆️ (was 95%)
+### Web UI: 98% Feature Complete ⬆️ (was 97%)
 **Strengths:**
 - No installation needed
 - Server file browser
@@ -266,9 +268,11 @@ This document ensures all three UIs (Tk, Curses, Web) have feature parity. It wa
 - **✅ Full keyboard shortcuts (ADDED 2025-10-26)**
 - Error markers and statement indicators
 - Smart Insert Line (Edit menu dialog)
+- Recent Files (File menu dialog with icons)
 
 **Gaps:**
 - No direct file save (download only - by design for web)
+- No auto-save
 - Current line highlight missing (textarea limitation)
 - Mobile support limited
 
@@ -287,13 +291,14 @@ This document ensures all three UIs (Tk, Curses, Web) have feature parity. It wa
    - Status: Remains a limitation of textarea component
 
 ### High Priority (Useful Features)
-3. ❌ **All UIs: No recent files list** - Would improve workflow
-   - Files: All UI files
-   - Implement: Recent files menu (last 5-10 files)
+3. ✅ **DONE: All UIs: Recent files list** - **COMPLETED 2025-10-27**
+   - Files: src/ui/recent_files.py (shared), tk_ui.py, curses_ui.py, web_ui.py
+   - Status: Tracks last 10 files in ~/.mbasic/recent_files.json
+   - Implementation: Submenu (Tk), Ctrl+Shift+O dialog (Curses), File menu (Web)
 
-4. ❌ **All UIs: No auto-save** - Risk of losing work
+4. ❌ **All UIs: No auto-save** - **HIGH PRIORITY** - Risk of losing work
    - Files: All UI files
-   - Implement: Periodic auto-save to temp file
+   - Implement: Periodic auto-save to temp file (~/.mbasic/autosave/)
 
 5. ⚠️ **All UIs: Limited variable search** - Hard to find in large programs
    - Files: tk_ui.py, curses_ui.py, web_ui.py
