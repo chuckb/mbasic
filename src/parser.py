@@ -1033,7 +1033,12 @@ class Parser:
         self.expect(TokenType.FN)
 
         name_token = self.expect(TokenType.IDENTIFIER)
-        func_name = "FN" + name_token.value
+        raw_name = name_token.value
+        # Strip type suffix from the name (e.g., "ucase$" -> "ucase")
+        type_suffix = self.get_type_suffix(raw_name)
+        if type_suffix:
+            raw_name = raw_name[:-1]
+        func_name = "fn" + raw_name  # Use lowercase 'fn' to match function definitions
 
         # Parse arguments if present
         args: List[ExpressionNode] = []
