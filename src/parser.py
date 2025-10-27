@@ -2577,13 +2577,23 @@ class Parser:
             # Handle "DEF FN name" with space (optional FN keyword)
             self.advance()
             fn_name_token = self.expect(TokenType.IDENTIFIER)
-            function_name = "FN" + fn_name_token.value
+            raw_name = fn_name_token.value
+            # Strip type suffix from the name (e.g., "test$" -> "test")
+            type_suffix = self.get_type_suffix(raw_name)
+            if type_suffix:
+                raw_name = raw_name[:-1]
+            function_name = "FN" + raw_name
         elif fn_name_token and fn_name_token.type == TokenType.IDENTIFIER:
             # "DEF FNR" without space - identifier is "fnr" (normalized to lowercase)
             if not fn_name_token.value.startswith("fn"):
                 raise ParseError("DEF function name must start with FN", fn_name_token)
             self.advance()
-            function_name = fn_name_token.value
+            raw_name = fn_name_token.value
+            # Strip type suffix from the name (e.g., "fntest$" -> "fntest")
+            type_suffix = self.get_type_suffix(raw_name)
+            if type_suffix:
+                raw_name = raw_name[:-1]
+            function_name = raw_name
         else:
             raise ParseError("Expected function name after DEF", fn_name_token)
 
@@ -2596,10 +2606,15 @@ class Parser:
             if not self.match(TokenType.RPAREN):
                 while True:
                     param_token = self.expect(TokenType.IDENTIFIER)
+                    # Split parameter name and type suffix (e.g., "z$" -> name="z", suffix="$")
+                    param_name = param_token.value
+                    param_type_suffix = self.get_type_suffix(param_name)
+                    if param_type_suffix:
+                        param_name = param_name[:-1]  # Remove suffix from name
                     # Create VariableNode for each parameter
                     param_var = VariableNode(
-                        name=param_token.value,
-                        type_suffix=self.get_type_suffix(param_token.value),
+                        name=param_name,
+                        type_suffix=param_type_suffix,
                         subscripts=None,
                         line_num=param_token.line,
                         column=param_token.column
