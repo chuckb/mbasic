@@ -226,12 +226,18 @@ class TkBackend(UIBackend):
         # Add click handler to force focus when clicking in entry
         def on_entry_click(e):
             print(f"[DEBUG] Button-1 click in immediate_entry at x={e.x} y={e.y}", flush=True)
+            print(f"[DEBUG] At click time: viewable={self.immediate_entry.winfo_viewable()} mapped={self.immediate_entry.winfo_ismapped()}", flush=True)
             debug_log(f"Button-1 click in immediate_entry at x={e.x} y={e.y}", level=1)
             # Force focus to this widget when clicked
             self.immediate_entry.focus_force()
             # Also set the insert cursor at the click position
             self.immediate_entry.icursor(f"@{e.x}")
-            print(f"[DEBUG] Focus after click: {self.root.focus_get()}", flush=True)
+            focused = self.root.focus_get()
+            print(f"[DEBUG] Focus after click: {focused} (entry={self.immediate_entry})", flush=True)
+            if focused == self.immediate_entry:
+                print(f"[DEBUG] SUCCESS! Entry has focus!", flush=True)
+            else:
+                print(f"[DEBUG] FAIL! Focus is still on {focused}", flush=True)
             return "break"  # Prevent event from propagating
 
         # Debug: Add bindings to test if widget receives events
