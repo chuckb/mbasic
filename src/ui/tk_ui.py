@@ -808,8 +808,8 @@ class TkBackend(UIBackend):
                     new_line_table[line.line_number] = line
                 new_line_order = sorted(new_line_table.keys())
 
-                self.interpreter.runtime.line_table = new_line_table
-                self.interpreter.runtime.line_order = new_line_order
+                self.runtime.line_table = new_line_table
+                self.runtime.line_order = new_line_order
                 debug_log(f"Updated line_table with {len(new_line_table)} lines", level=1)
 
                 # Clear error state and set to paused
@@ -1035,7 +1035,7 @@ class TkBackend(UIBackend):
 
         # Extract variable info from display
         variable_display = item_data['text']  # From #0 column (Variable)
-        value_display = item_data['values'][0]  # Value column (swapped to first)
+        value_display = str(item_data['values'][0])  # Value column (swapped to first) - convert to string
         type_suffix_display = item_data['values'][1]  # Type column (swapped to second)
 
         # Parse variable name and type
@@ -1058,8 +1058,8 @@ class TkBackend(UIBackend):
         import tkinter as tk
         from tkinter import simpledialog, messagebox
 
-        if not self.interpreter or not self.interpreter.runtime:
-            messagebox.showerror("Error", "No program running")
+        if not self.runtime:
+            messagebox.showerror("Error", "Runtime not available")
             return
 
         # Determine dialog type based on type suffix
@@ -1111,12 +1111,12 @@ class TkBackend(UIBackend):
                 base_name = variable_name
                 suffix = None
 
-            # Use debugger_set=True to bypass token requirement
-            self.interpreter.runtime.set_variable(
+            # Use token=None for immediate mode / variable editor
+            self.runtime.set_variable(
                 base_name,
                 suffix,
                 new_value,
-                debugger_set=True
+                token=None
             )
 
             # Refresh variables window
@@ -1140,8 +1140,8 @@ class TkBackend(UIBackend):
         from tkinter import messagebox
         import re
 
-        if not self.interpreter or not self.interpreter.runtime:
-            messagebox.showerror("Error", "No program running")
+        if not self.runtime:
+            messagebox.showerror("Error", "Runtime not available")
             return
 
         # Get array dimensions from display "Array(10x10)"
@@ -1159,7 +1159,7 @@ class TkBackend(UIBackend):
         suffix = variable_name[-1] if variable_name[-1] in '$%!#' else None
 
         try:
-            array_var = self.interpreter.runtime.get_variable(base_name, suffix)
+            array_var = self.runtime.get_variable(base_name, suffix)
             dimensions = array_var.dimensions if hasattr(array_var, 'dimensions') else []
         except:
             dimensions = []
@@ -1226,7 +1226,7 @@ class TkBackend(UIBackend):
                             return
 
                 # Get current value
-                array_var = self.interpreter.runtime.get_variable(base_name, suffix)
+                array_var = self.runtime.get_variable(base_name, suffix)
 
                 # Calculate linear index
                 index = 0
@@ -1278,7 +1278,7 @@ class TkBackend(UIBackend):
                     new_value = float(new_value_str)
 
                 # Update array element
-                self.interpreter.runtime.set_array_element(
+                self.runtime.set_array_element(
                     base_name,
                     suffix,
                     subscripts,
@@ -1582,8 +1582,8 @@ class TkBackend(UIBackend):
         if not self.stack_visible:
             return
 
-        # Get runtime - prefer interpreter.runtime if available (for tick-based execution)
-        runtime = self.interpreter.runtime if (self.interpreter and hasattr(self.interpreter, 'runtime')) else self.runtime
+        # Get runtime
+        runtime = self.runtime
         if not runtime:
             return
 
