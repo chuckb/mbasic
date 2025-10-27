@@ -304,12 +304,23 @@ class TkBackend(UIBackend):
         # Try setting focus after a longer delay to ensure window is fully realized
         self.root.after(500, set_initial_focus)
 
+        # Store reference to input_frame for diagnostics
+        self.immediate_input_frame = input_frame
+        self.immediate_frame_container = immediate_frame
+
         # Add a second check much later to see if widget ever gets proper size
         def check_widget_later():
             print(f"[DEBUG] Widget check at 2000ms:", flush=True)
+            print(f"[DEBUG] Entry:", flush=True)
             print(f"[DEBUG]   viewable={self.immediate_entry.winfo_viewable()} mapped={self.immediate_entry.winfo_ismapped()}", flush=True)
             print(f"[DEBUG]   width={self.immediate_entry.winfo_width()} height={self.immediate_entry.winfo_height()}", flush=True)
             print(f"[DEBUG]   x={self.immediate_entry.winfo_x()} y={self.immediate_entry.winfo_y()}", flush=True)
+            print(f"[DEBUG] Input frame:", flush=True)
+            print(f"[DEBUG]   viewable={self.immediate_input_frame.winfo_viewable()} mapped={self.immediate_input_frame.winfo_ismapped()}", flush=True)
+            print(f"[DEBUG]   width={self.immediate_input_frame.winfo_width()} height={self.immediate_input_frame.winfo_height()}", flush=True)
+            print(f"[DEBUG] Immediate frame:", flush=True)
+            print(f"[DEBUG]   viewable={self.immediate_frame_container.winfo_viewable()} mapped={self.immediate_frame_container.winfo_ismapped()}", flush=True)
+            print(f"[DEBUG]   width={self.immediate_frame_container.winfo_width()} height={self.immediate_frame_container.winfo_height()}", flush=True)
             if self.immediate_entry.winfo_width() > 10:
                 print(f"[DEBUG] Widget has proper size now! Trying focus again...", flush=True)
                 self.immediate_entry.focus_force()
