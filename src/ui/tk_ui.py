@@ -2041,11 +2041,25 @@ class TkBackend(UIBackend):
                 if midpoint is not None:
                     new_line_num = midpoint
                 else:
-                    # No room at all - just move to next line
-                    if current_line_text_index is not None:
-                        next_line_index = current_line_text_index + 1
-                        self.editor_text.text.mark_set(tk.INSERT, f'{next_line_index}.0')
-                        self.editor_text.text.see(f'{next_line_index}.0')
+                    # No room at all - offer to renumber
+                    from tkinter import messagebox
+                    response = messagebox.askyesno(
+                        "No Room",
+                        f"No room to insert line between {current_line_num} and {next_existing_line_num}.\n\n"
+                        f"Would you like to renumber the program to make room?"
+                    )
+                    if response:
+                        # Renumber to make room
+                        self._save_editor_to_program()
+                        self.cmd_renum(f"10,0,10")
+                        self._refresh_editor()
+                        # After renumber, user can try again
+                    else:
+                        # User declined - just move to next line
+                        if current_line_text_index is not None:
+                            next_line_index = current_line_text_index + 1
+                            self.editor_text.text.mark_set(tk.INSERT, f'{next_line_index}.0')
+                            self.editor_text.text.see(f'{next_line_index}.0')
                     return 'break'
 
         # Insert the new line number
