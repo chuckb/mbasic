@@ -57,6 +57,9 @@ class LineNumberedText(tk.Frame if tk else object):
         )
         self.canvas.grid(row=0, column=0, sticky='ns')
 
+        # Bind click on status column
+        self.canvas.bind('<Button-1>', self._on_status_click)
+
         # Create text widget
         text_kwargs = {
             'wrap': tk.NONE,
@@ -298,6 +301,42 @@ class LineNumberedText(tk.Frame if tk else object):
         if line_number in self.line_metadata:
             return self.line_metadata[line_number].get('error_message')
         return None
+
+    def _on_status_click(self, event):
+        """Handle click on status column (show error message if clicked on ?)."""
+        import tkinter.messagebox as messagebox
+
+        # Calculate which line was clicked based on Y coordinate
+        # Get scroll position
+        first_visible = float(self.text.index('@0,0').split('.')[0])
+
+        # Calculate line based on click Y and line height
+        clicked_line_offset = int(event.y / self.line_height)
+        clicked_editor_line = int(first_visible) + clicked_line_offset
+
+        # Get the text of that editor line to find BASIC line number
+        try:
+            line_text = self.text.get(f'{clicked_editor_line}.0', f'{clicked_editor_line}.end')
+            import re
+            match = re.match(r'^\s*(\d+)', line_text)
+            if match:
+                line_num = int(match.group(1))
+                error_msg = self.get_error_message(line_num)
+                if error_msg:
+                    messagebox.showerror(
+                        f"Error on Line {line_num}",
+                        error_msg
+                    )
+                else:
+                    # Has breakpoint, not error
+                    metadata = self.line_metadata.get(line_num, {})
+                    if metadata.get('has_breakpoint'):
+                        messagebox.showinfo(
+                            f"Breakpoint on Line {line_num}",
+                            f"Line {line_num} has a breakpoint set.\n\nClick the ● again to toggle it off."
+                        )
+        except Exception:
+            pass  # Click outside valid lines
 
     def clear_all_errors(self):
         """Clear all error indicators."""

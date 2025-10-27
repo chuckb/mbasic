@@ -1583,14 +1583,17 @@ class TkBackend(UIBackend):
         # Clear existing error markers
         self.editor_text.clear_all_errors()
 
+        # Collect errors to show in output
+        errors_found = []
+
         # Check each line
         for line in editor_content.split('\n'):
-            line = line.strip()
-            if not line:
+            line_stripped = line.strip()
+            if not line_stripped:
                 continue
 
             # Try to parse line number
-            match = re.match(r'^(\d+)\s+(.+)$', line)
+            match = re.match(r'^(\d+)\s+(.+)$', line_stripped)
             if match:
                 line_num = int(match.group(1))
                 code = match.group(2)
@@ -1599,6 +1602,14 @@ class TkBackend(UIBackend):
                 is_valid, error_msg = self._check_line_syntax(code)
                 if not is_valid:
                     self.editor_text.set_error(line_num, True, error_msg)
+                    errors_found.append((line_num, error_msg))
+
+        # Show errors in output window if any found
+        if errors_found:
+            self._add_output("\n=== Syntax Errors ===\n")
+            for line_num, error_msg in errors_found:
+                self._add_output(f"Line {line_num}: {error_msg}\n")
+            self._add_output("===================\n")
 
     def _check_line_syntax(self, code_text):
         """Check if a line of BASIC code has valid syntax.
