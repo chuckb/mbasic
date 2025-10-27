@@ -1175,10 +1175,12 @@ class TkBackend(UIBackend):
                     return
 
                 # Validate bounds
+                ordinals = ['1st', '2nd', '3rd', '4th']
                 for i, sub in enumerate(subscripts):
                     if dimensions and i < len(dimensions):
                         if sub < 0 or sub > dimensions[i]:
-                            error_label.config(text=f"Subscript {i} out of bounds: {sub} not in [0, {dimensions[i]}]")
+                            ordinal = ordinals[i] if i < len(ordinals) else f"{i+1}th"
+                            error_label.config(text=f"{ordinal} subscript out of bounds: {sub} not in [0, {dimensions[i]}]")
                             current_value_label.config(text="")
                             value_entry.delete(0, 'end')
                             return
