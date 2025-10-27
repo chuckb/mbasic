@@ -1937,13 +1937,24 @@ class TkBackend(UIBackend):
             f'{current_line_index}.end'
         ).strip()
 
-        # If line is completely blank, don't do anything special
+        # If line is completely blank, don't do anything (prevent blank lines)
         if not current_line_text:
-            # Just insert a newline and stay there
-            self.editor_text.text.insert(tk.INSERT, '\n')
             return 'break'
 
-        # Check if line already has a line number
+        # Check if line is just a line number with no content (e.g., "20 ")
+        # This happens when Enter is pressed on the auto-generated prompt
+        match_number_only = re.match(r'^\s*(\d+)\s*$', current_line_text)
+        if match_number_only:
+            # Line has only a number, no code - remove it and don't create another blank line
+            self.editor_text.text.delete(f'{current_line_index}.0', f'{current_line_index}.end')
+            # Also remove the newline if this isn't the last line
+            try:
+                self.editor_text.text.delete(f'{current_line_index}.0', f'{current_line_index+1}.0')
+            except:
+                pass
+            return 'break'
+
+        # Check if line already has a line number with content
         match = re.match(r'^\s*(\d+)\s+(.+)', current_line_text)
         if match:
             # Already has line number - just save and move to next line
