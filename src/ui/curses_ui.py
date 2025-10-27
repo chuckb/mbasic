@@ -19,6 +19,7 @@ from .keybindings import (
 from .markdown_renderer import MarkdownRenderer
 from .help_widget import HelpWidget
 from .recent_files import RecentFilesManager
+from .auto_save import AutoSaveManager
 from runtime import Runtime
 from interpreter import Interpreter
 from lexer import Lexer
@@ -1305,6 +1306,9 @@ class CursesBackend(UIBackend):
         # Recent files manager
         self.recent_files = RecentFilesManager()
 
+        # Auto-save manager
+        self.auto_save = AutoSaveManager()
+
         # UI state
         self.app = None
         self.loop = None
@@ -1390,6 +1394,12 @@ class CursesBackend(UIBackend):
 
     def _cleanup(self):
         """Clean up resources before exit."""
+        # Stop autosave
+        if hasattr(self, 'auto_save'):
+            self.auto_save.stop_autosave()
+            # Clean up old autosaves (7+ days)
+            self.auto_save.cleanup_old_autosaves()
+
         # Restore default cursor color
         try:
             if hasattr(self, 'loop') and hasattr(self.loop.screen, '_term_output_file'):
@@ -3020,13 +3030,33 @@ Run                           Debug Windows
 
         self._update_output()
 
+    def _get_editor_content(self) -> str:
+        """Get current editor content.
+
+        Returns:
+            Current text in editor
+        """
+        if self.editor and self.editor.edit_widget:
+            return self.editor.edit_widget.get_edit_text()
+        return ""
+
     def _new_program(self):
         """Clear the current program."""
+        # Stop current autosave
+        self.auto_save.stop_autosave()
+
         self.editor_lines = {}
         self.editor.clear()
         self.output_buffer.append("Program cleared")
         self._update_output()
         self.status_bar.set_text("Ready - Press Ctrl+H for help")
+
+        # Start autosave for new file
+        self.auto_save.start_autosave(
+            'untitled.bas',
+            self._get_editor_content,
+            interval=30
+        )
 
     def _parse_editor_content(self):
         """Parse the editor content into line-numbered statements."""
@@ -3092,6 +3122,68 @@ Run                           Debug Windows
             # Force a screen update
             if hasattr(self, 'loop') and self.loop and self.loop_running:
                 self.loop.draw_screen()
+
+    def _show_yesno_dialog(self, title, message):
+        """Show yes/no dialog and get user response.
+
+        Args:
+            title: Dialog title
+            message: Dialog message
+
+        Returns:
+            True if yes, False if no
+        """
+        # Create text widget
+        text = urwid.Text(message)
+
+        # Create dialog
+        fill = urwid.Filler(text, valign='top')
+        box = urwid.LineBox(fill, title=f"{title} - Press 'y' for Yes, 'n' for No, ESC to cancel")
+        overlay = urwid.Overlay(
+            urwid.AttrMap(box, 'body'),
+            self.loop.widget,
+            align='center',
+            width=('relative', 70),
+            valign='middle',
+            height=('relative', 40)
+        )
+
+        # Store original widget
+        original_widget = self.loop.widget
+        self.loop.widget = overlay
+
+        # Variable to store result
+        result = {'value': False}
+        done = {'flag': False}
+
+        def handle_input(key):
+            if key == 'y' or key == 'Y':
+                result['value'] = True
+                done['flag'] = True
+                self.loop.widget = original_widget
+            elif key == 'n' or key == 'N' or key == 'esc':
+                result['value'] = False
+                done['flag'] = True
+                self.loop.widget = original_widget
+            return None
+
+        # Temporarily override input handler
+        old_handler = self.loop.unhandled_input
+        self.loop.unhandled_input = handle_input
+
+        # Run loop until we get input
+        while not done['flag']:
+            self.loop.draw_screen()
+            keys = self.loop.screen.get_input()
+            for key in keys:
+                self.loop.process_input(keys)
+            if done['flag']:
+                break
+
+        # Restore handler
+        self.loop.unhandled_input = old_handler
+
+        return result['value']
 
     def _get_input_dialog(self, prompt):
         """Show input dialog and get user response."""
@@ -3176,6 +3268,14 @@ Run                           Debug Windows
             self.output_buffer.append(f"Loaded {filename}")
             self._update_output()
 
+            # Start autosave for loaded file
+            self.auto_save.stop_autosave()
+            self.auto_save.start_autosave(
+                filename,
+                self._get_editor_content,
+                interval=30
+            )
+
         except Exception as e:
             self.output_buffer.append(f"Error loading file: {e}")
             self._update_output()
@@ -3210,6 +3310,17 @@ Run                           Debug Windows
             self.output_buffer.append(f"Saved to {filename}")
             self._update_output()
 
+            # Clean up autosave after successful save
+            self.auto_save.cleanup_after_save(filename)
+
+            # Restart autosave with new filename
+            self.auto_save.stop_autosave()
+            self.auto_save.start_autosave(
+                filename,
+                self._get_editor_content,
+                interval=30
+            )
+
         except Exception as e:
             self.output_buffer.append(f"Error saving file: {e}")
             self._update_output()
@@ -3225,6 +3336,36 @@ Run                           Debug Windows
             return
 
         try:
+            # Check for autosave recovery
+            if self.auto_save.is_autosave_newer(filename):
+                prompt = self.auto_save.format_recovery_prompt(filename)
+                if prompt:
+                    response = self._show_yesno_dialog(
+                        "Auto-save Recovery",
+                        prompt + "\n\nPress 'y' to recover, 'n' to load original file"
+                    )
+                    if response:
+                        # Load from autosave
+                        autosave_content = self.auto_save.load_autosave(filename)
+                        if autosave_content:
+                            # Clear editor
+                            self.editor_lines = {}
+                            self.editor.set_edit_text(autosave_content)
+                            # Parse content
+                            self._parse_editor_content()
+                            # Add to recent files
+                            self.recent_files.add_file(filename)
+                            self.output_buffer.append(f"Recovered from autosave: {filename}")
+                            self._update_output()
+                            # Start autosave
+                            self.auto_save.start_autosave(
+                                filename,
+                                self._get_editor_content,
+                                interval=30
+                            )
+                            return
+
+            # Normal load (no recovery or user declined)
             self._load_program_file(filename)
         except Exception as e:
             self.output_buffer.append(f"Error loading file: {e}")

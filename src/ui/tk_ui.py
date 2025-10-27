@@ -10,6 +10,7 @@ from runtime import Runtime
 from interpreter import Interpreter
 from .keybinding_loader import KeybindingLoader
 from .recent_files import RecentFilesManager
+from .auto_save import AutoSaveManager
 from immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
 from iohandler.base import IOHandler
 from input_sanitizer import sanitize_and_clear_parity, is_valid_input_char
@@ -51,6 +52,9 @@ class TkBackend(UIBackend):
 
         # Recent files manager
         self.recent_files = RecentFilesManager()
+
+        # Auto-save manager
+        self.auto_save = AutoSaveManager()
 
         # Runtime and interpreter for program execution
         self.runtime = None
@@ -352,13 +356,46 @@ class TkBackend(UIBackend):
     def _menu_open(self):
         """File > Open"""
         import tkinter as tk
-        from tkinter import filedialog
+        from tkinter import filedialog, messagebox
 
         filename = filedialog.askopenfilename(
             title="Open BASIC Program",
             filetypes=[("BASIC files", "*.bas"), ("All files", "*.*")]
         )
         if filename:
+            # Check for autosave recovery
+            if self.auto_save.is_autosave_newer(filename):
+                prompt = self.auto_save.format_recovery_prompt(filename)
+                if prompt:
+                    response = messagebox.askyesno(
+                        "Recover Auto-Save?",
+                        prompt,
+                        icon='question'
+                    )
+                    if response:
+                        # Load from autosave
+                        autosave_content = self.auto_save.load_autosave(filename)
+                        if autosave_content:
+                            # Load content into editor
+                            self.editor_text.text.delete(1.0, tk.END)
+                            self.editor_text.text.insert(1.0, autosave_content)
+                            # Parse into program
+                            self._save_editor_to_program()
+                            # Set current file
+                            self.program.current_file = filename
+                            self._set_status(f"Recovered from autosave: {filename}")
+                            # Add to recent files
+                            self.recent_files.add_file(filename)
+                            self._update_recent_files_menu()
+                            # Start autosave
+                            self.auto_save.start_autosave(
+                                filename,
+                                self._get_editor_content,
+                                interval=30
+                            )
+                            return
+
+            # Normal load (no recovery or user declined)
             self.cmd_load(filename)
             # Add to recent files
             self.recent_files.add_file(filename)
@@ -391,6 +428,10 @@ class TkBackend(UIBackend):
 
     def _menu_exit(self):
         """File > Exit"""
+        # Stop autosave
+        self.auto_save.stop_autosave()
+        # Clean up old autosaves (7+ days)
+        self.auto_save.cleanup_old_autosaves()
         self.root.quit()
 
     def _update_recent_files_menu(self):
@@ -440,11 +481,11 @@ class TkBackend(UIBackend):
             filepath: Full path to file to open
         """
         from pathlib import Path
+        import tkinter as tk
+        from tkinter import messagebox
 
         # Check if file exists
         if not Path(filepath).exists():
-            import tkinter as tk
-            from tkinter import messagebox
             messagebox.showerror(
                 "File Not Found",
                 f"The file '{filepath}' no longer exists.\n\n"
@@ -455,7 +496,39 @@ class TkBackend(UIBackend):
             self._update_recent_files_menu()
             return
 
-        # Load the file
+        # Check for autosave recovery
+        if self.auto_save.is_autosave_newer(filepath):
+            prompt = self.auto_save.format_recovery_prompt(filepath)
+            if prompt:
+                response = messagebox.askyesno(
+                    "Recover Auto-Save?",
+                    prompt,
+                    icon='question'
+                )
+                if response:
+                    # Load from autosave
+                    autosave_content = self.auto_save.load_autosave(filepath)
+                    if autosave_content:
+                        # Load content into editor
+                        self.editor_text.text.delete(1.0, tk.END)
+                        self.editor_text.text.insert(1.0, autosave_content)
+                        # Parse into program
+                        self._save_editor_to_program()
+                        # Set current file
+                        self.program.current_file = filepath
+                        self._set_status(f"Recovered from autosave: {filepath}")
+                        # Update recent files
+                        self.recent_files.add_file(filepath)
+                        self._update_recent_files_menu()
+                        # Start autosave
+                        self.auto_save.start_autosave(
+                            filepath,
+                            self._get_editor_content,
+                            interval=30
+                        )
+                        return
+
+        # Load the file normally
         self.cmd_load(filepath)
         # Update recent files (moves to top)
         self.recent_files.add_file(filepath)
@@ -2049,20 +2122,50 @@ class TkBackend(UIBackend):
         for line_num, line_text in lines:
             self._add_output(line_text + "\n")
 
+    def _get_editor_content(self) -> str:
+        """Get current editor content.
+
+        Returns:
+            Current text in editor
+        """
+        import tkinter as tk
+        return self.editor_text.text.get(1.0, tk.END)
+
     def cmd_new(self) -> None:
         """Execute NEW command - clear program."""
         import tkinter as tk
+
+        # Stop current autosave
+        self.auto_save.stop_autosave()
 
         self.program.clear()
         self.editor_text.text.delete(1.0, tk.END)
         self._menu_clear_output()
         self._set_status("New program")
 
+        # Start autosave for new file
+        self.auto_save.start_autosave(
+            'untitled.bas',
+            self._get_editor_content,
+            interval=30
+        )
+
     def cmd_save(self, filename: str) -> None:
         """Execute SAVE command - save to file."""
         try:
             self.program.save_to_file(filename)
             self._set_status(f"Saved to {filename}")
+
+            # Clean up autosave after successful save
+            self.auto_save.cleanup_after_save(filename)
+
+            # Restart autosave with new filename
+            self.auto_save.stop_autosave()
+            self.auto_save.start_autosave(
+                filename,
+                self._get_editor_content,
+                interval=30
+            )
         except Exception as e:
             self._add_output(f"Save error: {e}\n")
             self._set_status("Save error")
@@ -2081,6 +2184,14 @@ class TkBackend(UIBackend):
                 # Re-validate to show error markers for loaded lines
                 self._validate_editor_syntax()
                 self._set_status(f"Loaded from {filename}")
+
+                # Start autosave for loaded file
+                self.auto_save.stop_autosave()
+                self.auto_save.start_autosave(
+                    filename,
+                    self._get_editor_content,
+                    interval=30
+                )
         except Exception as e:
             self._add_output(f"Load error: {e}\n")
             self._set_status("Load error")
