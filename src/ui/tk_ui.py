@@ -1915,13 +1915,16 @@ class TkBackend(UIBackend):
                 self.editor_text.text.mark_set(tk.INSERT, tk.END)
 
     def _on_enter_key(self, event):
-        """Handle Enter key - implement auto-numbering.
+        """Handle Enter key - auto-number current line and move to next.
 
         Returns:
-            'break' to prevent default Enter behavior, None to allow it
+            'break' to prevent default Enter behavior
         """
         import tkinter as tk
         import re
+        from lexer import tokenize
+        from parser import Parser
+        from debug_logger import debug_log
 
         if not self.auto_number_enabled:
             return None  # Allow default behavior
@@ -1932,104 +1935,64 @@ class TkBackend(UIBackend):
         current_line_text = self.editor_text.text.get(
             f'{current_line_index}.0',
             f'{current_line_index}.end'
-        )
+        ).strip()
 
-        # Parse line number from current line
-        match = re.match(r'^\s*(\d+)', current_line_text)
-        if not match:
-            # No line number on current line - check if it's valid BASIC and auto-number it
-            stripped = current_line_text.strip()
-            if not stripped:
-                # Blank line - allow default behavior
-                return None
+        # If line is completely blank, don't do anything special
+        if not current_line_text:
+            # Just insert a newline and stay there
+            self.editor_text.text.insert(tk.INSERT, '\n')
+            return 'break'
 
-            # Try to parse as BASIC code
-            from lexer import tokenize
-            from parser import Parser
-            from debug_logger import debug_log
-
+        # Check if line already has a line number
+        match = re.match(r'^\s*(\d+)\s+(.+)', current_line_text)
+        if match:
+            # Already has line number - just save and move to next line
+            current_line_num = int(match.group(1))
+        else:
+            # No line number - try to add one
             try:
-                test_line = f"1 {stripped}"
+                # Validate it's valid BASIC
+                test_line = f"1 {current_line_text}"
                 tokens = list(tokenize(test_line))
                 parser = Parser(tokens, self.program.def_type_map, source=test_line)
                 parser.parse_line()
 
-                # Valid BASIC code - add line number
-                # Find the next line number to use
+                # Valid BASIC - find next line number
                 if self.program and self.program.has_lines():
                     existing_lines = self.program.get_all_line_numbers()
-                    next_line_num = max(existing_lines) + self.auto_number_increment
+                    current_line_num = max(existing_lines) + self.auto_number_increment
                 else:
-                    next_line_num = self.auto_number_start
+                    current_line_num = self.auto_number_start
 
                 # Replace current line with numbered version
+                numbered_line = f"{current_line_num} {current_line_text}"
                 self.editor_text.text.delete(f'{current_line_index}.0', f'{current_line_index}.end')
-                numbered_line = f"{next_line_num} {stripped}"
                 self.editor_text.text.insert(f'{current_line_index}.0', numbered_line)
-
-                debug_log(f"Auto-numbered typed line: {numbered_line}", level=1)
-
-                # Now treat this as if it was a numbered line
-                current_line_num = next_line_num
+                debug_log(f"Auto-numbered: {numbered_line}", level=1)
 
             except Exception as e:
-                # Not valid BASIC - allow default behavior
-                debug_log(f"Not valid BASIC, allowing default Enter: {e}", level=1)
-                return None
-        else:
-            current_line_num = int(match.group(1))
+                # Not valid BASIC - don't auto-number, just move to next line
+                debug_log(f"Not auto-numbering (not valid BASIC): {e}", level=1)
+                self.editor_text.text.insert(tk.INSERT, '\n')
+                return 'break'
 
-            # Check if current line has content after the line number
-            content_match = re.match(r'^\s*\d+\s+(.+)', current_line_text)
-            if not content_match or not content_match.group(1).strip():
-                # Current line is blank (just a number) - don't create another blank line
-                return None
+        # Save current program state
+        self._save_editor_to_program()
 
-            # Calculate next number
-            next_num = current_line_num + self.auto_number_increment
-
-            # Get all existing line numbers from program
-            existing_nums = set(self.program.get_all_line_numbers())
-
-            # Find next available number
-            # If there's a line after current, don't exceed it
-            sorted_nums = sorted(existing_nums)
-            try:
-                current_idx = sorted_nums.index(current_line_num)
-                if current_idx + 1 < len(sorted_nums):
-                    max_allowed = sorted_nums[current_idx + 1]
-                else:
-                    max_allowed = 99999
-            except ValueError:
-                max_allowed = 99999
-
-            # Skip conflicts
-            while next_num in existing_nums or next_num >= max_allowed:
-                next_num += self.auto_number_increment
-                if next_num >= 99999:
-                    # Ran out of numbers - use current + 1
-                    next_num = current_line_num + 1
-                    break
-
-        # Save current line to program first (so it's included in sort)
-        success = self._save_editor_to_program()
-
-        # Only refresh if no parse errors - preserve user's work if there are errors
-        if not success:
-            # Don't auto-number on error - let user fix the error first
-            return None
-
-        # Refresh editor to sort lines by number
+        # Refresh to sort lines
         self._refresh_editor()
 
-        # Move cursor to the end (after the last line)
-        # Don't insert anything - let default Enter behavior add the newline
+        # Move to end of editor (after all lines)
         self.editor_text.text.mark_set(tk.INSERT, tk.END)
         self.editor_text.text.see(tk.END)
 
-        # Allow default Enter behavior to insert newline
-        # The blank line will be handled by typing on it
-        return None
+        # Insert a newline for the next line
+        self.editor_text.text.insert(tk.END, '\n')
+
+        # Move cursor to the new line
+        self.editor_text.text.mark_set(tk.INSERT, tk.END)
+
+        return 'break'  # Prevent default Enter behavior
 
     def _on_paste(self, event):
         """Handle paste event - sanitize clipboard content.
