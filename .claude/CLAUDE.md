@@ -3,6 +3,10 @@
 ## Workflow
 - Always commit and push changes when you stop to talk to me
 - Track all installed dependencies and update documentation
+- **CRITICAL: Increment VERSION in src/version.py before every commit**
+  - Version appears in debug output so we can verify user has latest code
+  - Format: "X.Y.Z" where Z increments each commit
+  - Example: 1.0.0 → 1.0.1 → 1.0.2
 - **Check `docs/dev/WORK_IN_PROGRESS.md` on EVERY startup** - contains current task that may be incomplete
 
 ## Work-in-Progress Tracking

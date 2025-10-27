@@ -68,9 +68,11 @@ def debug_log_error(message: str,
         return message
 
     # Debug mode - create detailed output
+    from src.version import VERSION
     lines = []
     lines.append("=" * 70)
     lines.append("MBASIC DEBUG ERROR")
+    lines.append(f"Version: {VERSION}")
     lines.append("=" * 70)
     lines.append(f"Message: {message}")
 
