@@ -52,7 +52,6 @@ The CALL statement is one way to transfer program flow to an assembly language s
 ```basic
 110 MYROOT=&HDOOO
              120 CALL MYROOT(I,J,K)
-BASIC-SO COMMANDS AND STATEMENTS                             Page 2-4
 ```
 
 ## See Also

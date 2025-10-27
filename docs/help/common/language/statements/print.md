@@ -26,7 +26,6 @@ To output data at the terminal. To print strings or numbers    using    a   spec
 
 ## Remarks
 
-If <list of expressions> is omitted, a blank line is printed.     If <list of expressions> is included, the values of the expressions are printed at the terminal. The expressions in the list may be numeric and/or string expressions. (Strings must be enclosed in quotation marks.) Print Positions The position of each printed item is determined by the punctuation used to separate the items in the list. BASIC-SO divides the line into print zones of 14 spaces each.        In the list of expressions, a comma causes the next value to be printed at the beginning of the next zone. A semicolon causes the next value to be printed immediately after the last value. Typing one or more spaces between expressions has the same effect as typing a semicolon. If a comma or a semicolon terminates the list of expressions, the next PRINT statement begins printing on the same line, spacing accordingly. If the list of expressions terminates without a comma or a semicolon, a carriage return is printed at the end of the line. If the printed line is longer than the terminal width, BASIC-SO goes to the next physical line and continues printing. Printed numbers are always followed by a space. Positive   numbers are preceded by a space. Negative numbers are preceded by a minus sign. Single precision numbers that can be represented with 6 or fewer digits in the unscaled format no less accurately than they can be represen.ted in the scaled format, are output using the unscaled format.   For eX9mple, 10A(-6) is output as .000001 and 10A(-7) is output as lE-7.    Double preclslon numbers that can be represented with 16 or fewer digits in the unscaled format no less accurately than they can be represented in the scaled format, are output using the unscaled format.' For example, 10A(-16) is output as .0000000000000001 and 10A(-17)    is output as 10-17. BASIC-80 COMMANDS AND STATEMENTS                            Page 2-61 A question mark may be used in place of the word PRINT in a PRINT statement. Example 1:   10 X=5 20 PRINT X+5, X-5, X*(-5), X""5 30 END RUN 10            a            -25                    3125 Ok In this example, the commas in the        PRINT statement cause each value to be printed at the beginning of the next print zone. Example 2:   LIST 10 INPUT X 20 PRINT X "SQUARED IS" X""2 "AND" 7 30 PRINT X "CUBED IS" X""3 40 PRINT 50 GOTO 10 Ok RUN ? 9 9 SQUARED IS 81 AND 9 CUBED IS 729 ? 21 21 SQUARED IS 441 AND 21 CUBED IS 9261 ? In this example, the semicolon at the end of line 20 causes both PRINT statements to be printed on the same line, and line 40 causes a blank line to be printed before the next prompt. Example 3:   10 FOR X = 1 TO 5 20 J=J+5 30 K=K+10 40 ?J7K7 50 NEXT X Ok RUN 5 10 10 20 15        30   20   40   25   50 Ok In this example, the semicolons in the PRINT statement   cause   each value to be printed immediately after the preceding value.   (Don~t forget, a number is always followed by a space and positive numbers are preceded by a space.) In line 40, a question mark is used instead of the word PRINT. BASIC-80 COMMANDS AND STATEMENTS                           Page 2-62 2.~0     PRINT USING
 
 ## Example
 
@@ -61,7 +60,6 @@ be printed, separated by semicolons.     <string
                LO
                LOOKOUT
                LOOK OUT   !!
-BASIC-80 COMMANDS AND STATEMENTS                    Page 2-63
     "&"    Specifies a variable length string field. When
            the field is specified with "&", the string is
            output exactly as input. Example:
@@ -98,7 +96,6 @@ be printed, separated by semicolons.     <string
             format string will cause ·the sign of the number
             (plus or minus) to be printed before or after
             the number.
-BASIC-80 COMMANDS AND STATEMENTS                        Page 2-64
            A minus sign at the end of the format field will
            cause negative numbers to be printed with a
            trailing minus sign.
@@ -141,7 +138,6 @@ be printed, separated by semicolons.     <string
             1,234.50
             PRINT USING " ••••••• ,";1234.5
             1234.50,
-BASIC-80 COMMANDS AND STATEMENTS                   Page 2-65
            Four carats (or up-arrows) may be placed after
            the   digit   position   characters to specify
            exponential format. The four carats allow space
@@ -177,7 +173,6 @@ be printed, separated by semicolons.     <string
             %1.00
             If the number of digits specified exceeds 24, an
             "Illegal function call" error will result.
-BASIC-80 COMMANDS AND STATEMENTS                         Page 2-66
 ```
 
 ## See Also

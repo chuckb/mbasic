@@ -39,7 +39,6 @@ To merge a specified disk file into the      program currently in memory.
 
 ```basic
 MERGE "NUMBRS"
-BASIC-SO COMMANDS AND STATEMENTS                        Page 2-50
 ```
 
 ## See Also

@@ -51,7 +51,6 @@ To read an entire line (up to 254 characters), without delimiters, from a sequen
            CUSTOMER INFORMATION? LINDA JONES    234,4    MEMPHIS
            LINDA JONES     234,4   MEMPHIS
            Ok
-BASIC-80 COMMANDS AND STATEMENTS                              Page 2-43
 ```
 
 ## See Also

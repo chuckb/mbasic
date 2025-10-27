@@ -41,7 +41,6 @@ DELETE 40         Deletes line 40
                                   100, inclusive
                 DELETE-40         Deletes all lines up to
                                   and including line 40
-BASIC-80 COMMANDS AND STATEMENTS                    Page 2-18
 ```
 
 ## See Also

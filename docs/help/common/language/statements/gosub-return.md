@@ -47,7 +47,6 @@ To branch to and return from a subroutine.
              SUBROUTINE IN PROGRESS
              BACK FROM SUBROUTINE
              Ok
-BASIC-SO COMMANDS AND STATEMENTS                     Page 2-33
 ```
 
 ## See Also

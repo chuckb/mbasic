@@ -39,7 +39,6 @@ To load a file from disk into memory.
 
 ```basic
 LOAD nSTRTRKn,R
-BASIC-80 COMMANDS AND STATEMENTS                          Page 2-47
 ```
 
 ## See Also

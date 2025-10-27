@@ -40,7 +40,6 @@ A disk file must be OPENed before any disk I/O operation can be performed on tha
 ```basic
 10 OPEN "I",2,"INVEN"
                See also Appendix B.
-BASIC-80 COMMANDS AND STATEMENTS                         Page 2-57
 ```
 
 ## See Also

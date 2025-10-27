@@ -38,7 +38,6 @@ Once error trapping has been enabled all errors detected, including direct mode 
 
 ```basic
 10 ON ERROR GOTO 1000
-BASIC-SO COMMANDS AND STATEMENTS                      Page 2-55
 ```
 
 ## See Also

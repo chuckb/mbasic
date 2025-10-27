@@ -38,7 +38,6 @@ The COMMON statement is used in conjunction with the CHAIN statement.     COMMON
 100 COMMON A,B,C,D(),G$
                110 CHAIN "PROG3",10
                     •
-BASIC-80 COMMANDS AND STATEMENTS                    Page 2-10
 ```
 
 ## See Also

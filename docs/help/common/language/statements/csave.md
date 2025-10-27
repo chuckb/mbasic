@@ -35,7 +35,6 @@ Each program or array saved         on    tape    is identified by a filename.  
 CSAVE "TIMER"
                 Saves the program currently in memory on
                 cassette under filename "T".
-BASIC-80 COMMANDS AND STATEMENTS                      Page 2-12
 ```
 
 ## See Also

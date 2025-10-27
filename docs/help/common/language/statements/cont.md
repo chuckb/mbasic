@@ -38,7 +38,6 @@ Execution resumes at the point where the break occurred.   If the break occurred
 
 ```basic
 See example Section 2.61, STOP.
-BASIC-80 COMMANDS AND STATEMENTS                             Page 2-11
 ```
 
 ## See Also

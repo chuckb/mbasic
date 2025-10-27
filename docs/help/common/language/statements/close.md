@@ -38,7 +38,6 @@ To conclude I/O to a disk file.
 ```basic
 See PART II, Chapter 3, Microsoft BASIC       Disk
               I/O, of the Microsoft BASIC User's Guide.
-BASIC-80 COMMANDS AND STATEMENTS                         Page 2-9
 ```
 
 ## See Also

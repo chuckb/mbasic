@@ -48,7 +48,6 @@ The integer expression I is the port number, and the integer expression J is the
 
 ```basic
 100 OUT 32,100
-BASIC-80 COMMANDS AND STATEMENTS                        Page 2-59
 ```
 
 ## See Also

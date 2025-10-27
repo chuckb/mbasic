@@ -39,7 +39,6 @@ Notice the word LET is optional, i.e., the equal sign is sufficient when assigni
              120   E=12"'2
              130   F=12 .... 4
              140   SUM=D+E+F
-BASIC-80 COMMANDS AND STATEMENTS                       Page 2-41
 ```
 
 ## See Also

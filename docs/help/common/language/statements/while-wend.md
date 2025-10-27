@@ -46,7 +46,6 @@ If <expression> is not zero (Le., true), <loop statements>    are  executed   un
                                          SWAP A$(I) ,A$(I+l) :FLIPS=l
               140        NEXT I
               150 WEND
-BASIC-80 COMMANDS AND STATEMENTS                       Page 2-83
 ```
 
 ## See Also

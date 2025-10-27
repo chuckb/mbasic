@@ -46,7 +46,6 @@ NOTE:            ~  !!2! ~ a FIELDed var iable name in an I.NPUT
                  LET statement with that variable       name   is
                  executed, the variable~s pointer is moved to
                  string space.
-BASIC-SO COMMANDS AND STATEMENTS                           Page 2-29
 ```
 
 ## See Also

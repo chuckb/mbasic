@@ -46,7 +46,6 @@ NOTE:         PRINT#, PRINT# USING, and WRITE# may be used to
               with spaces up to the carriage return. Any
               attempt to read or write past the end of the
               buffer causes a "Field overflow" error.
-BASIC-80 COMMANDS AND STATEMENTS                          Page 2-69
 ```
 
 ## See Also

@@ -55,7 +55,6 @@ TRON
              Ok
              TROFF
              Ok
-BASIC-80 COMMANDS AND STATEMENTS                       Page 2-81
 ```
 
 ## See Also

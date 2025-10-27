@@ -52,7 +52,6 @@ The integer expression I is the address of the memory   location to be POKEd.   
 
 ```basic
 10 POKE &H5AOO,&HFF
-BASIC-SO COMMANDS AND STATEMENTS                      Page 2-60
 ```
 
 ## See Also

@@ -40,7 +40,6 @@ END statements may be placed anywbere in the program to terminate execution. Unl
 
 ```basic
 520 IF K>lOOO THEN END ELSE GOTO 20
-BASIC-80 COMMANDS AND STATEMENTS                            Page 2-24
 ```
 
 ## See Also

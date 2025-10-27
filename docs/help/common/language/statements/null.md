@@ -43,7 +43,6 @@ Ok
               200 IF X<50 GOTO 800
               Two null characters will be printed after each
               line.
-BASIC-SO COMMANDS AND STATEMENTS                    Page 2-54
 ```
 
 ## See Also

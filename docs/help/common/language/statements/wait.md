@@ -51,7 +51,6 @@ The WAIT statement causes execution to       be suspended until a specified mach
 
 ```basic
 100 WAIT 32,2
-BASIC-80 COMMANDS AND STATEMENTS                       Page 2-82
 ```
 
 ## See Also

@@ -39,7 +39,6 @@ If an array variable name is used without a DIM statement, the maximum value of 
              30 READ A(I)
              40 NEXT I
                  •
-BASIC-SO COMMANDS AND STATEMENTS                      Page 2-19
 ```
 
 ## See Also

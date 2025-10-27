@@ -41,7 +41,6 @@ CLEAR
                 CLEAR ,32768
                 CLEAR ,,2000
                 CLEAR ,32768,2000
-MICROSOFT BASIC COMMANDS AND STATEMENTS                         Page 2-7
 ```
 
 ## See Also

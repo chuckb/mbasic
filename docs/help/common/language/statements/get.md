@@ -42,7 +42,6 @@ See Appendix B.
 NOTE:         After a GET statement, INPUT# and LINE INPUT#
               may be done to read characters from the random
               file buffer.
-BASIC-80 COMMANDS AND STATEMENTS                        Page 2-32
 ```
 
 ## See Also

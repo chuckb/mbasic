@@ -40,7 +40,6 @@ If a KILL statement is given for a file that is currently OPEN, a RFile already 
 ```basic
 200 KILL RDATA1R
               See also Appendix B.
-BASIC-80 COMMANDS AND STATEMENTS                           Page 2-40
 ```
 
 ## See Also

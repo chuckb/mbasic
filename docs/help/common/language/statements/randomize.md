@@ -55,7 +55,6 @@ If <expression> is    omitted, BASIC-80 suspends program execution     and asks 
              sequence as first RUN)
               .88598 .484668 .586328       .119426    .709225
              Ok
-BASIC-80 COMMANDS AND STATEMENTS                     Page 2-70
 ```
 
 ## See Also

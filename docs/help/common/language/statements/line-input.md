@@ -38,7 +38,6 @@ The prompt string is a string literal that is printed   at    the  terminal befo
 
 ```basic
 See Example, Section 2.32, LINE INPUT#.
-BASIC-SO COMMANDS AND STATEMENTS                   Page 2-42
 ```
 
 ## See Also

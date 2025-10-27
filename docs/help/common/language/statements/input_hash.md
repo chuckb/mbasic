@@ -40,7 +40,6 @@ To read data items from a sequential disk    file and assign them to program var
 
 ```basic
 See Appendix B.
-BASIC-SO COMMANDS AND STATEMENTS                    Page 2-39
 ```
 
 ## See Also

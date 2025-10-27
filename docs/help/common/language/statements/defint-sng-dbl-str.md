@@ -50,7 +50,6 @@ A DEFtype statement declares that the variable names beginning with the 1etter(s
                             the letters I, J, K, L, M,
                             N, W, X, Y, Z will be integer
                             variables.
- BASIC-80 COMMANDS AND STATEMENTS                        Page 2-16
  2.13   ~    USR
  Format:       DEF USR[<digit>]=<integer expression>
  Versions:     Extended, Disk
@@ -72,7 +71,6 @@ _ Example:         •
               200 DEFUSRO=24000
               210 X=USRO(y A 2/2.89)
                    ."
-BASIC-80 COMMANDS AND STATEMENTS                         Page 2-17
 ```
 
 ## See Also

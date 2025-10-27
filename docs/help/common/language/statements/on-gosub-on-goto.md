@@ -41,7 +41,6 @@ The value of <expression> determines which line number in the list will be used 
 
 ```basic
 100 ON L-1 GOTO 150,300,320,390
-BASIC-80 COMMANDS AND STATEMENTS                        Page 2-56
 ```
 
 ## See Also

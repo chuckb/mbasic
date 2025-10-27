@@ -50,7 +50,6 @@ To print data at the line printer. To move data from memory to a random file buf
 
 ## Remarks
 
-Same as PRINT and PRINT USING, except output goes to the line printer. See Section 2.49 and Section 2.50. LPRINT assumes a l32-character-wide printer. NOTE:         LPRINT and LLIST are not         included    in   all implementations of BASIC-80. BASIC-80 COMMANDS AND STATEMENTS                      Page 2-48 2 • 37   LSET AND RSET If <string expression> requires fewer bytes than were   FIELDed   to    <string    variable>, LSET left-justifies the string in the field, and RSET right-justifies the string.    (Spaces are used to pad the extra positions.) If the string is too long for the field, characters are dropped from the right. Numeric values must be converted to strings before they are LSET or RSET. See the MKI$, MKS$, MKD$ functions, Section 3.25.
 
 ## Example
 
@@ -67,7 +66,6 @@ NOTE:         LSET or RSET may also be used with a non-fielded
               right-justify the string N$ in a 20-character
               field.   This can be very handy for formatting
               printed output.
-BASIC-80 COMMANDS AND STATEMENTS                         Page 2-49
 ```
 
 ## See Also

@@ -44,7 +44,6 @@ REM statements are not executed but are output exactly as entered when the progr
              120 FOR I=l TO 20     ~CALCULATE   AVERAGE VELOCITY
              130 SUM=SUM+V(I)
              140 NEXT I
-BASIC-80 COMMANDS AND STATEMENTS                          Page 2-73
 ```
 
 ## See Also

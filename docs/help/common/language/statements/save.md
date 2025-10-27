@@ -40,7 +40,6 @@ To save a program file on disk.
 SAVE nCOM2 n ,A
               SAVEnpRoo n , P
               See also Appendix B.
-BASIC-80 COMMANDS AND STATEMENTS                            Page 2-78
 ```
 
 ## See Also

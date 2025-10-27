@@ -38,7 +38,6 @@ To output data at the terminal. Remark$.:      If <list of expressions> is omitt
                RUN
                 SO,   90,"THAT~S   ALL"
                Ok
-BASIC-80 COMMANDS AND STATEMENTS                          Page 2-85
 ```
 
 ## See Also

@@ -40,7 +40,6 @@ Arrays may be redimensioned after they are ERASEd, or the previously allocated a
                 460 DIM B(99)
                  •
                  •
-BASIC-80 COMMANDS AND STATEMENTS                    Page 2-25
 ```
 
 ## See Also

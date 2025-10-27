@@ -56,7 +56,6 @@ LLIST assumes a l32-character wide printer. BASIC-80 always returns to command l
 
 ```basic
 See the examples for LIST, Format 2.
-BASIC-SO COMMANDS AND STATEMENTS                      Page 2-46
 ```
 
 ## See Also

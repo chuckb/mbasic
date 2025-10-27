@@ -40,7 +40,6 @@ AUTO 100,50      Generates line numbers 100,
                               150, 200 •••
              AUTO             Generates line numbers 10,
                               20,30,40 •••
-BASIC-SO COMMANDS AND STATEMENTS                        Page 2-3
 ```
 
 ## See Also

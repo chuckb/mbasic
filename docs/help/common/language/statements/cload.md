@@ -31,7 +31,6 @@ CLOAD executes a NEW command before it loads the program from cassette tape. <fi
 ```basic
 CLOAD "MAX2"
                 Loads file "M" into memory.
-MICROSOFT BASIC COMMANDS AND STATEMENTS                 Page 2-8
 ```
 
 ## See Also

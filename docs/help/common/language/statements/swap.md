@@ -46,7 +46,6 @@ LIST
                ONE FOR ALL
                ALL FOR ONE
               Ok
-BASIC-80 COMMANDS AND STATEMENTS                    Page 2-80
 ```
 
 ## See Also

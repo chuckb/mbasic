@@ -48,7 +48,6 @@ LIST
               R = 12               AREA = 452.16
               ?Out of data in 10
               Ok
-BASIC-SO COMMANDS AND STATEMENTS                           Page 2-34
 ```
 
 ## See Also

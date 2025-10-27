@@ -39,7 +39,6 @@ Ok
               Ok
               In this example, the file that was
               formerly named ACCTS will now be named LEDGER.
-BASIC-80 COMMANDS AND STATEMENTS                      Page 2-52
 ```
 
 ## See Also

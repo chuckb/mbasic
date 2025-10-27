@@ -45,7 +45,6 @@ The characters in <string expl>, beginning at position n, are replaced by the ch
               KANSAS CITY, KS
               MID$ is also a function that returns a substring
               of a given string. See Section 3.24.
-BASIC-80 COMMANDS AND STATEMENTS                      Page 2-51
 ```
 
 ## See Also

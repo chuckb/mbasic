@@ -50,7 +50,6 @@ STOP statements may be used anywhere in a program to terminate execution. When a
               CONT
                115.9
               Ok
-BASIC-SO COMMANDS AND STATEMENTS                      Page 2-79
 ```
 
 ## See Also

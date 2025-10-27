@@ -38,7 +38,6 @@ DATA statements are nonexecutable and may be placed    anywhere  in   the progra
 
 ```basic
 See examples in Section 2.54, READ.
-BASIC-80 COMMANDS AND STATEMENTS                        Page 2-13
 ```
 
 ## See Also
