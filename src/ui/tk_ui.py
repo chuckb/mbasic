@@ -1100,11 +1100,11 @@ class TkBackend(UIBackend):
         base_name = variable_name[:-1] if variable_name[-1] in '$%!#' else variable_name
         suffix = variable_name[-1] if variable_name[-1] in '$%!#' else None
 
-        try:
-            array_var = self.runtime.get_variable(base_name, suffix)
-            dimensions = array_var.dimensions if hasattr(array_var, 'dimensions') else []
-        except:
-            dimensions = []
+        # Get dimensions from runtime's _arrays dictionary
+        full_name, _ = self.runtime._resolve_variable_name(base_name, suffix, None)
+        dimensions = []
+        if full_name in self.runtime._arrays:
+            dimensions = self.runtime._arrays[full_name]['dims']
 
         # If no default subscripts, use first element based on array_base
         if not default_subscripts and dimensions:
@@ -1180,17 +1180,8 @@ class TkBackend(UIBackend):
                             current_value_label.config(text="")
                             return
 
-                # Get current value
-                array_var = self.runtime.get_variable(base_name, suffix)
-
-                # Calculate linear index
-                index = 0
-                multiplier = 1
-                for i in reversed(range(len(subscripts))):
-                    index += subscripts[i] * multiplier
-                    multiplier *= (dimensions[i] + 1)
-
-                current_val = array_var.elements[index]
+                # Get current value using runtime's method
+                current_val = self.runtime.get_array_element_for_debugger(base_name, suffix, subscripts, None)
                 current_value_label.config(text=f"Current value: {current_val}")
                 error_label.config(text="")
 
