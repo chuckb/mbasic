@@ -1916,6 +1916,18 @@ class TkBackend(UIBackend):
         if not self.auto_number_enabled:
             return None  # Allow default behavior
 
+        # Check if there's a text selection - if yes, let default behavior handle it
+        # (default behavior: delete selection, insert newline)
+        try:
+            if self.editor_text.text.tag_ranges(tk.SEL):
+                # There's a selection - delete it and insert newline
+                self.editor_text.text.delete(tk.SEL_FIRST, tk.SEL_LAST)
+                self.editor_text.text.insert(tk.INSERT, '\n')
+                return 'break'
+        except tk.TclError:
+            # No selection
+            pass
+
         # Get current line
         current_pos = self.editor_text.text.index(tk.INSERT)
         current_line_index = int(current_pos.split('.')[0])
