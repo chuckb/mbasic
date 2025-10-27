@@ -2298,10 +2298,10 @@ class TkBackend(UIBackend):
         current_line_text = self.editor_text.text.get(
             f'{current_line_index}.0',
             f'{current_line_index}.end'
-        )
+        ).strip()
 
         # Parse current line number
-        match = re.match(r'^\s*(\d+)', current_line_text)
+        match = re.match(r'^(\d+)', current_line_text)
         if not match:
             messagebox.showinfo("Smart Insert", "Current line has no line number.\nAdd a line number first.")
             return
