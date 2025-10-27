@@ -705,9 +705,15 @@ class TkBackend(UIBackend):
                     return
 
                 # Update the interpreter's runtime with new program
-                self.interpreter.runtime.line_table = program.line_table
-                self.interpreter.runtime.line_order = program.line_order
-                debug_log(f"Updated line_table with {len(program.line_table)} lines", level=1)
+                # Build line_table from ProgramNode.lines
+                new_line_table = {}
+                for line in program.lines:
+                    new_line_table[line.line_number] = line
+                new_line_order = sorted(new_line_table.keys())
+
+                self.interpreter.runtime.line_table = new_line_table
+                self.interpreter.runtime.line_order = new_line_order
+                debug_log(f"Updated line_table with {len(new_line_table)} lines", level=1)
 
                 # Clear error state and set to paused
                 self.interpreter.state.status = 'paused'
