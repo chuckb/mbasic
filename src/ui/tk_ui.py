@@ -1962,13 +1962,16 @@ class TkBackend(UIBackend):
             'break' to prevent default paste, None to allow it
         """
         import tkinter as tk
+        from debug_logger import debug_log
 
         try:
             # Get clipboard content
             clipboard_text = self.root.clipboard_get()
+            debug_log(f"Paste handler called with: {repr(clipboard_text)}", level=1)
 
             # Sanitize: clear parity bits and filter control characters
             sanitized_text, was_modified = sanitize_and_clear_parity(clipboard_text)
+            debug_log(f"After sanitize: {repr(sanitized_text)}, was_modified={was_modified}", level=1)
 
             # Remove blank lines and auto-number lines without line numbers
             import re
@@ -1983,13 +1986,16 @@ class TkBackend(UIBackend):
 
             # Start with default auto-number or find highest existing line number
             next_line_num = self.auto_number_start
+            debug_log(f"Starting next_line_num: {next_line_num}", level=1)
 
             # Check highest line number in existing program
             if self.program and self.program.has_lines():
                 existing_lines = self.program.get_all_line_numbers()
+                debug_log(f"Existing program lines: {existing_lines}", level=1)
                 if existing_lines:
                     highest_existing = max(existing_lines)
                     next_line_num = max(next_line_num, highest_existing + self.auto_number_increment)
+                    debug_log(f"After checking existing: next_line_num={next_line_num}", level=1)
 
             # First pass - find highest line number in pasted content
             for line in lines:
@@ -1999,6 +2005,7 @@ class TkBackend(UIBackend):
                     if match:
                         line_num = int(match.group(1))
                         next_line_num = max(next_line_num, line_num + self.auto_number_increment)
+                        debug_log(f"Found numbered line {line_num}, next_line_num={next_line_num}", level=1)
 
             # Second pass - process lines
             for line in lines:
@@ -2012,6 +2019,7 @@ class TkBackend(UIBackend):
                 # Check if line starts with a line number
                 if not re.match(r'^\s*\d+', stripped):
                     # Line without line number - try to auto-number it
+                    debug_log(f"Line without number: {repr(stripped)}", level=1)
                     # First check if it would be valid BASIC code
                     try:
                         test_line = f"1 {stripped}"
@@ -2021,15 +2029,18 @@ class TkBackend(UIBackend):
 
                         # Valid BASIC code - add line number
                         numbered_line = f"{next_line_num} {stripped}"
+                        debug_log(f"Adding numbered line: {repr(numbered_line)}", level=1)
                         filtered_lines.append(numbered_line)
                         next_line_num += self.auto_number_increment
                         added_line_numbers = True
-                    except:
+                    except Exception as e:
                         # Invalid BASIC code - reject it
+                        debug_log(f"Rejected invalid line: {repr(stripped)}, error: {e}", level=1)
                         removed_invalid = True
                     continue
 
                 # Valid line with line number - keep it
+                debug_log(f"Keeping numbered line: {repr(line)}", level=1)
                 filtered_lines.append(line)
 
             sanitized_text = '\n'.join(filtered_lines)
