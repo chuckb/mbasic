@@ -57,6 +57,7 @@ class InterpreterState:
 
     # Debugging
     breakpoints: set = field(default_factory=set)
+    skip_next_breakpoint_check: bool = False  # Set to True after hitting breakpoint to allow execution
     pause_requested: bool = False  # Set by pause() method
 
     # Error handling
@@ -235,8 +236,14 @@ class Interpreter:
                 self.state.current_line = line_number
 
                 # Check for breakpoint (skip in step modes - we're intentionally stepping through)
-                if mode == 'run' and line_number in self.state.breakpoints:
+                # Also skip if we just resumed from this breakpoint (to allow execution to proceed)
+                if self.state.skip_next_breakpoint_check:
+                    # Clear the flag and continue execution
+                    self.state.skip_next_breakpoint_check = False
+                elif mode == 'run' and line_number in self.state.breakpoints:
                     self.state.status = 'at_breakpoint'
+                    # Set flag so next tick will skip this breakpoint and execute
+                    self.state.skip_next_breakpoint_check = True
                     # Set char positions to show what we're ABOUT to execute
                     self.runtime.current_stmt_index = 0
                     self.state.current_statement_index = 0
