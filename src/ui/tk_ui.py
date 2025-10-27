@@ -696,7 +696,7 @@ class TkBackend(UIBackend):
                     tokens = lexer.tokenize()
                     parser = Parser(tokens)
                     program = parser.parse()
-                    debug_log(f"Parse successful, got {len(program.line_table)} lines", level=1)
+                    debug_log(f"Parse successful, got {len(program.lines)} lines", level=1)
                 except Exception as parse_error:
                     debug_log(f"Parse FAILED: {parse_error}", level=1)
                     self._add_output(f"Parse error: {parse_error}\n")
