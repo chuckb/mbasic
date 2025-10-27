@@ -605,7 +605,7 @@ class TkBackend(UIBackend):
 
     def _menu_paste(self):
         """Edit > Paste"""
-        self.editor_text.event_generate("<<Paste>>")
+        self.editor_text.text.event_generate("<<Paste>>")
 
     def _menu_run(self):
         """Run > Run Program"""
@@ -1883,8 +1883,45 @@ class TkBackend(UIBackend):
         # Parse line number from current line
         match = re.match(r'^\s*(\d+)', current_line_text)
         if not match:
-            # No line number on current line - allow default behavior
-            return None
+            # No line number on current line - check if it's valid BASIC and auto-number it
+            stripped = current_line_text.strip()
+            if not stripped:
+                # Blank line - allow default behavior
+                return None
+
+            # Try to parse as BASIC code
+            from lexer import tokenize
+            from parser import Parser
+            from debug_logger import debug_log
+
+            try:
+                test_line = f"1 {stripped}"
+                tokens = list(tokenize(test_line))
+                parser = Parser(tokens, self.program.def_type_map, source=test_line)
+                parser.parse_line()
+
+                # Valid BASIC code - add line number
+                # Find the next line number to use
+                if self.program and self.program.has_lines():
+                    existing_lines = self.program.get_all_line_numbers()
+                    next_line_num = max(existing_lines) + self.auto_number_increment
+                else:
+                    next_line_num = self.auto_number_start
+
+                # Replace current line with numbered version
+                self.editor_text.text.delete(f'{current_line_index}.0', f'{current_line_index}.end')
+                numbered_line = f"{next_line_num} {stripped}"
+                self.editor_text.text.insert(f'{current_line_index}.0', numbered_line)
+
+                debug_log(f"Auto-numbered typed line: {numbered_line}", level=1)
+
+                # Now treat this as if it was a numbered line
+                current_line_num = next_line_num
+
+            except Exception as e:
+                # Not valid BASIC - allow default behavior
+                debug_log(f"Not valid BASIC, allowing default Enter: {e}", level=1)
+                return None
         else:
             current_line_num = int(match.group(1))
 
