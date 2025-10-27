@@ -226,6 +226,17 @@ class TkBackend(UIBackend):
         help_hint = ttk.Label(input_frame, text="(Type HELP for commands)", foreground="gray", font=("Courier", 9))
         help_hint.pack(side=tk.LEFT, padx=10)
 
+        # Initialize immediate mode entry to be enabled and focused
+        # (it will be enabled/disabled later based on program state via _update_immediate_status)
+        self.immediate_entry.config(state=tk.NORMAL)
+        # Give initial focus to immediate entry for convenience
+        self.root.after(100, lambda: self.immediate_entry.focus_set())
+
+        # Initialize immediate executor for standalone use (no program running)
+        # This allows immediate mode to work even before a program is loaded
+        immediate_io = OutputCapturingIOHandler()
+        self.immediate_executor = ImmediateExecutor(runtime=None, interpreter=None, io_handler=immediate_io)
+
         # Status bar
         self.status_label = ttk.Label(self.root, text="Ready", relief=tk.SUNKEN, anchor=tk.W)
         self.status_label.pack(side=tk.BOTTOM, fill=tk.X)
@@ -2403,9 +2414,9 @@ class TkBackend(UIBackend):
             if self.breakpoints:
                 self.interpreter.state.breakpoints = self.breakpoints.copy()
 
-            # Initialize immediate mode executor
-            immediate_io = OutputCapturingIOHandler()
-            self.immediate_executor = ImmediateExecutor(self.runtime, self.interpreter, immediate_io)
+            # Update immediate mode executor context to use program's runtime and interpreter
+            if self.immediate_executor:
+                self.immediate_executor.set_context(self.runtime, self.interpreter)
             self._update_immediate_status()
 
             # Start running
