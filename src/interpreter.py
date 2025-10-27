@@ -1442,6 +1442,22 @@ class Interpreter:
         if not loop_info:
             raise RuntimeError(f"NEXT without FOR: {var_name}")
 
+        # Validate that this FOR loop is on top of the stack (innermost control structure)
+        # This prevents errors like: FOR X / FOR Y / NEXT X (skipping Y)
+        loop_index = self.runtime.for_loop_vars[var_name]
+        if loop_index != len(self.runtime.execution_stack) - 1:
+            # Find what's actually on top
+            if self.runtime.execution_stack:
+                top_entry = self.runtime.execution_stack[-1]
+                if top_entry['type'] == 'FOR':
+                    top_var = top_entry['var']
+                    raise RuntimeError(f"NEXT {var_name} without FOR - found FOR {top_var} loop instead (improper nesting)")
+                elif top_entry['type'] == 'WHILE':
+                    raise RuntimeError(f"NEXT {var_name} without FOR - found WHILE loop instead (improper nesting)")
+                elif top_entry['type'] == 'GOSUB':
+                    raise RuntimeError(f"NEXT {var_name} without FOR - found GOSUB instead (improper nesting)")
+            raise RuntimeError(f"NEXT {var_name} without FOR - improper nesting")
+
         # Create token info for tracking
         token = self._make_token_info(var_node) if var_node else None
 

@@ -96,6 +96,21 @@ MBASIC_DEBUG=1 python3 mbasic.py program.bas
 This outputs detailed error traces to stderr (visible to Claude) while keeping the UI clean.
 See `docs/dev/DEBUG_MODE.md` for full details.
 
+### Persistent Debug Mode
+**CRITICAL: When debugging actively, add to .bashrc:**
+```bash
+export MBASIC_DEBUG=1
+```
+
+After adding to .bashrc, restart the shell or run `source ~/.bashrc`.
+
+### Checking Debug Output
+**When debugging, ALWAYS check the debug link for stderr output:**
+- Debug output is automatically sent via the debug link
+- Check the debug link/logs when investigating errors
+- Debug prints from Python code (print(..., file=sys.stderr)) will appear in the debug output
+- User may reference "check your debug link" or "it was sent to stderr" - this means check the debug output system
+
 ## Developer Setup
 
 ### System Requirements

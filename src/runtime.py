@@ -798,8 +798,12 @@ class Runtime:
 
         # DEBUG: Log every push with stack trace
         print(f"DEBUG: push_for_loop({var_name}) at line {return_line}, stack size before: {len(self.execution_stack)}", file=sys.stderr)
+
+        # Check if this variable already has an active FOR loop
+        # This prevents nested FOR loops with the same variable (e.g., FOR I=1 TO 10 / FOR I=1 TO 5)
         if var_name in self.for_loop_vars:
-            print(f"  WARNING: {var_name} already on stack at index {self.for_loop_vars[var_name]}!", file=sys.stderr)
+            print(f"  ERROR: {var_name} already on stack at index {self.for_loop_vars[var_name]}!", file=sys.stderr)
+            raise RuntimeError(f"FOR loop variable {var_name} already active - nested FOR loops with same variable not allowed")
 
         loop_entry = {
             'type': 'FOR',
