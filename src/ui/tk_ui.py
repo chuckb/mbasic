@@ -1843,6 +1843,11 @@ class TkBackend(UIBackend):
         Returns:
             'break' to prevent character insertion, None to allow it
         """
+        # Clear yellow statement highlight when user starts editing
+        # This prevents the "half yellow line" issue when editing error/breakpoint lines
+        if self.paused_at_breakpoint:
+            self._clear_statement_highlight()
+
         # Ignore special keys (arrows, function keys, modifiers, etc.)
         if len(event.char) != 1:
             return None
