@@ -130,6 +130,14 @@ class MBasicWebIDE:
                         ui.separator()
                         ui.menu_item('Load Example', on_click=self.show_examples, auto_close=True)
 
+                # Edit menu
+                with ui.button(icon='edit', color='white').props('flat'):
+                    with ui.menu() as menu:
+                        ui.menu_item('Sort Lines', on_click=self.sort_program_lines, auto_close=True)
+                        ui.menu_item('Renumber...', on_click=self.menu_renumber, auto_close=True)
+                        ui.separator()
+                        ui.menu_item('Insert Line Between', on_click=self.smart_insert_line, auto_close=True)
+
                 # Run menu
                 with ui.button(icon='play_arrow', color='white').props('flat'):
                     with ui.menu() as menu:
@@ -540,6 +548,141 @@ class MBasicWebIDE:
         ui.notify(f'Program renumbered ({start} to {final_num})', type='positive')
         dialog.close()
 
+    def smart_insert_line(self):
+        """Smart insert - insert blank line before cursor position with calculated line number.
+
+        Calculates midpoint between previous and current line numbers.
+        If no room, offers to renumber the program.
+        """
+        import re
+
+        if not self.editor or not self.editor.value:
+            ui.notify('No program loaded', type='warning')
+            return
+
+        # Get all lines
+        lines = self.editor.value.split('\n')
+
+        # Parse all line numbers from program
+        all_line_numbers = []
+        line_number_pattern = re.compile(r'^\s*(\d+)')
+
+        for line in lines:
+            match = line_number_pattern.match(line)
+            if match:
+                all_line_numbers.append(int(match.group(1)))
+
+        if not all_line_numbers:
+            ui.notify('No numbered lines found. Add a line number first.', type='warning')
+            return
+
+        all_line_numbers = sorted(set(all_line_numbers))  # Remove duplicates and sort
+
+        # For Web UI, we don't have cursor position, so we'll prompt for the line number
+        # where the user wants to insert before
+        with ui.dialog() as dialog, ui.card():
+            ui.label('Insert Line Between').classes('text-h6')
+            ui.label('Enter the line number you want to insert BEFORE:')
+
+            target_input = ui.input(
+                label='Target Line Number',
+                placeholder='e.g., 30'
+            ).classes('w-full')
+
+            with ui.row():
+                ui.button('Insert', on_click=lambda: self._do_smart_insert(
+                    target_input.value,
+                    all_line_numbers,
+                    dialog
+                )).props('color=primary')
+                ui.button('Cancel', on_click=dialog.close).props('flat')
+
+        dialog.open()
+
+    def _do_smart_insert(self, target_line_str: str, all_line_numbers: list, dialog):
+        """Perform the smart insert operation.
+
+        Args:
+            target_line_str: Target line number (as string from input)
+            all_line_numbers: List of existing line numbers
+            dialog: Dialog to close after operation
+        """
+        import re
+
+        # Validate input
+        if not target_line_str or not target_line_str.strip():
+            ui.notify('Please enter a line number', type='warning')
+            return
+
+        try:
+            target_line = int(target_line_str.strip())
+        except ValueError:
+            ui.notify('Invalid line number', type='negative')
+            return
+
+        # Check if target line exists
+        if target_line not in all_line_numbers:
+            ui.notify(f'Line {target_line} not found in program', type='warning')
+            return
+
+        # Find previous line before target
+        prev_line_num = None
+        for line_num in reversed(all_line_numbers):
+            if line_num < target_line:
+                prev_line_num = line_num
+                break
+
+        # Calculate insertion point
+        if prev_line_num is None:
+            # At beginning of program
+            insert_num = max(1, target_line - 10)
+            if insert_num >= target_line:
+                insert_num = target_line - 1 if target_line > 1 else 1
+        else:
+            # Between previous and target lines - try midpoint
+            midpoint = (prev_line_num + target_line) // 2
+            if midpoint > prev_line_num and midpoint < target_line:
+                insert_num = midpoint
+            else:
+                # No room - offer to renumber
+                with ui.dialog() as renum_dialog, ui.card():
+                    ui.label('No Room').classes('text-h6')
+                    ui.label(f'No room between lines {prev_line_num} and {target_line}.')
+                    ui.label('Would you like to renumber the program to make room?')
+
+                    with ui.row():
+                        ui.button('Renumber', on_click=lambda: [
+                            renum_dialog.close(),
+                            dialog.close(),
+                            self.menu_renumber()
+                        ]).props('color=primary')
+                        ui.button('Cancel', on_click=renum_dialog.close).props('flat')
+
+                renum_dialog.open()
+                return
+
+        # Insert the new blank line before target line
+        lines = self.editor.value.split('\n')
+        new_lines = []
+        inserted = False
+
+        for line in lines:
+            # Check if this is the target line
+            match = re.match(r'^\s*(\d+)', line)
+            if match and int(match.group(1)) == target_line and not inserted:
+                # Insert blank line before this line
+                new_lines.append(f'{insert_num} ')
+                inserted = True
+
+            new_lines.append(line)
+
+        # Update editor
+        self.editor.value = '\n'.join(new_lines)
+        self.update_line_numbers()
+
+        ui.notify(f'Inserted line {insert_num} before line {target_line}', type='positive')
+        dialog.close()
+
     # File operations
     def menu_new(self):
         """Create a new program."""
@@ -885,8 +1028,8 @@ class MBasicWebIDE:
                 self.variables_table = ui.table(
                     columns=[
                         {'name': 'name', 'label': 'Name', 'field': 'name', 'align': 'left'},
-                        {'name': 'type', 'label': 'Type', 'field': 'type', 'align': 'left'},
                         {'name': 'value', 'label': 'Value', 'field': 'value', 'align': 'left'},
+                        {'name': 'type', 'label': 'Type', 'field': 'type', 'align': 'left'},
                     ],
                     rows=[],
                     row_key='name',
