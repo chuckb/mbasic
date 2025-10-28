@@ -196,7 +196,9 @@ class NiceGUIBackend(UIBackend):
                 ui.button('Open', on_click=self._menu_open, icon='folder_open').mark('btn_open')
                 ui.button('Save', on_click=self._menu_save, icon='save').mark('btn_save')
                 ui.separator().props('vertical')
-                ui.button('Run', on_click=self._menu_run, icon='play_arrow', color='green').mark('btn_run')
+                run_btn = ui.button('Run', on_click=self._menu_run, icon='play_arrow', color='green').mark('btn_run')
+                print(f"DEBUG: Created Run button: {run_btn}", file=sys.stderr)
+                sys.stderr.flush()
                 ui.button('Stop', on_click=self._menu_stop, icon='stop', color='red').mark('btn_stop')
                 ui.button('Step', on_click=self._menu_step, icon='skip_next').mark('btn_step')
                 ui.button('Continue', on_click=self._menu_continue, icon='play_circle').mark('btn_continue')
@@ -565,6 +567,10 @@ class NiceGUIBackend(UIBackend):
 
     def _menu_run(self):
         """Run > Run Program - Execute program."""
+        print("=" * 70, file=sys.stderr)
+        print("WEB UI: _menu_run called!", file=sys.stderr)
+        print("=" * 70, file=sys.stderr)
+        sys.stderr.flush()
         log_web_error("_menu_run", Exception("DEBUG: _menu_run called"))
 
         if self.running:
