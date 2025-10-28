@@ -210,12 +210,13 @@ class NiceGUIBackend(UIBackend):
 
             # Main content area - simple stacked layout (no splitter)
             # The splitter was causing visibility issues, so using simple column layout
-            with ui.column().classes('w-full gap-1'):
+            # Remove all gaps and margins for truly compact layout
+            with ui.column().classes('w-full').style('gap: 0; margin: 0; padding: 0;'):
                 # Editor section (no label)
                 self.editor = ui.textarea(
                     value='',
                     placeholder='Program Editor - Enter BASIC program here (e.g., 10 PRINT "Hello")'
-                ).classes('w-full font-mono').style('height: 300px;').props('outlined').mark('editor')
+                ).classes('w-full font-mono').style('height: 300px; margin: 0;').props('outlined').mark('editor')
 
                 # Bind keyboard events for auto-numbering
                 self.editor.on('keydown.enter', self._on_enter_key)
@@ -226,6 +227,7 @@ class NiceGUIBackend(UIBackend):
                     placeholder='Program output will appear here'
                 ).classes('w-full font-mono').style(
                     'height: 300px; '
+                    'margin: 0; '
                     'background-color: white; '
                     'color: black; '
                     'font-size: 14px;'
@@ -241,11 +243,11 @@ class NiceGUIBackend(UIBackend):
             self.input_row.visible = False  # Hidden by default
 
             # Immediate mode (no label, just textarea with execute button)
-            with ui.row().classes('w-full gap-2'):
+            with ui.row().classes('w-full gap-2').style('margin: 0; padding: 0;'):
                 self.immediate_entry = ui.textarea(
                     value='',
                     placeholder='Enter BASIC command (e.g., PRINT 2+2)'
-                ).classes('flex-grow font-mono').style('height: 60px;').props('outlined').mark('immediate_entry')
+                ).classes('flex-grow font-mono').style('height: 60px; margin: 0;').props('outlined').mark('immediate_entry')
                 self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
                 ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
 
