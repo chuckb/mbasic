@@ -14,6 +14,8 @@ nicegui>=3.2.0      # For web backend (browser-based UI)
 pexpect>=4.8.0         # For automated UI testing
 pytest>=8.0.0          # For running tests
 pytest-asyncio>=1.0.0  # For async NiceGUI tests
+playwright>=1.40.0     # For browser-based web UI testing
+pytest-playwright>=0.4.0  # Pytest plugin for Playwright
 
 # Help system dependencies
 python-frontmatter>=1.0.0  # For YAML front matter parsing in help files
