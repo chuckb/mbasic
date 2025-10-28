@@ -984,17 +984,33 @@ class NiceGUIBackend(UIBackend):
             self.output.update()  # Force NiceGUI to push update to browser
 
             # Auto-scroll to bottom using JavaScript
-            # Use setTimeout to ensure DOM is updated before scrolling
+            # Try multiple methods to ensure scroll works
             ui.run_javascript('''
                 setTimeout(() => {
-                    const output = document.querySelector('[data-ref="output"]');
-                    if (output) {
-                        const textarea = output.querySelector('textarea');
-                        if (textarea) {
-                            textarea.scrollTop = textarea.scrollHeight;
+                    // Method 1: Find by marker attribute
+                    let textarea = document.querySelector('[data-marker="output"] textarea');
+
+                    // Method 2: Find any readonly textarea (likely the output)
+                    if (!textarea) {
+                        const textareas = document.querySelectorAll('textarea[readonly]');
+                        textarea = textareas[textareas.length - 1]; // Last readonly textarea
+                    }
+
+                    // Method 3: Find by Quasar class
+                    if (!textarea) {
+                        const qTextarea = document.querySelector('.q-textarea textarea');
+                        if (qTextarea && qTextarea.hasAttribute('readonly')) {
+                            textarea = qTextarea;
                         }
                     }
-                }, 10);
+
+                    if (textarea) {
+                        textarea.scrollTop = textarea.scrollHeight;
+                        console.log('Scrolled output to bottom, scrollHeight:', textarea.scrollHeight);
+                    } else {
+                        console.error('Could not find output textarea for scrolling');
+                    }
+                }, 50);
             ''')
 
     def _show_input_row(self, prompt=''):
