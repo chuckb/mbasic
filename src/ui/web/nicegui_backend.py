@@ -139,6 +139,10 @@ class NiceGUIBackend(UIBackend):
         self.auto_number_start = 10          # Starting line number
         self.auto_number_increment = 10      # Increment between lines
 
+        # Recent files (stored in browser localStorage)
+        self.recent_files = []  # List of recent file names
+        self.max_recent_files = 10
+
         # Execution state
         self.running = False
         self.paused = False
@@ -153,6 +157,7 @@ class NiceGUIBackend(UIBackend):
         self.output = None
         self.status_label = None
         self.immediate_entry = None  # Immediate mode command input
+        self.recent_files_menu = None  # Recent files submenu
 
         # INPUT row elements (for inline input)
         self.input_row = None
@@ -246,11 +251,16 @@ class NiceGUIBackend(UIBackend):
         with ui.row().classes('w-full bg-gray-800 text-white p-2 gap-4'):
             # File menu
             with ui.button('File', icon='menu').props('flat color=white'):
-                with ui.menu():
+                with ui.menu() as file_menu:
                     ui.menu_item('New', on_click=self._menu_new)
                     ui.menu_item('Open...', on_click=self._menu_open)
                     ui.menu_item('Save', on_click=self._menu_save)
                     ui.menu_item('Save As...', on_click=self._menu_save_as)
+                    ui.separator()
+                    # Recent Files submenu
+                    with ui.menu_item('Recent Files'):
+                        with ui.menu() as self.recent_files_menu:
+                            self._update_recent_files_menu()
                     ui.separator()
                     ui.menu_item('Exit', on_click=self._menu_exit)
 
@@ -271,6 +281,83 @@ class NiceGUIBackend(UIBackend):
                     ui.menu_item('Help Topics', on_click=self._menu_help)
                     ui.separator()
                     ui.menu_item('About', on_click=self._menu_about)
+
+    # =========================================================================
+    # Recent Files Management
+    # =========================================================================
+
+    def _load_recent_files(self):
+        """Load recent files from localStorage via JavaScript."""
+        # This will be called when UI loads
+        # For now, start with empty list
+        # In a real implementation, we'd use JavaScript to read from localStorage
+        self.recent_files = []
+
+    def _save_recent_files(self):
+        """Save recent files to localStorage via JavaScript."""
+        try:
+            # Convert list to JSON and save to localStorage
+            import json
+            files_json = json.dumps(self.recent_files)
+            ui.run_javascript(f'''
+                localStorage.setItem('mbasic_recent_files', '{files_json}');
+            ''')
+        except Exception as e:
+            log_web_error("_save_recent_files", e)
+
+    def _add_recent_file(self, filename):
+        """Add a file to recent files list."""
+        try:
+            # Remove if already exists
+            if filename in self.recent_files:
+                self.recent_files.remove(filename)
+
+            # Add to front
+            self.recent_files.insert(0, filename)
+
+            # Limit to max
+            self.recent_files = self.recent_files[:self.max_recent_files]
+
+            # Save to localStorage
+            self._save_recent_files()
+
+            # Update menu
+            self._update_recent_files_menu()
+
+        except Exception as e:
+            log_web_error("_add_recent_file", e)
+
+    def _update_recent_files_menu(self):
+        """Update Recent Files submenu."""
+        try:
+            if not self.recent_files_menu:
+                return
+
+            # Clear existing items
+            self.recent_files_menu.clear()
+
+            # Add recent files
+            if self.recent_files:
+                for filename in self.recent_files:
+                    # Create a closure to capture the filename
+                    def make_handler(fname):
+                        return lambda: self._open_recent_file(fname)
+
+                    with self.recent_files_menu:
+                        ui.menu_item(filename, on_click=make_handler(filename))
+            else:
+                with self.recent_files_menu:
+                    ui.menu_item('(No recent files)', on_click=lambda: None).props('disable')
+
+        except Exception as e:
+            log_web_error("_update_recent_files_menu", e)
+
+    def _open_recent_file(self, filename):
+        """Open a file from recent files."""
+        # For web UI, we can't actually open local files
+        # Just show a notification
+        ui.notify(f'Recent file: {filename}. Use Open to load files.', type='info')
+        self._set_status(f'Recent: {filename}')
 
     # =========================================================================
     # Menu Handlers
@@ -317,6 +404,9 @@ class NiceGUIBackend(UIBackend):
 
             # Store filename
             self.current_file = e.name
+
+            # Add to recent files
+            self._add_recent_file(e.name)
 
             self._set_status(f'Opened: {e.name}')
             ui.notify(f'Loaded {e.name}', type='positive')
@@ -586,15 +676,55 @@ class NiceGUIBackend(UIBackend):
 
         If auto-numbering is enabled and current line has no line number,
         automatically add one.
-
-        Note: This is a simplified version compared to TK. Full cursor
-        manipulation and line sorting happens in TK but is complex to
-        implement in web textarea. For now, just allow default behavior.
         """
-        # TODO: Implement auto-numbering
-        # For now, just let the default Enter behavior happen
-        # Users can manually add line numbers
-        pass
+        if not self.auto_number_enabled:
+            return  # Allow default behavior
+
+        try:
+            # Get current editor content and cursor position via JavaScript
+            # This is complex in NiceGUI, so we'll use a simpler approach:
+            # Just add the next line number on a new line after Enter is pressed
+
+            # Get current text
+            current_text = self.editor.value
+
+            # Find highest line number
+            lines = current_text.split('\n')
+            highest_line_num = 0
+
+            for line in lines:
+                match = re.match(r'^\s*(\d+)', line.strip())
+                if match:
+                    line_num = int(match.group(1))
+                    highest_line_num = max(highest_line_num, line_num)
+
+            # Calculate next line number
+            if highest_line_num > 0:
+                next_line_num = highest_line_num + self.auto_number_increment
+            else:
+                next_line_num = self.auto_number_start
+
+            # Use JavaScript to insert line number after Enter
+            # The Enter key default behavior will happen, then we add the line number
+            ui.run_javascript(f'''
+                setTimeout(() => {{
+                    const textarea = document.querySelector('[data-ref="editor"] textarea');
+                    if (textarea) {{
+                        const start = textarea.selectionStart;
+                        const text = textarea.value;
+                        // Insert line number at cursor position
+                        const newText = text.substring(0, start) + "{next_line_num} " + text.substring(start);
+                        textarea.value = newText;
+                        textarea.selectionStart = textarea.selectionEnd = start + {len(str(next_line_num)) + 1};
+                        // Trigger input event to update Vue model
+                        textarea.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                    }}
+                }}, 10);
+            ''')
+
+        except Exception as ex:
+            log_web_error("_on_enter_key", ex)
+            # Don't prevent Enter if auto-numbering fails
 
     def _clear_output(self):
         """Clear output pane."""
