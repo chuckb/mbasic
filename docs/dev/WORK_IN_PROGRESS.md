@@ -1,10 +1,10 @@
 # Work in Progress
 
-## Current Session: 2025-10-27 - Spacing and Case Preservation
+## Current Session: 2025-10-27 - Spacing, Case, and RENUM Preservation
 
 ### Session Summary ✅ COMPLETED
 
-Major work on preserving original source formatting - both spacing and variable case.
+Major work on preserving original source formatting - spacing, variable case, and RENUM with position preservation.
 
 ### Completed Tasks
 
@@ -25,6 +25,13 @@ Major work on preserving original source formatting - both spacing and variable 
    - Test results: 9/10 tests passing
    - Historical note: approach by William Wulf (CMU, 1984)
 
+3. **RENUM with Spacing Preservation** (v1.0.92)
+   - Implemented `renumber_with_spacing_preservation()` function
+   - Updates all line number references: GOTO, GOSUB, ON GOTO, ON GOSUB, IF THEN, ON ERROR, RESTORE, RESUME, ERL comparisons
+   - Regenerates source_text from AST after updating line numbers
+   - Handles position conflicts gracefully by adding spaces
+   - Test results: All tests passing (5/5 basic, 1/1 complex)
+
 ### Files Modified
 
 **v1.0.89 - Spacing Preservation:**
@@ -40,6 +47,13 @@ Major work on preserving original source formatting - both spacing and variable 
 - `src/position_serializer.py` - Output variables with original case
 - `src/ui/ui_helpers.py` - Output variables with original case
 - `test_case_preservation.py` - NEW: Case preservation test suite
+
+**v1.0.92 - RENUM with Spacing Preservation:**
+- `src/position_serializer.py` - Added `renumber_with_spacing_preservation()` function
+- `src/position_serializer.py` - Fixed serialize_if_statement() to handle then_line_number
+- `src/position_serializer.py` - Fixed serialize_goto/gosub_statement() to use line_number field
+- `src/position_serializer.py` - Added helper functions to update line references in AST
+- `test_renum_spacing.py` - NEW: RENUM spacing preservation test suite
 
 ### Documentation Created
 
@@ -62,6 +76,13 @@ Major work on preserving original source formatting - both spacing and variable 
 - Lookup remains case-insensitive (all refer to same variable)
 - Backward compatible - no runtime changes
 
+**RENUM with Spacing Preservation:**
+- Renumbers program lines while updating all line number references
+- Updates GOTO, GOSUB, ON GOTO, ON GOSUB, IF THEN, ON ERROR, RESTORE, RESUME
+- Detects and updates ERL comparisons in expressions
+- Regenerates source_text from AST to preserve formatting
+- Handles position conflicts by adding spaces when needed
+
 ### Test Results
 
 **Spacing Preservation:**
@@ -74,16 +95,22 @@ Major work on preserving original source formatting - both spacing and variable 
 - ✅ 9/10 unit tests passing (snake_case with underscore not valid BASIC)
 - ✅ No regressions in game preservation test
 
+**RENUM with Spacing Preservation:**
+- ✅ 5/5 basic tests passing (spacing, GOTO, GOSUB, IF THEN)
+- ✅ 1/1 complex test passing (ON GOTO with multiple targets)
+- ✅ All line number references correctly updated
+- ⚠️ Position conflicts occur when line number length changes (expected behavior)
+
 ## Current State
 
-- **Version**: 1.0.90
-- **Status**: Spacing and case preservation complete
+- **Version**: 1.0.92
+- **Status**: Spacing, case, and RENUM preservation complete
 - **Blocking Issues**: None
 - **Ready for**: Further enhancements
 
 ## Next Steps (when resuming)
 
-1. **RENUM with position adjustment** - Preserve spacing through renumbering
+1. ✅ **RENUM with position adjustment** - COMPLETED (v1.0.92)
 2. **Investigate 57 changed files** - Why aren't they perfectly preserved?
 3. **Settings system** - Configuration for case conflict handling, etc.
 4. **Single source of truth** - Architectural refactor
@@ -95,5 +122,12 @@ All recent work follows the principle of **maintaining fidelity to source code**
 - Type suffix preservation (v1.0.85) - Don't output DEF-inferred suffixes
 - Spacing preservation (v1.0.89) - Preserve user's exact spacing
 - Case preservation (v1.0.90) - Display variables as user typed them
+- RENUM preservation (v1.0.92) - Maintain formatting through renumbering
 
 This respects the programmer's original intent and formatting choices.
+
+**Technical Approach:**
+- Fast path: Use original `source_text` when available
+- Fallback: Reconstruct from AST with position tracking
+- Position conflicts: Gracefully handled by adding spaces
+- Line number updates: Traverse AST to update all references
