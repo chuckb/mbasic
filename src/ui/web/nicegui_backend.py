@@ -181,6 +181,15 @@ class NiceGUIBackend(UIBackend):
         - Status bar
         """
 
+        # API endpoint for polling output
+        from fastapi.responses import JSONResponse
+        from nicegui import app as fastapi_app
+
+        @fastapi_app.get('/get_output')
+        def get_output():
+            """Return current output text for JavaScript polling."""
+            return JSONResponse({'output': self.output_text})
+
         # Main page
         @ui.page('/')
         def main_page():
@@ -226,11 +235,31 @@ class NiceGUIBackend(UIBackend):
                 # Bottom pane - Output (40% of space)
                 with splitter.after:
                     ui.label('Output').classes('text-lg font-bold p-2')
-                    # Direct textarea - we'll update it manually with set_value()
+                    # Direct textarea - we'll update it via JavaScript polling
                     self.output = ui.textarea(
                         value='MBASIC 5.21 Web IDE\nReady\n',
                         placeholder='Program output will appear here'
                     ).classes('w-full font-mono').style('height: 250px').props('readonly').mark('output')
+
+                    # Add JavaScript to poll for output updates every 100ms
+                    ui.add_head_html('''
+                        <script>
+                        // Poll server for output updates
+                        setInterval(async () => {
+                            try {
+                                const response = await fetch('/get_output');
+                                const data = await response.json();
+                                const textarea = document.querySelector('textarea[readonly]');
+                                if (textarea && data.output !== textarea.value) {
+                                    textarea.value = data.output;
+                                    textarea.scrollTop = textarea.scrollHeight;
+                                }
+                            } catch (e) {
+                                // Ignore errors during polling
+                            }
+                        }, 100);
+                        </script>
+                    ''')
 
                     # INPUT row (hidden by default, shown when INPUT statement needs input)
                     self.input_row = ui.row().classes('w-full p-2 gap-2')
