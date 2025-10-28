@@ -27,10 +27,14 @@ class SimpleWebIOHandler(IOHandler):
         self.output_callback = output_callback
         self.input_callback = input_callback
 
-    def print(self, text="", end="\n"):
+    def output(self, text: str, end: str = '\n') -> None:
         """Output text to the web UI."""
         output = str(text) + end
         self.output_callback(output)
+
+    def print(self, text="", end="\n"):
+        """Output text to the web UI (alias for output)."""
+        self.output(str(text), end)
 
     def input(self, prompt=""):
         """Get input from user via inline input field.
@@ -51,9 +55,22 @@ class SimpleWebIOHandler(IOHandler):
 
         return result
 
-    def get_char(self):
-        """Get single character (not implemented)."""
+    def input_line(self, prompt: str = '') -> str:
+        """Input complete line from user (LINE INPUT statement)."""
+        return self.input(prompt)
+
+    def input_char(self, blocking: bool = True) -> str:
+        """Get single character (not implemented for web)."""
         return ""
+
+    def error(self, message: str) -> None:
+        """Output error message."""
+        self.output(f"Error: {message}\n")
+
+    def debug(self, message: str) -> None:
+        """Output debug message."""
+        # Don't show debug in web UI output
+        pass
 
     def clear_screen(self):
         """Clear screen (not applicable for textarea)."""
