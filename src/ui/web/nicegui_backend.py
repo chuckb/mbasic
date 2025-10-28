@@ -984,11 +984,17 @@ class NiceGUIBackend(UIBackend):
             self.output.update()  # Force NiceGUI to push update to browser
 
             # Auto-scroll to bottom using JavaScript
+            # Use setTimeout to ensure DOM is updated before scrolling
             ui.run_javascript('''
-                const textarea = document.querySelector('[data-ref="output"] textarea');
-                if (textarea) {
-                    textarea.scrollTop = textarea.scrollHeight;
-                }
+                setTimeout(() => {
+                    const output = document.querySelector('[data-ref="output"]');
+                    if (output) {
+                        const textarea = output.querySelector('textarea');
+                        if (textarea) {
+                            textarea.scrollTop = textarea.scrollHeight;
+                        }
+                    }
+                }, 10);
             ''')
 
     def _show_input_row(self, prompt=''):
