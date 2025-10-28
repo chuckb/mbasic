@@ -1,14 +1,16 @@
 name: Deploy Documentation
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'docs/**'
-      - 'mkdocs.yml'
-      - '.github/workflows/docs.yml'
-  workflow_dispatch:  # Allow manual triggering
+  # Disabled automatic deployment - too many errors in strict mode
+  # Re-enable when documentation is cleaned up
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'docs/**'
+  #     - 'mkdocs.yml'
+  #     - '.github/workflows/docs.yml'
+  workflow_dispatch:  # Allow manual triggering only
 
 permissions:
   contents: read
