@@ -229,13 +229,16 @@ class NiceGUIBackend(UIBackend):
                     # Output textarea - black text on white background
                     # Set explicit color and background to ensure visibility
                     # Use flex-grow to take up remaining space
+                    # TEMPORARY: Red border for visibility debugging
                     self.output = ui.textarea(
                         value='MBASIC 5.21 Web IDE\nReady\n',
                         placeholder='Program output will appear here'
                     ).classes('w-full flex-grow font-mono').style(
                         'background-color: white; '
                         'color: black; '
-                        'font-size: 14px;'
+                        'font-size: 14px; '
+                        'border: 3px solid red !important; '
+                        'min-height: 200px;'
                     ).props('readonly').mark('output')
 
             # INPUT row (hidden by default, shown when INPUT statement needs input)
@@ -1124,21 +1127,24 @@ class NiceGUIBackend(UIBackend):
             # Create output capturing IO handler
             output_io = OutputCapturingIOHandler()
 
-            # Create immediate executor
+            # Create immediate executor (runtime, interpreter, io_handler)
             immediate_executor = ImmediateExecutor(
-                self.program,
                 self.runtime if self.runtime else None,
+                self.interpreter if self.interpreter else None,
                 output_io
             )
 
             # Execute command
-            result = immediate_executor.execute_line(command)
+            success, output = immediate_executor.execute(command)
 
             # Show result
-            if output_io.output_buffer:
-                self._append_output(output_io.output_buffer)
+            if output:
+                self._append_output(output)
 
-            self._set_status('Immediate command executed')
+            if success:
+                self._set_status('Immediate command executed')
+            else:
+                self._set_status('Immediate command error')
 
         except Exception as e:
             log_web_error("_execute_immediate", e)
