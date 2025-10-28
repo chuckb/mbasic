@@ -97,6 +97,13 @@ Implemented comprehensive settings system with CLI commands and variable case co
 
 6. **Settings Scope Testing** - Test project/file-level settings
 
+7. **Package Distribution** - Setup automated builds for .deb, .snap, multi-arch
+   - See `docs/dev/PACKAGING_BUILD_FARMS_TODO.md` for complete plan
+   - Phase 1: Snap via GitHub Actions (1-2 days) - FREE ARM64 runners!
+   - Phase 2: Ubuntu PPA via Launchpad (3-5 days) - FREE build farm
+   - Target architectures: amd64, arm64, armhf
+   - Est. 1-2 weeks total
+
 ## Previous Session: 2025-10-28 - Architecture and Safety ✅ COMPLETED
 
 Major architectural improvements - single source of truth, stack validation, and documentation fixes.
