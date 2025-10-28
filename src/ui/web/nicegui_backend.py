@@ -243,18 +243,21 @@ class NiceGUIBackend(UIBackend):
                     # Add JavaScript to poll for output updates every 100ms
                     ui.add_head_html('''
                         <script>
-                        // Poll server for output updates
+                        console.log("MBASIC: Setting up output polling...");
                         setInterval(async () => {
                             try {
                                 const response = await fetch('/get_output');
                                 const data = await response.json();
+                                console.log("MBASIC POLL: Got output, length=" + data.output.length);
                                 const textarea = document.querySelector('textarea[readonly]');
+                                console.log("MBASIC POLL: textarea=" + textarea + ", current length=" + (textarea ? textarea.value.length : 0));
                                 if (textarea && data.output !== textarea.value) {
+                                    console.log("MBASIC POLL: Updating textarea!");
                                     textarea.value = data.output;
                                     textarea.scrollTop = textarea.scrollHeight;
                                 }
                             } catch (e) {
-                                // Ignore errors during polling
+                                console.error("MBASIC POLL ERROR:", e);
                             }
                         }, 100);
                         </script>
