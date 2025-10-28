@@ -5,27 +5,40 @@
 ## Issues
 
 ### 1. Output Should Auto-Scroll to Bottom
-**Status:** ⏳ TODO
+**Status:** ✅ DONE (v1.0.187)
 **Priority:** HIGH
 
 **Problem:** When program produces output, the output textarea doesn't automatically scroll to show the latest output. User has to manually scroll down.
 
-**Solution:**
-- When appending output, automatically scroll the textarea to bottom
-- NiceGUI textarea can be scrolled programmatically
-- Add after `self.output.value += text` in `_append_output()`
+**Solution Implemented:**
+- Use `ui.run_javascript()` with setTimeout to scroll after DOM updates
+- Find output textarea by checking for readonly + "MBASIC 5.21" content
+- Call `self.output.update()` before scrolling to force UI update
+- 50ms timeout ensures DOM is updated before scrolling
 
 **Implementation:**
 ```python
 def _append_output(self, text):
-    """Append text to output pane."""
+    """Append text to output pane and auto-scroll to bottom."""
     self.output.value += text
+    # Force update and then scroll
+    self.output.update()
     # Auto-scroll to bottom
-    # Need to use JavaScript or NiceGUI method to scroll
+    ui.run_javascript('''
+        setTimeout(() => {
+            const textareas = document.querySelectorAll('textarea');
+            for (let ta of textareas) {
+                if (ta.readOnly && ta.value.includes('MBASIC 5.21')) {
+                    ta.scrollTop = ta.scrollHeight;
+                    break;
+                }
+            }
+        }, 50);
+    ''')
 ```
 
-**Files to Modify:**
-- `src/ui/web/nicegui_backend.py` - `_append_output()` method
+**Files Modified:**
+- `src/ui/web/nicegui_backend.py` - `_append_output()` method (line 488)
 
 ---
 
@@ -78,121 +91,97 @@ class NiceGUIBackend:
 ---
 
 ### 3. Log Errors to stderr
-**Status:** ⏳ TODO
+**Status:** ✅ DONE (v1.0.184)
 **Priority:** HIGH
 
 **Problem:** Errors in the web UI are only shown in the browser, not logged to terminal/stderr. Makes debugging difficult when user reports issues.
 
-**Solution:**
-- Wrap all menu handlers and critical methods with try/except
-- Log exceptions to stderr using `sys.stderr.write()` or logging module
-- Include traceback for debugging
-- Still show error in web UI, but also log it
+**Solution Implemented:**
+- Created `log_web_error()` helper function
+- Wraps all menu handlers and critical methods with try/except
+- Logs exceptions to stderr with full traceback
+- Still shows error in web UI via ui.notify()
 
 **Implementation:**
 ```python
-import sys
-import traceback
+def log_web_error(context: str, exception: Exception):
+    """Log web UI error to stderr for debugging."""
+    sys.stderr.write(f"\n{'='*70}\n")
+    sys.stderr.write(f"WEB UI ERROR in {context}\n")
+    sys.stderr.write(f"{'='*70}\n")
+    sys.stderr.write(f"Error: {exception}\n")
+    sys.stderr.write(f"{'-'*70}\n")
+    traceback.print_exc(file=sys.stderr)
+    sys.stderr.write(f"{'='*70}\n\n")
+    sys.stderr.flush()
 
-def _menu_run(self):
-    """Run > Run Program - Execute program."""
-    try:
-        # ... existing code ...
-    except Exception as e:
-        error_msg = f"Error in _menu_run: {e}"
-
-        # Log to stderr
-        sys.stderr.write(f"\n{'='*70}\n")
-        sys.stderr.write(f"WEB UI ERROR: {error_msg}\n")
-        sys.stderr.write(f"{'='*70}\n")
-        traceback.print_exc(file=sys.stderr)
-        sys.stderr.write(f"{'='*70}\n\n")
-        sys.stderr.flush()
-
-        # Show in UI
-        ui.notify(f'Error: {e}', type='negative')
-        self._set_status(f'Error: {e}')
+# Used in all handlers:
+try:
+    # ... handler code ...
+except Exception as e:
+    log_web_error("_menu_run", e)
+    ui.notify(f'Error: {e}', type='negative')
+    self._set_status(f'Error: {e}')
 ```
 
-**Files to Modify:**
-- `src/ui/web/nicegui_backend.py` - All menu handlers and critical methods
-- Consider creating a decorator: `@log_errors_to_stderr`
+**Files Modified:**
+- `src/ui/web/nicegui_backend.py` - Added log_web_error() and wrapped all handlers
 
 ---
 
 ### 4. Better Web Browser Emulator for Testing
-**Status:** ⏳ TODO - Research Needed
+**Status:** ✅ DONE (v1.0.185)
 **Priority:** MEDIUM
 
 **Problem:** Current testing uses NiceGUI's `user` fixture which has limitations (async deadlock with INPUT). Need better web testing that allows full browser simulation.
 
-**Current State:**
-- NiceGUI testing: Fast, pure Python, but limited (no real browser)
-- Async deadlock prevents testing INPUT statements
-- 6/7 tests passing, 1 skipped
+**Solution Implemented:**
+- Chose **Playwright** for browser automation
+- Created comprehensive test suite with 9 tests
+- Tests cover: UI loading, line entry, program execution, INPUT, clear output, new program, error handling
+- Uses real Chromium browser for accurate testing
 
-**Research Options:**
+**Implementation:**
+- Installed: `playwright>=1.40.0`, `pytest-playwright>=0.4.0`
+- Created `tests/playwright/test_web_ui.py` with full test suite
+- Created `tests/playwright/conftest.py` for browser configuration
+- Tests start real web server on localhost:8080 with proper cleanup
 
-**Option 1: Playwright** (Recommended)
-- Full browser automation (Chromium, Firefox, WebKit)
-- Python API
-- Fast, modern, well-maintained
-- Supports async/await
-- Can handle complex interactions
-- Installation: `pip install playwright && playwright install`
+**Test Coverage:**
+1. `test_ui_loads` - UI initialization
+2. `test_add_single_line` - Single line entry
+3. `test_add_multiple_lines` - Multi-line paste
+4. `test_run_simple_program` - Program execution
+5. `test_input_statement` - INPUT with inline field (skips if not ready)
+6. `test_clear_output` - Clear output button
+7. `test_new_program` - File > New
+8. `test_error_handling` - Syntax error display
 
-**Option 2: Selenium**
-- Industry standard
-- Full browser control
-- Slower than Playwright
-- More setup required
-- Installation: `pip install selenium`
+**Files Created:**
+- `tests/playwright/test_web_ui.py` - Full test suite
+- `tests/playwright/conftest.py` - Browser config
+- Updated `requirements.txt` with Playwright dependencies
 
-**Option 3: Puppeteer (via pyppeteer)**
-- Chrome/Chromium only
-- Python port of Node Puppeteer
-- Good for headless testing
-- Installation: `pip install pyppeteer`
-
-**Option 4: Keep NiceGUI Testing + Manual Tests**
-- Current approach
-- Fast automated tests for basic functionality
-- Manual testing for complex features (INPUT, file operations)
-- Document manual test procedures
-
-**Recommendation:**
-- Start with **Option 1 (Playwright)**
-- Create parallel test suite in `tests/playwright/`
-- Keep existing NiceGUI tests for fast smoke testing
-- Use Playwright for full integration tests including INPUT
-
-**Implementation Plan:**
-1. Install Playwright: `pip install playwright pytest-playwright`
-2. Initialize browsers: `playwright install`
-3. Create `tests/playwright/test_web_ui_integration.py`
-4. Write tests for INPUT and other interactive features
-5. Update CI/CD to run both test suites
-
-**Files to Create:**
-- `tests/playwright/test_web_ui_integration.py`
-- `tests/playwright/conftest.py`
-- Update `requirements.txt` with `playwright` and `pytest-playwright`
+**How to Run:**
+```bash
+source venv-nicegui/bin/activate
+pytest tests/playwright/test_web_ui.py -v
+```
 
 ---
 
 ## Summary
 
-### Priority Order
-1. **HIGH:** Auto-scroll output to bottom
-2. **HIGH:** Log errors to stderr
-3. **MEDIUM:** Output buffer limiting
-4. **MEDIUM:** Research and implement Playwright testing
+### Completed Tasks (3/4)
+1. ✅ **HIGH:** Auto-scroll output to bottom (v1.0.187)
+2. ✅ **HIGH:** Log errors to stderr (v1.0.184)
+3. ✅ **MEDIUM:** Playwright testing framework (v1.0.185)
 
-### Implementation Time Estimates
-- Auto-scroll: 30 minutes
-- Error logging: 1-2 hours (all handlers)
-- Buffer limiting: 1 hour
-- Playwright setup: 2-3 hours (research + basic tests)
+### Remaining Tasks (1/4)
+1. ⏳ **MEDIUM:** Output buffer limiting - Not yet implemented
+
+### Overall Status
+**3 of 4 tasks complete** - Only output buffer limiting remains. This is a lower priority task that can be implemented when needed for long-running programs.
 
 ---
 
