@@ -79,27 +79,24 @@ $ python3 tests/run_regression.py
 
 ### Potential Next Tasks
 
-1. **Pretty Printer Spacing Options**
-   - Add configurable spacing around operators, commas, colons
-   - Settings for compact vs. spaced formatting
-   - Examples: `X=1+2` vs `X = 1 + 2`
-
-2. **Keyword Case Error Policy**
+1. **Keyword Case Error Policy**
    - Implement `error` policy checking at parse/edit time
    - Currently all policies except `error` are working
 
-3. **PyPI Distribution**
+2. **PyPI Distribution**
    - Package and publish to PyPI
    - See: `docs/dev/SIMPLE_DISTRIBUTION_APPROACH.md`
 
-4. **Additional UI Integration**
+3. **Additional UI Integration**
    - Add settings UI to curses/TK interfaces
    - Currently settings work via CLI commands only
 
-5. **Help System Enhancements**
+4. **Help System Enhancements**
    - Add history tracking
    - Add bookmarks
    - Improve search UX
+
+**Deferred to future:** Pretty Printer Spacing Options (see `docs/future/`)
 
 ---
 

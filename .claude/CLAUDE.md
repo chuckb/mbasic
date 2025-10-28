@@ -294,6 +294,9 @@ All documentation belongs in the `docs/` directory:
     - Use for: quick references, installation guides, tutorials
   - `docs/history/` - Historical/archived development documentation
     - Use for: session logs, completed milestones (move from dev/ when done)
+  - `docs/future/` - Deferred/someday projects
+    - Use for: nice-to-have features, enhancements that aren't priority
+    - Move to dev/ when project becomes active
   - `docs/design/` - Architecture and design documents
   - `docs/external/` - External references (PDFs, specifications)
 
@@ -302,6 +305,7 @@ All documentation belongs in the `docs/` directory:
 - Help content → `docs/help/common/` or `docs/help/ui/{backend}/`
 - User guides → `docs/user/`
 - Completed sessions → `docs/history/`
+- Future/deferred projects → `docs/future/`
 
 ## Code Style
 - Python 3 with type hints where appropriate
