@@ -1,16 +1,46 @@
-# Keyword Case Handling - TODO
+# Keyword Case Handling - DONE
 
-⏳ **Status**: TODO
+✅ **Status**: COMPLETED (v1.0.122-128)
 
 ## Overview
 
 Extend the case conflict handling system to support keywords (PRINT, FOR, IF, etc.) with separate configuration from variable case handling.
 
-## Current State
+## Implementation Summary
 
-- Variables have case conflict handling via `variables.case_conflict` setting
-- Keywords are currently normalized to lowercase by the lexer
-- No tracking or preservation of original keyword case
+**Completed in v1.0.122-128** with table-based architecture (cleaner than originally proposed).
+
+### What Was Built
+
+1. **Setting Added** (v1.0.122)
+   - Added `keywords.case_style` to `src/settings_definitions.py`
+   - 6 policies: force_lower, force_upper, force_capitalize, first_wins, error, preserve
+   - Default: force_lower (MBASIC 5.21 style)
+
+2. **Token Enhancement** (v1.0.122)
+   - Added `original_case_keyword` field to Token
+   - Lexer tracks original keyword case
+
+3. **Table-Based Architecture** (v1.0.126-127)
+   - Created `CaseKeeperTable` utility class (generic case-insensitive storage)
+   - Created `KeywordCaseManager` using CaseKeeperTable
+   - Lexer registers keywords during tokenization (lexical-level handling)
+   - Parser receives keyword_case_manager from lexer
+   - Serializer looks up display case from table
+
+4. **Testing** (v1.0.122-128)
+   - `test_keyword_case_policies.py` - All 5 main policies tested and working
+
+### Key Architectural Insight
+
+**Keywords work exactly like variables:**
+- Case-insensitive lookup (normalized key)
+- Display case from table (first_wins/policy determines display case)
+- Table is single source of truth
+
+This is **cleaner** than the originally proposed runtime tracking approach!
+
+## Original Proposal (For Reference)
 
 ## Proposed Implementation
 
