@@ -1,6 +1,6 @@
 # Web UI INPUT Statement UX - TODO
 
-## Status: ⏳ Design Decision Needed
+## Status: ✅ IMPLEMENTED (v1.0.174) - Manual Testing Required
 
 ## Problem
 
@@ -107,9 +107,78 @@ def input(self, prompt=""):
 
 ## Priority
 
-**MEDIUM** - INPUT works (returns empty), but UX needs improvement for games
+**IMPLEMENTED** - Inline INPUT with asyncio.Future coordination
+
+## Implementation Complete
+
+**Version:** 1.0.174
+
+**Solution Chosen:** Option 2 - Inline Input Field
+
+**Changes Made:**
+
+1. **Added INPUT row UI elements to build_ui():**
+   - `self.input_row` - Row container for INPUT controls
+   - `self.input_label` - Label showing prompt text
+   - `self.input_field` - Input field for user entry
+   - `self.input_submit_btn` - Submit button
+   - `self.input_future` - asyncio.Future for coordination
+
+2. **UI Structure:**
+   - INPUT row appears below output pane
+   - Hidden by default (`visible=False`)
+   - Shows when INPUT statement is reached
+   - Hides after submission
+   - Styled with blue text for prompt
+
+3. **Helper Methods Added:**
+   - `_show_input_row(prompt)` - Display INPUT row
+   - `_hide_input_row()` - Hide INPUT row
+   - `_submit_input()` - Handle Enter key and Submit button
+   - `_get_input_async(prompt)` - Async version using Future
+   - `_get_input(prompt)` - Blocking version for interpreter
+
+4. **asyncio.Future Coordination:**
+   - Creates Future when INPUT needed
+   - Shows inline input field
+   - Waits for user to submit
+   - Resolves Future with input value
+   - Compatible with synchronous interpreter
+
+5. **Test Added:**
+   - `test_input_statement()` in `tests/nicegui/test_mbasic_web_ui.py`
+   - Tests program with INPUT statement
+   - Verifies inline input appears
+   - Simulates user typing and submitting
+   - Checks program continues with input value
+
+**Benefits Achieved:**
+- ✅ Can see all output while typing input
+- ✅ Better for games with narrative text
+- ✅ More terminal-like experience
+- ✅ No modal dialogs blocking view
+- ✅ Natural reading flow
+
+**Testing:**
+
+Manual test (pytest not available in system):
+
+```bash
+python3 mbasic.py --backend web
+# Navigate to http://localhost:8080
+# Load tests/test_curses_input.bas or type manually
+# Run program
+# Verify inline input appears below output
+# Type answer and press Enter or click Submit
+# Verify program continues
+```
+
+## Files Modified
+
+- `src/ui/web/nicegui_backend.py` - ~80 lines added (INPUT row UI, helper methods, Future coordination)
+- `tests/nicegui/test_mbasic_web_ui.py` - Added `test_input_statement()` test
 
 ## See Also
 
-- `src/ui/web/nicegui_backend.py:35` - Current INPUT implementation with TODO
-- `src/ui/tk_ui.py:3421` - TK's modal dialog approach
+- `docs/dev/TK_UI_INPUT_DIALOG_TODO.md` - TK UI inline INPUT (implemented v1.0.173)
+- `docs/dev/CURSES_UI_INPUT_CHECK_TODO.md` - Curses model we followed

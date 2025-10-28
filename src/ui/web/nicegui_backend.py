@@ -33,18 +33,11 @@ class SimpleWebIOHandler(IOHandler):
         self.output_callback(output)
 
     def input(self, prompt=""):
-        """Get input from user via callback.
+        """Get input from user via inline input field.
 
-        TODO: Consider inline input approach instead of dialog.
-        User feedback: Games often have lots of text before INPUT,
-        dialog boxes block viewing that text. Inline input field
-        below output would be better UX.
-
-        Challenge: Interpreter expects synchronous input() return,
-        but web UI is async. Need to either:
-        1. Run interpreter in background thread (current approach)
-        2. Use event/queue for input coordination
-        3. Make interpreter fully async (major refactor)
+        Uses asyncio.Future for coordination between synchronous interpreter
+        and async web UI. The input field appears below the output pane,
+        allowing users to see all previous output while typing.
         """
         # Show prompt in output
         if prompt:
@@ -120,6 +113,13 @@ class NiceGUIBackend(UIBackend):
         self.status_label = None
         self.program_display = None
 
+        # INPUT row elements (for inline input)
+        self.input_row = None
+        self.input_label = None
+        self.input_field = None
+        self.input_submit_btn = None
+        self.input_future = None  # Future for async input coordination
+
     def build_ui(self):
         """Build the NiceGUI interface.
 
@@ -181,6 +181,15 @@ class NiceGUIBackend(UIBackend):
                         value='MBASIC 5.21 Web IDE\nReady\n',
                         placeholder='Program output will appear here'
                     ).classes('w-full flex-grow font-mono bg-black text-green-400').props('readonly').mark('output')
+
+                    # INPUT row (hidden by default, shown when INPUT statement needs input)
+                    self.input_row = ui.row().classes('w-full p-2 gap-2')
+                    with self.input_row:
+                        self.input_label = ui.label('').classes('font-bold text-blue-600')
+                        self.input_field = ui.input(placeholder='Enter value...').classes('flex-grow').mark('input_field')
+                        self.input_field.on('keydown.enter', self._submit_input)
+                        self.input_submit_btn = ui.button('Submit', on_click=self._submit_input, icon='send', color='primary').mark('btn_input_submit')
+                    self.input_row.visible = False  # Hidden by default
 
                     with ui.row().classes('w-full p-2'):
                         ui.button('Clear Output', on_click=self._clear_output, icon='clear').mark('btn_clear_output')
@@ -415,14 +424,80 @@ class NiceGUIBackend(UIBackend):
         """Append text to output pane."""
         self.output.value += text
 
-    def _get_input(self, prompt):
-        """Get input from user.
+    def _show_input_row(self, prompt=''):
+        """Show the INPUT row with prompt."""
+        if self.input_row and self.input_label and self.input_field:
+            self.input_label.text = prompt
+            self.input_field.value = ''
+            self.input_row.visible = True
+            # Focus on input field (NiceGUI will handle this automatically)
 
-        TODO: Implement proper inline input or dialog.
-        For now, returns empty string as placeholder.
+    def _hide_input_row(self):
+        """Hide the INPUT row."""
+        if self.input_row:
+            self.input_row.visible = False
+
+    def _submit_input(self):
+        """Submit INPUT value from inline input field."""
+        if self.input_field and self.input_future:
+            value = self.input_field.value
+            self.input_field.value = ''
+            # Resolve the future with the input value
+            if not self.input_future.done():
+                self.input_future.set_result(value)
+
+    async def _get_input_async(self, prompt):
+        """Get input from user (async version).
+
+        Creates a Future that will be resolved when user submits input.
         """
-        # Placeholder - proper implementation needed
-        return ""
+        # Create a new future for this input request
+        loop = asyncio.get_event_loop()
+        self.input_future = loop.create_future()
+
+        # Show input row
+        self._show_input_row(prompt)
+
+        # Wait for user to submit input
+        result = await self.input_future
+
+        # Hide input row
+        self._hide_input_row()
+
+        return result
+
+    def _get_input(self, prompt):
+        """Get input from user (blocking version).
+
+        Uses asyncio to wait for async input, making it compatible with
+        synchronous interpreter INPUT statements.
+        """
+        # Run the async input function and wait for result
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # If event loop is running, we need to create a task and wait
+            # This is tricky - we'll use a blocking approach with Future
+            import concurrent.futures
+            import threading
+
+            result_holder = []
+            done_event = threading.Event()
+
+            async def get_and_signal():
+                result = await self._get_input_async(prompt)
+                result_holder.append(result)
+                done_event.set()
+
+            # Schedule the coroutine on the event loop
+            asyncio.create_task(get_and_signal())
+
+            # Block until done
+            done_event.wait()
+
+            return result_holder[0] if result_holder else ""
+        else:
+            # Event loop not running, use run_until_complete
+            return loop.run_until_complete(self._get_input_async(prompt))
 
     def _set_status(self, message):
         """Set status bar message."""

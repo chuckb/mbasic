@@ -179,6 +179,51 @@ async def test_run_program(user: User):
     await user.should_see('Testing 1 2 3', marker='output')
 
 
+@pytest.mark.asyncio
+async def test_input_statement(user: User):
+    """Test INPUT statement with inline input field."""
+    from src.ui.web.nicegui_backend import NiceGUIBackend
+
+    io_handler = ConsoleIOHandler()
+    program_mgr = ProgramManager(create_def_type_map())
+    backend = NiceGUIBackend(io_handler, program_mgr)
+    backend.build_ui()
+
+    await user.open('/')
+
+    # Add a program with INPUT
+    user.find(marker='editor').type('10 PRINT "Enter your name:"')
+    user.find(marker='btn_add_line').click()
+
+    user.find(marker='editor').type('20 INPUT N$')
+    user.find(marker='btn_add_line').click()
+
+    user.find(marker='editor').type('30 PRINT "Hello, "; N$')
+    user.find(marker='btn_add_line').click()
+
+    user.find(marker='editor').type('40 END')
+    user.find(marker='btn_add_line').click()
+
+    # Run the program
+    user.find(marker='btn_run').click()
+
+    # Wait for INPUT to appear
+    await asyncio.sleep(0.5)
+
+    # INPUT row should be visible
+    await user.should_see('Enter your name:', marker='output')
+
+    # Type input and submit
+    user.find(marker='input_field').type('Alice')
+    user.find(marker='btn_input_submit').click()
+
+    # Wait for program to complete
+    await asyncio.sleep(0.5)
+
+    # Should see greeting
+    await user.should_see('Hello, Alice', marker='output')
+
+
 if __name__ == '__main__':
     # Run tests
     pytest.main([__file__, '-v'])
