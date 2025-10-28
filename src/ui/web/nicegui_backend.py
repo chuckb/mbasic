@@ -268,29 +268,118 @@ class NiceGUIBackend(UIBackend):
 
     def _menu_new(self):
         """File > New - Clear program."""
-        self.program.clear()
-        self.program_lines = []
-        self._update_program_display()
-        self.editor.value = ''
-        self._set_status('New program')
+        try:
+            self.program.clear()
+            self.editor.value = ''
+            self.current_file = None
+            self._set_status('New program')
+        except Exception as e:
+            log_web_error("_menu_new", e)
+            ui.notify(f'Error: {e}', type='negative')
 
     def _menu_open(self):
         """File > Open - Load program from file."""
-        # TODO: Implement file picker
-        self._set_status('Open not yet implemented')
-        ui.notify('File picker coming soon', type='info')
+        try:
+            # Create upload dialog
+            with ui.dialog() as dialog, ui.card():
+                ui.label('Open BASIC Program')
+                upload = ui.upload(
+                    on_upload=lambda e: self._handle_file_upload(e, dialog),
+                    auto_upload=True
+                ).classes('w-full').props('accept=".bas,.txt"')
+                ui.button('Cancel', on_click=dialog.close)
+            dialog.open()
+        except Exception as e:
+            log_web_error("_menu_open", e)
+            ui.notify(f'Error: {e}', type='negative')
+
+    def _handle_file_upload(self, e, dialog):
+        """Handle file upload from Open dialog."""
+        try:
+            # Read uploaded file content
+            content = e.content.read().decode('utf-8')
+
+            # Load into editor
+            self.editor.value = content
+
+            # Parse into program
+            self._save_editor_to_program()
+
+            # Store filename
+            self.current_file = e.name
+
+            self._set_status(f'Opened: {e.name}')
+            ui.notify(f'Loaded {e.name}', type='positive')
+            dialog.close()
+
+        except Exception as ex:
+            log_web_error("_handle_file_upload", ex)
+            ui.notify(f'Error loading file: {ex}', type='negative')
 
     def _menu_save(self):
         """File > Save - Save current program."""
-        # TODO: Implement file save
-        self._set_status('Save not yet implemented')
-        ui.notify('Save coming soon', type='info')
+        try:
+            # Save editor to program first
+            self._save_editor_to_program()
+
+            # Get filename
+            filename = self.current_file or 'program.bas'
+
+            # Download file with current editor content
+            content = self.editor.value
+            ui.download(content.encode('utf-8'), filename)
+
+            self._set_status(f'Saved: {filename}')
+            ui.notify(f'Downloaded {filename}', type='positive')
+
+        except Exception as e:
+            log_web_error("_menu_save", e)
+            ui.notify(f'Error: {e}', type='negative')
 
     def _menu_save_as(self):
         """File > Save As - Save with new filename."""
-        # TODO: Implement save as
-        self._set_status('Save As not yet implemented')
-        ui.notify('Save As coming soon', type='info')
+        try:
+            # Create save dialog
+            with ui.dialog() as dialog, ui.card():
+                ui.label('Save As')
+                filename_input = ui.input(
+                    'Filename:',
+                    value=self.current_file or 'program.bas',
+                    placeholder='program.bas'
+                ).classes('w-full')
+
+                with ui.row():
+                    ui.button('Save', on_click=lambda: self._handle_save_as(filename_input.value, dialog))
+                    ui.button('Cancel', on_click=dialog.close)
+            dialog.open()
+        except Exception as e:
+            log_web_error("_menu_save_as", e)
+            ui.notify(f'Error: {e}', type='negative')
+
+    def _handle_save_as(self, filename, dialog):
+        """Handle Save As dialog."""
+        try:
+            if not filename:
+                ui.notify('Please enter a filename', type='warning')
+                return
+
+            # Save editor to program first
+            self._save_editor_to_program()
+
+            # Update current filename
+            self.current_file = filename
+
+            # Download file
+            content = self.editor.value
+            ui.download(content.encode('utf-8'), filename)
+
+            self._set_status(f'Saved: {filename}')
+            ui.notify(f'Downloaded {filename}', type='positive')
+            dialog.close()
+
+        except Exception as e:
+            log_web_error("_handle_save_as", e)
+            ui.notify(f'Error: {e}', type='negative')
 
     def _menu_exit(self):
         """File > Exit - Quit application."""
@@ -302,13 +391,16 @@ class NiceGUIBackend(UIBackend):
             self._set_status('Program already running')
             return
 
-        # Check if program has lines
-        if not self.program.lines:
-            self._set_status('No program loaded')
-            ui.notify('No program loaded. Add some lines first.', type='warning')
-            return
-
         try:
+            # Save editor content to program first
+            if not self._save_editor_to_program():
+                return  # Parse errors, don't run
+
+            # Check if program has lines
+            if not self.program.lines:
+                self._set_status('No program loaded')
+                ui.notify('No program in editor. Add some lines first.', type='warning')
+                return
             # Clear output
             self._clear_output()
             self._set_status('Running...')
@@ -413,69 +505,86 @@ class NiceGUIBackend(UIBackend):
     # Editor Actions
     # =========================================================================
 
-    def _add_line(self):
-        """Add line(s) from editor to program.
+    def _save_editor_to_program(self):
+        """Save editor content to program.
 
-        Supports both single line and multiple lines separated by newlines.
+        Parses all lines in the editor and updates the program.
+        Returns True if successful, False if there were errors.
         """
-        text = self.editor.value.strip()
-        if not text:
-            return
-
         try:
-            # Split into lines
-            lines = [line.strip() for line in text.split('\n') if line.strip()]
+            # Clear existing program
+            self.program.clear()
 
-            if not lines:
-                return
+            # Get editor content
+            text = self.editor.value
+            if not text:
+                self._set_status('Program cleared')
+                return True
 
-            added_count = 0
+            # Parse each line
+            lines = text.split('\n')
             errors = []
 
             for line_text in lines:
-                # Parse line number from text
+                line_text = line_text.strip()
+                if not line_text:
+                    continue  # Skip blank lines
+
+                # Parse line number
                 match = re.match(r'^(\d+)(?:\s|$)', line_text)
                 if not match:
-                    errors.append(f'{line_text}: Line must start with line number')
+                    errors.append(f'Line must start with number: {line_text[:30]}...')
                     continue
 
                 line_num = int(match.group(1))
 
-                # Add line to program
+                # Add to program
                 success, error = self.program.add_line(line_num, line_text)
-
                 if not success:
                     errors.append(f'{line_num}: {error}')
-                else:
-                    added_count += 1
 
-            # Update display
-            self._update_program_display()
-
-            # Clear editor
-            self.editor.value = ''
-
-            # Show status
             if errors:
-                error_msg = '; '.join(errors[:3])  # Show first 3 errors
+                error_msg = '; '.join(errors[:3])
                 if len(errors) > 3:
                     error_msg += f' (and {len(errors)-3} more)'
-                self._set_status(f'Added {added_count} lines, {len(errors)} errors')
                 ui.notify(error_msg, type='warning')
-            else:
-                self._set_status(f'Added {added_count} line(s) - Total: {len(self.program.lines)}')
+                self._set_status(f'Parse errors: {len(errors)}')
+                return False
+
+            self._set_status(f'Program loaded: {len(self.program.lines)} lines')
+            return True
 
         except Exception as e:
-            log_web_error("_add_line", e)
+            log_web_error("_save_editor_to_program", e)
             ui.notify(f'Error: {e}', type='negative')
-            self._set_status(f'Error: {e}')
+            return False
 
-    def _update_program_display(self):
-        """Update program listing display."""
-        lines = self.program.get_lines()
-        # Format as "linenum text"
-        formatted_lines = [line_text for line_num, line_text in lines]
-        self.program_display.value = '\n'.join(formatted_lines)
+    def _load_program_to_editor(self):
+        """Load program content into editor."""
+        try:
+            lines = self.program.get_lines()
+            # Format as "linenum text"
+            formatted_lines = [line_text for line_num, line_text in lines]
+            self.editor.value = '\n'.join(formatted_lines)
+            self._set_status(f'Loaded {len(lines)} lines')
+        except Exception as e:
+            log_web_error("_load_program_to_editor", e)
+            ui.notify(f'Error: {e}', type='negative')
+
+    def _on_enter_key(self, e):
+        """Handle Enter key in editor for auto-numbering.
+
+        If auto-numbering is enabled and current line has no line number,
+        automatically add one.
+
+        Note: This is a simplified version compared to TK. Full cursor
+        manipulation and line sorting happens in TK but is complex to
+        implement in web textarea. For now, just allow default behavior.
+        """
+        # TODO: Implement auto-numbering
+        # For now, just let the default Enter behavior happen
+        # Users can manually add line numbers
+        pass
 
     def _clear_output(self):
         """Clear output pane."""
