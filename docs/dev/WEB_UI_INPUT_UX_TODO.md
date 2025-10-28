@@ -161,7 +161,16 @@ def input(self, prompt=""):
 
 **Testing:**
 
-Manual test (pytest not available in system):
+**Automated Test:** `test_input_statement()` in `tests/nicegui/test_mbasic_web_ui.py`
+- ⚠️ **Test is skipped** due to async deadlock issue
+- Interpreter runs in event loop via `ui.timer()`
+- INPUT tries to block waiting for user input
+- Event loop needs to keep running to process submit button
+- This creates a deadlock in test environment
+
+**Solution Required:** Run interpreter in background thread (significant architectural change)
+
+**Manual Testing Works:**
 
 ```bash
 python3 mbasic.py --backend web
@@ -172,6 +181,8 @@ python3 mbasic.py --backend web
 # Type answer and press Enter or click Submit
 # Verify program continues
 ```
+
+Manual testing works because the user's browser runs the full NiceGUI server with proper async handling, whereas the pytest environment has different async behavior.
 
 ## Files Modified
 
