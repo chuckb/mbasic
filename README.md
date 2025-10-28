@@ -7,6 +7,32 @@ See [STATUS.md](STATUS.md) for detailed implementation status.
 
 ## Installation
 
+### From PyPI (Recommended - Coming Soon)
+
+```bash
+# Minimal install - CLI backend only (zero dependencies)
+pip install mbasic
+
+# With full-screen terminal UI (curses backend)
+pip install mbasic[curses]
+
+# With graphical UI (tkinter - included with Python)
+pip install mbasic[tk]
+
+# With all UI backends
+pip install mbasic[all]
+
+# For development
+pip install mbasic[dev]
+```
+
+**Note:** Tkinter is included with most Python installations. If missing:
+- **Debian/Ubuntu:** `sudo apt-get install python3-tk`
+- **RHEL/Fedora:** `sudo dnf install python3-tkinter`
+- **macOS/Windows:** Reinstall Python from [python.org](https://python.org)
+
+### From Source
+
 For detailed installation instructions including virtual environment setup, see **[INSTALL.md](INSTALL.md)**.
 
 **Quick install:**
@@ -20,12 +46,20 @@ cd mbasic
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install dependencies (none required, but verifies environment)
+# Install dependencies (optional - only needed for curses UI)
 pip install -r requirements.txt
 
 # Run the interpreter
 python3 mbasic.py
 ```
+
+### Check Available Backends
+
+```bash
+python3 mbasic.py --list-backends
+```
+
+This shows which UI backends are available on your system.
 
 ## Features
 
