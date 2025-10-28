@@ -587,20 +587,25 @@ class NiceGUIBackend(UIBackend):
             self._clear_output()
             self._set_status('Running...')
 
+            log_web_error("_menu_run", Exception("DEBUG: Getting program AST"))
             # Get program AST
             program_ast = self.program.get_program_ast()
 
+            log_web_error("_menu_run", Exception("DEBUG: Creating runtime"))
             # Create runtime and interpreter
             from src.resource_limits import create_local_limits
             self.runtime = Runtime(self.program.line_asts, self.program.lines)
 
+            log_web_error("_menu_run", Exception("DEBUG: Creating interpreter"))
             # Create IO handler that outputs to our output pane
             self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
             self.interpreter = Interpreter(self.runtime, self.exec_io, limits=create_local_limits())
 
+            log_web_error("_menu_run", Exception("DEBUG: Wiring up interpreter"))
             # Wire up interpreter to use this UI's methods
             self.interpreter.interactive_mode = self
 
+            log_web_error("_menu_run", Exception("DEBUG: Starting interpreter"))
             # Start interpreter
             state = self.interpreter.start()
             if state.status == 'error':
@@ -609,11 +614,15 @@ class NiceGUIBackend(UIBackend):
                 self._set_status('Error')
                 return
 
+            log_web_error("_menu_run", Exception("DEBUG: Interpreter started, marking running"))
             # Mark as running
             self.running = True
 
+            log_web_error("_menu_run", Exception("DEBUG: Starting timer"))
             # Start async execution
             ui.timer(0.01, self._execute_tick, once=False)
+
+            log_web_error("_menu_run", Exception("DEBUG: _menu_run complete!"))
 
         except Exception as e:
             log_web_error("_menu_run", e)
