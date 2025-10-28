@@ -25,6 +25,19 @@ echo "New version: $NEW_VERSION"
 # Update version file
 sed -i "s/VERSION = \"$CURRENT_VERSION\"/VERSION = \"$NEW_VERSION\"/" $VERSION_FILE
 
+# Check if help documentation was modified
+HELP_CHANGED=$(git diff --name-only docs/help/ 2>/dev/null || echo "")
+
+if [ -n "$HELP_CHANGED" ]; then
+    echo "Help documentation changed - rebuilding indexes..."
+    python3 utils/build_help_indexes.py
+    if [ $? -eq 0 ]; then
+        echo "✓ Help indexes rebuilt successfully"
+    else
+        echo "⚠ Warning: Help index build failed"
+    fi
+fi
+
 # Git add, commit, push
 git add -A
 git commit -m "$COMMIT_MSG

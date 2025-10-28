@@ -56,11 +56,14 @@ diff /tmp/our_output.txt /tmp/real_output.txt
 
 This automatically:
 - Increments VERSION in src/version.py (1.0.5 → 1.0.6)
+- Rebuilds help indexes if docs/help/ files changed
 - Runs git add -A
 - Commits with version number in message
 - Pushes to remote
 
 **Always checkpoint when stopping to talk to user.**
+
+**Note:** If you modify files in `docs/help/`, the checkpoint script automatically runs `python3 utils/build_help_indexes.py` to rebuild search indexes before committing.
 
 ## Work-in-Progress Tracking
 
