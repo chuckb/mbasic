@@ -205,7 +205,7 @@ class NiceGUIBackend(UIBackend):
 
             # Main content area - simple stacked layout (no splitter)
             # The splitter was causing visibility issues, so using simple column layout
-            with ui.column().classes('w-full gap-2 p-4'):
+            with ui.column().classes('w-full gap-1'):
                 # Editor section
                 ui.label('Program Editor:').classes('text-lg font-bold')
                 self.editor = ui.textarea(
@@ -239,8 +239,8 @@ class NiceGUIBackend(UIBackend):
             self.input_row.visible = False  # Hidden by default
 
             # Immediate mode command input
-            ui.label('Immediate Mode:').classes('font-bold px-2 pt-2')
-            with ui.row().classes('w-full p-2 gap-2'):
+            ui.label('Immediate Mode:').classes('font-bold')
+            with ui.row().classes('w-full gap-2'):
                 self.immediate_entry = ui.input(
                     placeholder='Enter BASIC command (e.g., PRINT 2+2)',
                 ).classes('flex-grow font-mono').mark('immediate_entry')
@@ -248,7 +248,7 @@ class NiceGUIBackend(UIBackend):
                 ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
 
             # Status bar at the very bottom
-            with ui.row().classes('w-full bg-gray-200 p-2'):
+            with ui.row().classes('w-full bg-gray-200'):
                 self.status_label = ui.label('Ready').mark('status')
 
     def _create_menu(self):
