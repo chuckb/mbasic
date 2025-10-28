@@ -8,28 +8,39 @@ import os
 import sys
 os.environ['NO_AT_BRIDGE'] = '1'
 
-# Filter GTK warnings from stderr
-class StderrFilter:
-    """Filter to suppress GTK atk-bridge warnings."""
-    def __init__(self, stream):
-        self.stream = stream
-        self.buffer = ""
+# Filter GTK warnings at OS level by redirecting stderr through grep
+# This is needed because GTK messages come from C libraries before Python can intercept them
+def suppress_gtk_warnings():
+    """Suppress GTK warnings by filtering stderr at file descriptor level."""
+    import subprocess
+    import threading
 
-    def write(self, text):
-        # Filter out the specific GTK warning
-        if "Gtk-Message" not in text and "atk-bridge" not in text:
-            self.stream.write(text)
-        # Always flush to prevent buffering issues
-        self.stream.flush()
+    # Save original stderr
+    original_stderr = os.dup(2)
 
-    def flush(self):
-        self.stream.flush()
+    # Create a pipe
+    r, w = os.pipe()
 
-    def fileno(self):
-        return self.stream.fileno()
+    # Redirect stderr to the pipe write end
+    os.dup2(w, 2)
+    os.close(w)
 
-# Install stderr filter
-sys.stderr = StderrFilter(sys.stderr)
+    def filter_thread():
+        """Read from pipe and filter out GTK messages."""
+        with os.fdopen(r, 'r', buffering=1) as pipe_read:
+            with os.fdopen(original_stderr, 'w', buffering=1) as stderr_write:
+                for line in pipe_read:
+                    # Filter out GTK atk-bridge messages
+                    if 'Gtk-Message' not in line and 'atk-bridge' not in line:
+                        stderr_write.write(line)
+                        stderr_write.flush()
+
+    # Start filter thread
+    filter = threading.Thread(target=filter_thread, daemon=True)
+    filter.start()
+
+# Apply stderr filtering
+suppress_gtk_warnings()
 
 import re
 import asyncio
