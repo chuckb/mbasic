@@ -172,7 +172,7 @@ class NiceGUIBackend(UIBackend):
                     self.program_display = ui.textarea(
                         value='',
                         placeholder='No program loaded'
-                    ).classes('w-full h-[300px] font-mono').mark('program_display')
+                    ).classes('w-full h-[300px] font-mono').props('readonly outlined').mark('program_display')
 
                 # Right pane - Output
                 with splitter.after:
