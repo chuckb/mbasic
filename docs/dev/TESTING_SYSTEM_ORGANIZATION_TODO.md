@@ -147,11 +147,18 @@ python3 tests/run_regression.py --verbose
 
 ## Action Items
 
-### Phase 1: Inventory (Review Current Tests)
-- [ ] List all test files in root directory
-- [ ] Identify purpose of each test
-- [ ] Categorize: regression / manual / debug / obsolete
-- [ ] Check if test still works and is relevant
+### Phase 1: Inventory (Review Current Tests) ✅ COMPLETE
+- [x] List all test files in root directory
+- [x] Identify purpose of each test
+- [x] Categorize: regression / manual / debug / obsolete
+- [x] Check if test still works and is relevant
+
+**Results:** See `docs/dev/TEST_INVENTORY.md`
+- **35 test files identified**
+- **25 regression tests** (should run on every commit)
+- **4 manual/visual tests** (require human verification)
+- **6 tests to review** (may be obsolete or temporary)
+- **2 test fixtures** (.bas files)
 
 ### Phase 2: Create Structure
 - [ ] Create `tests/regression/` directory structure
