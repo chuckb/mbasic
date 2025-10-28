@@ -183,9 +183,8 @@ class NiceGUIBackend(UIBackend):
 
         # API endpoint for polling output
         from fastapi.responses import JSONResponse
-        from nicegui import app as fastapi_app
 
-        @fastapi_app.get('/get_output')
+        @app.get('/get_output')
         def get_output():
             """Return current output text for JavaScript polling."""
             return JSONResponse({'output': self.output_text})
