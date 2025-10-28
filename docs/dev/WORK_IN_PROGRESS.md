@@ -2,99 +2,114 @@
 
 ## Status: Ready for Next Task
 
-**Version**: 1.0.153+ (as of 2025-10-28)
+**Version**: 1.0.154+ (as of 2025-10-28)
 
-### Recently Completed (v1.0.153+)
+### Recently Completed (v1.0.154+)
 
-**Keyword Case Error Policy - UI Integration** - COMPLETE
+**Keyword Case Display Fix** - COMPLETE
 
-Successfully integrated the `keywords.case_style` setting with all UIs. The 'error' policy now properly raises and displays ValueError when keyword case conflicts are detected.
+Fixed critical bug where keyword case policies were not being applied to keyword display. Keywords now correctly show consistent case throughout the program based on the configured policy.
 
-#### Summary of Changes
+#### The Bug
 
-✅ **Integration implemented:**
-- Added `create_keyword_case_manager()` helper function in `src/lexer.py`
-- Reads `keywords.case_style` setting and creates properly configured KeywordCaseManager
-- Updated all Lexer instantiations to use settings-configured manager
-- Error messages automatically surface through existing UI error handling
+Lexer was ignoring the return value from `KeywordCaseManager.register_keyword()`:
 
-✅ **Locations fixed:**
-- `src/lexer.py` - Added helper function, updated tokenize()
-- `src/ui/tk_ui.py` - Pass keyword_case_manager to Lexer (line 743)
-- `src/ui/curses_ui.py` - Pass keyword_case_manager to Lexer (line 847)
-- `src/ui/web/web_ui.py` - Pass keyword_case_manager to Lexer (2 locations)
+**Before (WRONG):**
+```python
+token.original_case_keyword = ident  # Always used typed case
+self.keyword_case_manager.register_keyword(...)  # Return value ignored!
+```
 
-✅ **Error Display:**
-- TK UI: Errors shown in output area with "Parse error - fix and retry" status
-- Curses UI: Errors handled by existing error display mechanism
-- Web UI: Errors caught and displayed in web interface
-- Error format: `"Case conflict: 'print' at line 2:4 vs 'PRINT' at line 1:4"`
+**After (CORRECT):**
+```python
+display_case = self.keyword_case_manager.register_keyword(...)
+token.original_case_keyword = display_case  # Use policy-determined case
+```
+
+#### Impact
+
+**Before fix:**
+- Keywords always displayed as originally typed, regardless of policy
+- `first_wins` policy had no effect on display
+- Program with mixed case showed mixed case (inconsistent)
+
+**After fix:**
+- Keywords display according to policy
+- `first_wins`: All keywords use first occurrence's case
+- `force_upper/lower/capitalize`: All keywords converted
+- Program shows consistent keyword case
+
+#### Example
+
+Program with mixed case:
+```basic
+10 Print "First"
+20 PRINT "Second"
+30 print "Third"
+```
+
+**Policy: `first_wins`**
+- Before: Displayed as `Print`, `PRINT`, `print` (inconsistent)
+- After: All display as `Print` (consistent - first wins)
+
+**Policy: `force_upper`**
+- Before: Displayed as `Print`, `PRINT`, `print` (ignored policy)
+- After: All display as `PRINT` (policy enforced)
 
 #### Files Modified
 
 **Implementation:**
-- `src/lexer.py` - Added `create_keyword_case_manager()` function
-- `src/ui/tk_ui.py` - Use settings-configured keyword manager
-- `src/ui/curses_ui.py` - Use settings-configured keyword manager
-- `src/ui/web/web_ui.py` - Use settings-configured keyword manager (2 locations)
+- `src/lexer.py` - Fixed 3 locations where `register_keyword()` is called (lines 245, 272, 303)
 
 **Testing:**
-- `tests/regression/lexer/test_keyword_case_settings_integration.py` - 7 tests (✓ ALL PASSING)
-- `tests/manual/test_keyword_case_error_ui.md` - Manual test instructions
-- `tests/manual/test_keyword_case_error_display.bas` - Example program with conflicts
+- `tests/regression/lexer/test_keyword_case_display_consistency.py` - 8 tests (✓ ALL PASSING)
+- `tests/regression/lexer/test_keyword_case_scope_isolation.py` - 7 tests (✓ ALL PASSING)
+- `tests/manual/test_keyword_case_program.bas` - Example program for manual testing
 
 #### Test Results
 
 ```bash
-$ python3 tests/regression/lexer/test_keyword_case_settings_integration.py
-Ran 7 tests in 0.001s
+$ python3 tests/regression/lexer/test_keyword_case_display_consistency.py
+Ran 8 tests in 0.001s
 OK
 
 $ python3 tests/run_regression.py --category lexer
 ✅ ALL REGRESSION TESTS PASSED
 ```
 
-All tests verify:
-- ✓ Settings are read correctly
-- ✓ Error policy raises ValueError on conflicts
-- ✓ Error policy succeeds when no conflicts
-- ✓ All other policies work correctly
-- ✓ Error messages include line/column info
+#### Scope Behavior (Correct)
 
-#### Example Usage
-
-```bash
-# Set policy to error
-SET keywords.case_style error
-
-# Load program with mixed case
-LOAD "test.bas"
-
-# If program has case conflicts:
-# ERROR: Case conflict: 'print' at line 20:4 vs 'PRINT' at line 10:4
+✅ **Whole program shares one KeywordCaseManager:**
+```basic
+10 Print "First"
+20 PRINT "Second"  → Shows as "Print" (first_wins)
+30 print "Third"   → Shows as "Print" (first_wins)
 ```
+
+✅ **Immediate mode uses separate manager:**
+```
+Program: 10 RUN
+Immediate: run  → No conflict (separate scope)
+```
+
+This is correct because:
+- Keywords are syntax (should be consistent within program)
+- Variables are runtime state (shared between modes)
 
 ---
 
 ## Previous Work
 
+### Keyword Case Settings Integration
+**Completed:** 2025-10-28 (v1.0.153)
+- Integrated `keywords.case_style` setting with lexer
+- Error policy now surfaces in all UIs
+- See: `docs/history/SESSION_2025_10_28_KEYWORD_CASE_INTEGRATION.md`
+
 ### Help System Search Improvements
 **Completed:** 2025-10-28 (v1.0.151)
-- Search ranking by relevance
-- Fuzzy matching for typos
-- In-page search (Ctrl+F)
+- Search ranking, fuzzy matching, in-page search
 - See: `docs/history/SESSION_2025_10_28_HELP_SEARCH_IMPROVEMENTS.md`
-
-### PyPI Distribution Preparation
-**Completed:** 2025-10-28 (v1.0.147-148)
-- Package ready but deferred
-- See: `docs/future/PYPI_DISTRIBUTION.md`
-
-### Test Organization
-**Completed:** 2025-10-28 (v1.0.140-144)
-- 35 tests organized
-- All regression tests passing
-- See: `tests/README.md`
 
 ---
 

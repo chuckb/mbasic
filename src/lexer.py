@@ -241,9 +241,9 @@ class Lexer:
         ident_lower = ident.lower()
         if ident_lower in KEYWORDS:
             token = Token(KEYWORDS[ident_lower], ident_lower, start_line, start_column)
-            token.original_case_keyword = ident  # Preserve original keyword case
-            # Register keyword in case table during lexing
-            self.keyword_case_manager.register_keyword(ident_lower, ident, start_line, start_column)
+            # Register keyword and get display case based on policy
+            display_case = self.keyword_case_manager.register_keyword(ident_lower, ident, start_line, start_column)
+            token.original_case_keyword = display_case  # Use policy-determined case
             return token
 
         # Special handling for file I/O statements with # (file number follows)
@@ -268,9 +268,9 @@ class Lexer:
             # Return the keyword token without the #
             keyword = ident_lower[:-1]  # Remove the #
             token = Token(FILE_IO_KEYWORDS[ident_lower], keyword, start_line, start_column)
-            token.original_case_keyword = ident[:-1]  # Preserve original case without the #
-            # Register keyword in case table
-            self.keyword_case_manager.register_keyword(keyword, ident[:-1], start_line, start_column)
+            # Register keyword and get display case
+            display_case = self.keyword_case_manager.register_keyword(keyword, ident[:-1], start_line, start_column)
+            token.original_case_keyword = display_case  # Use policy-determined case
             return token
 
         # Check if identifier starts with a statement keyword (MBASIC compatibility)
@@ -299,9 +299,9 @@ class Lexer:
 
                     # Return the keyword token
                     token = Token(KEYWORDS[keyword], keyword, start_line, start_column)
-                    token.original_case_keyword = keyword_part  # Preserve original case of keyword part
-                    # Register keyword in case table
-                    self.keyword_case_manager.register_keyword(keyword, keyword_part, start_line, start_column)
+                    # Register keyword and get display case
+                    display_case = self.keyword_case_manager.register_keyword(keyword, keyword_part, start_line, start_column)
+                    token.original_case_keyword = display_case  # Use policy-determined case
                     return token
 
         # Otherwise it's an identifier
