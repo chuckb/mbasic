@@ -35,8 +35,13 @@ The Tk UI is the default graphical interface for MBASIC.
 | **Ctrl+I** | Smart insert blank line |
 | **Ctrl+E** | Renumber program |
 | **Ctrl+V** | Show/hide Variables window |
-| **Ctrl+T** | Step through code |
+| **Ctrl+W** | Show/hide Variables & Resources window |
+| **Ctrl+K** | Show/hide Execution Stack window |
+| **Ctrl+T** | Step through code (next statement) |
+| **Ctrl+L** | Step through code (next line) |
+| **Ctrl+G** | Continue execution (go) |
 | **Ctrl+B** | Toggle breakpoint |
+| **Ctrl+H** | Find and replace |
 
 ## Screen Layout
 
@@ -233,10 +238,12 @@ Notice: GOTO 10 automatically became GOTO 100!
 ```
 
 **Variables Window Features:**
-- Click column headers to sort
+- Click column headers to sort (Name, Value, Type)
 - Shows all variables and their current values
+- **Displays variables with original case** (TargetAngle, not targetangle)
 - Updates automatically as you step
 - Types displayed (integer, float, string, array)
+- Filter box to search for specific variables
 
 ### 5. Advanced Editing - Find and Replace
 
@@ -314,6 +321,146 @@ Red **?** markers appear in line number gutter for syntax errors:
 ```
 
 Run with **Ctrl+R**, then check Variables window (**Ctrl+V**) to see array contents!
+
+## Variable Case Preservation (New in October 2025)
+
+MBASIC now preserves the original case of your variables while maintaining case-insensitive behavior!
+
+### How It Works
+
+```basic
+10 TargetAngle = 45
+20 targetangle = 90  ' Same variable, different case
+30 PRINT TargetAngle  ' Displays "TargetAngle = 90"
+```
+
+**What you see:**
+- Variables window shows: `TargetAngle = 90` (using first case seen)
+- All references use the same display case
+- Lookups remain case-insensitive (BASIC compatibility)
+
+### Configure Case Behavior
+
+Use the settings system to control how case conflicts are handled:
+
+```basic
+' View current setting
+SHOW SETTINGS "case"
+
+' Change policy
+SET "variables.case_conflict" "error"        ' Strict: flag conflicts
+SET "variables.case_conflict" "first_wins"   ' Default: first case wins
+SET "variables.case_conflict" "prefer_upper" ' Prefer UPPERCASE
+SET "variables.case_conflict" "prefer_lower" ' Prefer lowercase
+SET "variables.case_conflict" "prefer_mixed" ' Prefer CamelCase
+
+' Get help on a setting
+HELP SET "variables.case_conflict"
+```
+
+### Example: Catching Typos with Error Mode
+
+```basic
+SET "variables.case_conflict" "error"
+10 TotalCount = 0
+20 FOR I = 1 TO 10
+30   TotalCont = TotalCont + I  ' ERROR: Typo detected!
+40 NEXT I
+```
+
+With error mode enabled, MBASIC catches the typo at line 30 immediately!
+
+**Learn more:** See `docs/user/SETTINGS_AND_CONFIGURATION.md` for complete settings guide.
+
+---
+
+## Improved Debugging Features (October 2025)
+
+The TK UI now provides enhanced debugging with intuitive statement highlighting.
+
+### Next-Statement Highlighting
+
+When stepping through code or hitting a breakpoint, MBASIC highlights **what will execute next**, not what just executed.
+
+**Example:**
+```basic
+10 PRINT "A"
+20 PRINT "B"  ' ← Highlighted when you pause here
+30 PRINT "C"
+```
+
+When you hit a breakpoint on line 20, you see line 20 highlighted BEFORE it executes. This lets you:
+- See what's about to happen
+- Examine variable values before the statement runs
+- Decide whether to step or continue
+
+### Control Flow Visualization
+
+The highlight automatically jumps to show where execution is going during GOSUB, RETURN, GOTO, NEXT, etc.
+
+**Example:**
+```basic
+10 PRINT "Start"
+20 GOSUB 100
+30 PRINT "End"   ' ← Highlights here after RETURN
+40 END
+100 PRINT "Sub"
+110 RETURN
+```
+
+**What you see:**
+1. Step at line 20 → Highlights GOSUB 100
+2. Step again → Highlight jumps to line 100 (subroutine entry)
+3. Step through 100, 110
+4. Step at RETURN → Highlight jumps to line 30 (statement AFTER the GOSUB)
+
+This makes control flow visible and easy to follow!
+
+### Mid-Line Statement Stepping
+
+For lines with multiple statements (colon-separated), stepping shows exactly which statement will execute:
+
+```basic
+10 PRINT "A": X=5: GOSUB 100: PRINT "B": END
+```
+
+Use **Ctrl+T** (step statement) to move through each part:
+1. `PRINT "A"` ← First
+2. `X=5` ← Second
+3. `GOSUB 100` ← Third (jumps to subroutine)
+4. After RETURN: `PRINT "B"` ← Resumes here (not at start of line)
+5. `END` ← Last
+
+Use **Ctrl+L** (step line) to execute the entire line at once.
+
+### Execution Stack Window
+
+Press **Ctrl+K** to see the execution stack showing active loops and subroutine calls:
+
+```basic
+10 FOR I = 1 TO 3
+20   FOR J = 1 TO 2
+30     GOSUB 100
+40   NEXT J
+50 NEXT I
+100 PRINT I; J
+110 RETURN
+```
+
+**Stack display at line 100:**
+```
+FOR I=1 TO 3 STEP 1  [I=2]
+  FOR J=1 TO 2 STEP 1  [J=1]
+    GOSUB from line 30
+```
+
+Perfect for understanding:
+- Nested loops
+- Subroutine call chains
+- Current loop variable values
+- Return addresses
+
+---
 
 ## Tips and Tricks
 
