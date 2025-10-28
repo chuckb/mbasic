@@ -52,12 +52,30 @@ Over hundreds/thousands of changes focused on TK client and interpreter rewrites
 - Overall: 85% core parity, 40% advanced feature parity
 
 #### Phase 2a: Web UI Rewrite (NiceGUI)
-1. ⏸️ Rename current web UI to `oldweb` (quick prototype, outdated)
-2. ⏸️ Create new web UI with NiceGUI from scratch
-3. ⏸️ Use TK UI as reference for features
-4. ⏸️ Test new web UI
+1. ✅ Rename current web UI to `oldweb` (quick prototype, outdated) - v1.0.161
+2. ✅ Research NiceGUI testing framework (user fixture for fast tests) - v1.0.160
+3. ✅ Create new web UI with NiceGUI from scratch - v1.0.161
+4. ✅ Fix ProgramManager import issues (lazy imports failed in test context) - v1.0.162
+5. ✅ Test new web UI - All 5 tests passing - v1.0.162
+6. ⏸️ Add program execution functionality
+7. ⏸️ Add file operations (Open/Save)
+8. ⏸️ Complete NiceGUI web UI feature parity with TK
 
 **Rationale:** Current web UI was a quick prototype. Rather than update it to match hundreds of TK changes, faster to rebuild with NiceGUI (impressed with its speed). Can salvage useful code from oldweb.
+
+**Completed (v1.0.161-162):**
+- Moved old web UI to `src/ui/oldweb`
+- Created `src/ui/web/nicegui_backend.py` (284 lines)
+- Implemented basic UI: menu bar, toolbar, split pane (editor/output), status bar
+- Created comprehensive test suite: `tests/nicegui/test_mbasic_web_ui.py` (5 tests)
+- Fixed NiceGUI menu API (nested context managers, not bind_menu())
+- Fixed ProgramManager imports (moved lazy imports to top of file for test compatibility)
+- All 5 tests passing:
+  - ✅ test_ui_loads - UI loads without errors
+  - ✅ test_add_program_line - Can add BASIC lines
+  - ✅ test_new_program - File > New clears program
+  - ✅ test_clear_output - Clear output works
+  - ✅ test_list_program - List Program outputs to console
 
 #### Phase 2b: Update Curses UI
 1. ⏸️ Fix editor line number display (embed in text like TK)
