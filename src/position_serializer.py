@@ -8,6 +8,7 @@ token positions and spacing. Includes debug tracking for position conflicts.
 from typing import List, Optional, Tuple
 from dataclasses import dataclass
 import ast_nodes
+from tokens import TokenType
 
 
 @dataclass
@@ -247,10 +248,15 @@ class PositionSerializer:
 
     def serialize_rem_statement(self, stmt: ast_nodes.RemarkStatementNode) -> str:
         """Serialize REM statement"""
-        result = self.emit_token("REM", stmt.column, "RemKeyword")
-        if stmt.comment:
+        # Use comment_type to preserve original syntax (REM, REMARK, or ')
+        if stmt.comment_type == "APOSTROPHE":
+            result = self.emit_token("'", stmt.column, "RemKeyword")
+        else:
+            result = self.emit_token(stmt.comment_type, stmt.column, "RemKeyword")
+
+        if stmt.text:
             # Preserve original comment spacing
-            result += " " + stmt.comment
+            result += " " + stmt.text
         return result
 
     def serialize_expression(self, expr) -> str:
@@ -292,7 +298,6 @@ class PositionSerializer:
             result += self.serialize_expression(expr.left)
 
             # Operator token
-            from tokens import TokenType
             op_map = {
                 TokenType.PLUS: '+',
                 TokenType.MINUS: '-',
