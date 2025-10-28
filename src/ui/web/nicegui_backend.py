@@ -209,13 +209,13 @@ class NiceGUIBackend(UIBackend):
                 ui.button('Continue', on_click=self._menu_continue, icon='play_circle').mark('btn_continue')
 
             # Main content area - simple stacked layout (no splitter)
-            # Put everything in one column for proper layout control
-            with ui.column().classes('w-full').style('gap: 0; margin: 0; padding: 0;'):
+            # Use flexbox with no gaps
+            with ui.column().classes('w-full').style('display: flex; flex-direction: column; gap: 0; margin: 0; padding: 0;'):
                 # Editor section (no label)
                 self.editor = ui.textarea(
                     value='',
                     placeholder='Program Editor - Enter BASIC program here (e.g., 10 PRINT "Hello")'
-                ).classes('w-full font-mono').style('height: 300px; margin: 0 !important; padding: 4px !important;').props('outlined dense').mark('editor')
+                ).classes('w-full font-mono q-ma-none').style('height: 300px;').props('outlined dense input-style="padding: 4px"').mark('editor')
 
                 # Bind keyboard events for auto-numbering
                 self.editor.on('keydown.enter', self._on_enter_key)
@@ -224,17 +224,15 @@ class NiceGUIBackend(UIBackend):
                 self.output = ui.textarea(
                     value='MBASIC 5.21 Web IDE\nReady\n',
                     placeholder='Program output will appear here'
-                ).classes('w-full font-mono').style(
+                ).classes('w-full font-mono q-ma-none').style(
                     'height: 300px; '
-                    'margin: 0 !important; '
-                    'padding: 4px !important; '
                     'background-color: white; '
                     'color: black; '
                     'font-size: 14px;'
-                ).props('readonly outlined dense').mark('output')
+                ).props('readonly outlined dense input-style="padding: 4px"').mark('output')
 
                 # INPUT row (hidden by default, shown when INPUT statement needs input)
-                self.input_row = ui.row().classes('w-full p-2 gap-2 bg-blue-50')
+                self.input_row = ui.row().classes('w-full gap-2 bg-blue-50 q-pa-sm')
                 with self.input_row:
                     self.input_label = ui.label('').classes('font-bold text-blue-600')
                     self.input_field = ui.input(placeholder='Enter value...').classes('flex-grow').mark('input_field')
@@ -243,16 +241,16 @@ class NiceGUIBackend(UIBackend):
                 self.input_row.visible = False  # Hidden by default
 
                 # Immediate mode (no label, just textarea with execute button)
-                with ui.row().classes('w-full gap-2').style('margin: 0; padding: 0;'):
+                with ui.row().classes('w-full gap-2 q-ma-none q-pa-none'):
                     self.immediate_entry = ui.textarea(
                         value='',
                         placeholder='Enter BASIC command (e.g., PRINT 2+2)'
-                    ).classes('flex-grow font-mono').style('height: 60px; margin: 0 !important; padding: 4px !important;').props('outlined dense').mark('immediate_entry')
+                    ).classes('flex-grow font-mono q-ma-none').style('height: 60px;').props('outlined dense input-style="padding: 4px"').mark('immediate_entry')
                     self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
                     ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
 
                 # Status bar at the very bottom
-                with ui.row().classes('w-full bg-gray-200').style('margin: 0; padding: 4px;'):
+                with ui.row().classes('w-full bg-gray-200 q-ma-none q-pa-xs'):
                     self.status_label = ui.label('Ready').mark('status')
 
     def _create_menu(self):
