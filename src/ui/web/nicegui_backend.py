@@ -199,7 +199,8 @@ class NiceGUIBackend(UIBackend):
 
             # Main content area - split pane (horizontal split, vertical layout: editor on top, output on bottom)
             # Note: NiceGUI splitter without 'horizontal' param defaults to vertical layout
-            with ui.splitter(value=60).classes('w-full h-[600px] flex-col') as splitter:
+            # Use viewport height minus menu/toolbar/status space
+            with ui.splitter(value=60).classes('w-full flex-col').style('height: calc(100vh - 200px)') as splitter:
 
                 # Top pane - Program Editor (60% of space)
                 with splitter.before:
