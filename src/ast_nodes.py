@@ -46,10 +46,14 @@ class ProgramNode:
 
 @dataclass
 class LineNode:
-    """A single line in a BASIC program (line_number + statements)"""
+    """A single line in a BASIC program (line_number + statements)
+
+    The AST is the single source of truth. Text is always regenerated from
+    the AST using token positions. Never store source_text - it creates
+    a duplicate copy that gets out of sync.
+    """
     line_number: int
     statements: List['StatementNode']
-    source_text: str = ""  # Original source line for statement highlighting
     line_num: int = 0
     column: int = 0
 

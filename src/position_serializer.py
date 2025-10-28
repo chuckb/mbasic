@@ -102,12 +102,7 @@ class PositionSerializer:
         self.reset()
         self.current_line = line_node.line_number
 
-        # FAST PATH: If we have the original source text, use it directly!
-        # This perfectly preserves all spacing, case, etc.
-        if hasattr(line_node, 'source_text') and line_node.source_text:
-            return line_node.source_text.strip(), []
-
-        # FALLBACK: Reconstruct from AST (for generated/modified lines)
+        # AST is the single source of truth - always serialize from AST
         # Start with line number
         line_num_text = str(line_node.line_number)
         output = self.emit_token(line_num_text, 0, "LineNumber")
@@ -360,10 +355,13 @@ def serialize_line_with_positions(line_node: ast_nodes.LineNode, debug=False) ->
 
 
 def renumber_with_spacing_preservation(program_lines: dict, start: int, step: int, debug=False):
-    """Renumber program lines while preserving spacing by surgically editing source_text.
+    """Renumber program lines while preserving spacing.
 
-    This implementation preserves exact spacing by finding and replacing line numbers
-    in the source text, then adjusting all token positions accordingly.
+    AST is the single source of truth. This function:
+    1. Updates line numbers in the AST
+    2. Updates all line number references (GOTO, GOSUB, etc.)
+    3. Adjusts token column positions to account for line number length changes
+    4. Text is regenerated from AST by position_serializer
 
     Args:
         program_lines: Dict of line_number -> LineNode
@@ -372,10 +370,8 @@ def renumber_with_spacing_preservation(program_lines: dict, start: int, step: in
         debug: If True, print debug information
 
     Returns:
-        Dict of new_line_number -> LineNode (with updated source_text and positions)
+        Dict of new_line_number -> LineNode (with updated positions)
     """
-    import re
-
     # Build mapping of old -> new line numbers
     old_line_nums = sorted(program_lines.keys())
     line_num_map = {}
@@ -392,141 +388,22 @@ def renumber_with_spacing_preservation(program_lines: dict, start: int, step: in
         line_node = program_lines[old_num]
         new_num = line_num_map[old_num]
 
-        # Get original source text
-        source = line_node.source_text if hasattr(line_node, 'source_text') else ""
-        if not source:
-            # No source text? Fall back to AST serialization
-            line_node.line_number = new_num
-            _update_line_refs_in_node(line_node, line_num_map)
-            serializer = PositionSerializer(debug=debug)
-            new_source_text, _ = serializer.serialize_line(line_node)
-            line_node.source_text = new_source_text
-            new_program_lines[new_num] = line_node
-            continue
-
-        # Strategy: Find all line numbers in source_text and replace them
-        # Track replacements: [(start_pos, old_text, new_text), ...]
-        replacements = []
-
-        # 1. Replace line number at start
+        # Update line number in the AST
         old_line_str = str(old_num)
         new_line_str = str(new_num)
+        line_node.line_number = new_num
 
-        # Line number is at the start, followed by space or statement
-        match = re.match(r'^(\d+)(\s+)', source)
-        if match:
-            replacements.append((0, match.group(1), new_line_str))
-
-        # 2. Find all line number references in the code BEFORE updating AST
-        # Collect (old_line_num, new_line_num) pairs from the line_num_map
-        line_num_refs_old = _collect_line_refs_before_update(line_node)
-
-        # Update line number references in AST
+        # Update all line number references (GOTO, GOSUB, IF THEN, etc.)
         _update_line_refs_in_node(line_node, line_num_map)
 
-        # For each old reference found, replace it in source text
-        code_part = source[match.end():] if match else source
-        code_start = match.end() if match else 0
-
-        for ref_old in line_num_refs_old:
-            if ref_old in line_num_map:
-                ref_new = line_num_map[ref_old]
-                # Find this line number in the code part
-                # Use word boundary to avoid matching partial numbers
-                pattern = r'\b' + str(ref_old) + r'\b'
-                for m in re.finditer(pattern, code_part):
-                    pos = code_start + m.start()
-                    replacements.append((pos, str(ref_old), str(ref_new)))
-
-        # Apply replacements from right to left to preserve positions
-        replacements.sort(key=lambda x: x[0], reverse=True)
-
-        new_source = source
-        total_offset = 0  # Track cumulative offset for position adjustment
-
-        for pos, old_text, new_text in replacements:
-            new_source = new_source[:pos] + new_text + new_source[pos + len(old_text):]
-            offset_change = len(new_text) - len(old_text)
-            total_offset += offset_change
-
-        # Update line node
-        line_node.line_number = new_num
-        line_node.source_text = new_source
-
-        # Adjust all token positions in AST if line number at start changed length
-        if match:
-            line_num_offset = len(new_line_str) - len(old_line_str)
-            if line_num_offset != 0:
-                _adjust_token_positions(line_node, line_num_offset)
+        # Adjust token positions if line number length changed
+        line_num_offset = len(new_line_str) - len(old_line_str)
+        if line_num_offset != 0:
+            _adjust_token_positions(line_node, line_num_offset)
 
         new_program_lines[new_num] = line_node
 
     return new_program_lines
-
-
-def _collect_line_refs_before_update(line_node):
-    """Collect all line number references from a LineNode BEFORE updating.
-
-    Returns set of line numbers that are referenced in this line.
-    """
-    refs = set()
-
-    for stmt in line_node.statements:
-        _collect_refs_from_statement(stmt, refs)
-
-    return refs
-
-
-def _collect_refs_from_statement(stmt, refs):
-    """Recursively collect line number references from a statement.
-
-    Args:
-        stmt: Statement node to scan
-        refs: Set to add line number references to
-    """
-    stmt_type = type(stmt).__name__
-
-    if stmt_type == 'GotoStatementNode':
-        refs.add(stmt.line_number)
-
-    elif stmt_type == 'GosubStatementNode':
-        refs.add(stmt.line_number)
-
-    elif stmt_type == 'OnGotoStatementNode':
-        refs.update(stmt.line_numbers)
-
-    elif stmt_type == 'OnGosubStatementNode':
-        refs.update(stmt.line_numbers)
-
-    elif stmt_type == 'OnErrorStatementNode':
-        if stmt.line_number:
-            refs.add(stmt.line_number)
-
-    elif stmt_type == 'RestoreStatementNode':
-        if stmt.line_number:
-            refs.add(stmt.line_number)
-
-    elif stmt_type == 'ResumeStatementNode':
-        if stmt.line_number:
-            refs.add(stmt.line_number)
-
-    elif stmt_type == 'IfStatementNode':
-        # Direct THEN/ELSE line numbers
-        if hasattr(stmt, 'then_line_number') and stmt.then_line_number:
-            refs.add(stmt.then_line_number)
-        if hasattr(stmt, 'else_line_number') and stmt.else_line_number:
-            refs.add(stmt.else_line_number)
-
-        # Recurse into THEN/ELSE statements
-        if stmt.then_statements:
-            for then_stmt in stmt.then_statements:
-                _collect_refs_from_statement(then_stmt, refs)
-        if stmt.else_statements:
-            for else_stmt in stmt.else_statements:
-                _collect_refs_from_statement(else_stmt, refs)
-
-        # TODO: Handle ERL comparisons in condition
-        # This is complex - would need to traverse expressions looking for ERL function calls
 
 
 def _adjust_token_positions(line_node, offset):

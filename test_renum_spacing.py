@@ -48,7 +48,10 @@ def test_renum_spacing():
     print("\nRenumbered program:")
     for line_num in sorted(renumbered_lines.keys()):
         line_node = renumbered_lines[line_num]
-        print(line_node.source_text)
+        # AST is the single source - regenerate text from it
+        from position_serializer import serialize_line_with_positions
+        text, _ = serialize_line_with_positions(line_node)
+        print(text)
 
     # Check that spacing is preserved
     print("\n" + "=" * 60)
@@ -69,7 +72,9 @@ def test_renum_spacing():
 
     for line_num, expected_fragments, description in tests:
         if line_num in renumbered_lines:
-            line_text = renumbered_lines[line_num].source_text
+            # AST is the single source - regenerate text
+            from position_serializer import serialize_line_with_positions
+            line_text, _ = serialize_line_with_positions(renumbered_lines[line_num])
             # Extract code after line number
             code = line_text.split(maxsplit=1)[1] if ' ' in line_text else ""
 
@@ -123,12 +128,15 @@ def test_renum_complex():
 
     print("\nRenumbered program:")
     for line_num in sorted(renumbered_lines.keys()):
-        print(renumbered_lines[line_num].source_text)
+        from position_serializer import serialize_line_with_positions
+        text, _ = serialize_line_with_positions(renumbered_lines[line_num])
+        print(text)
 
     # Check ON GOTO was updated
     # Original: ON X GOTO 100,200,300
     # Should map: 100→1100, 200→1300, 300→1500
-    line_1000 = renumbered_lines[1000].source_text
+    from position_serializer import serialize_line_with_positions
+    line_1000, _ = serialize_line_with_positions(renumbered_lines[1000])
     if "1100" in line_1000 and "1300" in line_1000 and "1500" in line_1000:
         print("\n✅ ON GOTO targets updated correctly")
         return True

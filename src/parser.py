@@ -302,12 +302,8 @@ class Parser:
         line_num_token = self.advance()
         line_number = int(line_num_token.value)
 
-        # Get source text for this line (for statement highlighting)
-        line_source_text = ""
-        if self.source_lines and 0 < line_num_token.line <= len(self.source_lines):
-            line_source_text = self.source_lines[line_num_token.line - 1]
-
         # Parse statements on this line
+        # Note: We don't store source_text - AST is the single source of truth
         statements: List[StatementNode] = []
 
         while not self.at_end_of_line():
@@ -373,7 +369,6 @@ class Parser:
         return LineNode(
             line_number=line_number,
             statements=statements,
-            source_text=line_source_text,
             line_num=line_num_token.line,
             column=line_num_token.column
         )
