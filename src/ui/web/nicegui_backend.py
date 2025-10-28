@@ -244,6 +244,21 @@ class NiceGUIBackend(UIBackend):
                     ui.add_head_html('''
                         <script>
                         console.log("MBASIC: Setting up output polling...");
+
+                        // Test on page load
+                        setTimeout(() => {
+                            const textarea = document.querySelector('textarea[readonly]');
+                            console.log("MBASIC TEST: Found textarea:", textarea);
+                            if (textarea) {
+                                console.log("MBASIC TEST: Textarea visible:", textarea.offsetParent !== null);
+                                console.log("MBASIC TEST: Textarea height:", textarea.offsetHeight);
+                                console.log("MBASIC TEST: Setting test value...");
+                                textarea.value = "*** JAVASCRIPT TEST - Can you see this? ***\\n" + textarea.value;
+                            } else {
+                                console.error("MBASIC TEST: Could not find readonly textarea!");
+                            }
+                        }, 1000);
+
                         setInterval(async () => {
                             try {
                                 const response = await fetch('/get_output');
