@@ -536,11 +536,25 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 max_allowed = 99999
 
             # Find next valid number
+            attempts = 0
             while next_num in existing_line_nums or next_num >= max_allowed:
                 next_num += self.auto_number_increment
-                if next_num >= 99999:  # Avoid overflow
-                    next_num = current_line_number + 1 if current_line_number else 10
-                    break
+                attempts += 1
+                if next_num >= 99999 or attempts > 10:  # Avoid overflow or too many attempts
+                    # No room - offer to renumber
+                    response = self._parent_ui._show_yesno_dialog(
+                        "No Room",
+                        f"No room to insert line after {current_line_number}.\n\n"
+                        f"Would you like to renumber the program to make room?"
+                    )
+                    if response:
+                        # Save editor to program, renumber, and refresh
+                        self._parent_ui._save_editor_to_program()
+                        self._parent_ui._renumber_lines()
+                        return None
+                    else:
+                        # User declined - just stay on current line
+                        return None
 
             # Format new line: " NNNNN "
             new_line_prefix = f"\n {next_num:5d} "
@@ -1480,6 +1494,7 @@ class CursesBackend(UIBackend):
         self.menu_bar = urwid.AttrMap(MenuBar(), 'header')
         self.toolbar = self._create_toolbar()
         self.editor = ProgramEditorWidget()
+        self.editor._parent_ui = self  # Give editor access to parent UI for dialogs
 
         # Create scrollable output window using ListBox
         self.output_walker = urwid.SimpleFocusListWalker([])
