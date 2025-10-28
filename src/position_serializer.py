@@ -5,7 +5,7 @@ Serializes AST nodes back to source text while preserving the original
 token positions and spacing. Includes debug tracking for position conflicts.
 """
 
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 from dataclasses import dataclass
 import ast_nodes
 from tokens import TokenType
@@ -27,24 +27,108 @@ class PositionConflict:
                 f"(node: {self.node_type})")
 
 
+def apply_keyword_case_policy(keyword: str, policy: str, keyword_tracker: Optional[Dict[str, str]] = None) -> str:
+    """Apply keyword case policy to a keyword.
+
+    Args:
+        keyword: The keyword to transform (normalized lowercase)
+        policy: Case policy to apply (force_lower, force_upper, force_capitalize, first_wins, error, preserve)
+        keyword_tracker: Dictionary tracking first occurrence of each keyword (for first_wins policy)
+
+    Returns:
+        Keyword with case policy applied
+    """
+    if policy == "force_lower":
+        return keyword.lower()
+
+    elif policy == "force_upper":
+        return keyword.upper()
+
+    elif policy == "force_capitalize":
+        # Capitalize first letter only
+        return keyword.capitalize()
+
+    elif policy == "first_wins":
+        # Use the first occurrence seen for this keyword
+        if keyword_tracker is not None:
+            keyword_lower = keyword.lower()
+            if keyword_lower in keyword_tracker:
+                return keyword_tracker[keyword_lower]
+        # If not tracked yet, use capitalized as default
+        return keyword.capitalize()
+
+    elif policy == "error":
+        # Error policy is checked at parse/edit time, not serialization time
+        # At serialization, we just use capitalize as fallback
+        return keyword.capitalize()
+
+    elif policy == "preserve":
+        # Preserve is handled by caller passing in original case
+        # This shouldn't be called with "preserve", but if it is, use capitalize
+        return keyword.capitalize()
+
+    else:
+        # Unknown policy - use lowercase (safest default)
+        return keyword.lower()
+
+
 class PositionSerializer:
     """Serializes AST with position preservation and conflict tracking"""
 
-    def __init__(self, debug=False):
+    def __init__(self, debug=False, keyword_case_policy: Optional[str] = None):
         """Initialize serializer.
 
         Args:
             debug: If True, collect and report position conflicts
+            keyword_case_policy: Optional override for keyword case policy (from settings if None)
         """
         self.debug = debug
         self.conflicts: List[PositionConflict] = []
         self.current_column = 0
         self.current_line = 0
 
+        # Get keyword case policy from settings if not provided
+        if keyword_case_policy is None:
+            try:
+                from src.settings import get_settings_manager
+                settings_mgr = get_settings_manager()
+                self.keyword_case_policy = settings_mgr.get("keywords.case_style", "force_lower")
+            except:
+                # Fallback if settings not available
+                self.keyword_case_policy = "force_lower"
+        else:
+            self.keyword_case_policy = keyword_case_policy
+
+        # Keyword tracker for first_wins policy
+        self.keyword_tracker: Dict[str, str] = {}
+
     def reset(self):
         """Reset serializer state for new line"""
         self.current_column = 0
         self.conflicts = []
+
+    def emit_keyword(self, keyword: str, expected_column: Optional[int], node_type: str = "Keyword") -> str:
+        """Emit a keyword token with case policy applied.
+
+        Args:
+            keyword: The keyword to emit (normalized lowercase)
+            expected_column: Column where keyword should appear
+            node_type: Type of AST node for debugging
+
+        Returns:
+            String with appropriate spacing + keyword text (with case applied)
+        """
+        # Apply keyword case policy
+        keyword_with_case = apply_keyword_case_policy(keyword, self.keyword_case_policy, self.keyword_tracker)
+
+        # Track for first_wins policy
+        if self.keyword_case_policy == "first_wins":
+            keyword_lower = keyword.lower()
+            if keyword_lower not in self.keyword_tracker:
+                self.keyword_tracker[keyword_lower] = keyword_with_case
+
+        # Use regular emit_token for positioning
+        return self.emit_token(keyword_with_case, expected_column, node_type)
 
     def emit_token(self, text, expected_column: Optional[int],
                    node_type: str = "unknown") -> str:
@@ -166,7 +250,7 @@ class PositionSerializer:
 
     def serialize_print_statement(self, stmt: ast_nodes.PrintStatementNode) -> str:
         """Serialize PRINT statement"""
-        result = self.emit_token("PRINT", stmt.column, "PrintKeyword")
+        result = self.emit_keyword("print", stmt.column, "PrintKeyword")
 
         # File number if present
         if stmt.file_number:
@@ -184,9 +268,9 @@ class PositionSerializer:
 
     def serialize_if_statement(self, stmt: ast_nodes.IfStatementNode) -> str:
         """Serialize IF statement"""
-        result = self.emit_token("IF", stmt.column, "IfKeyword")
+        result = self.emit_keyword("if", stmt.column, "IfKeyword")
         result += self.serialize_expression(stmt.condition)
-        result += self.emit_token("THEN", None, "ThenKeyword")
+        result += self.emit_keyword("then", None, "ThenKeyword")
 
         # Direct THEN line number (e.g., IF X>5 THEN 100)
         if stmt.then_line_number is not None:
@@ -200,10 +284,10 @@ class PositionSerializer:
 
         # ELSE statements or line number
         if stmt.else_line_number is not None:
-            result += self.emit_token("ELSE", None, "ElseKeyword")
+            result += self.emit_keyword("else", None, "ElseKeyword")
             result += self.emit_token(str(stmt.else_line_number), None, "LineNumber")
         elif stmt.else_statements:
-            result += self.emit_token("ELSE", None, "ElseKeyword")
+            result += self.emit_keyword("else", None, "ElseKeyword")
             for i, else_stmt in enumerate(stmt.else_statements):
                 if i > 0:
                     result += self.emit_token(":", None, "StatementSep")
@@ -213,32 +297,32 @@ class PositionSerializer:
 
     def serialize_goto_statement(self, stmt: ast_nodes.GotoStatementNode) -> str:
         """Serialize GOTO statement"""
-        result = self.emit_token("GOTO", stmt.column, "GotoKeyword")
+        result = self.emit_keyword("goto", stmt.column, "GotoKeyword")
         result += self.emit_token(str(stmt.line_number), None, "LineNumber")
         return result
 
     def serialize_gosub_statement(self, stmt: ast_nodes.GosubStatementNode) -> str:
         """Serialize GOSUB statement"""
-        result = self.emit_token("GOSUB", stmt.column, "GosubKeyword")
+        result = self.emit_keyword("gosub", stmt.column, "GosubKeyword")
         result += self.emit_token(str(stmt.line_number), None, "LineNumber")
         return result
 
     def serialize_for_statement(self, stmt: ast_nodes.ForStatementNode) -> str:
         """Serialize FOR statement"""
-        result = self.emit_token("FOR", stmt.column, "ForKeyword")
+        result = self.emit_keyword("for", stmt.column, "ForKeyword")
         result += self.serialize_expression(stmt.variable)
         result += self.emit_token("=", None, "Equals")
         result += self.serialize_expression(stmt.start_expr)
-        result += self.emit_token("TO", None, "ToKeyword")
+        result += self.emit_keyword("to", None, "ToKeyword")
         result += self.serialize_expression(stmt.end_expr)
         if stmt.step_expr:
-            result += self.emit_token("STEP", None, "StepKeyword")
+            result += self.emit_keyword("step", None, "StepKeyword")
             result += self.serialize_expression(stmt.step_expr)
         return result
 
     def serialize_next_statement(self, stmt: ast_nodes.NextStatementNode) -> str:
         """Serialize NEXT statement"""
-        result = self.emit_token("NEXT", stmt.column, "NextKeyword")
+        result = self.emit_keyword("next", stmt.column, "NextKeyword")
         if stmt.variables:
             for i, var in enumerate(stmt.variables):
                 if i > 0:
@@ -252,7 +336,8 @@ class PositionSerializer:
         if stmt.comment_type == "APOSTROPHE":
             result = self.emit_token("'", stmt.column, "RemKeyword")
         else:
-            result = self.emit_token(stmt.comment_type, stmt.column, "RemKeyword")
+            # Apply keyword case to REM/REMARK
+            result = self.emit_keyword(stmt.comment_type.lower(), stmt.column, "RemKeyword")
 
         if stmt.text:
             # Preserve original comment spacing
@@ -297,8 +382,14 @@ class PositionSerializer:
             result = ""
             result += self.serialize_expression(expr.left)
 
-            # Operator token
-            op_map = {
+            # Operator token - keywords need case policy applied
+            keyword_ops = {
+                TokenType.AND: 'and',
+                TokenType.OR: 'or',
+                TokenType.XOR: 'xor',
+                TokenType.MOD: 'mod',
+            }
+            symbol_ops = {
                 TokenType.PLUS: '+',
                 TokenType.MINUS: '-',
                 TokenType.MULTIPLY: '*',
@@ -310,14 +401,16 @@ class PositionSerializer:
                 TokenType.LESS_EQUAL: '<=',
                 TokenType.GREATER_EQUAL: '>=',
                 TokenType.NOT_EQUAL: '<>',
-                TokenType.AND: 'AND',
-                TokenType.OR: 'OR',
-                TokenType.XOR: 'XOR',
-                TokenType.MOD: 'MOD',
                 TokenType.BACKSLASH: '\\',
             }
-            op_str = op_map.get(expr.operator, str(expr.operator))
-            result += self.emit_token(op_str, None, "Operator")
+
+            # Use emit_keyword for keyword operators, emit_token for symbols
+            if expr.operator in keyword_ops:
+                result += self.emit_keyword(keyword_ops[expr.operator], None, "Operator")
+            elif expr.operator in symbol_ops:
+                result += self.emit_token(symbol_ops[expr.operator], None, "Operator")
+            else:
+                result += self.emit_token(str(expr.operator), None, "Operator")
 
             result += self.serialize_expression(expr.right)
             return result
