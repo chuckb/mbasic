@@ -5,7 +5,7 @@ Abstract Syntax Tree (AST) node definitions for MBASIC 5.21
 from typing import List, Optional, Any, Set
 from dataclasses import dataclass
 from enum import Enum
-from tokens import TokenType
+from tokens import TokenType, Token
 
 
 # ============================================================================
@@ -84,6 +84,7 @@ class PrintStatementNode:
     file_number: Optional['ExpressionNode'] = None  # For PRINT #n, ...
     line_num: int = 0
     column: int = 0
+    keyword_token: Optional[Token] = None  # Token for PRINT keyword (for case handling)
 
 
 @dataclass
@@ -157,6 +158,9 @@ class IfStatementNode:
     else_line_number: Optional[int]
     line_num: int = 0
     column: int = 0
+    keyword_token: Optional[Token] = None  # Token for IF keyword
+    then_token: Optional[Token] = None     # Token for THEN keyword
+    else_token: Optional[Token] = None     # Token for ELSE keyword (if present)
 
 
 @dataclass
@@ -168,6 +172,9 @@ class ForStatementNode:
     step_expr: Optional['ExpressionNode']  # Default is 1
     line_num: int = 0
     column: int = 0
+    keyword_token: Optional[Token] = None  # Token for FOR keyword
+    to_token: Optional[Token] = None       # Token for TO keyword
+    step_token: Optional[Token] = None     # Token for STEP keyword (if present)
 
 
 @dataclass
