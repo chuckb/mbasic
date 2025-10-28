@@ -215,7 +215,7 @@ class NiceGUIBackend(UIBackend):
                 self.editor = ui.textarea(
                     value='',
                     placeholder='Program Editor'
-                ).style('height: 200px; border: 2px solid blue;').props('outlined dense').mark('editor')
+                ).style('height: 200px; width: 100%; border: 2px solid blue; user-select: text;').props('outlined dense').mark('editor')
                 self.editor.on('keydown.enter', self._on_enter_key)
 
                 # Output
@@ -223,7 +223,7 @@ class NiceGUIBackend(UIBackend):
                 self.output = ui.textarea(
                     value='MBASIC 5.21 Web IDE\nReady\n',
                     placeholder='Output'
-                ).style('height: 200px; border: 2px solid green; background: white; color: black;').props('readonly outlined dense').mark('output')
+                ).style('height: 200px; width: 100%; border: 2px solid green; background: white; color: black;').props('readonly outlined dense').mark('output')
 
                 # INPUT row (hidden by default)
                 self.input_row = ui.row().classes('w-full bg-blue-50 q-pa-sm')
@@ -236,11 +236,11 @@ class NiceGUIBackend(UIBackend):
 
                 # Immediate
                 ui.label('IMMEDIATE').style('background: yellow;')
-                with ui.row():
+                with ui.row().style('width: 100%;'):
                     self.immediate_entry = ui.textarea(
                         value='',
                         placeholder='Command'
-                    ).style('height: 60px; flex-grow: 1; border: 2px solid purple;').props('outlined dense').mark('immediate_entry')
+                    ).style('height: 60px; width: 100%; border: 2px solid purple;').props('outlined dense').mark('immediate_entry')
                     self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
                     ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
 
@@ -1117,10 +1117,23 @@ class NiceGUIBackend(UIBackend):
             # Create output capturing IO handler
             output_io = OutputCapturingIOHandler()
 
+            # Ensure we have a runtime - create temporary one if needed
+            runtime = self.runtime
+            interpreter = self.interpreter
+
+            if runtime is None:
+                # Create a temporary runtime for immediate mode
+                runtime = Runtime({}, {})
+
+            if interpreter is None:
+                # Create a temporary interpreter for immediate mode
+                from src.resource_limits import create_local_limits
+                interpreter = Interpreter(runtime, output_io, limits=create_local_limits())
+
             # Create immediate executor (runtime, interpreter, io_handler)
             immediate_executor = ImmediateExecutor(
-                self.runtime if self.runtime else None,
-                self.interpreter if self.interpreter else None,
+                runtime,
+                interpreter,
                 output_io
             )
 
