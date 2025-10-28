@@ -993,9 +993,12 @@ class NiceGUIBackend(UIBackend):
 
     def _append_output(self, text):
         """Append text to output pane and auto-scroll to bottom."""
+        log_web_error("_append_output", Exception(f"DEBUG: Appending {len(text)} chars: {text[:50]}..."))
         self.output.value += text
+        log_web_error("_append_output", Exception(f"DEBUG: Output value now {len(self.output.value)} chars"))
         # Force update and then scroll
         self.output.update()
+        log_web_error("_append_output", Exception("DEBUG: update() called"))
         # Auto-scroll to bottom
         # Use mark selector to find the specific textarea
         ui.run_javascript('''
