@@ -79,16 +79,14 @@ All tests pass:
 
 ## Potential Next Tasks
 
-1. **Keyword Case Error Policy**
+1. **Keyword Case Error Policy Integration**
    - Core implementation: ✅ Complete
    - Integration needed: Surface errors to editor/parser UI
 
-2. **PyPI Distribution**
-   - Package ready but not published
-   - Requires explicit approval
-
-3. **Additional UI Integration**
+2. **Settings UI Integration**
    - Add settings UI to curses/TK interfaces
    - Currently settings work via CLI commands only
 
-**Deferred to future:** Pretty Printer Spacing Options (see `docs/future/`)
+**Deferred to future:**
+- Pretty Printer Spacing Options
+- PyPI Distribution (see `docs/future/DISTRIBUTION_TESTING.md`)
