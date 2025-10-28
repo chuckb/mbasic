@@ -87,82 +87,11 @@ markdown_extensions:
       toc_depth: 3
 
 # Documentation structure
+# Using awesome-pages plugin to auto-discover pages
+# This avoids hard-coding non-existent files
 nav:
   - Home: index.md
-  - Getting Started:
-      - Installation: help/mbasic/getting-started.md
-      - Your First Program: help/mbasic/getting-started.md#your-first-program
-      - Choosing a UI: help/mbasic/getting-started.md#choosing-a-user-interface
-  - User Interfaces:
-      - Overview: help/ui/curses/index.md
-      - Curses (Terminal):
-          - Getting Started: help/ui/curses/getting-started.md
-          - Keyboard Shortcuts: help/ui/curses/quick-reference.md
-          - Keyboard Commands: help/ui/curses/keyboard-commands.md
-          - Editing Programs: help/ui/curses/editing.md
-          - Running Programs: help/ui/curses/running.md
-          - File Operations: help/ui/curses/files.md
-          - Help Navigation: help/ui/curses/help-navigation.md
-      - CLI (Command-Line): help/ui/cli/index.md
-      - Tkinter (GUI): help/ui/tk/index.md
-  - MBASIC Interpreter:
-      - Overview: help/mbasic/index.md
-      - Features: help/mbasic/features.md
-      - Compatibility: help/mbasic/compatibility.md
-      - Architecture: help/mbasic/architecture.md
-  - Language Reference:
-      - Overview: help/common/language/index.md
-      - Operators: help/common/language/operators.md
-      - Statements:
-          - Index: help/common/language/statements/index.md
-          - Control Flow:
-              - FOR...NEXT: help/common/language/statements/for-next.md
-              - IF...THEN...ELSE: help/common/language/statements/if-then-else-if-goto.md
-              - WHILE...WEND: help/common/language/statements/while-wend.md
-              - GOTO: help/common/language/statements/goto.md
-              - GOSUB...RETURN: help/common/language/statements/gosub-return.md
-              - ON GOTO/GOSUB: help/common/language/statements/on-goto-on-gosub.md
-              - STOP/END: help/common/language/statements/stop.md
-          - Input/Output:
-              - PRINT: help/common/language/statements/print.md
-              - INPUT: help/common/language/statements/input.md
-              - LINE INPUT: help/common/language/statements/line-input.md
-              - PRINT USING: help/common/language/statements/print-using.md
-          - File I/O:
-              - OPEN: help/common/language/statements/open.md
-              - CLOSE: help/common/language/statements/close.md
-              - FIELD: help/common/language/statements/field.md
-              - GET/PUT: help/common/language/statements/get-put.md
-          - Arrays:
-              - DIM: help/common/language/statements/dim.md
-              - OPTION BASE: help/common/language/statements/option-base.md
-              - ERASE: help/common/language/statements/erase.md
-          - Error Handling:
-              - ON ERROR: help/common/language/statements/on-error-goto.md
-              - RESUME: help/common/language/statements/resume.md
-              - ERROR: help/common/language/statements/error.md
-      - Functions:
-          - Index: help/common/language/functions/index.md
-          - Mathematical:
-              - ABS: help/common/language/functions/abs.md
-              - INT: help/common/language/functions/int.md
-              - SIN/COS/TAN: help/common/language/functions/sin.md
-              - SQR: help/common/language/functions/sqr.md
-              - LOG/EXP: help/common/language/functions/log.md
-              - RND: help/common/language/functions/rnd.md
-          - String:
-              - LEFT$/RIGHT$/MID$: help/common/language/functions/left_dollar.md
-              - LEN: help/common/language/functions/len.md
-              - CHR$/ASC: help/common/language/functions/chr_dollar.md
-              - STR$/VAL: help/common/language/functions/str_dollar.md
-              - INSTR: help/common/language/functions/instr.md
-          - Type Conversion:
-              - CINT/CSNG/CDBL: help/common/language/functions/cint.md
-              - FIX: help/common/language/functions/fix.md
-      - Appendices:
-          - Error Codes: help/common/language/appendices/error-codes.md
-          - ASCII Codes: help/common/language/appendices/ascii-codes.md
-          - Math Functions: help/common/language/appendices/math-functions.md
+  - ...
 
 extra:
   social:

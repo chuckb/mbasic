@@ -39,9 +39,8 @@ jobs:
           pip install mkdocs mkdocs-material mkdocs-awesome-pages-plugin python-frontmatter
 
       - name: Build documentation
-        run: mkdocs build --verbose
-        # Note: --strict removed temporarily due to errors
-        # TODO: Fix errors and re-enable strict mode (see docs/dev/FIX_MKDOCS_STRICT_MODE_TODO.md)
+        run: mkdocs build --strict --verbose
+        # Strict mode re-enabled after fixing nav structure with auto-discovery
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
