@@ -380,7 +380,7 @@ class Interpreter:
                         return self.state
 
                     # Check if we need to jump
-                    if self.runtime.next_line is not None:
+                    if self.runtime.has_pending_jump():
                         break
 
                     self.runtime.current_stmt_index += 1
@@ -390,7 +390,7 @@ class Interpreter:
                         # Check if we've finished all statements on this line
                         if self.runtime.current_stmt_index >= len(line_node.statements):
                             # All statements on this line are done, advance to next line
-                            if self.runtime.next_line is not None:
+                            if self.runtime.has_pending_jump():
                                 # Handle jump
                                 target_line = self.runtime.next_line
                                 self.runtime.next_line = None
@@ -434,7 +434,7 @@ class Interpreter:
                         return self.state
 
                 # Handle jumps
-                if self.runtime.next_line is not None:
+                if self.runtime.has_pending_jump():
                     target_line = self.runtime.next_line
                     self.runtime.next_line = None
                     try:
@@ -709,7 +709,7 @@ class Interpreter:
                 self.execute_statement(stmt)
 
                 # Check if we need to jump
-                if self.runtime.next_line is not None:
+                if self.runtime.has_pending_jump():
                     break
 
                 self.runtime.current_stmt_index += 1
@@ -722,7 +722,7 @@ class Interpreter:
             }
 
         # Handle jumps (GOTO, GOSUB, etc.)
-        if self.runtime.next_line is not None:
+        if self.runtime.has_pending_jump():
             target_line = self.runtime.next_line
             self.runtime.next_line = None
             try:
@@ -869,7 +869,7 @@ class Interpreter:
                         raise
 
                 # Check if we need to jump
-                if self.runtime.next_line is not None:
+                if self.runtime.has_pending_jump():
                     # Break to jump to new line (will be handled by after-loop code)
                     import os
                     if os.environ.get('DEBUG'):
@@ -883,7 +883,7 @@ class Interpreter:
             import os
             if os.environ.get('DEBUG'):
                 self.io.debug(f"After-loop check, next_line={self.runtime.next_line}, halted={self.runtime.halted}")
-            if self.runtime.next_line is not None:
+            if self.runtime.has_pending_jump():
                 target_line = self.runtime.next_line
                 self.runtime.next_line = None
 
@@ -1258,7 +1258,7 @@ class Interpreter:
                 # THEN statement(s)
                 for then_stmt in stmt.then_statements:
                     self.execute_statement(then_stmt)
-                    if self.runtime.next_line is not None:
+                    if self.runtime.has_pending_jump():
                         break
         else:
             # Execute ELSE clause
@@ -1269,7 +1269,7 @@ class Interpreter:
                 # ELSE statement(s)
                 for else_stmt in stmt.else_statements:
                     self.execute_statement(else_stmt)
-                    if self.runtime.next_line is not None:
+                    if self.runtime.has_pending_jump():
                         break
 
     def execute_goto(self, stmt):

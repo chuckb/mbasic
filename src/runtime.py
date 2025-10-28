@@ -1125,6 +1125,24 @@ class Runtime:
             pass
         return None
 
+    def has_pending_jump(self):
+        """
+        Check if a GOTO/GOSUB jump is pending.
+
+        Returns:
+            True if next_line is set (jump pending), False otherwise
+        """
+        return self.next_line is not None
+
+    def is_sequential_execution(self):
+        """
+        Check if execution should continue sequentially (no jump pending).
+
+        Returns:
+            True if no jump pending, False if GOTO/GOSUB jump is waiting
+        """
+        return self.next_line is None
+
     # ========================================================================
     # Debugging and Inspection Interface
     # ========================================================================
