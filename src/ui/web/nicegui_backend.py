@@ -180,7 +180,7 @@ class NiceGUIBackend(UIBackend):
                     self.output = ui.textarea(
                         value='MBASIC 5.21 Web IDE\nReady\n',
                         placeholder='Program output will appear here'
-                    ).classes('w-full flex-grow font-mono bg-black text-green-400').props('readonly').mark('output')
+                    ).classes('w-full flex-grow font-mono').props('readonly').mark('output')
 
                     # INPUT row (hidden by default, shown when INPUT statement needs input)
                     self.input_row = ui.row().classes('w-full p-2 gap-2')
@@ -373,28 +373,40 @@ class NiceGUIBackend(UIBackend):
     # =========================================================================
 
     def _add_line(self):
-        """Add line from editor to program."""
-        line_text = self.editor.value.strip()
-        if not line_text:
+        """Add line(s) from editor to program.
+
+        Supports both single line and multiple lines separated by newlines.
+        """
+        text = self.editor.value.strip()
+        if not text:
             return
 
         try:
-            # Parse line number from text
-            match = re.match(r'^(\d+)(?:\s|$)', line_text)
-            if not match:
-                self._set_status('Error: Line must start with line number')
-                ui.notify('Line must start with line number', type='negative')
+            # Split into lines
+            lines = [line.strip() for line in text.split('\n') if line.strip()]
+
+            if not lines:
                 return
 
-            line_num = int(match.group(1))
+            added_count = 0
+            errors = []
 
-            # Add line to program
-            success, error = self.program.add_line(line_num, line_text)
+            for line_text in lines:
+                # Parse line number from text
+                match = re.match(r'^(\d+)(?:\s|$)', line_text)
+                if not match:
+                    errors.append(f'{line_text}: Line must start with line number')
+                    continue
 
-            if not success:
-                self._set_status(f'Error: {error}')
-                ui.notify(f'Error: {error}', type='negative')
-                return
+                line_num = int(match.group(1))
+
+                # Add line to program
+                success, error = self.program.add_line(line_num, line_text)
+
+                if not success:
+                    errors.append(f'{line_num}: {error}')
+                else:
+                    added_count += 1
 
             # Update display
             self._update_program_display()
@@ -402,7 +414,15 @@ class NiceGUIBackend(UIBackend):
             # Clear editor
             self.editor.value = ''
 
-            self._set_status(f'Added: {line_text}')
+            # Show status
+            if errors:
+                error_msg = '; '.join(errors[:3])  # Show first 3 errors
+                if len(errors) > 3:
+                    error_msg += f' (and {len(errors)-3} more)'
+                self._set_status(f'Added {added_count} lines, {len(errors)} errors')
+                ui.notify(error_msg, type='warning')
+            else:
+                self._set_status(f'Added {added_count} line(s)')
 
         except Exception as e:
             ui.notify(f'Error: {e}', type='negative')
