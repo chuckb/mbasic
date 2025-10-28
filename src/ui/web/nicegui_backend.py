@@ -134,6 +134,11 @@ class NiceGUIBackend(UIBackend):
         self.output_lines = []   # Output text lines
         self.current_file = None  # Currently open file path
 
+        # Auto-numbering configuration (like TK)
+        self.auto_number_enabled = True      # Enable auto-numbering
+        self.auto_number_start = 10          # Starting line number
+        self.auto_number_increment = 10      # Increment between lines
+
         # Execution state
         self.running = False
         self.paused = False
@@ -147,7 +152,6 @@ class NiceGUIBackend(UIBackend):
         self.editor = None
         self.output = None
         self.status_label = None
-        self.program_display = None
 
         # INPUT row elements (for inline input)
         self.input_row = None
@@ -187,30 +191,23 @@ class NiceGUIBackend(UIBackend):
                 ui.button('Step', on_click=self._menu_step, icon='skip_next').mark('btn_step')
                 ui.button('Continue', on_click=self._menu_continue, icon='play_circle').mark('btn_continue')
 
-            # Main content area - split pane
-            with ui.splitter(value=50).classes('w-full h-[600px]') as splitter:
+            # Main content area - split pane (vertical: editor on top, output on bottom)
+            with ui.splitter(value=60, vertical=True).classes('w-full h-[600px]') as splitter:
 
-                # Left pane - Editor
+                # Top pane - Program Editor (60% of space)
                 with splitter.before:
-                    ui.label('Program Editor').classes('text-lg font-bold p-2')
+                    ui.label('Program Editor:').classes('text-lg font-bold p-2')
 
-                    # Program line entry
-                    with ui.row().classes('w-full p-2 gap-2'):
-                        self.editor = ui.textarea(
-                            placeholder='Enter BASIC line (e.g., 10 PRINT "Hello")',
-                            on_change=lambda: None
-                        ).classes('flex-grow h-[200px]').mark('editor')
-
-                        ui.button('Add Line', on_click=self._add_line, icon='add').mark('btn_add_line')
-
-                    # Program listing
-                    ui.label('Program:').classes('font-bold px-2')
-                    self.program_display = ui.textarea(
+                    # Multi-line program editor (like TK)
+                    self.editor = ui.textarea(
                         value='',
-                        placeholder='No program loaded'
-                    ).classes('w-full h-[300px] font-mono').props('readonly outlined').mark('program_display')
+                        placeholder='Enter BASIC program here (e.g., 10 PRINT "Hello")\nPress Enter for auto-numbering'
+                    ).classes('w-full h-full font-mono text-base').props('outlined').mark('editor')
 
-                # Right pane - Output
+                    # Bind keyboard events
+                    self.editor.on('keydown.enter', self._on_enter_key)
+
+                # Bottom pane - Output (40% of space)
                 with splitter.after:
                     ui.label('Output').classes('text-lg font-bold p-2')
                     self.output = ui.textarea(
