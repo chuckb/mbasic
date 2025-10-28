@@ -327,5 +327,5 @@ related: [POKE, INP, RANDOMIZE]
 
 ## See Also
 
-- [help_widget.py](../../src/ui/help_widget.py) - Current help implementation
-- [markdown_renderer.py](../../src/ui/markdown_renderer.py) - Markdown parsing
+- `src/ui/help_widget.py` - Current help implementation
+- `src/ui/markdown_renderer.py` - Markdown parsing

@@ -815,6 +815,6 @@ Run any test with report generation to see detailed optimization opportunities.
 
 ## References
 
-- [Compiler vs Interpreter Differences](COMPILER_VS_INTERPRETER_DIFFERENCES.md)
+- [Compiler vs Interpreter Differences](../../history/COMPILER_VS_INTERPRETER_DIFFERENCES.md)
 - MBASIC Compiler User's Manual (1980)
 - BASIC-80 Reference Manual Version 5.21

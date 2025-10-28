@@ -38,6 +38,24 @@ if [ -n "$HELP_CHANGED" ]; then
     fi
 fi
 
+# Check if docs were modified - validate mkdocs build
+DOCS_CHANGED=$(git diff --name-only docs/ mkdocs.yml 2>/dev/null || echo "")
+
+if [ -n "$DOCS_CHANGED" ]; then
+    echo "Documentation changed - validating mkdocs build..."
+    if command -v mkdocs &> /dev/null; then
+        if mkdocs build --strict --quiet 2>&1 | grep -q "WARNING\|ERROR"; then
+            echo "❌ ERROR: mkdocs build has warnings or errors in strict mode!"
+            echo "Run 'mkdocs build --strict' to see details"
+            exit 1
+        else
+            echo "✓ mkdocs build validation passed"
+        fi
+    else
+        echo "⚠ Warning: mkdocs not installed, skipping build validation"
+    fi
+fi
+
 # Git add, commit, push
 git add -A
 git commit -m "$COMMIT_MSG

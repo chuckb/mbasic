@@ -570,10 +570,10 @@ Try both and use whichever feels faster!
 
 ### Learn More About...
 
-- **Debugging**: See [Debugging Features](../docs/help/common/debugging.md)
-- **Keyboard Shortcuts**: See [Tk Keyboard Shortcuts](../docs/help/ui/tk/keyboard-shortcuts.md)
-- **BASIC Language**: See [Language Reference](../docs/help/common/language/index.md)
-- **Editor Features**: See [Editor Commands](../docs/help/common/editor-commands.md)
+- **Debugging**: See [Debugging Features](../help/common/debugging.md)
+- **Keyboard Shortcuts**: See [Tk Keyboard Shortcuts](../help/ui/tk/keyboard-shortcuts.md)
+- **BASIC Language**: See [Language Reference](../help/common/language/index.md)
+- **Editor Features**: See [Editor Commands](../help/common/editor-commands.md)
 
 ### Try These Sample Programs
 

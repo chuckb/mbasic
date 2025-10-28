@@ -119,7 +119,7 @@ the BASIC interpreter used on CP/M systems in the 1980s.
 - ⚠️ Compatibility implementations for some features
 - ❌ No hardware access (PEEK, POKE, INP, OUT)
 
-See [Features](features.md) for complete list.
+See [Features](../help/mbasic/features.md) for complete list.
 
 ## Your First Program
 
@@ -137,22 +137,22 @@ python3 mbasic.py hello.bas
 ## Choose Your Interface
 
 MBASIC supports multiple interfaces:
-- [CLI](../ui/cli/index.md) - Command-line REPL
-- [Curses](../ui/curses/index.md) - Terminal IDE
-- [Tk](../ui/tk/index.md) - Graphical IDE
+- [CLI](../help/ui/cli/index.md) - Command-line REPL
+- [Curses](../help/ui/curses/index.md) - Terminal IDE
+- [Tk](../help/ui/tk/index.md) - Graphical IDE
 
 ## Learning BASIC
 
 For BASIC language basics, see:
-- [BASIC-80 Tutorial](tutorial/index.md) - Learn the language
-- [Language Reference](../language/index.md) - Complete syntax reference
-- [Example Programs](examples/index.md) - Working examples
+- BASIC-80 Tutorial - Learn the language (tutorial content in help/common/language/)
+- [Language Reference](../help/common/language/index.md) - Complete syntax reference
+- Example Programs - Working examples (in basic/ directory)
 
 ## Next Steps
 
-1. [Choose your interface](../ui/cli/index.md)
-2. [Learn BASIC syntax](tutorial/basics.md)
-3. [Try example programs](examples/index.md)
+1. [Choose your interface](../help/ui/cli/index.md)
+2. Learn BASIC syntax (see help/common/language/)
+3. Try example programs (in basic/ directory)
 ```
 
 **Tier 1**: `docs/help/language/tutorial/basics.md` (New - Language)
@@ -192,7 +192,7 @@ BASIC programs consist of numbered lines:
   - Double precision: A# (# suffix)
 - **String**: A$, NAME$, TEXT$ ($ suffix required)
 
-See [Data Types](data-types.md) for details.
+See [Data Types](../help/common/language/data-types.md) for details.
 
 ## Your First Program
 
@@ -206,9 +206,9 @@ See [Data Types](data-types.md) for details.
 
 ## Next Steps
 
-- [Control Flow](control-flow.md) - IF, FOR, WHILE
-- [Input/Output](input-output.md) - INPUT, PRINT
-- [Subroutines](subroutines.md) - GOSUB, DEF FN
+- Control Flow - IF, FOR, WHILE (see help/common/language/statements/)
+- Input/Output - INPUT, PRINT (see help/common/language/statements/)
+- Subroutines - GOSUB, DEF FN (see help/common/language/statements/)
 ```
 
 ### Example 2: Curses Index (Add Cross-Tier Links)
@@ -222,8 +222,8 @@ See [Data Types](data-types.md) for details.
 - [Getting Started](getting-started.md)
 
 ## Language Reference
-- [BASIC Language](../../common/language.md)
-- [Examples](../../common/examples.md)
+- [BASIC Language](../help/common/language/index.md)
+- [Examples](../help/common/examples.md)
 ```
 
 **AFTER** (`docs/help/ui/curses/index.md`):
@@ -245,20 +245,20 @@ Learn how to use the curses interface:
 ## 📗 MBASIC Interpreter
 
 About this BASIC interpreter:
-- [About MBASIC](../../mbasic/index.md) - What is MBASIC?
-- [Getting Started](../../mbasic/getting-started.md) - First steps
-- [Features](../../mbasic/features.md) - What's implemented
-- [Example Programs](../../mbasic/examples/index.md) - Working examples
-- [Tutorial](../../mbasic/tutorial/index.md) - Learn BASIC
+- [About MBASIC](../help/mbasic/index.md) - What is MBASIC?
+- [Getting Started](../help/mbasic/getting-started.md) - First steps
+- [Features](../help/mbasic/features.md) - What's implemented
+- Example Programs - Working examples (in basic/ directory)
+- Tutorial - Learn BASIC (see help/common/language/)
 
 ## 📕 BASIC-80 Language Reference
 
 Complete BASIC-80 language documentation:
-- [Language Overview](../../language/index.md) - Language reference home
-- [Statements](../../language/statements/index.md) - 63 statements
-- [Functions](../../language/functions/index.md) - 40 functions
-- [Operators](../../language/operators.md) - Arithmetic, logical, relational
-- [Appendices](../../language/appendices/index.md) - Error codes, ASCII, math
+- [Language Overview](../help/common/language/index.md) - Language reference home
+- [Statements](../help/common/language/statements/index.md) - 63 statements
+- [Functions](../help/common/language/functions/index.md) - 40 functions
+- [Operators](../help/common/language/operators.md) - Arithmetic, logical, relational
+- [Appendices](../help/common/language/appendices/index.md) - Error codes, ASCII, math
 
 ## Help Navigation
 
@@ -300,7 +300,7 @@ PEEK(I)
 access memory addresses. PEEK returns a random value (0-255) to support
 programs that use PEEK for random number seeding.
 
-See [MBASIC Compatibility Notes](../../mbasic/compatibility.md#peek) for details.
+See [MBASIC Compatibility Notes](../help/mbasic/compatibility.md#peek) for details.
 
 **Historical Reference**: The documentation below is preserved from the
 original MBASIC 5.21 manual for historical reference.
@@ -346,7 +346,7 @@ compatibility for this use case.
 20 PRINT RND
 ```
 
-See also: [PEEK function reference](../language/functions/peek.md)
+See also: [PEEK function reference](../help/common/language/functions/peek.md)
 
 ### RANDOMIZE
 
@@ -369,7 +369,7 @@ Cannot access hardware from Python interpreter:
 - **WAIT port, mask[, xor]** - Wait on I/O port (no-op)
 - **INP(port)** - Read from I/O port (returns 0)
 
-See also: [Not Implemented Features](not-implemented.md)
+See also: [Not Implemented Features](../help/mbasic/not-implemented.md)
 
 ### Machine Code
 
@@ -410,7 +410,7 @@ Most BASIC-80 features work exactly as in the original:
 - ✅ Arrays and variables
 - ✅ Error handling (ON ERROR GOTO, RESUME)
 
-See [Features](features.md) for complete list.
+See [Features](../help/mbasic/features.md) for complete list.
 ```
 
 ## File Organization After Reorganization

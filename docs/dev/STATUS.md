@@ -363,4 +363,4 @@ Contributions welcome! Priority areas:
 2. Performance optimization
 3. Enhanced error messages and debugging features
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+Contributions welcome - see the project repository for details.
