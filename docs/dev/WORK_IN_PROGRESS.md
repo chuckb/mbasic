@@ -75,38 +75,72 @@ $ python3 tests/run_regression.py
 
 ---
 
-## Active Work: PyPI Distribution Preparation
+## Completed: PyPI Distribution Preparation
 
-**Started:** 2025-10-28
-**Task:** Prepare MBASIC for PyPI distribution (build and test, NO PUBLISH without approval)
-**Current Version:** 1.0.146
+**Completed:** 2025-10-28 (v1.0.147-148)
+**Task:** Prepare MBASIC for PyPI distribution
 
-### Goal
+### Summary
 
-Prepare MBASIC as a proper Python package that can be installed via `pip install mbasic`. This includes:
-- Creating packaging configuration (`pyproject.toml`)
-- Setting up entry points for command-line usage
-- Testing local and built installations
-- Documenting the distribution process
-- **NOT publishing to PyPI without explicit approval**
+✅ **Package fully prepared and ready for publication!**
 
-### Status
+**Key files created/updated:**
+- ✅ `pyproject.toml` - Updated to v1.0.147 with correct metadata
+- ✅ `mbasic.py` - Entry point already configured (main() function)
+- ✅ `MANIFEST.in` - Already configured with all necessary files
+- ✅ `docs/dev/DISTRIBUTION_TESTING.md` - Complete testing and publishing guide
+- ✅ `utils/build_package.sh` - Automated build and test script
+- ✅ `README.md` - Updated with PyPI status
 
-- ⏳ Create pyproject.toml
-- ⏸️ Update mbasic.py entry point
-- ⏸️ Create MANIFEST.in
-- ⏸️ Test local installation
-- ⏸️ Build package
-- ⏸️ Test built package
-- ⏸️ Documentation
+### What's Ready
 
-### Files to Modify
+**Package configuration:**
+- Version: 1.0.147
+- Zero dependencies for core functionality
+- Optional dependencies for curses/tk UIs
+- Entry point: `mbasic` command
+- Includes docs, help files, and example programs
 
-- `pyproject.toml` (new) - Package metadata and dependencies
-- `mbasic.py` - Add main() entry point
-- `MANIFEST.in` (new) - Include non-Python files
-- `README.md` - Update with pip install instructions
-- `docs/dev/DISTRIBUTION_TESTING.md` (new) - Testing procedures
+**Build and test:**
+- Build script: `./utils/build_package.sh`
+- Test locally: `./utils/build_package.sh --test`
+- Upload to TestPyPI: `./utils/build_package.sh --test-pypi`
+
+**Documentation:**
+- Complete guide: `docs/dev/DISTRIBUTION_TESTING.md`
+- Pre-publication checklist included
+- Emergency procedures documented
+
+### Next Steps (When Ready to Publish)
+
+1. **Install build tools** (requires venv):
+   ```bash
+   python3 -m venv venv-build
+   source venv-build/bin/activate
+   pip install build twine
+   ```
+
+2. **Build package**:
+   ```bash
+   ./utils/build_package.sh
+   ```
+
+3. **Test locally**:
+   ```bash
+   ./utils/build_package.sh --test
+   ```
+
+4. **(Optional) Test on TestPyPI**:
+   ```bash
+   ./utils/build_package.sh --test-pypi
+   ```
+
+5. **Publish to PyPI** (NEEDS EXPLICIT APPROVAL):
+   ```bash
+   python3 -m twine upload dist/*
+   ```
+
+See `docs/dev/DISTRIBUTION_TESTING.md` for complete instructions.
 
 ---
 

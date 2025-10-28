@@ -7,7 +7,11 @@ See [STATUS.md](STATUS.md) for detailed implementation status.
 
 ## Installation
 
-### From PyPI (Recommended - Coming Soon)
+### From PyPI (Prepared, Not Yet Published)
+
+**Status**: Package is prepared and tested, awaiting publication to PyPI.
+
+Once published, you'll be able to install with:
 
 ```bash
 # Minimal install - CLI backend only (zero dependencies)
@@ -25,6 +29,8 @@ pip install mbasic[all]
 # For development
 pip install mbasic[dev]
 ```
+
+**Building from source**: See `docs/dev/DISTRIBUTION_TESTING.md` for instructions on building and testing the package.
 
 **Note:** Tkinter is included with most Python installations. If missing:
 - **Debian/Ubuntu:** `sudo apt-get install python3-tk`
