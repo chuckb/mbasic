@@ -573,11 +573,16 @@ class NiceGUIBackend(UIBackend):
                 log_web_error("_menu_run", Exception("DEBUG: Save editor failed"))
                 return  # Parse errors, don't run
 
+            log_web_error("_menu_run", Exception(f"DEBUG: Save succeeded, program.lines={len(self.program.lines)}"))
+
             # Check if program has lines
             if not self.program.lines:
+                log_web_error("_menu_run", Exception("DEBUG: No program lines - exiting"))
                 self._set_status('No program loaded')
                 ui.notify('No program in editor. Add some lines first.', type='warning')
                 return
+
+            log_web_error("_menu_run", Exception("DEBUG: Program has lines, clearing output"))
             # Clear output
             self._clear_output()
             self._set_status('Running...')
