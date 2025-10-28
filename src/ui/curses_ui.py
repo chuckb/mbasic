@@ -12,7 +12,7 @@ from .keybindings import (
     VARIABLES_KEY, STACK_KEY, RUN_KEY, LIST_KEY, NEW_KEY, SAVE_KEY, OPEN_KEY,
     BREAKPOINT_KEY, CLEAR_BREAKPOINTS_KEY, CLEAR_BREAKPOINTS_DISPLAY,
     DELETE_LINE_KEY, INSERT_LINE_KEY, RENUMBER_KEY,
-    CONTINUE_KEY, STEP_KEY, STOP_KEY, TAB_KEY, SETTINGS_KEY,
+    CONTINUE_KEY, STEP_KEY, STOP_KEY, CLEAR_OUTPUT_KEY, TAB_KEY, SETTINGS_KEY,
     STATUS_BAR_SHORTCUTS, EDITOR_STATUS, OUTPUT_STATUS,
     KEYBINDINGS_BY_CATEGORY
 )
@@ -1673,6 +1673,16 @@ class CursesBackend(UIBackend):
             # Stop execution
             self._debug_stop()
 
+        elif key == CLEAR_OUTPUT_KEY:
+            # Clear output pane
+            self._clear_output()
+
+    def _clear_output(self):
+        """Clear the output pane."""
+        self.output_buffer.clear()
+        self._update_output()
+        self.status_bar.set_text("Output cleared")
+
     def _debug_continue(self):
         """Continue execution from paused/breakpoint state."""
         if not self.interpreter:
@@ -2259,8 +2269,9 @@ Run                           Debug Windows
   Run             Ctrl+R        Variables       Ctrl+W
   Step Line       Ctrl+L          Sort: s (mode) d (dir)
   Step Statement  Ctrl+T        Stack           Ctrl+K
-  Continue        Ctrl+G
-  Stop            Ctrl+X        Help
+  Continue        Ctrl+G        Clear Output    Ctrl+Y
+  Stop            Ctrl+X
+                                Help
                                 ────────────────────
                                   Show Help     Ctrl+H
                                   About         (see help)

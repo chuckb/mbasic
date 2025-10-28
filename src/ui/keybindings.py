@@ -174,6 +174,11 @@ STOP_KEY = 'ctrl x'
 STOP_CHAR = '\x18'
 STOP_DISPLAY = 'Ctrl+X'
 
+# Clear Output (not in JSON, hardcoded)
+CLEAR_OUTPUT_KEY = 'ctrl y'
+CLEAR_OUTPUT_CHAR = '\x19'
+CLEAR_OUTPUT_DISPLAY = 'Ctrl+Y'
+
 # Note: Ctrl+L is context-sensitive in curses UI:
 # - When debugging: Step Line (execute all statements on current line)
 # - When editing: List program (same as LIST_KEY)
