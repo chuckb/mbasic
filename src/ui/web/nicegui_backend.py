@@ -1006,9 +1006,6 @@ class NiceGUIBackend(UIBackend):
 
                     if (textarea) {
                         textarea.scrollTop = textarea.scrollHeight;
-                        console.log('Scrolled output to bottom, scrollHeight:', textarea.scrollHeight);
-                    } else {
-                        console.error('Could not find output textarea for scrolling');
                     }
                 }, 50);
             ''')
