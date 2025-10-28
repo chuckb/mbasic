@@ -8,9 +8,9 @@ Tests that variable names preserve the original case as typed by the user.
 import sys
 sys.path.insert(0, 'src')
 
-from lexer import Lexer
-from parser import Parser
-from position_serializer import serialize_line_with_positions
+from src.lexer import Lexer
+from src.parser import Parser
+from src.position_serializer import serialize_line_with_positions
 
 
 def test_case_preservation():

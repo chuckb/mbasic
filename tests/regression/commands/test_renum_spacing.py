@@ -8,9 +8,9 @@ Tests that renumbering preserves the original spacing in the code.
 import sys
 sys.path.insert(0, 'src')
 
-from lexer import Lexer
-from parser import Parser
-from position_serializer import renumber_with_spacing_preservation
+from src.lexer import Lexer
+from src.parser import Parser
+from src.position_serializer import renumber_with_spacing_preservation
 
 
 def test_renum_spacing():

@@ -4,7 +4,7 @@
 import sys
 sys.path.insert(0, 'src')
 
-from runtime import Runtime
+from src.runtime import Runtime
 from src.settings import SettingsManager
 
 def test_update_variables_preserves_case():

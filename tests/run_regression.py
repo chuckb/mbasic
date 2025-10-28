@@ -59,13 +59,21 @@ class TestRunner:
             True if test passed, False if failed
         """
         try:
-            # Run the test as a subprocess
+            # Get project root (tests/ parent directory)
+            project_root = test_path.parent.parent.parent
+
+            # Run the test as a subprocess from project root
+            # Set PYTHONPATH to include project root so imports work
+            env = os.environ.copy()
+            env['PYTHONPATH'] = str(project_root) + os.pathsep + env.get('PYTHONPATH', '')
+
             result = subprocess.run(
                 [sys.executable, str(test_path)],
                 capture_output=True,
                 text=True,
                 timeout=30,  # 30 second timeout per test
-                cwd=test_path.parent.parent.parent  # Run from project root
+                cwd=project_root,  # Run from project root
+                env=env
             )
 
             if result.returncode == 0:

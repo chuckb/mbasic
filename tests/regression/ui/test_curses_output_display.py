@@ -9,7 +9,7 @@ sys.path.insert(0, 'src')
 from ui.curses_ui import CursesBackend
 from iohandler.console import ConsoleIOHandler
 from editing import ProgramManager
-from parser import TypeInfo
+from src.parser import TypeInfo
 
 def test_output_display():
     """Test that program output is captured and displayed."""

@@ -4,10 +4,10 @@
 import sys
 sys.path.insert(0, 'src')
 
-from runtime import Runtime
+from src.runtime import Runtime
 from src.settings import SettingsManager
-from parser import Parser
-from lexer import Lexer
+from src.parser import Parser
+from src.lexer import Lexer
 from src.interpreter import Interpreter
 
 program = """
