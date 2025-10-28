@@ -25,12 +25,20 @@ Major work on preserving original source formatting - spacing, variable case, an
    - Test results: 9/10 tests passing
    - Historical note: approach by William Wulf (CMU, 1984)
 
-3. **RENUM with Spacing Preservation** (v1.0.92)
+3. **RENUM with Spacing Preservation** (v1.0.92, v1.0.94)
    - Implemented `renumber_with_spacing_preservation()` function
    - Updates all line number references: GOTO, GOSUB, ON GOTO, ON GOSUB, IF THEN, ON ERROR, RESTORE, RESUME, ERL comparisons
-   - Regenerates source_text from AST after updating line numbers
-   - Handles position conflicts gracefully by adding spaces
+   - v1.0.92: Initially used source_text surgical editing
+   - v1.0.94: Perfected with surgical text replacement (before single source refactor)
    - Test results: All tests passing (5/5 basic, 1/1 complex)
+
+4. **Single Source of Truth** (v1.0.95)
+   - Removed `source_text` field from LineNode
+   - AST is now the ONLY source - text always regenerated from positions
+   - Removed fast path in position_serializer
+   - Simplified RENUM to adjust AST positions only
+   - Updated parser to not store source_text
+   - All tests still passing
 
 ### Files Modified
 
@@ -54,6 +62,18 @@ Major work on preserving original source formatting - spacing, variable case, an
 - `src/position_serializer.py` - Fixed serialize_goto/gosub_statement() to use line_number field
 - `src/position_serializer.py` - Added helper functions to update line references in AST
 - `test_renum_spacing.py` - NEW: RENUM spacing preservation test suite
+
+**v1.0.94 - Perfect RENUM Spacing:**
+- `src/position_serializer.py` - Rewrote RENUM with surgical text editing approach
+- `src/position_serializer.py` - Added position adjustment helpers
+- All spacing perfectly preserved through RENUM
+
+**v1.0.95 - Single Source of Truth:**
+- `src/ast_nodes.py` - Removed source_text field from LineNode
+- `src/parser.py` - Removed code that stored source_text
+- `src/position_serializer.py` - Removed fast path, always serialize from AST
+- `src/position_serializer.py` - Simplified RENUM to only adjust positions
+- `test_renum_spacing.py` - Updated to regenerate text from AST
 
 ### Documentation Created
 
@@ -103,17 +123,19 @@ Major work on preserving original source formatting - spacing, variable case, an
 
 ## Current State
 
-- **Version**: 1.0.92
-- **Status**: Spacing, case, and RENUM preservation complete
+- **Version**: 1.0.97
+- **Status**: Single source of truth architecture complete
 - **Blocking Issues**: None
 - **Ready for**: Further enhancements
+- **Recent**: v1.0.95 removed source_text duplication, v1.0.96-97 fixed docs deployment
 
 ## Next Steps (when resuming)
 
-1. ✅ **RENUM with position adjustment** - COMPLETED (v1.0.92)
-2. **Investigate 57 changed files** - Why aren't they perfectly preserved?
-3. **Settings system** - Configuration for case conflict handling, etc.
-4. **Single source of truth** - Architectural refactor
+1. ✅ **RENUM with position adjustment** - COMPLETED (v1.0.92, v1.0.94)
+2. ✅ **Single source of truth** - COMPLETED (v1.0.95) - Removed source_text, AST is only source
+3. **Investigate 57 changed files** - Why aren't they perfectly preserved?
+4. **Settings system** - Configuration for case conflict handling, etc.
+5. **Fix MkDocs strict mode errors** - See FIX_MKDOCS_STRICT_MODE_TODO.md
 
 ## Important Context
 
@@ -126,8 +148,10 @@ All recent work follows the principle of **maintaining fidelity to source code**
 
 This respects the programmer's original intent and formatting choices.
 
-**Technical Approach:**
-- Fast path: Use original `source_text` when available
-- Fallback: Reconstruct from AST with position tracking
-- Position conflicts: Gracefully handled by adding spaces
-- Line number updates: Traverse AST to update all references
+**Technical Approach (v1.0.95+):**
+- **Single source of truth**: AST is the only source, no source_text stored
+- **Always regenerate**: Text generated from AST using token positions
+- **Position preservation**: Every token stores line_num and column
+- **Position conflicts**: Gracefully handled by adding spaces when needed
+- **RENUM**: Adjust token positions, then regenerate from AST
+- **Line number updates**: Traverse AST to update all references
