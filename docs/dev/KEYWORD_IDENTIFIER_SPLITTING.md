@@ -596,7 +596,7 @@ Programs from the CP/M era (1977-1983) often featured:
 
 ### MBASIC 5.21 Behavior
 
-Microsoft BASIC-80 version 5.21 (1981) accepted both:
+MBASIC-80 version 5.21 (1981) accepted both:
 ```basic
 ' Spaced (readable):
 FOR I = 1 TO 10 : NEXT I

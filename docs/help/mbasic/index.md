@@ -57,7 +57,7 @@ Looking to understand or modify the MBASIC interpreter?
 
 ## About This Implementation
 
-This is a complete Python implementation of Microsoft BASIC-80 (MBASIC) version 5.21 for CP/M.
+This is a complete Python implementation of MBASIC-80 (MBASIC) version 5.21 for CP/M.
 
 **Key Features:**
 - 100% MBASIC 5.21 language compatibility

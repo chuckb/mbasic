@@ -433,7 +433,7 @@ In CP/M systems (1970s-1980s), file I/O was critical:
 
 ### MBASIC 5.21 File I/O
 
-Microsoft BASIC-80 version 5.21 (1981) supported:
+MBASIC-80 version 5.21 (1981) supported:
 - **Sequential files**: INPUT #n, PRINT #n, LINE INPUT #n
 - **Random access**: FIELD, GET, PUT
 - **File numbers**: 1-15 typical range

@@ -1689,7 +1689,7 @@ class MBasicWebIDE:
             ui.markdown('''
 **MBASIC 5.21 Web IDE**
 
-A full-featured Python implementation of Microsoft BASIC-80 5.21
+A full-featured Python implementation of MBASIC-80 5.21
 for CP/M systems, running in your web browser.
 
 **Features:**

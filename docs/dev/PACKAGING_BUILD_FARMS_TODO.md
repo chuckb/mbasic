@@ -293,7 +293,7 @@ jobs:
   version: '1.0.111'
   summary: MBASIC 5.21 compatible BASIC interpreter
   description: |
-    Modern implementation of Microsoft MBASIC 5.21 with enhanced
+    Modern implementation of MBASIC 5.21 with enhanced
     features including TK GUI, case-preserving variables, and more.
 
   base: core22

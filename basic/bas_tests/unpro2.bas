@@ -7,7 +7,7 @@
 160 REM
 170 REM Thanks to Martin from the Google comp.os.cpm group as well as
 180 REM to R. van den Assem and W.J. van Elk for the 1986 article
-190 REM "A Chosen-Plaintext Attack on the Microsoft BASIC Protection".
+190 REM "A Chosen-Plaintext Attack on the MBASIC Protection".
 200 REM
 210 REM This program will ONLY work when compiled with BASCOM.
 220 REM Commands to save and build:

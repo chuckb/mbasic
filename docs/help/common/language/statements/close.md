@@ -36,8 +36,8 @@ To conclude I/O to a disk file.
 ## Example
 
 ```basic
-See PART II, Chapter 3, Microsoft BASIC       Disk
-              I/O, of the Microsoft BASIC User's Guide.
+See PART II, Chapter 3, MBASIC       Disk
+              I/O, of the MBASIC User's Guide.
 ```
 
 ## See Also

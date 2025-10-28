@@ -4,10 +4,10 @@
 22 ' Published in Interface Age Vol 6 No 6 June 1981
 23 '
 24 ' Original version for Informer III Computer
-25 '       in Microsoft BASIC-80 v5.0
+25 '       in MBASIC-80 v5.0
 26 '
 27 ' Modified and keyed in by Tony Nicholson
-28 '  for Microsoft BASIC-80 v5.21 with CP/M
+28 '  for MBASIC-80 v5.21 with CP/M
 29 '
 30 PRINT
 40 LZ=65

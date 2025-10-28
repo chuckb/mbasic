@@ -1,6 +1,8 @@
 # MBASIC 5.21 Interpreter
 
-An interpreter for MBASIC 5.21 (Microsoft BASIC-80 for CP/M) written in Python.
+An interpreter for MBASIC 5.21 (BASIC-80 for CP/M) written in Python.
+
+> **About MBASIC:** MBASIC was a BASIC interpreter originally developed by Microsoft in the late 1970s. This is an independent, open-source reimplementation created for educational purposes and historical software preservation. See [MBASIC History](docs/MBASIC_HISTORY.md) for more information.
 
 **Status:** Full MBASIC 5.21 implementation complete. All core features, file I/O, and error handling implemented.
 See [STATUS.md](STATUS.md) for detailed implementation status.
@@ -430,12 +432,25 @@ These limitations are inherent to running vintage BASIC in a modern environment 
    - Save/load functionality
    - Immediate mode
 
-## Credits
+## Credits and Disclaimers
 
-This is a faithful implementation of MBASIC 5.21 as documented in the official Microsoft BASIC-80 manual.
+**Original Language:** MBASIC 5.21 was created by Microsoft Corporation (1970s-1980s). See [MBASIC History](docs/MBASIC_HISTORY.md) for the historical context and Microsoft's role in creating BASIC interpreters.
+
+**This Implementation:**
+- Written by Andrew Wohl (2025)
+- Independent, open-source project
+- Not created, endorsed, or supported by Microsoft
+- Based on published MBASIC 5.21 specifications and documentation
+- Created for educational purposes and historical software preservation
+
+**Credit Distribution:**
+- Language design and historical implementation: Microsoft Corporation
+- This Python reimplementation: Andrew Wohl and contributors
+- Any bugs or issues in this implementation: Our responsibility, not Microsoft's
+- Quality of the original language design: Credit to Microsoft's team
 
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
-This project is an independent implementation for educational purposes and is not affiliated with or endorsed by Microsoft Corporation.
+This project is an independent implementation created for educational and historical preservation purposes. It is not affiliated with, endorsed by, or supported by Microsoft Corporation. MBASIC and Microsoft BASIC are historical products of Microsoft Corporation.

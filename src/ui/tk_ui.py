@@ -1701,7 +1701,7 @@ class TkBackend(UIBackend):
         messagebox.showinfo(
             "About MBASIC 5.21",
             "MBASIC 5.21 Interpreter\n\n"
-            "A Python implementation of Microsoft BASIC 5.21\n\n"
+            "A Python implementation of MBASIC 5.21\n\n"
             "Tkinter GUI Backend\n\n"
             f"Press {help_key_text} for help"
         )

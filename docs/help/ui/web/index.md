@@ -138,6 +138,6 @@ Use the tabs in this help browser to explore:
 
 ## About MBASIC 5.21
 
-This is an implementation of Microsoft BASIC-80 version 5.21, originally released for CP/M systems in 1981. It provides compatibility with classic BASIC programs from that era.
+This is an implementation of MBASIC-80 version 5.21, originally released for CP/M systems in 1981. It provides compatibility with classic BASIC programs from that era.
 
 For language documentation, see the **📕 Language** and **📗 MBASIC** help tabs.

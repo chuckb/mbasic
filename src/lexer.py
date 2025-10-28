@@ -1,5 +1,5 @@
 """
-Lexer for MBASIC 5.21 (CP/M era Microsoft BASIC-80)
+Lexer for MBASIC 5.21 (CP/M era MBASIC-80)
 Based on BASIC-80 Reference Manual Version 5.21
 """
 from typing import List, Optional

@@ -214,7 +214,7 @@ When preserving token positions, remember:
 
 ## Historical Note
 
-This behavior is standard across all Microsoft BASICs:
+This behavior is standard across all MBASICs:
 - BASIC-80 (MBASIC 5.21) - 1981
 - GW-BASIC - 1983
 - QuickBASIC - 1985

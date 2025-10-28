@@ -2,7 +2,7 @@
 
 ## Historical Context: The 8080 Architecture
 
-Microsoft BASIC (MBASIC) originally ran on the **Intel 8080** processor, which had severe limitations:
+MBASIC (MBASIC) originally ran on the **Intel 8080** processor, which had severe limitations:
 
 - **8-bit CPU**: Only native 8-bit arithmetic operations
 - **Limited 16-bit support**: 16-bit operations required multiple instructions
@@ -22,7 +22,7 @@ This meant:
 
 ## The Problem
 
-In interpreted Microsoft BASIC, **variables can change type at runtime** based on the expression assigned to them. This behavior is fundamental to BASIC's dynamic typing but poses significant challenges for compilation.
+In interpreted MBASIC, **variables can change type at runtime** based on the expression assigned to them. This behavior is fundamental to BASIC's dynamic typing but poses significant challenges for compilation.
 
 ## Concrete Example
 

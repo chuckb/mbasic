@@ -138,7 +138,7 @@ PyPI needs a `main()` function to call. Update `mbasic.py`:
 ```python
 #!/usr/bin/env python3
 """
-MBASIC - Microsoft BASIC 5.21 compatible interpreter
+MBASIC - MBASIC 5.21 compatible interpreter
 """
 
 def main():
@@ -454,7 +454,7 @@ git push --tags
 
 **Solution:** Ensure `src/mbasic/__init__.py` exists:
 ```python
-"""MBASIC - Microsoft BASIC 5.21 interpreter"""
+"""MBASIC - MBASIC 5.21 interpreter"""
 __version__ = "1.0.115"
 ```
 

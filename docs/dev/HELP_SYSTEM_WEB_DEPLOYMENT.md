@@ -189,7 +189,7 @@ theme: jekyll-theme-slate
 Create `mkdocs.yml`:
 ```yaml
 site_name: MBASIC 5.21 Documentation
-site_description: Microsoft BASIC-80 Interpreter for Modern Systems
+site_description: MBASIC-80 Interpreter for Modern Systems
 site_author: MBASIC Team
 site_url: https://avwohl.github.io/mbasic/
 

@@ -104,11 +104,11 @@ A = 5...
 ```markdown
 # Getting Started with MBASIC
 
-Welcome! MBASIC is a Python-based interpreter for Microsoft BASIC-80.
+Welcome! MBASIC is a Python-based interpreter for MBASIC-80.
 
 ## What is MBASIC?
 
-MBASIC is a faithful implementation of Microsoft BASIC-80 (version 5.21),
+MBASIC is a faithful implementation of MBASIC-80 (version 5.21),
 the BASIC interpreter used on CP/M systems in the 1980s.
 
 ## Features

@@ -31,7 +31,7 @@ This document tracks all optimizations implemented, planned, and possible for th
 
 **Benefits:**
 - Allows variable subscripts in DIM statements
-- More flexible than 1980 Microsoft BASIC compiler
+- More flexible than 1980 MBASIC compiler
 - Enables constant folding in more contexts
 
 ### 3. Common Subexpression Elimination (CSE)

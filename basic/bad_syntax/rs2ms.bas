@@ -2,7 +2,7 @@
 11 REM  MYRS2MB   (v) 1.0    28 May  1983   by   Ed Mahoney
 12 REM *******************************************************************
 13 REM  This program will convert a Radio Shack BASIC program to a 
-14 REM   Microsoft MBASIC 5.1 program.
+14 REM   MBASIC 5.1 program.
 15 REM  Instructions are given as the program runs.
 16 REM  INSTALLATION: The conversion process will make certain Radio Shack
 17 REM   statements into printable 'escape codes'.  You must now the two
@@ -102,10 +102,10 @@
 40100 FOR I=1 TO SP:PRINT Z(I),:NEXT
 49999 END
 50000 I$=INKEY$:IF I$="" THEN 50000 ELSE RETURN
-60000 PRINT CLS;"MYRS2MB          My Radio Shack to Microsoft BASIC conversion utility"
+60000 PRINT CLS;"MYRS2MB          My Radio Shack to MBASIC conversion utility"
 60010 PRINT"By Ed Mahoney  28 May 83             Version 1.0 "
 60020 PRINT:PRINT"This program will convert a Radio Shack Model I or Model 3 BASIC (or
-60030 PRINT"Disk BASIC) program to a Microsoft BASIC 5.1 program."
+60030 PRINT"Disk BASIC) program to a MBASIC 5.1 program."
 60040 PRINT:PRINT"REQUIREMENTS:":PRINT"1) Your computer that will be running the Microsoft program
 60050 PRINT"   must be able to 'print at' specific locations on your screen."
 60060 PRINT"2) The Radio Shack program that is to be converted, must exist on disk

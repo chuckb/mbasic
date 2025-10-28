@@ -179,7 +179,7 @@ See `COMPILER_DESIGN.md` for detailed analysis of interpreter vs compiler differ
 ## References
 
 - BASIC-80 (MBASIC) Reference Manual, Version 5.21, 1981
-- Microsoft BASIC Compiler (BASCOM) for CP/M, 1980
+- MBASIC Compiler (BASCOM) for CP/M, 1980
 - Microsoft QuickBASIC 4.5 Language Reference
 - CP/M Operating System documentation
 

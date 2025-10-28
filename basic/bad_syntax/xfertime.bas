@@ -5,7 +5,7 @@
 50 REM a RCPM system.  Time  is rounded down  to  the  nearest 
 60 REM minute,  but  detailed information may be  obtained  by 
 70 REM removing the 'REM's in the following code. This program 
-80 REM is compatible with Microsoft BASIC, and will compile to 
+80 REM is compatible with MBASIC, and will compile to 
 90 REM a 11 kilobyte (Gag!) file utilizing BASCOM.
 100 REM
 110 PRINT:INPUT "What is the Baud Rate (60 to 1200)";B

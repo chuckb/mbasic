@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Semantic Analyzer for Microsoft BASIC Compiler
+Semantic Analyzer for MBASIC Compiler
 
 This module performs semantic analysis on the parsed AST for compilation.
 Unlike the interpreter which does runtime checking, this performs static

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "mbasic"
 version = "1.0.148"
-description = "MBASIC 5.21 (Microsoft BASIC-80) interpreter with modern enhancements"
+description = "MBASIC 5.21 (BASIC-80) interpreter - Independent open-source implementation"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
@@ -19,7 +19,7 @@ keywords = [
     "retro",
     "programming",
     "mbasic",
-    "microsoft-basic",
+    "mbasic-5.21",
     "basic-80",
     "cp/m",
     "vintage-computing"

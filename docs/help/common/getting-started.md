@@ -4,7 +4,7 @@ Learn the basics of BASIC programming!
 
 ## What is BASIC?
 
-BASIC (Beginner's All-purpose Symbolic Instruction Code) is an easy-to-learn programming language. MBASIC 5.21 is compatible with Microsoft BASIC from the 1980s.
+BASIC (Beginner's All-purpose Symbolic Instruction Code) is an easy-to-learn programming language. MBASIC 5.21 is compatible with MBASIC from the 1980s.
 
 ## Your First Program
 

@@ -2,7 +2,7 @@
 
 ## Key Differences: Interpreted vs Compiled BASIC
 
-Based on Microsoft BASIC Compiler (BASCOM) for CP/M and QuickBASIC compiler behavior.
+Based on MBASIC Compiler (BASCOM) for CP/M and QuickBASIC compiler behavior.
 
 ---
 
@@ -300,6 +300,6 @@ Compiler-specific commands not in interpreter:
 
 ## References
 
-- Microsoft BASIC Compiler (BASCOM) for CP/M, 1980
+- MBASIC Compiler (BASCOM) for CP/M, 1980
 - Microsoft QuickBASIC 4.5 Language Reference
 - BASIC-80 (MBASIC) Reference Manual Version 5.21

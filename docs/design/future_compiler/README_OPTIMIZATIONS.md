@@ -1,6 +1,6 @@
 # MBASIC Compiler - Optimization Suite
 
-A comprehensive, production-ready semantic analysis and optimization suite for Microsoft BASIC programs.
+A comprehensive, production-ready semantic analysis and optimization suite for MBASIC programs.
 
 ## 🎯 Overview
 
@@ -318,7 +318,7 @@ Built with modern compiler design principles:
 - Dataflow analysis techniques
 - Modern optimization frameworks
 
-Targets vintage Microsoft BASIC while using contemporary compiler technology.
+Targets vintage MBASIC while using contemporary compiler technology.
 
 ---
 

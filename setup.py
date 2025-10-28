@@ -13,7 +13,7 @@ long_description = (this_directory / "README.md").read_text()
 setup(
     name="mbasic-interpreter",
     version="0.99.0",  # Reflects ~99% implementation status (core complete)
-    description="An interpreter for MBASIC 5.21 (Microsoft BASIC-80 for CP/M) - Full implementation complete",
+    description="An interpreter for MBASIC 5.21 (BASIC-80 for CP/M) - Independent open-source implementation",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="Aaron Wohl",

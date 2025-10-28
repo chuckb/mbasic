@@ -149,7 +149,7 @@ Analyzed first 50 of 138 lexer failures by:
 ## 8K BASIC Analysis
 
 ### Original Question
-Are lexer failures due to **8K BASIC** (Microsoft BASIC for Altair) which allows keywords without spaces?
+Are lexer failures due to **8K BASIC** (MBASIC for Altair) which allows keywords without spaces?
 
 **Example 8K BASIC**:
 ```basic

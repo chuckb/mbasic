@@ -1,6 +1,6 @@
-# Microsoft BASIC Compiler vs Interpreter Differences
+# MBASIC Compiler vs Interpreter Differences
 
-This document outlines the key differences between the Microsoft BASIC-80 5.x Interpreter and the Microsoft BASIC Compiler (BASCOM), based on the Microsoft BASIC Compiler 1980 documentation.
+This document outlines the key differences between the MBASIC-80 5.x Interpreter and the MBASIC Compiler (BASCOM), based on the MBASIC Compiler 1980 documentation.
 
 ## 1. OPERATIONAL DIFFERENCES
 

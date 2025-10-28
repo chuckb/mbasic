@@ -1,6 +1,6 @@
 10 ' CPM-PERT Program from Interface Age, Feb 1981
 20 ' Written by Richard Parry
-30 ' Adapted to Microsoft BASIC by Charles H Strom
+30 ' Adapted to MBASIC by Charles H Strom
 40 ' Dressed up & Adapted to Freedom 100 and Decision I 10 Apr 84 [Toad hall]
 50 ' Added COUT and LIST location from CP/M and BIOS jump table to alleviate
 60 ' problems with reserved locations in Page 0, problems with RST 1 and 3

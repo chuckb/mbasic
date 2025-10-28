@@ -2,7 +2,7 @@
 
 ## Overview
 
-Successfully implemented a **complete, faithful interpreter** for Microsoft BASIC-80 (MBASIC) version 5.21, providing full runtime compatibility with original CP/M BASIC programs.
+Successfully implemented a **complete, faithful interpreter** for MBASIC-80 (MBASIC) version 5.21, providing full runtime compatibility with original CP/M BASIC programs.
 
 **Key Achievement**: 100% parser coverage (121/121 test files parsing successfully) and comprehensive runtime implementation of all core MBASIC 5.21 features.
 
@@ -408,4 +408,4 @@ The MBASIC 5.21 interpreter is a **complete, production-ready implementation** p
 - ✅ Comprehensive documentation
 - ✅ Real program compatibility
 
-The project successfully preserves the experience of programming in CP/M-era Microsoft BASIC while running on modern systems.
+The project successfully preserves the experience of programming in CP/M-era MBASIC while running on modern systems.

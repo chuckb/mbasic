@@ -19,7 +19,7 @@ type: guide
 
 ## Overview
 
-MBASIC is a **runtime interpreter** for Microsoft BASIC-80 programs. Unlike traditional BASIC interpreters that re-parse code on each execution, MBASIC uses a modern **compile-then-execute** architecture for better performance.
+MBASIC is a **runtime interpreter** for MBASIC-80 programs. Unlike traditional BASIC interpreters that re-parse code on each execution, MBASIC uses a modern **compile-then-execute** architecture for better performance.
 
 ## Architecture Diagram
 

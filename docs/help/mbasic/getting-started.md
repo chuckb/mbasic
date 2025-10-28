@@ -14,7 +14,7 @@ description: Introduction to MBASIC interpreter and how to get started
 
 # Getting Started with MBASIC
 
-Welcome to MBASIC 5.21! This is a complete Python implementation of Microsoft BASIC-80 for CP/M.
+Welcome to MBASIC 5.21! This is a complete Python implementation of MBASIC-80 for CP/M.
 
 ## What is MBASIC?
 

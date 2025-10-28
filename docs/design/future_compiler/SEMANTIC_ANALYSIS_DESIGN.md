@@ -40,7 +40,7 @@ This document summarizes the comprehensive set of compiler optimizations impleme
 
 **Benefits:**
 - Allows variable subscripts in DIM statements
-- More flexible than 1980 Microsoft BASIC compiler
+- More flexible than 1980 MBASIC compiler
 - Enables constant folding in more contexts
 
 **Tests:** Integrated into constant folding tests

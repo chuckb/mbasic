@@ -455,7 +455,7 @@ ELSE clauses enable:
 - Dartmouth BASIC: IF...THEN only (no ELSE)
 - Workaround: IF NOT condition THEN alternative
 
-**Microsoft BASIC (1970s-80s)**:
+**MBASIC (1970s-80s)**:
 - BASIC-80 (CP/M): Added ELSE support
 - Syntax: `IF condition THEN action ELSE action`
 - Extended: `:ELSE` for multi-statement lines

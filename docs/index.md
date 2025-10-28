@@ -1,6 +1,6 @@
 # MBASIC 5.21 Documentation
 
-Welcome to the complete documentation for MBASIC 5.21, a Python implementation of Microsoft BASIC-80 for CP/M.
+Welcome to the complete documentation for MBASIC 5.21, a Python implementation of MBASIC-80 for CP/M.
 
 ## What is MBASIC?
 

@@ -13,7 +13,7 @@
 
 ### Verification
 
-In MBASIC and Microsoft BASIC-80, `?` is the official shorthand for `PRINT`:
+In MBASIC and MBASIC-80, `?` is the official shorthand for `PRINT`:
 
 ```basic
 ? "Hello"        ' Same as PRINT "Hello"
@@ -210,7 +210,7 @@ In MBASIC and Microsoft BASIC-80, `?` is the official shorthand for `PRINT`:
 
 ## Known MBASIC 5.21 Features
 
-Based on Microsoft BASIC-80 Version 5.21 documentation and our test corpus:
+Based on MBASIC-80 Version 5.21 documentation and our test corpus:
 
 ### Standard Features We Support
 

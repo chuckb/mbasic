@@ -28,5 +28,5 @@ Welcome to the MBASIC Interpreter IDE!
 
 ## About
 
-This is a Microsoft BASIC-80 compatible interpreter with a modern IDE.
+This is a MBASIC-80 compatible interpreter with a modern IDE.
 It supports classic BASIC programs from CP/M and early microcomputers.

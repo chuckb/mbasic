@@ -316,7 +316,7 @@ Demonstration of uninitialized variable detection with various scenarios
 
 ### Compiler Quality
 - **Modern Compiler Standards:** Matches semantic analysis of contemporary compilers
-- **Better Than Original:** Exceeds 1980s Microsoft BASIC compiler
+- **Better Than Original:** Exceeds 1980s MBASIC compiler
 - **Production Ready:** Complete, tested, and documented
 
 ### Key Technical Advances
@@ -344,7 +344,7 @@ Demonstration of uninitialized variable detection with various scenarios
 
 ### What We Exceed (for BASIC)
 ✅ More comprehensive than original 1980s BASIC compiler
-✅ Runtime constant propagation beyond Microsoft BASIC
+✅ Runtime constant propagation beyond MBASIC
 ✅ IF-GOTO loop detection not in original
 ✅ Comprehensive warning system (uninitialized vars, dead code)
 

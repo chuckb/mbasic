@@ -623,7 +623,7 @@ Result: Should match original after first serialize
 
 ### Classic BASIC Interpreters
 
-**Microsoft BASIC (MBASIC, GW-BASIC, etc.):**
+**MBASIC (MBASIC, GW-BASIC, etc.):**
 - Actually preserved spacing in line buffer!
 - Stored lines as tokenized form + original text
 - When LISTing, used original text (with spacing)

@@ -1,5 +1,5 @@
 """
-Token definitions for MBASIC 5.21 (CP/M era Microsoft BASIC-80)
+Token definitions for MBASIC 5.21 (CP/M era MBASIC-80)
 Based on BASIC-80 Reference Manual Version 5.21
 """
 from enum import Enum, auto

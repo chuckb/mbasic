@@ -4,7 +4,7 @@ The semantic analyzer performs static analysis on BASIC programs to validate com
 
 ## Overview
 
-The semantic analyzer is a **separate phase** from the interpreter. While the interpreter executes programs dynamically, the semantic analyzer validates programs for **compilation** according to the 1980 Microsoft BASIC Compiler requirements.
+The semantic analyzer is a **separate phase** from the interpreter. While the interpreter executes programs dynamically, the semantic analyzer validates programs for **compilation** according to the 1980 MBASIC Compiler requirements.
 
 **Location**: `src/semantic_analyzer.py`
 
@@ -816,5 +816,5 @@ Run any test with report generation to see detailed optimization opportunities.
 ## References
 
 - [Compiler vs Interpreter Differences](COMPILER_VS_INTERPRETER_DIFFERENCES.md)
-- Microsoft BASIC Compiler User's Manual (1980)
+- MBASIC Compiler User's Manual (1980)
 - BASIC-80 Reference Manual Version 5.21
