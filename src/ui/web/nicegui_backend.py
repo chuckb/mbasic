@@ -203,43 +203,30 @@ class NiceGUIBackend(UIBackend):
                 ui.button('Step', on_click=self._menu_step, icon='skip_next').mark('btn_step')
                 ui.button('Continue', on_click=self._menu_continue, icon='play_circle').mark('btn_continue')
 
-            # Main content area - split pane (horizontal split, vertical layout: editor on top, output on bottom)
-            # Note: NiceGUI splitter without 'horizontal' param defaults to vertical layout
-            # Use viewport height minus menu/toolbar/status space
-            with ui.splitter(value=60).classes('w-full flex-col').style('height: calc(100vh - 200px)') as splitter:
+            # Main content area - simple stacked layout (no splitter)
+            # The splitter was causing visibility issues, so using simple column layout
+            with ui.column().classes('w-full gap-4 p-4'):
+                # Editor section
+                ui.label('Program Editor:').classes('text-lg font-bold')
+                self.editor = ui.textarea(
+                    value='',
+                    placeholder='Enter BASIC program here (e.g., 10 PRINT "Hello")'
+                ).classes('w-full font-mono').style('height: 300px;').props('outlined').mark('editor')
 
-                # Top pane - Program Editor (60% of space)
-                with splitter.before:
-                    with ui.row().classes('w-full items-center p-2'):
-                        ui.label('Program Editor:').classes('text-lg font-bold flex-grow')
-                        ui.button('Toggle Breakpoint', on_click=self._toggle_breakpoint, icon='bug_report', color='red').props('flat').mark('btn_breakpoint')
+                # Bind keyboard events for auto-numbering
+                self.editor.on('keydown.enter', self._on_enter_key)
 
-                    # Multi-line program editor (like TK)
-                    self.editor = ui.textarea(
-                        value='',
-                        placeholder='Enter BASIC program here (e.g., 10 PRINT "Hello")\nPress Enter for auto-numbering\nClick Toggle Breakpoint to add breakpoints'
-                    ).classes('w-full h-full font-mono text-base').props('outlined').mark('editor')
-
-                    # Bind keyboard events
-                    self.editor.on('keydown.enter', self._on_enter_key)
-
-                # Bottom pane - Output (40% of space)
-                with splitter.after:
-                    ui.label('Output').classes('text-lg font-bold p-2')
-                    # Output textarea - black text on white background
-                    # Set explicit color and background to ensure visibility
-                    # Use flex-grow to take up remaining space
-                    # TEMPORARY: Red border for visibility debugging
-                    self.output = ui.textarea(
-                        value='MBASIC 5.21 Web IDE\nReady\n',
-                        placeholder='Program output will appear here'
-                    ).classes('w-full flex-grow font-mono').style(
-                        'background-color: white; '
-                        'color: black; '
-                        'font-size: 14px; '
-                        'border: 3px solid red !important; '
-                        'min-height: 200px;'
-                    ).props('readonly').mark('output')
+                # Output section
+                ui.label('Output').classes('text-lg font-bold')
+                self.output = ui.textarea(
+                    value='MBASIC 5.21 Web IDE\nReady\n',
+                    placeholder='Program output will appear here'
+                ).classes('w-full font-mono').style(
+                    'height: 300px; '
+                    'background-color: white; '
+                    'color: black; '
+                    'font-size: 14px;'
+                ).props('readonly outlined').mark('output')
 
             # INPUT row (hidden by default, shown when INPUT statement needs input)
             # This is OUTSIDE the splitter, below it
