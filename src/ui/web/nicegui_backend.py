@@ -5,10 +5,33 @@ Provides a modern web-based UI for the MBASIC interpreter using NiceGUI.
 
 # Suppress GTK accessibility bridge warning before NiceGUI import
 import os
+import sys
 os.environ['NO_AT_BRIDGE'] = '1'
 
+# Filter GTK warnings from stderr
+class StderrFilter:
+    """Filter to suppress GTK atk-bridge warnings."""
+    def __init__(self, stream):
+        self.stream = stream
+        self.buffer = ""
+
+    def write(self, text):
+        # Filter out the specific GTK warning
+        if "Gtk-Message" not in text and "atk-bridge" not in text:
+            self.stream.write(text)
+        # Always flush to prevent buffering issues
+        self.stream.flush()
+
+    def flush(self):
+        self.stream.flush()
+
+    def fileno(self):
+        return self.stream.fileno()
+
+# Install stderr filter
+sys.stderr = StderrFilter(sys.stderr)
+
 import re
-import sys
 import asyncio
 import traceback
 from nicegui import ui, app
