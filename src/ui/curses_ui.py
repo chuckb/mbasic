@@ -1744,6 +1744,15 @@ class CursesBackend(UIBackend):
         self._update_output()
         self.status_bar.set_text("Output cleared")
 
+    def _update_status_with_errors(self, base_message="Ready"):
+        """Update status bar with error count if there are syntax errors."""
+        if self.editor.errors:
+            error_count = len(self.editor.errors)
+            plural = "s" if error_count > 1 else ""
+            self.status_bar.set_text(f"{base_message} - {error_count} syntax error{plural} in program")
+        else:
+            self.status_bar.set_text(f"{base_message} - Press Ctrl+H for help")
+
     def _debug_continue(self):
         """Continue execution from paused/breakpoint state."""
         if not self.interpreter:
@@ -3128,7 +3137,7 @@ Run                           Debug Windows
                     self.output_buffer.extend(final_output)
                 self.output_buffer.append("Ok")
                 self._update_output()
-                self.status_bar.set_text("Ready - Press Ctrl+H for help")
+                self._update_status_with_errors("Ready")
                 self._update_immediate_status()
 
             elif state.status == 'error':
@@ -3258,7 +3267,7 @@ Run                           Debug Windows
         self.editor.clear()
         self.output_buffer.append("Program cleared")
         self._update_output()
-        self.status_bar.set_text("Ready - Press Ctrl+H for help")
+        self._update_status_with_errors("Ready")
 
         # Start autosave for new file
         self.auto_save.start_autosave(
