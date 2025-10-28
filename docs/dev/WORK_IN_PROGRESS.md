@@ -25,9 +25,34 @@ Major work completed on settings system, case handling, documentation system, an
 
 ---
 
-## No Active Work
+## Active Work: Test Organization (Phase 2+)
 
-Currently no work in progress. System is stable and ready for next task.
+**Started:** 2025-10-28
+**Task:** Organize 35 test files into proper test structure
+
+### Status
+
+- ✅ Phase 1: Inventory complete (35 tests categorized)
+- ⏳ Phase 2: Create structure (in progress)
+- ⏸️ Phase 3: Move tests to appropriate locations
+- ⏸️ Phase 4: Create test runner script
+- ⏸️ Phase 5: Documentation
+
+### Files Being Modified
+
+- Creating: `tests/regression/` (subdirectories)
+- Creating: `tests/manual/`
+- Creating: `tests/debug/` with .gitignore
+- Moving: Test files from root → tests/regression/
+- Moving: Test files from utils/ → tests/regression/
+
+### Next Steps
+
+1. ✅ Create directory structure
+2. Move regression tests from root directory
+3. Move regression tests from utils/
+4. Create test runner script
+5. Document test organization
 
 ### Potential Next Tasks
 

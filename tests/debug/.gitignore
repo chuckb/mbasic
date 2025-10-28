@@ -1,0 +1,6 @@
+# Ignore all files in debug directory (temporary development tests)
+*
+
+# Except this .gitignore and README
+!.gitignore
+!README.md

@@ -4,12 +4,12 @@
 import sys
 import os
 
-# Add src directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+# Add src directory to path (go up 3 levels: lexer -> regression -> tests -> root)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
 
-from lexer import Lexer
-from parser import Parser
-from position_serializer import PositionSerializer
+from src.lexer import Lexer
+from src.parser import Parser
+from src.position_serializer import PositionSerializer
 
 # Test program
 test_code = """10 PRINT "Test"
