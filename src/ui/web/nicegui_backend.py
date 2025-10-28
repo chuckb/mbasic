@@ -1009,6 +1009,7 @@ class NiceGUIBackend(UIBackend):
         self.output_text = ''
         if self.output:
             self.output.value = ''
+            self.output.update()  # Force NiceGUI to push update to browser
         self._set_status('Output cleared')
 
     def _append_output(self, text):
@@ -1022,6 +1023,7 @@ class NiceGUIBackend(UIBackend):
         # Update the textarea directly (push-based, not polling)
         if self.output:
             self.output.value = self.output_text
+            self.output.update()  # Force NiceGUI to push update to browser
             log_web_error("_append_output", Exception(f"DEBUG: Updated textarea.value to {len(self.output_text)} chars"))
 
     def _show_input_row(self, prompt=''):
