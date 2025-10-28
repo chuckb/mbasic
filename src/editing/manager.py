@@ -8,6 +8,9 @@ import re
 from typing import Dict, List, Tuple, Optional
 from pathlib import Path
 from src.input_sanitizer import sanitize_and_clear_parity
+from src.lexer import tokenize
+from src.parser import Parser
+from src.debug_logger import debug_log
 
 
 class ProgramManager:
@@ -352,10 +355,6 @@ class ProgramManager:
             error_message: Error message if parsing failed, None otherwise
         """
         try:
-            from lexer import tokenize
-            from parser import Parser
-            from debug_logger import debug_log
-
             debug_log(f"parse_single_line: {repr(line_text)}", level=2)
             tokens = list(tokenize(line_text))
             parser = Parser(tokens, self.def_type_map, source=line_text)
@@ -363,7 +362,6 @@ class ProgramManager:
             return (line_node, None)
 
         except Exception as e:
-            from debug_logger import debug_log
             # Strip "Parse error at line X, " from parser error messages
             error_msg = str(e)
             # Remove "Parse error at line N, " prefix since we show the BASIC line number
