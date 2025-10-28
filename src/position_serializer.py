@@ -360,10 +360,10 @@ def serialize_line_with_positions(line_node: ast_nodes.LineNode, debug=False) ->
 
 
 def renumber_with_spacing_preservation(program_lines: dict, start: int, step: int, debug=False):
-    """Renumber program lines while preserving spacing.
+    """Renumber program lines while preserving spacing by surgically editing source_text.
 
-    This is the fancy implementation that adjusts token positions after renumbering
-    to preserve the original spacing as much as possible.
+    This implementation preserves exact spacing by finding and replacing line numbers
+    in the source text, then adjusting all token positions accordingly.
 
     Args:
         program_lines: Dict of line_number -> LineNode
@@ -372,8 +372,10 @@ def renumber_with_spacing_preservation(program_lines: dict, start: int, step: in
         debug: If True, print debug information
 
     Returns:
-        Dict of new_line_number -> LineNode (with updated source_text)
+        Dict of new_line_number -> LineNode (with updated source_text and positions)
     """
+    import re
+
     # Build mapping of old -> new line numbers
     old_line_nums = sorted(program_lines.keys())
     line_num_map = {}
@@ -390,34 +392,239 @@ def renumber_with_spacing_preservation(program_lines: dict, start: int, step: in
         line_node = program_lines[old_num]
         new_num = line_num_map[old_num]
 
-        # Regenerate source_text from AST with new line numbers
-        # This is simpler and more reliable than trying to adjust token positions
+        # Get original source text
+        source = line_node.source_text if hasattr(line_node, 'source_text') else ""
+        if not source:
+            # No source text? Fall back to AST serialization
+            line_node.line_number = new_num
+            _update_line_refs_in_node(line_node, line_num_map)
+            serializer = PositionSerializer(debug=debug)
+            new_source_text, _ = serializer.serialize_line(line_node)
+            line_node.source_text = new_source_text
+            new_program_lines[new_num] = line_node
+            continue
 
-        # Method: Update line references first, then serialize with new line number
+        # Strategy: Find all line numbers in source_text and replace them
+        # Track replacements: [(start_pos, old_text, new_text), ...]
+        replacements = []
 
-        # Update line number in the node
-        line_node.line_number = new_num
+        # 1. Replace line number at start
+        old_line_str = str(old_num)
+        new_line_str = str(new_num)
 
-        # Update line number references in all statements BEFORE serializing
+        # Line number is at the start, followed by space or statement
+        match = re.match(r'^(\d+)(\s+)', source)
+        if match:
+            replacements.append((0, match.group(1), new_line_str))
+
+        # 2. Find all line number references in the code BEFORE updating AST
+        # Collect (old_line_num, new_line_num) pairs from the line_num_map
+        line_num_refs_old = _collect_line_refs_before_update(line_node)
+
+        # Update line number references in AST
         _update_line_refs_in_node(line_node, line_num_map)
 
-        # Clear source_text to force AST serialization
-        line_node.source_text = ""  # Force regeneration from AST
+        # For each old reference found, replace it in source text
+        code_part = source[match.end():] if match else source
+        code_start = match.end() if match else 0
 
-        # Now serialize - will use fallback since source_text is empty
-        serializer = PositionSerializer(debug=debug)
-        new_source_text, conflicts = serializer.serialize_line(line_node)
+        for ref_old in line_num_refs_old:
+            if ref_old in line_num_map:
+                ref_new = line_num_map[ref_old]
+                # Find this line number in the code part
+                # Use word boundary to avoid matching partial numbers
+                pattern = r'\b' + str(ref_old) + r'\b'
+                for m in re.finditer(pattern, code_part):
+                    pos = code_start + m.start()
+                    replacements.append((pos, str(ref_old), str(ref_new)))
 
-        # Update the LineNode with new source text
-        line_node.source_text = new_source_text
+        # Apply replacements from right to left to preserve positions
+        replacements.sort(key=lambda x: x[0], reverse=True)
 
-        # Store in new program
+        new_source = source
+        total_offset = 0  # Track cumulative offset for position adjustment
+
+        for pos, old_text, new_text in replacements:
+            new_source = new_source[:pos] + new_text + new_source[pos + len(old_text):]
+            offset_change = len(new_text) - len(old_text)
+            total_offset += offset_change
+
+        # Update line node
+        line_node.line_number = new_num
+        line_node.source_text = new_source
+
+        # Adjust all token positions in AST if line number at start changed length
+        if match:
+            line_num_offset = len(new_line_str) - len(old_line_str)
+            if line_num_offset != 0:
+                _adjust_token_positions(line_node, line_num_offset)
+
         new_program_lines[new_num] = line_node
 
-        if debug and conflicts:
-            print(f"Line {new_num}: {len(conflicts)} position conflicts during renum")
-
     return new_program_lines
+
+
+def _collect_line_refs_before_update(line_node):
+    """Collect all line number references from a LineNode BEFORE updating.
+
+    Returns set of line numbers that are referenced in this line.
+    """
+    refs = set()
+
+    for stmt in line_node.statements:
+        _collect_refs_from_statement(stmt, refs)
+
+    return refs
+
+
+def _collect_refs_from_statement(stmt, refs):
+    """Recursively collect line number references from a statement.
+
+    Args:
+        stmt: Statement node to scan
+        refs: Set to add line number references to
+    """
+    stmt_type = type(stmt).__name__
+
+    if stmt_type == 'GotoStatementNode':
+        refs.add(stmt.line_number)
+
+    elif stmt_type == 'GosubStatementNode':
+        refs.add(stmt.line_number)
+
+    elif stmt_type == 'OnGotoStatementNode':
+        refs.update(stmt.line_numbers)
+
+    elif stmt_type == 'OnGosubStatementNode':
+        refs.update(stmt.line_numbers)
+
+    elif stmt_type == 'OnErrorStatementNode':
+        if stmt.line_number:
+            refs.add(stmt.line_number)
+
+    elif stmt_type == 'RestoreStatementNode':
+        if stmt.line_number:
+            refs.add(stmt.line_number)
+
+    elif stmt_type == 'ResumeStatementNode':
+        if stmt.line_number:
+            refs.add(stmt.line_number)
+
+    elif stmt_type == 'IfStatementNode':
+        # Direct THEN/ELSE line numbers
+        if hasattr(stmt, 'then_line_number') and stmt.then_line_number:
+            refs.add(stmt.then_line_number)
+        if hasattr(stmt, 'else_line_number') and stmt.else_line_number:
+            refs.add(stmt.else_line_number)
+
+        # Recurse into THEN/ELSE statements
+        if stmt.then_statements:
+            for then_stmt in stmt.then_statements:
+                _collect_refs_from_statement(then_stmt, refs)
+        if stmt.else_statements:
+            for else_stmt in stmt.else_statements:
+                _collect_refs_from_statement(else_stmt, refs)
+
+        # TODO: Handle ERL comparisons in condition
+        # This is complex - would need to traverse expressions looking for ERL function calls
+
+
+def _adjust_token_positions(line_node, offset):
+    """Adjust all token column positions in a LineNode by the given offset.
+
+    Args:
+        line_node: The LineNode to adjust
+        offset: Amount to shift columns (positive = right, negative = left)
+    """
+    # Adjust positions in all statements
+    for stmt in line_node.statements:
+        _adjust_statement_positions(stmt, offset)
+
+
+def _adjust_statement_positions(stmt, offset):
+    """Recursively adjust token positions in a statement.
+
+    Args:
+        stmt: Statement node to adjust
+        offset: Amount to shift columns
+    """
+    # Adjust column if present
+    if hasattr(stmt, 'column'):
+        stmt.column += offset
+
+    # Recurse into sub-structures
+    stmt_type = type(stmt).__name__
+
+    if stmt_type == 'AssignmentStatementNode':
+        _adjust_expression_positions(stmt.variable, offset)
+        _adjust_expression_positions(stmt.expression, offset)
+
+    elif stmt_type in ['PrintStatementNode', 'InputStatementNode']:
+        if hasattr(stmt, 'expressions'):
+            for expr in stmt.expressions:
+                _adjust_expression_positions(expr, offset)
+
+    elif stmt_type == 'IfStatementNode':
+        _adjust_expression_positions(stmt.condition, offset)
+        if stmt.then_statements:
+            for then_stmt in stmt.then_statements:
+                _adjust_statement_positions(then_stmt, offset)
+        if stmt.else_statements:
+            for else_stmt in stmt.else_statements:
+                _adjust_statement_positions(else_stmt, offset)
+
+    elif stmt_type == 'ForStatementNode':
+        _adjust_expression_positions(stmt.variable, offset)
+        _adjust_expression_positions(stmt.start_expr, offset)
+        _adjust_expression_positions(stmt.end_expr, offset)
+        if stmt.step_expr:
+            _adjust_expression_positions(stmt.step_expr, offset)
+
+    elif stmt_type == 'NextStatementNode':
+        if stmt.variables:
+            for var in stmt.variables:
+                _adjust_expression_positions(var, offset)
+
+    elif stmt_type == 'DimStatementNode':
+        for var in stmt.variables:
+            _adjust_expression_positions(var, offset)
+
+    elif stmt_type == 'OnGotoStatementNode' or stmt_type == 'OnGosubStatementNode':
+        _adjust_expression_positions(stmt.expression, offset)
+
+
+def _adjust_expression_positions(expr, offset):
+    """Recursively adjust token positions in an expression.
+
+    Args:
+        expr: Expression node to adjust
+        offset: Amount to shift columns
+    """
+    if not expr:
+        return
+
+    # Adjust column if present
+    if hasattr(expr, 'column'):
+        expr.column += offset
+
+    expr_type = type(expr).__name__
+
+    if expr_type == 'BinaryOpNode':
+        _adjust_expression_positions(expr.left, offset)
+        _adjust_expression_positions(expr.right, offset)
+
+    elif expr_type == 'UnaryOpNode':
+        _adjust_expression_positions(expr.operand, offset)
+
+    elif expr_type == 'FunctionCallNode':
+        if expr.arguments:
+            for arg in expr.arguments:
+                _adjust_expression_positions(arg, offset)
+
+    elif expr_type == 'VariableNode':
+        if expr.subscripts:
+            for sub in expr.subscripts:
+                _adjust_expression_positions(sub, offset)
 
 
 def _update_line_refs_in_node(line_node, line_num_map):
