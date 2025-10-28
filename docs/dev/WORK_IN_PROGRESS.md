@@ -51,7 +51,7 @@ Implemented comprehensive settings system with CLI commands and variable case co
 - `src/interpreter.py` - Fixed io.write() → io.output()
 - `src/parser.py` - Fixed type hints
 
-**v1.0.106-108 - Variable Case Conflict Integration:**
+**v1.0.106-108, 114 - Variable Case Conflict Integration:**
 - `src/runtime.py` - Added `_variable_case_variants` tracking dictionary
 - `src/runtime.py` - Added `_check_case_conflict()` method with 5 policy implementations
 - `src/runtime.py` - Updated `get_variable()` to track original_case and detect conflicts
@@ -68,6 +68,12 @@ Implemented comprehensive settings system with CLI commands and variable case co
 - `test_case_conflict_integration.py` - NEW: Integration tests with full AST (2/2 passing)
 - All 5 test cases passing: first_wins, prefer_upper, prefer_lower, error, variable window display
 
+**v1.0.114 - CHAIN/MERGE Case Preservation Fix:**
+- `src/runtime.py` - Fixed `update_variables()` to preserve `original_case` during CHAIN ALL
+- `test_chain_case_preservation.py` - NEW: Test for CHAIN ALL case preservation (passing)
+- Critical bug fix: Variables now retain canonical case after CHAIN ALL
+- Affects variable window display and case policy enforcement across programs
+
 **Case Conflict Policies Implemented:**
 1. `first_wins` (default) - First occurrence sets case, silent
 2. `error` - Raises RuntimeError on conflict with line numbers
@@ -75,14 +81,20 @@ Implemented comprehensive settings system with CLI commands and variable case co
 4. `prefer_lower` - Choose version with most lowercase letters
 5. `prefer_mixed` - Prefer mixed case (camelCase/PascalCase)
 
+**v1.0.115 - License and Qt Analysis:**
+- `LICENSE` - Changed from MIT to 0BSD (Zero-Clause BSD) - most permissive
+- 0BSD: "Do anything, just don't sue me" - no attribution required
+- `docs/dev/GUI_LIBRARY_OPTIONS.md` - NEW: Analysis of Qt licensing
+- Tkinter (current): PSF License - compatible with 0BSD
+- PySide6 (future option): LGPL - compatible with 0BSD ✅
+- PyQt6: GPL - incompatible with 0BSD philosophy ❌
+- Recommendation: Stay with Tkinter or use PySide6 if upgrading
+
 ### Next Steps
 
-1. **Fix CHAIN/MERGE Case Handling** - Critical bug in `update_variables()`
-   - See `docs/dev/CASE_CONFLICT_WITH_CHAIN_MERGE_COMMON.md` for analysis
-   - Bug: `update_variables()` uses `set_variable_raw()` - bypasses case checking
-   - Impact: CHAIN ALL loses original_case, variable window shows wrong case
-   - Solution: Update `update_variables()` to preserve `original_case` metadata
-   - Priority: HIGH (affects variable display after CHAIN)
+1. ~~**Fix CHAIN/MERGE Case Handling**~~ - ✅ COMPLETED (v1.0.114)
+   - Fixed `update_variables()` to preserve `original_case`
+   - See `docs/dev/CASE_CONFLICT_WITH_CHAIN_MERGE_COMMON.md` for full analysis
 
 2. **Keyword Case Handling** - Extend case conflict to keywords (separate `keywords.case_style` setting)
    - See `docs/dev/KEYWORD_CASE_HANDLING_TODO.md` for design

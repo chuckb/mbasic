@@ -540,7 +540,7 @@ class Runtime:
         Args:
             variables: list of variable dicts (from get_all_variables())
                       Each dict contains: name, type_suffix, is_array, value/dimensions,
-                      last_read, last_write
+                      last_read, last_write, original_case (for case preservation)
         """
         for var_info in variables:
             # Reconstruct full name
@@ -553,11 +553,12 @@ class Runtime:
                     'data': [0] * self._calculate_array_size(var_info['dimensions'])
                 }
             else:
-                # Restore scalar variable
+                # Restore scalar variable with original_case preservation
                 self._variables[full_name] = {
                     'value': var_info['value'],
                     'last_read': var_info.get('last_read'),
-                    'last_write': var_info.get('last_write')
+                    'last_write': var_info.get('last_write'),
+                    'original_case': var_info.get('original_case', var_info['name'])  # Preserve canonical case
                 }
 
     def update_arrays(self, arrays):
