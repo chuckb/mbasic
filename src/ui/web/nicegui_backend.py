@@ -202,12 +202,14 @@ class NiceGUIBackend(UIBackend):
 
                 # Top pane - Program Editor (60% of space)
                 with splitter.before:
-                    ui.label('Program Editor:').classes('text-lg font-bold p-2')
+                    with ui.row().classes('w-full items-center p-2'):
+                        ui.label('Program Editor:').classes('text-lg font-bold flex-grow')
+                        ui.button('Toggle Breakpoint', on_click=self._toggle_breakpoint, icon='bug_report', color='red').props('flat').mark('btn_breakpoint')
 
                     # Multi-line program editor (like TK)
                     self.editor = ui.textarea(
                         value='',
-                        placeholder='Enter BASIC program here (e.g., 10 PRINT "Hello")\nPress Enter for auto-numbering'
+                        placeholder='Enter BASIC program here (e.g., 10 PRINT "Hello")\nPress Enter for auto-numbering\nClick Toggle Breakpoint to add breakpoints'
                     ).classes('w-full h-full font-mono text-base').props('outlined').mark('editor')
 
                     # Bind keyboard events
@@ -358,6 +360,72 @@ class NiceGUIBackend(UIBackend):
         # Just show a notification
         ui.notify(f'Recent file: {filename}. Use Open to load files.', type='info')
         self._set_status(f'Recent: {filename}')
+
+    # =========================================================================
+    # Breakpoint Management
+    # =========================================================================
+
+    def _toggle_breakpoint(self):
+        """Toggle breakpoint on current line."""
+        try:
+            # Use JavaScript to get current cursor line
+            ui.run_javascript('''
+                const textarea = document.querySelector('[data-ref="editor"] textarea');
+                if (textarea) {
+                    const text = textarea.value;
+                    const cursorPos = textarea.selectionStart;
+                    // Count newlines before cursor to get line number
+                    const textBeforeCursor = text.substring(0, cursorPos);
+                    const lineIndex = textBeforeCursor.split('\\n').length - 1;
+                    // Get the line text
+                    const lines = text.split('\\n');
+                    const lineText = lines[lineIndex];
+                    // Extract BASIC line number if present
+                    const match = lineText.match(/^\\s*(\\d+)/);
+                    if (match) {
+                        const lineNum = parseInt(match[1]);
+                        // Send to Python via custom event
+                        window.dispatchEvent(new CustomEvent('toggle-breakpoint', {detail: lineNum}));
+                    }
+                }
+            ''')
+
+            # For now, prompt for line number since we can't easily get cursor position
+            # In a real implementation, we'd use JavaScript events to communicate back
+            # Simple approach: ask user for line number
+            with ui.dialog() as dialog, ui.card():
+                ui.label('Toggle Breakpoint')
+                line_input = ui.input('Line number:', placeholder='10').classes('w-full')
+                with ui.row():
+                    ui.button('Toggle', on_click=lambda: self._do_toggle_breakpoint(line_input.value, dialog))
+                    ui.button('Cancel', on_click=dialog.close)
+            dialog.open()
+
+        except Exception as e:
+            log_web_error("_toggle_breakpoint", e)
+            ui.notify(f'Error: {e}', type='negative')
+
+    def _do_toggle_breakpoint(self, line_num_str, dialog):
+        """Actually toggle the breakpoint."""
+        try:
+            line_num = int(line_num_str)
+
+            if line_num in self.breakpoints:
+                self.breakpoints.remove(line_num)
+                ui.notify(f'Breakpoint removed: line {line_num}', type='info')
+                self._set_status(f'Removed breakpoint at {line_num}')
+            else:
+                self.breakpoints.add(line_num)
+                ui.notify(f'Breakpoint set: line {line_num}', type='positive')
+                self._set_status(f'Breakpoint at {line_num}')
+
+            dialog.close()
+
+        except ValueError:
+            ui.notify('Please enter a valid line number', type='warning')
+        except Exception as e:
+            log_web_error("_do_toggle_breakpoint", e)
+            ui.notify(f'Error: {e}', type='negative')
 
     # =========================================================================
     # Menu Handlers
@@ -580,11 +648,43 @@ class NiceGUIBackend(UIBackend):
 
     def _menu_step(self):
         """Run > Step - Step one line."""
-        self._set_status('Step not yet implemented')
+        try:
+            if not self.running:
+                # Not running - start in step mode
+                if not self._save_editor_to_program():
+                    return  # Parse errors
+
+                if not self.program.lines:
+                    ui.notify('No program loaded', type='warning')
+                    return
+
+                # Start execution in step mode
+                self.paused = True
+                asyncio.create_task(self._start_execution())
+                self._set_status('Stepping...')
+            else:
+                # Already running - step one tick
+                if self.paused and self.interpreter:
+                    self.paused = False  # Allow one tick
+                    # The tick handler will pause again
+                    self._set_status('Step')
+
+        except Exception as e:
+            log_web_error("_menu_step", e)
+            ui.notify(f'Error: {e}', type='negative')
 
     def _menu_continue(self):
         """Run > Continue - Continue from breakpoint."""
-        self._set_status('Continue not yet implemented')
+        try:
+            if self.running and self.paused:
+                self.paused = False
+                self._set_status('Continuing...')
+            else:
+                ui.notify('Not paused at breakpoint', type='warning')
+
+        except Exception as e:
+            log_web_error("_menu_continue", e)
+            ui.notify(f'Error: {e}', type='negative')
 
     def _menu_list(self):
         """Run > List Program - List to output."""
