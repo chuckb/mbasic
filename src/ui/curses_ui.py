@@ -1430,10 +1430,55 @@ class CursesBackend(UIBackend):
             except:
                 pass
 
+    def _create_toolbar(self):
+        """Create toolbar with common action buttons."""
+        # Create button widgets - use urwid.Button with callback
+        new_btn = urwid.Button("New", on_press=lambda btn: self._menu_new())
+        open_btn = urwid.Button("Open", on_press=lambda btn: self._menu_load())
+        save_btn = urwid.Button("Save", on_press=lambda btn: self._menu_save())
+
+        sep1 = urwid.Text("│")  # Separator
+
+        run_btn = urwid.Button("Run", on_press=lambda btn: self._menu_run())
+        stop_btn = urwid.Button("Stop", on_press=lambda btn: self._menu_stop())
+
+        sep2 = urwid.Text("│")  # Separator
+
+        step_btn = urwid.Button("Step", on_press=lambda btn: self._menu_step_line())
+        stmt_btn = urwid.Button("Stmt", on_press=lambda btn: self._menu_step())
+        cont_btn = urwid.Button("Cont", on_press=lambda btn: self._menu_continue())
+
+        # Create horizontal layout with buttons
+        toolbar_columns = urwid.Columns([
+            ('pack', new_btn),
+            (1, urwid.Text(" ")),
+            ('pack', open_btn),
+            (1, urwid.Text(" ")),
+            ('pack', save_btn),
+            (1, urwid.Text(" ")),
+            ('pack', sep1),
+            (1, urwid.Text(" ")),
+            ('pack', run_btn),
+            (1, urwid.Text(" ")),
+            ('pack', stop_btn),
+            (1, urwid.Text(" ")),
+            ('pack', sep2),
+            (1, urwid.Text(" ")),
+            ('pack', step_btn),
+            (1, urwid.Text(" ")),
+            ('pack', stmt_btn),
+            (1, urwid.Text(" ")),
+            ('pack', cont_btn),
+        ])
+
+        # Wrap in AttrMap for styling
+        return urwid.AttrMap(toolbar_columns, 'header')
+
     def _create_ui(self):
         """Create the urwid UI layout."""
         # Create widgets
         self.menu_bar = urwid.AttrMap(MenuBar(), 'header')
+        self.toolbar = self._create_toolbar()
         self.editor = ProgramEditorWidget()
 
         # Create scrollable output window using ListBox
@@ -1504,18 +1549,19 @@ class CursesBackend(UIBackend):
             title="Immediate Mode"
         )
 
-        # Create layout - menu bar at top, editor, output, immediate, status bar at bottom
+        # Create layout - menu bar at top, toolbar, editor, output, immediate, status bar at bottom
         # Store as instance variable so we can modify it when toggling variables window
         self.pile = urwid.Pile([
             ('pack', self.menu_bar),
+            ('pack', self.toolbar),
             ('weight', 4, self.editor_frame),
             ('weight', 3, self.output_frame),
             ('weight', 3, self.immediate_frame),
             ('pack', self.status_bar)
         ])
 
-        # Set focus to the editor (second item in pile, after menu bar)
-        self.pile.focus_position = 1
+        # Set focus to the editor (third item in pile, after menu bar and toolbar)
+        self.pile.focus_position = 2
 
         # Create main widget with keybindings
         main_widget = urwid.AttrMap(self.pile, 'body')
@@ -1556,15 +1602,15 @@ class CursesBackend(UIBackend):
             raise urwid.ExitMainLoop()
 
         elif key == TAB_KEY:
-            # Toggle between editor (position 1) and output (position 2)
+            # Toggle between editor (position 2) and output (position 3)
             pile = self.loop.widget.base_widget
-            if pile.focus_position == 1:
+            if pile.focus_position == 2:
                 # Switch to output for scrolling
-                pile.focus_position = 2
+                pile.focus_position = 3
                 self.status_bar.set_text(OUTPUT_STATUS)
             else:
                 # Switch back to editor
-                pile.focus_position = 1
+                pile.focus_position = 2
                 self.status_bar.set_text(EDITOR_STATUS)
             return None
 
