@@ -560,13 +560,17 @@ class NiceGUIBackend(UIBackend):
 
     def _menu_run(self):
         """Run > Run Program - Execute program."""
+        log_web_error("_menu_run", Exception("DEBUG: _menu_run called"))
+
         if self.running:
             self._set_status('Program already running')
             return
 
         try:
             # Save editor content to program first
+            log_web_error("_menu_run", Exception("DEBUG: About to save editor"))
             if not self._save_editor_to_program():
+                log_web_error("_menu_run", Exception("DEBUG: Save editor failed"))
                 return  # Parse errors, don't run
 
             # Check if program has lines
