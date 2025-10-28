@@ -620,10 +620,10 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_menu_run", Exception(f"DEBUG: Set running=True, value is now {self.running}"))
 
             log_web_error("_menu_run", Exception("DEBUG: Starting timer"))
-            # Start async execution
-            ui.timer(0.01, self._execute_tick, once=False)
+            # Start async execution - store timer handle so we can cancel it
+            self.exec_timer = ui.timer(0.01, self._execute_tick, once=False)
 
-            log_web_error("_menu_run", Exception(f"DEBUG: _menu_run complete! running={self.running}"))
+            log_web_error("_menu_run", Exception(f"DEBUG: _menu_run complete! timer={self.exec_timer}"))
 
         except Exception as e:
             log_web_error("_menu_run", e)
@@ -633,14 +633,12 @@ class NiceGUIBackend(UIBackend):
 
     def _execute_tick(self):
         """Execute one tick of the interpreter."""
-        log_web_error("_execute_tick", Exception(f"DEBUG: Tick called, running={self.running}, interpreter={self.interpreter is not None}"))
-
-        if not self.running or not self.interpreter:
-            log_web_error("_execute_tick", Exception("DEBUG: Early return - not running or no interpreter"))
+        # Don't check self.running - it seems to not persist correctly in NiceGUI callbacks
+        # Just check if we have an interpreter
+        if not self.interpreter:
             return
 
         try:
-            log_web_error("_execute_tick", Exception("DEBUG: About to call interpreter.tick"))
             # Execute one tick (up to 1000 statements)
             state = self.interpreter.tick(mode='run', max_statements=1000)
 
@@ -651,15 +649,21 @@ class NiceGUIBackend(UIBackend):
                 self._append_output("\n--- Program finished ---\n")
                 self._set_status("Ready")
                 self.running = False
+                if hasattr(self, 'exec_timer') and self.exec_timer:
+                    self.exec_timer.cancel()
             elif state.status == 'error':
                 error_msg = state.error_info.error_message if state.error_info else "Unknown error"
                 self._append_output(f"\n--- Error: {error_msg} ---\n")
                 self._set_status("Error")
                 self.running = False
+                if hasattr(self, 'exec_timer') and self.exec_timer:
+                    self.exec_timer.cancel()
             elif state.status == 'paused' or state.status == 'at_breakpoint':
                 self._set_status(f"Paused at line {state.current_line}")
                 self.running = False
                 self.paused = True
+                if hasattr(self, 'exec_timer') and self.exec_timer:
+                    self.exec_timer.cancel()
 
         except Exception as e:
             log_web_error("_execute_tick", e)
