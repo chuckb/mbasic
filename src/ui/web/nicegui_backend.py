@@ -1001,21 +1001,36 @@ class NiceGUIBackend(UIBackend):
         # Force update using JavaScript since self.output.update() doesn't work from timer callbacks
         # Escape the value for JavaScript
         escaped_value = json.dumps(self.output.value)
-        log_web_error("_append_output", Exception(f"DEBUG: Calling JavaScript to set value"))
+        log_web_error("_append_output", Exception(f"DEBUG: Calling JavaScript to set value, length={len(self.output.value)}"))
+
+        # Try multiple approaches to update the UI
+        # Approach 1: Direct DOM manipulation with console logging
         ui.run_javascript(f'''
-            setTimeout(() => {{
-                // Find the output textarea (readonly, contains MBASIC)
-                const textareas = document.querySelectorAll('textarea');
-                for (let ta of textareas) {{
-                    if (ta.readOnly) {{
-                        ta.value = {escaped_value};
-                        ta.scrollTop = ta.scrollHeight;
-                        break;
-                    }}
+            console.log("MBASIC: JavaScript executing, looking for textarea...");
+            const textareas = document.querySelectorAll('textarea');
+            console.log("MBASIC: Found " + textareas.length + " textareas");
+            let found = false;
+            for (let i = 0; i < textareas.length; i++) {{
+                const ta = textareas[i];
+                console.log("MBASIC: Textarea " + i + " - readonly=" + ta.readOnly + ", value length=" + ta.value.length);
+                if (ta.readOnly) {{
+                    console.log("MBASIC: Setting readonly textarea value to length " + {len(self.output.value)});
+                    ta.value = {escaped_value};
+                    ta.scrollTop = ta.scrollHeight;
+                    found = true;
+                    console.log("MBASIC: Updated! New value length=" + ta.value.length);
+                    break;
                 }}
-            }}, 10);
+            }}
+            if (!found) {{
+                console.log("MBASIC: ERROR - Could not find readonly textarea!");
+            }}
         ''')
-        log_web_error("_append_output", Exception("DEBUG: JavaScript call complete"))
+
+        # Approach 2: Also try calling update() in case it helps
+        self.output.update()
+
+        log_web_error("_append_output", Exception("DEBUG: JavaScript and update() called"))
 
     def _show_input_row(self, prompt=''):
         """Show the INPUT row with prompt."""
