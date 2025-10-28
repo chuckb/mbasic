@@ -16,14 +16,16 @@ from src.iohandler.base import IOHandler
 class SimpleWebIOHandler(IOHandler):
     """Simple IO handler for NiceGUI that appends to textarea."""
 
-    def __init__(self, output_callback):
+    def __init__(self, output_callback, input_callback):
         """
         Initialize web IO handler.
 
         Args:
             output_callback: Function to call with output text
+            input_callback: Function to call to get input from user (blocking)
         """
         self.output_callback = output_callback
+        self.input_callback = input_callback
 
     def print(self, text="", end="\n"):
         """Output text to the web UI."""
@@ -31,10 +33,30 @@ class SimpleWebIOHandler(IOHandler):
         self.output_callback(output)
 
     def input(self, prompt=""):
-        """Get input from user (not yet implemented for web)."""
-        # TODO: Implement web input dialog
-        self.print(f"{prompt}[INPUT NOT YET IMPLEMENTED]")
-        return ""
+        """Get input from user via callback.
+
+        TODO: Consider inline input approach instead of dialog.
+        User feedback: Games often have lots of text before INPUT,
+        dialog boxes block viewing that text. Inline input field
+        below output would be better UX.
+
+        Challenge: Interpreter expects synchronous input() return,
+        but web UI is async. Need to either:
+        1. Run interpreter in background thread (current approach)
+        2. Use event/queue for input coordination
+        3. Make interpreter fully async (major refactor)
+        """
+        # Show prompt in output
+        if prompt:
+            self.print(prompt, end='')
+
+        # Get input from UI (this will block until user enters input)
+        result = self.input_callback(prompt)
+
+        # Echo input to output
+        self.print(result)
+
+        return result
 
     def get_char(self):
         """Get single character (not implemented)."""
@@ -251,7 +273,7 @@ class NiceGUIBackend(UIBackend):
             self.runtime = Runtime(self.program.line_asts, self.program.lines)
 
             # Create IO handler that outputs to our output pane
-            self.exec_io = SimpleWebIOHandler(self._append_output)
+            self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
             self.interpreter = Interpreter(self.runtime, self.exec_io, limits=create_local_limits())
 
             # Wire up interpreter to use this UI's methods
@@ -391,7 +413,16 @@ class NiceGUIBackend(UIBackend):
 
     def _append_output(self, text):
         """Append text to output pane."""
-        self.output.value += text + '\n'
+        self.output.value += text
+
+    def _get_input(self, prompt):
+        """Get input from user.
+
+        TODO: Implement proper inline input or dialog.
+        For now, returns empty string as placeholder.
+        """
+        # Placeholder - proper implementation needed
+        return ""
 
     def _set_status(self, message):
         """Set status bar message."""
