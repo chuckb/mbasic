@@ -197,8 +197,9 @@ class NiceGUIBackend(UIBackend):
                 ui.button('Step', on_click=self._menu_step, icon='skip_next').mark('btn_step')
                 ui.button('Continue', on_click=self._menu_continue, icon='play_circle').mark('btn_continue')
 
-            # Main content area - split pane (vertical: editor on top, output on bottom)
-            with ui.splitter(value=60, vertical=True).classes('w-full h-[600px]') as splitter:
+            # Main content area - split pane (horizontal split, vertical layout: editor on top, output on bottom)
+            # Note: NiceGUI splitter without 'horizontal' param defaults to vertical layout
+            with ui.splitter(value=60).classes('w-full h-[600px] flex-col') as splitter:
 
                 # Top pane - Program Editor (60% of space)
                 with splitter.before:
