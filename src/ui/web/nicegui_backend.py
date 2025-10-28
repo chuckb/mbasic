@@ -617,12 +617,13 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_menu_run", Exception("DEBUG: Interpreter started, marking running"))
             # Mark as running
             self.running = True
+            log_web_error("_menu_run", Exception(f"DEBUG: Set running=True, value is now {self.running}"))
 
             log_web_error("_menu_run", Exception("DEBUG: Starting timer"))
             # Start async execution
             ui.timer(0.01, self._execute_tick, once=False)
 
-            log_web_error("_menu_run", Exception("DEBUG: _menu_run complete!"))
+            log_web_error("_menu_run", Exception(f"DEBUG: _menu_run complete! running={self.running}"))
 
         except Exception as e:
             log_web_error("_menu_run", e)
