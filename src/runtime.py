@@ -901,6 +901,75 @@ class Runtime:
                 return self.execution_stack[i]
         return None
 
+    def validate_stack(self):
+        """Validate execution stack after program edits.
+
+        Checks that all return addresses in the stack still point to valid lines.
+        Returns a tuple: (valid, removed_entries, messages)
+        - valid: True if stack is valid (possibly after removals)
+        - removed_entries: List of stack entries that were removed
+        - messages: List of warning messages for the user
+
+        This is called when user edits code at a breakpoint and then continues.
+        We validate that:
+        - FOR loops: return_line still exists
+        - GOSUB: return_line still exists
+        - WHILE loops: while_line still exists
+
+        Invalid entries are removed from the stack.
+        """
+        removed_entries = []
+        messages = []
+
+        # Validate each entry from bottom to top
+        i = 0
+        while i < len(self.execution_stack):
+            entry = self.execution_stack[i]
+            entry_type = entry['type']
+            should_remove = False
+
+            if entry_type == 'FOR':
+                var_name = entry['var']
+                return_line = entry['return_line']
+
+                # Check if return line still exists
+                if return_line not in self.line_table:
+                    should_remove = True
+                    messages.append(f"FOR {var_name} loop removed - line {return_line} no longer exists")
+
+            elif entry_type == 'GOSUB':
+                return_line = entry['return_line']
+
+                # Check if return line still exists
+                if return_line not in self.line_table:
+                    should_remove = True
+                    messages.append(f"GOSUB removed - return line {return_line} no longer exists")
+
+            elif entry_type == 'WHILE':
+                while_line = entry.get('while_line')
+
+                # Check if while line still exists
+                if while_line and while_line not in self.line_table:
+                    should_remove = True
+                    messages.append(f"WHILE loop removed - line {while_line} no longer exists")
+
+            if should_remove:
+                removed_entry = self.execution_stack.pop(i)
+                removed_entries.append(removed_entry)
+
+                # Clean up for_loop_vars tracking if it's a FOR loop
+                if entry_type == 'FOR':
+                    var_name = removed_entry['var']
+                    if var_name in self.for_loop_vars:
+                        del self.for_loop_vars[var_name]
+
+                # Don't increment i - we removed an entry so next entry is now at position i
+            else:
+                i += 1
+
+        # Stack is valid if we processed everything (even if we removed some entries)
+        return (True, removed_entries, messages)
+
     def find_line(self, line_number):
         """
         Find LineNode by line number.
