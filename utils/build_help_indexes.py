@@ -25,6 +25,10 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple
 import re
 
+# Add src directory to Python path for importing HelpMacros
+sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+from ui.help_macros import HelpMacros
+
 
 class HelpIndexBuilder:
     """Builds and validates merged help indexes for each UI."""
@@ -140,6 +144,35 @@ class HelpIndexBuilder:
 
         return True
 
+    def validate_macros_in_file(self, file_path: Path):
+        """
+        Validate that all macros can be expanded in a markdown file.
+
+        Args:
+            file_path: Path to markdown file
+        """
+        try:
+            content = file_path.read_text(encoding='utf-8')
+
+            # Try to expand macros using the current UI's macro expander
+            if hasattr(self, 'macro_expander'):
+                expanded = self.macro_expander.expand(content)
+            else:
+                expanded = content
+
+            # Find any remaining unexpanded macro patterns like {{kbd:...}} or {{...}}
+            macro_pattern = r'\{\{[^}]+\}\}'
+
+            for line_num, line in enumerate(expanded.split('\n'), 1):
+                for match in re.finditer(macro_pattern, line):
+                    macro = match.group(0)
+                    self.errors.append(
+                        f"Unexpanded macro in {file_path.relative_to(self.help_root)}:{line_num}: {macro}"
+                    )
+
+        except Exception as e:
+            self.warnings.append(f"Error reading {file_path} for macro validation: {e}")
+
     def validate_all_links_in_file(self, file_path: Path):
         """
         Validate all links in a markdown file.
@@ -164,6 +197,9 @@ class HelpIndexBuilder:
         print(f"\n{'='*60}")
         print(f"Building help index for: {ui_name}")
         print(f"{'='*60}")
+
+        # Create macro expander for this UI
+        self.macro_expander = HelpMacros(ui_name, str(self.help_root))
 
         # Load the three tiers
         language_index = self.load_index(self.help_root / 'common/language/search_index.json')
@@ -201,6 +237,8 @@ class HelpIndexBuilder:
                 if self.validate_file_exists(full_path, self.help_root):
                     # Validate all links in the file
                     self.validate_all_links_in_file(file_path)
+                    # Validate no unexpanded macros
+                    self.validate_macros_in_file(file_path)
 
         # Merge in order: language, mbasic, ui-specific
         add_files(language_index.get('files', []), 'common/language', 'language')

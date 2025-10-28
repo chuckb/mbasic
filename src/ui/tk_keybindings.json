@@ -5,12 +5,22 @@
       "primary": "Ctrl+N",
       "description": "New file"
     },
+    "new_program": {
+      "keys": ["Ctrl+N"],
+      "primary": "Ctrl+N",
+      "description": "New file"
+    },
     "file_open": {
       "keys": ["Ctrl+O"],
       "primary": "Ctrl+O",
       "description": "Open file"
     },
     "file_save": {
+      "keys": ["Ctrl+S"],
+      "primary": "Ctrl+S",
+      "description": "Save file"
+    },
+    "save_file": {
       "keys": ["Ctrl+S"],
       "primary": "Ctrl+S",
       "description": "Save file"
@@ -34,6 +44,35 @@
       "keys": ["Ctrl+?", "Ctrl+/"],
       "primary": "Ctrl+?",
       "description": "Open help topics"
+    }
+  },
+  "editor": {
+    "smart_insert": {
+      "keys": ["Ctrl+I"],
+      "primary": "Ctrl+I",
+      "description": "Smart insert line between current and next"
+    },
+    "toggle_breakpoint": {
+      "keys": ["Ctrl+B"],
+      "primary": "Ctrl+B",
+      "description": "Toggle breakpoint on current line"
+    },
+    "renumber": {
+      "keys": ["Ctrl+E"],
+      "primary": "Ctrl+E",
+      "description": "Renumber all lines"
+    }
+  },
+  "view": {
+    "toggle_variables": {
+      "keys": ["Ctrl+W"],
+      "primary": "Ctrl+W",
+      "description": "Toggle variables watch window"
+    },
+    "toggle_stack": {
+      "keys": ["Ctrl+K"],
+      "primary": "Ctrl+K",
+      "description": "Toggle execution stack window"
     }
   },
   "help_browser": {
