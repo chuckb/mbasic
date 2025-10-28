@@ -149,7 +149,12 @@ class NiceGUIBackend(UIBackend):
         self.paused = False
         self.breakpoints = set()  # Line numbers with breakpoints
         self.interpreter = None
-        self.runtime = None
+
+        # Initialize a default runtime for immediate mode
+        # This gets replaced when a program runs
+        from src.runtime import Runtime
+        self.runtime = Runtime({}, {})
+
         self.exec_io = None
         self.tick_task = None  # Async task for execution
 
@@ -206,18 +211,16 @@ class NiceGUIBackend(UIBackend):
             # Main content area - simple stacked layout (no splitter)
             # The splitter was causing visibility issues, so using simple column layout
             with ui.column().classes('w-full gap-1'):
-                # Editor section
-                ui.label('Program Editor:').classes('text-lg font-bold')
+                # Editor section (no label)
                 self.editor = ui.textarea(
                     value='',
-                    placeholder='Enter BASIC program here (e.g., 10 PRINT "Hello")'
+                    placeholder='Program Editor - Enter BASIC program here (e.g., 10 PRINT "Hello")'
                 ).classes('w-full font-mono').style('height: 300px;').props('outlined').mark('editor')
 
                 # Bind keyboard events for auto-numbering
                 self.editor.on('keydown.enter', self._on_enter_key)
 
-                # Output section
-                ui.label('Output').classes('text-lg font-bold')
+                # Output section (no label)
                 self.output = ui.textarea(
                     value='MBASIC 5.21 Web IDE\nReady\n',
                     placeholder='Program output will appear here'
@@ -229,7 +232,6 @@ class NiceGUIBackend(UIBackend):
                 ).props('readonly outlined').mark('output')
 
             # INPUT row (hidden by default, shown when INPUT statement needs input)
-            # This is OUTSIDE the splitter, below it
             self.input_row = ui.row().classes('w-full p-2 gap-2 bg-blue-50')
             with self.input_row:
                 self.input_label = ui.label('').classes('font-bold text-blue-600')
@@ -238,12 +240,12 @@ class NiceGUIBackend(UIBackend):
                 self.input_submit_btn = ui.button('Submit', on_click=self._submit_input, icon='send', color='primary').mark('btn_input_submit')
             self.input_row.visible = False  # Hidden by default
 
-            # Immediate mode command input
-            ui.label('Immediate Mode:').classes('font-bold')
+            # Immediate mode (no label, just textarea with execute button)
             with ui.row().classes('w-full gap-2'):
-                self.immediate_entry = ui.input(
-                    placeholder='Enter BASIC command (e.g., PRINT 2+2)',
-                ).classes('flex-grow font-mono').mark('immediate_entry')
+                self.immediate_entry = ui.textarea(
+                    value='',
+                    placeholder='Enter BASIC command (e.g., PRINT 2+2)'
+                ).classes('flex-grow font-mono').style('height: 60px;').props('outlined').mark('immediate_entry')
                 self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
                 ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
 
