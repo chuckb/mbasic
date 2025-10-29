@@ -274,7 +274,7 @@ class Interpreter:
                     return self.state
 
                 # Handle jump (NPC set by GOTO/GOSUB/etc.)
-                if self.runtime.npc is not None:
+                if self.runtime.has_pending_jump():
                     pc = self.runtime.npc
                     self.runtime.npc = None
                     self.runtime.pc = pc
@@ -354,7 +354,7 @@ class Interpreter:
                     return self.state
 
                 # Get next PC (if npc was set by statement, loop will handle it)
-                if self.runtime.npc is None:
+                if not self.runtime.has_pending_jump():
                     next_pc = self.runtime.statement_table.next_pc(pc)
 
                     # Check for step mode

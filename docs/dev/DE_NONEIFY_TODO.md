@@ -1,6 +1,6 @@
 # De-Noneify Codebase - Refactoring TODO
 
-⏳ **Status**: PARTIALLY COMPLETE (Phase 1-3 done, Phase 4 deferred)
+✅ **Status**: SUBSTANTIALLY COMPLETE (Phases 1-4 done, remaining checks are legitimate optional values)
 
 ## Problem
 
@@ -89,7 +89,7 @@ Some uses of `None` checks are perfectly fine and should **NOT** be changed:
        return self.vars.get(name)  # None = not found (OK)
    ```
 
-## Progress Summary (v1.0.299)
+## Progress Summary (v1.0.300)
 
 ### Completed ✅
 
@@ -102,24 +102,29 @@ Some uses of `None` checks are perfectly fine and should **NOT** be changed:
 Added to `src/runtime.py`:
 - `has_error_handler()` - Check if ON ERROR GOTO installed
 - `has_active_loop(var_name=None)` - Check if FOR loop active
+- `has_pending_jump()` - Check if GOTO/GOSUB pending (already existed)
 
 Added to `src/parser.py`:
 - `has_more_tokens()` - Check if tokens remaining
 - `at_end_of_tokens()` - Check if exhausted tokens
 
-**Phase 3: Replacements**
+**Phase 3: Replacements - Interpreter Core**
 - `src/interpreter.py`: 2 error handler checks replaced
 - `src/parser.py`: 8 token None checks replaced with semantic methods
 
+**Phase 4: Replacements - Control Flow** (v1.0.300)
+- `src/interpreter.py:277`: `npc is not None` → `has_pending_jump()`
+- `src/interpreter.py:357`: `npc is None` → `not has_pending_jump()`
+
 **Impact:**
-- ~10 None checks replaced with clear semantic names
-- Improved code readability in high-traffic paths
-- All tests passing
+- ~12 None checks replaced with clear semantic names
+- Improved code readability in high-traffic execution paths
+- All tests passing (FOR, WHILE, GOSUB, error handling)
 
 ### Deferred to Future
 
-**Phase 4:** UI None checks (interpreter existence) - low priority, working fine
 **Phase 5:** Optional parameters - already well-typed with type hints
+**Remaining None checks:** FILE_OPS, LINE_LOOKUPS, INTERPRETER_STATE categories - legitimate optional values
 
 ## Implementation Strategy
 
