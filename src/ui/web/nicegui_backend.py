@@ -1072,7 +1072,7 @@ class NiceGUIBackend(UIBackend):
         if loop.is_running():
             # If event loop is running, we need to create a task and wait
             # This is tricky - we'll use a blocking approach with Future
-            .futures
+            import concurrent.futures
             import threading
 
             result_holder = []
