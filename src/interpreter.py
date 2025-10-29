@@ -21,13 +21,6 @@ class BreakException(Exception):
 
 
 @dataclass
-class CallFrame:
-    """Represents a single call in the GOSUB stack"""
-    return_line: int
-    return_stmt: int
-
-
-@dataclass
 class ErrorInfo:
     """Information about a runtime error"""
     error_code: int
