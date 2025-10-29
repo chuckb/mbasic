@@ -5,10 +5,12 @@ Complete three-tier help system with web deployment and comprehensive metadata.
 ## Final Statistics
 
 ### Documentation Files
-- **Total files:** 125
+- **Total files:** 130
   - Language reference: 112 files (statements, functions, appendices, operators)
-  - MBASIC implementation: 5 files (getting-started, features, compatibility, architecture, index)
-  - Curses UI: 8 files (guides and tutorials)
+  - MBASIC implementation: 7 files (getting-started, features, compatibility, not-implemented, extensions, architecture, index)
+  - Curses UI: 10 files (guides and tutorials)
+  - CLI: 1 file
+  - Tkinter: 1 file
 
 ### Metadata Quality
 - **All files have complete front matter:**
@@ -36,31 +38,35 @@ Complete three-tier help system with web deployment and comprehensive metadata.
 ### Tier 1: UI-Specific Documentation (📘)
 Location: `docs/help/ui/{backend}/`
 
-**Curses UI (8 files):**
-- `getting-started.md` - First steps
-- `quick-reference.md` - Keyboard shortcuts
-- `keyboard-commands.md` - Complete command reference
-- `editing.md` - Program editing
-- `running.md` - Execution and debugging
-- `files.md` - File operations
-- `help-navigation.md` - Help system usage
-- `index.md` - Unified entry point
+**Curses UI (10 files):**
+- [getting-started.md](../help/ui/curses/getting-started.md) - First steps
+- [quick-reference.md](../help/ui/curses/quick-reference.md) - Keyboard shortcuts
+- [keyboard-commands.md](../help/ui/curses/keyboard-commands.md) - Complete command reference
+- [editing.md](../help/ui/curses/editing.md) - Program editing
+- [running.md](../help/ui/curses/running.md) - Execution and debugging
+- [files.md](../help/ui/curses/files.md) - File operations
+- [help-navigation.md](../help/ui/curses/help-navigation.md) - Help system usage
+- [find-replace.md](../help/ui/curses/find-replace.md) - Find and replace functionality
+- [variables.md](../help/ui/curses/variables.md) - Variable inspector
+- [index.md](../help/ui/curses/index.md) - Unified entry point
 
 **CLI (1 file):**
-- `index.md` - Command-line interface guide
+- [index.md](../help/ui/cli/index.md) - Command-line interface guide
 
 **Tkinter (1 file):**
-- `index.md` - GUI interface guide
+- [index.md](../help/ui/tk/index.md) - GUI interface guide
 
 ### Tier 2: MBASIC Implementation (📗)
 Location: `docs/help/mbasic/`
 
-**Documentation (5 files):**
-- `getting-started.md` - Installation and first program
-- `features.md` - Complete feature list (50+ functions, 63 statements, 18 optimizations)
-- `compatibility.md` - MBASIC 5.21 compatibility (what works, what doesn't, porting guide)
-- `architecture.md` - Interpreter vs compiler, semantic analyzer
-- `index.md` - Overview and navigation
+**Documentation (7 files):**
+- [getting-started.md](../help/mbasic/getting-started.md) - Installation and first program
+- [features.md](../help/mbasic/features.md) - Complete feature list (50+ functions, 63 statements, 18 optimizations)
+- [compatibility.md](../help/mbasic/compatibility.md) - MBASIC 5.21 compatibility (what works, what doesn't, porting guide)
+- [not-implemented.md](../help/mbasic/not-implemented.md) - Features not yet implemented
+- [extensions.md](../help/mbasic/extensions.md) - Modern extensions beyond MBASIC 5.21
+- [architecture.md](../help/mbasic/architecture.md) - Interpreter vs compiler, semantic analyzer
+- [index.md](../help/mbasic/index.md) - Overview and navigation
 
 ### Tier 3: BASIC-80 Language Reference (📕)
 Location: `docs/help/common/language/`
@@ -79,14 +85,15 @@ Location: `docs/help/common/language/`
 - Type conversion: CINT, CSNG, CDBL, FIX
 - System: INKEY$, FRE, POS, PEEK, POKE, etc.
 
-**Appendices (3 files):**
-- `error-codes.md` - All 68 error codes
-- `ascii-codes.md` - ASCII character table
-- `math-functions.md` - Derived mathematical functions
+**Appendices (4 files):**
+- [error-codes.md](../help/common/language/appendices/error-codes.md) - All 68 error codes
+- [ascii-codes.md](../help/common/language/appendices/ascii-codes.md) - ASCII character table
+- [math-functions.md](../help/common/language/appendices/math-functions.md) - Derived mathematical functions
+- [index.md](../help/common/language/appendices/index.md) - Appendices overview
 
 **Other (2 files):**
-- `operators.md` - Arithmetic, relational, logical operators
-- `index.md` - Language overview
+- [operators.md](../help/common/language/operators.md) - Arithmetic, relational, logical operators
+- [index.md](../help/common/language/index.md) - Language overview
 
 ## Search Functionality
 
