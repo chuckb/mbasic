@@ -1,5 +1,31 @@
 # Work in Progress
 
+## Session - 2025-10-29 (Part 4) - Web UI Output Buffer Limiting
+
+### Status ✅ COMPLETE
+
+Implemented line-based output buffer limiting for web UI to prevent memory issues with long-running programs.
+
+### Changes Made
+
+**File:** `src/ui/web/nicegui_backend.py`
+- Added `self.output_max_lines = 3000` configuration in `__init__()`
+- Updated `_append_output()` to use line-based limiting instead of character-based
+- Changed from 10,000 chars to 3,000 lines (more predictable)
+- Adds "[... output truncated ...]" indicator when buffer is trimmed
+- Prevents browser memory issues with long-running programs
+
+**Documentation:**
+- Updated `docs/dev/WEB_UI_OUTPUT_IMPROVEMENTS_TODO.md` → moved to history
+- All 4 web UI output improvements now complete
+
+### Impact
+- More predictable memory usage for web UI
+- Prevents performance degradation with long output
+- Configurable limit (can be adjusted in __init__)
+
+---
+
 ## Session Complete - 2025-10-29 (Part 3) - DE_NONEIFY Refactoring
 
 ### Status ✅ COMPLETE

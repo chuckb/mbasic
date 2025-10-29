@@ -43,7 +43,7 @@ def _append_output(self, text):
 ---
 
 ### 2. Output Buffer Limiting
-**Status:** ⏳ TODO
+**Status:** ✅ DONE (v1.0.300)
 **Priority:** MEDIUM
 
 **Problem:** Output area can grow indefinitely, causing browser memory issues and slow performance with long-running programs.
@@ -84,9 +84,18 @@ class NiceGUIBackend:
 - Minimum: 100
 - Maximum: 10000
 
-**Files to Modify:**
-- `src/ui/web/nicegui_backend.py` - `_append_output()` method
-- Settings dialog (when created)
+**Implementation Complete:**
+- Added `self.output_max_lines = 3000` in `__init__()` (line 152)
+- Updated `_append_output()` to use line-based limiting (lines 979-988)
+- Changed from character-based (10,000 chars) to line-based (3,000 lines)
+- Adds "[... output truncated ...]" indicator when buffer is trimmed
+- More predictable behavior for users
+
+**Files Modified:**
+- `src/ui/web/nicegui_backend.py` - Updated `__init__()` and `_append_output()`
+
+**Future Enhancement:**
+- Add to Settings dialog when implemented (configurable max_lines)
 
 ---
 
@@ -172,16 +181,14 @@ pytest tests/playwright/test_web_ui.py -v
 
 ## Summary
 
-### Completed Tasks (3/4)
+### Completed Tasks (4/4) ✅
 1. ✅ **HIGH:** Auto-scroll output to bottom (v1.0.187)
 2. ✅ **HIGH:** Log errors to stderr (v1.0.184)
 3. ✅ **MEDIUM:** Playwright testing framework (v1.0.185)
-
-### Remaining Tasks (1/4)
-1. ⏳ **MEDIUM:** Output buffer limiting - Not yet implemented
+4. ✅ **MEDIUM:** Output buffer limiting (v1.0.300)
 
 ### Overall Status
-**3 of 4 tasks complete** - Only output buffer limiting remains. This is a lower priority task that can be implemented when needed for long-running programs.
+**ALL TASKS COMPLETE** ✅ - Web UI output improvements fully implemented.
 
 ---
 

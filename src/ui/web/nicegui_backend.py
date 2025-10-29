@@ -147,6 +147,9 @@ class NiceGUIBackend(UIBackend):
         # Execution state
         self.running = False
         self.paused = False
+
+        # Output buffer limiting
+        self.output_max_lines = 3000  # Maximum lines to keep in output buffer
         self.breakpoints = set()  # Line numbers with breakpoints
         self.interpreter = None
 
@@ -973,12 +976,16 @@ class NiceGUIBackend(UIBackend):
         # Update our internal buffer
         self.output_text += text
 
-        # Limit output buffer to last 10,000 characters to prevent infinite growth
-        # Truncate from the beginning if too long
-        MAX_OUTPUT_CHARS = 10000
-        if len(self.output_text) > MAX_OUTPUT_CHARS:
-            # Keep last MAX_OUTPUT_CHARS, add indicator at start
-            self.output_text = "[... output truncated ...]\n" + self.output_text[-MAX_OUTPUT_CHARS:]
+        # Limit output buffer by number of lines to prevent infinite growth
+        # This is more predictable than character-based limiting
+        lines = self.output_text.split('\n')
+        if len(lines) > self.output_max_lines:
+            # Keep last N lines, add indicator at start
+            lines = lines[-self.output_max_lines:]
+            self.output_text = '\n'.join(lines)
+            # Add truncation indicator if not already present
+            if not self.output_text.startswith('[... output truncated'):
+                self.output_text = '[... output truncated ...]\n' + self.output_text
 
         # Update the textarea directly (push-based, not polling)
         if self.output:
