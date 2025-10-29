@@ -273,12 +273,6 @@ class Interpreter:
                     # Keep PC at current position for resume
                     return self.state
 
-                # Handle jump (NPC set by GOTO/GOSUB/etc.)
-                if self.runtime.has_pending_jump():
-                    pc = self.runtime.npc
-                    self.runtime.npc = None
-                    self.runtime.pc = pc
-
                 # Check for breakpoint (supports both line-level and statement-level)
                 # Check exact PC first (statement-level), then line-level
                 at_breakpoint = False
@@ -341,8 +335,11 @@ class Interpreter:
                     # Check if we have an error handler and not already handling an error
                     if self.runtime.has_error_handler() and not already_in_error_handler:
                         self._invoke_error_handler(error_code, pc)
-                        # Error handler set npc, loop will handle it
-                        continue
+                        # Error handler set npc - apply it and continue execution
+                        # (don't use continue here - we need to let normal flow handle NPC)
+                        statements_in_tick += 1
+                        self.state.statements_executed += 1
+                        # Fall through to NPC handling below
                     else:
                         # No error handler (or recursive error) - set error state and raise
                         self.state.status = 'error'
@@ -353,22 +350,26 @@ class Interpreter:
                 if self.state.status == 'waiting_for_input':
                     return self.state
 
-                # Get next PC (if npc was set by statement, loop will handle it)
-                if not self.runtime.has_pending_jump():
+                # Advance PC: if NPC was set by statement (GOTO/GOSUB/RETURN/etc.), use it;
+                # otherwise advance to next sequential statement
+                if self.runtime.npc is not None:
+                    next_pc = self.runtime.npc
+                    self.runtime.npc = None
+                else:
                     next_pc = self.runtime.statement_table.next_pc(pc)
 
-                    # Check for step mode
-                    if mode == 'step_statement':
-                        self.runtime.pc = next_pc
-                        self.state.status = 'paused'
-                        return self.state
-                    elif mode == 'step_line' and pc.is_step_point(next_pc, 'step_line'):
-                        self.runtime.pc = next_pc
-                        self.state.status = 'paused'
-                        return self.state
-
-                    # Normal advance
+                # Check for step mode before updating PC
+                if mode == 'step_statement':
                     self.runtime.pc = next_pc
+                    self.state.status = 'paused'
+                    return self.state
+                elif mode == 'step_line' and pc.is_step_point(next_pc, 'step_line'):
+                    self.runtime.pc = next_pc
+                    self.state.status = 'paused'
+                    return self.state
+
+                # Update PC for next iteration
+                self.runtime.pc = next_pc
 
                 # Yield control periodically
                 if mode == 'run' and statements_in_tick >= max_statements:
@@ -904,7 +905,7 @@ class Interpreter:
                 # THEN statement(s)
                 for then_stmt in stmt.then_statements:
                     self.execute_statement(then_stmt)
-                    if self.runtime.has_pending_jump():
+                    if self.runtime.npc is not None:
                         break
         else:
             # Execute ELSE clause
@@ -915,7 +916,7 @@ class Interpreter:
                 # ELSE statement(s)
                 for else_stmt in stmt.else_statements:
                     self.execute_statement(else_stmt)
-                    if self.runtime.has_pending_jump():
+                    if self.runtime.npc is not None:
                         break
 
     def execute_goto(self, stmt):

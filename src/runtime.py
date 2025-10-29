@@ -1094,15 +1094,6 @@ class Runtime:
         # Stack is valid if we processed everything (even if we removed some entries)
         return (True, removed_entries, messages)
 
-    def has_pending_jump(self):
-        """
-        Check if a GOTO/GOSUB jump is pending.
-
-        Returns:
-            True if npc is set (jump pending), False otherwise
-        """
-        return self.npc is not None
-
     def has_error_handler(self):
         """
         Check if an error handler is installed (ON ERROR GOTO).

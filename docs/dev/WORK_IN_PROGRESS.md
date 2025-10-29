@@ -2,9 +2,40 @@
 
 ## No Active Work
 
-Last session completed: 2025-10-29 - Code quality cleanup (vulture + DE_NONEIFY Phase 4) at v1.0.299
+Last session completed: 2025-10-29 - NPC architecture refactoring at v1.0.300
 
 All work committed and pushed.
+
+### Session Summary - 2025-10-29 - NPC Architecture Refactoring
+
+**Problem Identified:**
+- Previous DE_NONEIFY work (has_pending_jump) made architecturally wrong code look semantic
+- tick() loop handled NPC from PREVIOUS iteration at TOP of loop (one iteration late)
+- Fundamentally misunderstood NPC pattern
+
+**Root Cause:**
+- NPC is not a "pending jump flag" - it's ALWAYS the next PC
+- Should be: statement sets NPC (or defaults to next), then at END: `pc = npc`
+- Was: check NPC at START (from previous iteration), conditionally advance
+
+**Solution (v1.0.300):**
+- Moved NPC handling from top of loop (lines 277-280) to end of iteration (lines 352-356)
+- Simple pattern: if NPC set, use it; else advance to next sequential statement
+- Removed has_pending_jump() method (was obscuring the architectural problem)
+- Fixed error handler flow to fall through to NPC handling instead of continue
+
+**Files Modified:**
+- src/interpreter.py: Refactored tick_pc() loop, fixed execute_if() None checks
+- src/runtime.py: Removed has_pending_jump() method
+
+**Impact:**
+- All control flow now handles NPC at correct time (end of iteration, not beginning)
+- FOR/WHILE loops work correctly
+- GOTO/GOSUB/RETURN work correctly
+- Error handling (ON ERROR GOTO, RESUME NEXT) works correctly
+- All tests passing
+
+---
 
 ### Session Summary - 2025-10-29 - Code Quality Cleanup
 
