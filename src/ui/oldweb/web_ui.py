@@ -19,6 +19,7 @@ import sys
 import asyncio
 from datetime import datetime
 from typing import Optional, Set
+import logging
 
 
 # Add parent directories to path for imports
@@ -1858,10 +1859,16 @@ if __name__ in {"__main__", "__mp_main__"}:
     # In production, use environment variable or config file
     storage_secret = secrets.token_urlsafe(32)
 
+    # Suppress NiceGUI startup messages
+    logging.getLogger('nicegui').setLevel(logging.WARNING)
+    logging.getLogger('uvicorn').setLevel(logging.WARNING)
+    logging.getLogger('uvicorn.access').setLevel(logging.WARNING)
+
     ui.run(
         title='MBASIC 5.21 Web IDE',
         port=8080,
         reload=False,
         show=False,  # Don't auto-open browser
         storage_secret=storage_secret,  # Required for app.storage.user
+        show_welcome_message=False,  # Suppress verbose startup messages
     )
