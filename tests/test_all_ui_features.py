@@ -1681,16 +1681,16 @@ class WebFeatureTests(UIFeatureTest):
         self.test("Clear Output", self.test_has_clear_output)
 
         print("\n3. DEBUGGING")
-        self.test("Toggle Breakpoint", self.test_has_breakpoint)
-        self.test("Clear Breakpoints", self.test_has_clear_breakpoints)
+        self.test("Breakpoints", self.test_has_breakpoint)
+        self.test("Clear All Breakpoints", self.test_has_clear_breakpoints)
         self.test("Breakpoints Wired", self.test_breakpoints_wired)
         self.test("Multi-Statement Debug", self.test_has_multi_statement_debug)
         self.test("Current Line Highlight", self.test_has_current_line_highlight)
 
         print("\n4. VARIABLE INSPECTION")
         self.test("Variables Window", self.test_has_variables)
-        self.test("Stack Window", self.test_has_stack)
-        self.test("Edit Variable", self.test_has_edit_variable)
+        self.test("Execution Stack", self.test_has_stack)
+        self.test("Edit Variable Value", self.test_has_edit_variable)
         self.test("Variable Filtering", self.test_has_variable_filtering)
         self.test("Variable Sorting", self.test_has_variable_sorting)
 
@@ -1701,7 +1701,7 @@ class WebFeatureTests(UIFeatureTest):
         self.test("Syntax Checking", self.test_has_syntax_checking)
 
         print("\n6. HELP")
-        self.test("Help System", self.test_has_help)
+        self.test("Help Command", self.test_has_help)
 
         return self.summary()
 
