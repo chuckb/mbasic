@@ -87,7 +87,7 @@ class Parser:
     def advance(self) -> Token:
         """Consume and return current token"""
         token = self.current()
-        if token is None:
+        if self.at_end_of_tokens():
             raise ParseError("Unexpected end of input")
         self.position += 1
         return token
@@ -95,7 +95,7 @@ class Parser:
     def expect(self, token_type: TokenType) -> Token:
         """Consume token of expected type or raise error"""
         token = self.current()
-        if token is None:
+        if self.at_end_of_tokens():
             raise ParseError(f"Expected {token_type.name}, got end of input")
         if token.type != token_type:
             raise ParseError(f"Expected {token_type.name}, got {token.type.name}", token)
@@ -103,14 +103,22 @@ class Parser:
 
     def match(self, *token_types: TokenType) -> bool:
         """Check if current token matches any of the given types"""
-        token = self.current()
-        if token is None:
+        if self.at_end_of_tokens():
             return False
+        token = self.current()
         return token.type in token_types
 
     def at_end(self) -> bool:
         """Check if at end of tokens"""
         return self.position >= len(self.tokens) or self.current().type == TokenType.EOF
+
+    def has_more_tokens(self) -> bool:
+        """Check if there are more tokens to parse"""
+        return self.current() is not None
+
+    def at_end_of_tokens(self) -> bool:
+        """Check if we've exhausted all tokens (alias for current() is None)"""
+        return self.current() is None
 
     def at_end_of_line(self) -> bool:
         """Check if at end of logical line (NEWLINE or EOF)
@@ -118,9 +126,9 @@ class Parser:
         Note: APOSTROPHE is now treated as a statement (comment), not end-of-line,
         so it can be preserved in the AST.
         """
-        token = self.current()
-        if token is None:
+        if self.at_end_of_tokens():
             return True
+        token = self.current()
         return token.type in (TokenType.NEWLINE, TokenType.EOF)
 
     def at_end_of_statement(self) -> bool:
@@ -131,9 +139,9 @@ class Parser:
         - Statement separator (COLON)
         - Comment (REM, REMARK, or APOSTROPHE)
         """
-        token = self.current()
-        if token is None:
+        if self.at_end_of_tokens():
             return True
+        token = self.current()
         return token.type in (TokenType.NEWLINE, TokenType.EOF, TokenType.COLON,
                               TokenType.REM, TokenType.REMARK, TokenType.APOSTROPHE)
 
@@ -395,9 +403,9 @@ class Parser:
 
         Dispatches to specific statement parsers based on keyword
         """
-        token = self.current()
-        if token is None:
+        if self.at_end_of_tokens():
             return None
+        token = self.current()
 
         # Comments
         if token.type in (TokenType.REM, TokenType.REMARK, TokenType.APOSTROPHE):
@@ -820,9 +828,9 @@ class Parser:
         - User-defined functions (FN name)
         - Parenthesized expressions
         """
-        token = self.current()
-        if token is None:
+        if self.at_end_of_tokens():
             raise ParseError("Unexpected end of input in expression")
+        token = self.current()
 
         # Numbers
         if token.type == TokenType.NUMBER:
@@ -3269,9 +3277,9 @@ class Parser:
             # Try to parse as expression (handles numbers and quoted strings)
             # If that fails or we encounter identifiers, treat as unquoted string
 
-            current_token = self.current()
-            if current_token is None:
+            if self.at_end_of_tokens():
                 break
+            current_token = self.current()
 
             # If it's a string literal, number, or signed number, parse as expression
             if current_token.type in (TokenType.STRING, TokenType.NUMBER):
