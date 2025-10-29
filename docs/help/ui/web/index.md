@@ -8,8 +8,23 @@ The web interface provides a full-featured BASIC programming environment accessi
 
 ### Main Components
 
-- **Editor** (top) - Write your BASIC code here
-- **Output** (bottom) - See program output and error messages
+The Web UI has three main text areas:
+
+- **Program Editor** (top) - Write your BASIC program here
+  - Has automatic line numbering when you press Enter
+  - Example: Type `PRINT "HELLO"` and press Enter → becomes `10 PRINT "HELLO"`
+  - Successive lines auto-increment: next line becomes 20, 30, 40, etc.
+
+- **Output** (middle) - See program output and error messages
+  - Shows results when you run your program
+  - Displays error messages and diagnostics
+
+- **Command** (bottom) - Type immediate commands
+  - Execute single BASIC statements directly
+  - **No automatic line numbering** - commands run immediately
+  - Example: Type `PRINT 2+2` → shows `4` without adding to program
+  - Useful for testing expressions and quick calculations
+
 - **Menu Bar** - Access File, Edit, Run, and Help functions
 
 ## Menu Functions
@@ -37,10 +52,51 @@ The web interface provides a full-featured BASIC programming environment accessi
 
 ## Writing Programs
 
-1. Type your BASIC program in the editor
-2. Use line numbers (e.g., `10 PRINT "HELLO"`)
+1. Type your BASIC program in the **Program Editor** (top area)
+2. Press Enter after each statement - line numbers are added automatically
 3. Click **Run** → **Run Program** to execute
-4. View output in the bottom panel
+4. View output in the **Output** area (middle)
+
+### Auto-Numbering
+
+The **Program Editor** automatically adds line numbers when you press Enter:
+
+- **First line**: Starts at 10
+- **Subsequent lines**: Increment by 10 (20, 30, 40...)
+- **Manual numbering**: You can still type your own line numbers if desired
+- **Only in Editor**: The Command area does NOT auto-number (it runs commands immediately)
+
+**Example workflow**:
+```
+Type: PRINT "Hello"
+Press Enter → becomes: 10 PRINT "Hello"
+
+Type: FOR I=1 TO 5
+Press Enter → becomes: 20 FOR I=1 TO 5
+
+Type: NEXT I
+Press Enter → becomes: 30 NEXT I
+```
+
+### Using the Command Area
+
+The **Command** area (bottom) executes statements immediately without adding them to your program:
+
+**Try these examples**:
+```
+Type: PRINT 2+2
+Press Enter → Output shows: 4
+
+Type: X=10: PRINT X*X
+Press Enter → Output shows: 100
+
+Type: FOR I=1 TO 3: PRINT I: NEXT I
+Press Enter → Output shows: 1 2 3
+```
+
+**When to use Command vs Editor**:
+- **Command** - Quick calculations, testing expressions, checking variables
+- **Editor** - Writing programs you want to save and run multiple times
 
 ### Example Program
 

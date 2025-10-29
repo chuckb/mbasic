@@ -1,71 +1,183 @@
+---
+title: "Getting Started with Web UI"
+description: "Quick start guide for the MBASIC Web UI interface"
+category: web-ui
+keywords: [web, browser, getting started, interface, quick start]
+type: guide
+---
+
 # Getting Started with Web UI
 
-Welcome to the MBASIC Web UI! This modern browser-based interface provides a full-featured BASIC development environment.
+Welcome to the MBASIC Web UI! This browser-based interface provides a BASIC programming environment accessible from any modern web browser.
 
 ## Launching the Web UI
 
-### Quick Start
+### Starting the Server
 
-1. **Start the web server:**
-   ```bash
-   python3 mbasic.py --backend web
-   ```
+From the command line:
 
-2. **Open your browser:**
-   - Navigate to `http://localhost:8080`
-   - The interface loads automatically
+```bash
+python3 mbasic.py --backend web
+```
 
-3. **Alternative launch:**
-   ```bash
-   python3 mbasic.py --backend web --open
-   ```
-   This automatically opens your default browser.
+Then open your browser to: **http://localhost:8080**
+
+### Stopping the Server
+
+Press `Ctrl+C` in the terminal where the server is running.
 
 ## Interface Overview
 
-### Main Components
+The Web UI has a simple, vertical layout with these components from top to bottom:
 
-The Web UI has four main areas:
+### 1. Menu Bar
 
-1. **Editor Panel** (Left)
-   - Line-numbered code editor
-   - Syntax highlighting
-   - Auto-indentation
-   - Real-time syntax checking
+At the very top, three menus:
 
-2. **Output Panel** (Right Top)
-   - Program output display
-   - Error messages
-   - INPUT prompt handling
+- **File** - New, Open, Save, Save As, Recent Files, Exit
+- **Run** - Run Program, Stop, Step, Continue, List Program, Show Variables, Show Stack, Clear Output
+- **Help** - Help Topics, About
 
-3. **Debug Panel** (Right Middle)
-   - Variables inspector
-   - Breakpoint indicators
-   - Execution state
+### 2. Toolbar
 
-4. **Control Bar** (Top)
-   - Run/Stop buttons
-   - File operations
-   - Debug controls
-   - Settings menu
+Quick-access buttons below the menu bar:
+
+- **New** - Clear editor, start fresh program
+- **Open** - Upload a .BAS file from your computer
+- **Save** - Download current program (triggers Save As if not yet named)
+- **Save As** - Download program with custom filename
+- **Run** - Parse and execute the program (▶️ green button)
+- **Stop** - Stop running program (⏹️ red button)
+- **Step** - Execute one statement at a time (⏭️ button)
+- **Continue** - Resume execution after stepping (▶️⏸️ button)
+
+### 3. Program Editor
+
+**Large text area labeled "Program Editor"** - This is where you write your BASIC program.
+
+**Key feature: Automatic line numbering**
+- Type a statement and press Enter
+- First line becomes: `10 <your statement>`
+- Next line becomes: `20 <your statement>`
+- Lines increment by 10 automatically
+
+**Example:**
+```
+Type: PRINT "Hello"
+Press Enter → becomes: 10 PRINT "Hello"
+
+Type: END
+Press Enter → becomes: 20 END
+```
+
+You can also type your own line numbers if you prefer:
+```
+Type: 100 PRINT "Custom number"
+Press Enter → accepted as-is
+```
+
+### 4. Output
+
+**Text area labeled "Output"** - Shows program results, error messages, and diagnostics.
+
+- Read-only (you can't type here)
+- Shows what your program prints
+- Displays error messages if program fails
+- Shows "Ready" when program completes
+
+### 5. Input Area (appears when needed)
+
+When your program uses `INPUT`, a blue row appears with:
+- Prompt text (what the program is asking for)
+- Input field (where you type your answer)
+- Submit button (click or press Enter to send)
+
+**Example:**
+```basic
+10 INPUT "Your name"; N$
+```
+When this runs, the blue input area appears with "Your name" as the prompt.
+
+### 6. Command Area
+
+**Small text area labeled "Command"** at the bottom with an **Execute** button.
+
+Use this for immediate commands that **don't get added to your program**:
+
+**Try these:**
+```
+Type: PRINT 2+2
+Click Execute → Output shows: 4
+
+Type: X=10: PRINT X*X
+Click Execute → Output shows: 100
+```
+
+**Important:** The Command area does **NOT** auto-number. It executes immediately.
+
+### 7. Status Bar
+
+Bottom row shows:
+- Current status (Ready, Running, Stopped, etc.)
+- Version number (v1.0.xxx)
 
 ## Your First Program
 
-### Hello World
+Let's write a simple program:
 
-1. **Type in the editor:**
-   ```basic
-   10 PRINT "Hello, World!"
-   20 PRINT "Welcome to MBASIC Web UI"
-   30 END
-   ```
+### Step 1: Type in the Program Editor
 
-2. **Run the program:**
-   - Click the **Run** button or press `Ctrl+R`
-   - Output appears in the right panel
+Click in the **Program Editor** area (top) and type:
 
-### Interactive Input
+```
+PRINT "Hello, World!"
+```
 
+Press **Enter**. It becomes:
+```
+10 PRINT "Hello, World!"
+```
+
+Type:
+```
+END
+```
+
+Press **Enter**. It becomes:
+```
+20 END
+```
+
+### Step 2: Run It
+
+Click the green **Run** button (or use Run menu → Run Program).
+
+### Step 3: See Output
+
+The **Output** area shows:
+```
+Hello, World!
+Ready
+```
+
+Congratulations! You've run your first program.
+
+## Example: Interactive Input
+
+Try a program that asks for input:
+
+**In the Program Editor, type:**
+```
+INPUT "What's your name"; N$
+PRINT "Hello, "; N$
+INPUT "Enter your age"; A
+PRINT "You are"; A; "years old"
+END
+```
+
+**Remember:** Press Enter after each line, and line numbers are added automatically.
+
+**Your program becomes:**
 ```basic
 10 INPUT "What's your name"; N$
 20 PRINT "Hello, "; N$
@@ -74,160 +186,120 @@ The Web UI has four main areas:
 50 END
 ```
 
-When you run this:
-- Input prompts appear in the output panel
-- Type your response and press Enter
-- Program continues with your input
+**Click Run**, then:
+1. The blue input area appears with "What's your name" prompt
+2. Type your name and press Enter
+3. The program greets you
+4. Input area appears again with "Enter your age" prompt
+5. Type your age and press Enter
+6. The program tells you your age
 
 ## File Operations
 
-### Loading Programs
+### Opening a File
 
-**Method 1: File Menu**
-1. Click **File → Open** or press `Ctrl+O`
-2. Browse and select a .bas file
-3. Program loads in editor
+1. Click **Open** button (or File → Open)
+2. A dialog appears with a file picker
+3. Click to select a .BAS or .TXT file from your computer
+4. Click "Open" or just select it (depending on browser)
+5. File contents load into the Program Editor
 
-**Method 2: Drag and Drop**
-- Drag a .bas file onto the editor
-- File loads automatically
+### Saving a File
 
-### Saving Programs
+**First time saving:**
+1. Click **Save** button (or File → Save)
+2. Browser download dialog appears
+3. Enter a filename (default: `program.bas`)
+4. File downloads to your Downloads folder
 
-- **Save:** `Ctrl+S` - Saves to browser storage
-- **Save As:** `Ctrl+Shift+S` - Download as file
-- **Export:** File → Export - Download with custom name
+**Note:** The Web UI doesn't have a built-in filesystem. All saves are downloads to your computer.
 
-### Browser Storage
+**Save As:**
+- Use **Save As** to download with a different filename
+- File → Save As opens browser save dialog
 
-The Web UI uses browser localStorage to:
-- Save your current program
-- Remember recent files
-- Store preferences
-- Maintain breakpoints
+### Recent Files
 
-**Note:** Clearing browser data will remove stored programs!
+File → Recent Files shows recently opened files in this session (not persistent across browser restarts).
 
-## Basic Editing
+## Using the Command Area
 
-### Keyboard Shortcuts
+The **Command** area is perfect for quick tests and calculations **without modifying your program**.
 
-**Editing:**
-- `Ctrl+Z` - Undo
-- `Ctrl+Y` - Redo
-- `Ctrl+A` - Select all
-- `Ctrl+C` - Copy
-- `Ctrl+X` - Cut
-- `Ctrl+V` - Paste
+### Quick Math
+```
+Type in Command: PRINT 5 * 12
+Click Execute
+Output shows: 60
+```
 
-**Navigation:**
-- `Ctrl+G` - Go to line
-- `Ctrl+Home` - Go to start
-- `Ctrl+End` - Go to end
-- `F3` - Find next
+### Testing Variables
+```
+Type: X = 100
+Click Execute
 
-**Program Control:**
-- `Ctrl+R` - Run program
-- `Esc` - Stop program
-- `Ctrl+.` - Break execution
+Type: PRINT X * 2
+Click Execute
+Output shows: 200
+```
 
-### Line Operations
+### Quick Loops
+```
+Type: FOR I=1 TO 5: PRINT I: NEXT I
+Click Execute
+Output shows: 1 2 3 4 5
+```
 
-- **Add line:** Type number and code
-- **Replace line:** Type same number with new code
-- **Delete line:** Type just the number
-- **Insert between:** Use intermediate numbers (15, 25, etc.)
-
-## Running Programs
-
-### Execution Modes
-
-**Normal Run:**
-- Click Run or press `Ctrl+R`
-- Program executes from beginning
-- Stops at END or error
-
-**Debug Mode:**
-- Set breakpoints first
-- Click Debug or press `F5`
-- Execution pauses at breakpoints
-
-### Handling Input
-
-When program needs input:
-1. Prompt appears in output panel
-2. Input field activates
-3. Type your response
-4. Press Enter to continue
-
-### Stopping Programs
-
-- Click **Stop** button
-- Press `Esc` key
-- Press `Ctrl+C` (break)
-- Close browser tab (emergency)
+**When to use Command vs Editor:**
+- **Program Editor** - Write programs you want to save and run repeatedly
+- **Command area** - Quick calculations, testing ideas, checking values
 
 ## Debugging Features
 
-### Setting Breakpoints
+### Step Execution
 
-- Click line number to toggle breakpoint
-- Red dot indicates active breakpoint
-- Execution pauses before that line
+Want to see your program run one statement at a time?
 
-### During Break
+1. Click **Step** button instead of Run
+2. Program executes first statement and pauses
+3. Click **Step** again to execute next statement
+4. Click **Continue** to resume normal execution
+5. Click **Stop** to end execution
 
-When paused at breakpoint:
-- **Continue:** Resume execution
-- **Step:** Execute one line
-- **Stop:** End program
-- **Variables:** Inspect current values
+**Example:**
+```basic
+10 PRINT "Step 1"
+20 PRINT "Step 2"
+30 PRINT "Step 3"
+40 END
+```
 
-### Variable Inspector
+Click **Step** → Output shows "Step 1", program pauses
+Click **Step** → Output shows "Step 2", program pauses
+Click **Step** → Output shows "Step 3", program pauses
+Click **Step** → Program ends
 
-- Shows all defined variables
-- Updates in real-time
-- Double-click to edit values
-- Arrays show dimensions
+### Show Variables
 
-## Web UI Features
+While program is paused or after it runs:
+- Click Run → Show Variables
+- A popup shows all defined variables and their values
 
-### Auto-Save
+### Show Stack
 
-- Program auto-saves to browser storage
-- Saves every 30 seconds while editing
-- Recovers on browser restart
+See the current execution stack:
+- Click Run → Show Stack
+- Shows function/subroutine call stack
 
-### Syntax Checking
+### List Program
 
-- Real-time syntax validation
-- Red underlines for errors
-- Hover for error details
-- Updates as you type
-
-### Code Completion
-
-- Start typing BASIC keywords
-- Suggestions appear
-- Press Tab to complete
-- Works for statements and functions
-
-### Theme Options
-
-- Light/Dark mode toggle
-- Adjustable font size
-- Customizable colors
-- Saved in preferences
-
-## Tips and Tricks
-
-1. **Quick Run:** Press `Ctrl+R` anytime to run
-2. **Clear Output:** Click output panel header
-3. **Full Screen:** Press `F11` for more space
-4. **Multi-Line Edit:** Select multiple lines, then type
-5. **Quick Save:** `Ctrl+S` saves to browser instantly
+Want to see your program with line numbers?
+- Click Run → List Program
+- Output area shows formatted program listing
 
 ## Browser Compatibility
+
+The Web UI works with modern browsers:
 
 **Recommended:**
 - Chrome 90+
@@ -235,40 +307,56 @@ When paused at breakpoint:
 - Edge 90+
 - Safari 14+
 
-**Features requiring modern browser:**
-- localStorage (auto-save)
-- Clipboard API (copy/paste)
-- Drag and drop
-- WebSocket (future: collaborative editing)
+**Required browser features:**
+- JavaScript enabled
+- Modern HTML5 support
 
-## Troubleshooting
+## Tips and Tricks
 
-### Program Won't Run
-- Check for syntax errors (red underlines)
-- Ensure program has line numbers
-- Verify END statement exists
+1. **Auto-numbering:** Press Enter in Program Editor to get automatic line numbers
+2. **Quick test:** Use Command area to test expressions without changing your program
+3. **Clear output:** Run → Clear Output to empty the output area
+4. **Save often:** Click Save regularly - there's no auto-save
+5. **Check errors:** Red error messages in output show what went wrong
 
-### Lost Program
-- Check browser localStorage
-- Look in Downloads folder for saves
-- Use browser back button carefully
+## Common Issues
 
-### Performance Issues
-- Clear output panel if too full
-- Reduce program size if very large
-- Close other browser tabs
-- Check browser console for errors
+### Line numbers aren't being added
+
+**Problem:** You're typing in the Command area (bottom), not the Program Editor (top).
+
+**Solution:** Click in the large **Program Editor** area at the top.
+
+### Can't stop a program
+
+**Problem:** Infinite loop or program won't stop.
+
+**Solution:** Click the red **Stop** button (or Run → Stop).
+
+### Lost my program
+
+**Problem:** Refreshed browser and program is gone.
+
+**Solution:** The Web UI doesn't auto-save. Always **Save** your program before closing/refreshing.
+
+### Input area not appearing
+
+**Problem:** Program has `INPUT` but nothing happens.
+
+**Solution:** Make sure program is running (click Run first). Input area appears when program needs input.
 
 ## Next Steps
 
-- [Keyboard Shortcuts](keyboard-shortcuts.md) - Complete shortcut reference
+Now that you know the basics:
+
+- [Web UI Index](index.md) - Complete feature overview
+- [Keyboard Shortcuts](keyboard-shortcuts.md) - Quick reference
 - [Debugging Guide](debugging.md) - Advanced debugging
-- [Features](features.md) - All Web UI capabilities
-- [Settings](settings.md) - Customization options
+- [Language Reference](../../common/language/index.md) - BASIC language syntax
 
 ## Getting Help
 
-- Press `F1` for help
-- Type in output: `HELP <topic>`
-- Visit [MBASIC documentation](../../mbasic/index.md)
-- Check [Language Reference](../../common/language/index.md)
+- Click Help → Help Topics to browse documentation
+- See error messages in Output area
+- Check the [Language Reference](../../common/language/index.md) for BASIC commands
+- Visit [MBASIC documentation](../../mbasic/index.md) for implementation details
