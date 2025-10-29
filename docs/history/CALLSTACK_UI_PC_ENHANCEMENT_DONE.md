@@ -1,8 +1,9 @@
 # Call Stack UI Enhancement for PC-Aware Display
 
-**Status:** ⏳ TODO
+**Status:** ✅ COMPLETE (v1.0.300)
 **Priority:** MEDIUM
 **Created:** 2025-10-28 (v1.0.284)
+**Completed:** 2025-10-29 (v1.0.300)
 
 ## Problem
 
@@ -121,17 +122,18 @@ WHILE Loops:
 
 ## Implementation Tasks
 
-### Phase 1: Update Data Access (All UIs)
+### Phase 1: Update Data Access (All UIs) ✅ COMPLETE
 - [x] Runtime already stores PC data (completed in PC refactoring v1.0.276-278)
-- [ ] Verify GOSUB stack format: `[(line_num, stmt_offset), ...]`
-- [ ] Verify FOR loop info includes: `for_line`, `for_stmt`, `return_line`, `return_stmt`
-- [ ] Document access methods for UI developers
+- [x] Updated `get_gosub_stack()` to return `[(line_num, stmt_offset), ...]` tuples
+- [x] Updated `get_execution_stack()` to include `return_stmt`, `stmt` fields
+- [x] All execution stack entries now include statement offsets
 
-### Phase 2: Update Stack Display Formatting
+### Phase 2: Update Stack Display Formatting ✅ COMPLETE
 
-#### Curses UI (`src/ui/curses_ui.py`)
-- [ ] Locate GOSUB stack display code
-- [ ] Change format from `f"Return to {line}"` → `f"Return to {line}.{offset}"`
+#### Curses UI (`src/ui/curses_ui.py`) ✅ DONE
+- [x] Updated GOSUB display: `GOSUB from line 100.2`
+- [x] Updated FOR display: `FOR I = 1 TO 3 (line 10.0)`
+- [x] Updated WHILE display: `WHILE (line 10.2)`
 - [ ] Locate FOR loop stack display code
 - [ ] Change format to include statement positions
 - [ ] Test with multi-statement line programs

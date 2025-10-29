@@ -1,6 +1,41 @@
 # Work in Progress
 
-## Session - 2025-10-29 (Part 4) - Web UI Output Buffer Limiting
+## Session - 2025-10-29 (Part 5) - Call Stack PC Enhancement
+
+### Status ✅ COMPLETE
+
+Added statement-level precision to call stack displays, showing exact statement offsets for GOSUB, FOR, and WHILE entries.
+
+### Changes Made
+
+**Files:**
+- `src/runtime.py`:
+  - Updated `get_gosub_stack()` to return `[(line, stmt), ...]` tuples instead of just line numbers
+  - Updated `get_execution_stack()` to include `return_stmt` and `stmt` fields for all entry types
+  - Added statement offset tracking to GOSUB, FOR, and WHILE stack entries
+
+- `src/ui/curses_ui.py`:
+  - Updated stack display to show statement offsets: `100.2` format
+  - GOSUB: "GOSUB from line 100.2" (shows where to return)
+  - FOR: "FOR I = 1 TO 3 (line 10.0)" (shows loop location)
+  - WHILE: "WHILE (line 10.2)" (shows loop location)
+
+### Benefits
+- **Statement-level debugging**: Can see exactly which statement will execute after RETURN/NEXT
+- **Multi-statement clarity**: Distinguishes between multiple GOSUBs/FORs on same line
+- **Better UX**: More precise information for developers debugging complex programs
+
+### Example
+```
+GOSUB Stack (before): GOSUB from line 100
+GOSUB Stack (after):  GOSUB from line 100.2
+```
+
+Now you can see that execution will resume at the 3rd statement (index 2) on line 100.
+
+---
+
+## Session Complete - 2025-10-29 (Part 4) - Web UI Output Buffer Limiting
 
 ### Status ✅ COMPLETE
 

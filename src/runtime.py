@@ -1291,19 +1291,20 @@ class Runtime:
         return result
 
     def get_gosub_stack(self):
-        """Export GOSUB call stack.
+        """Export GOSUB call stack with statement-level precision.
 
-        Returns a list of line numbers representing GOSUB return points,
+        Returns a list of (line_number, stmt_offset) tuples representing GOSUB return points,
         ordered from oldest to newest (bottom to top of stack).
 
         Returns:
-            list: Line numbers where GOSUB was called
-                 Example: [100, 500, 1000]  # Called GOSUB at lines 100, 500, 1000
+            list: Tuples of (line_number, stmt_offset) where GOSUB was called
+                 Example: [(100, 0), (500, 2), (1000, 1)]  # Called GOSUB at 100.0, 500.2, 1000.1
 
         Note: The first element is the oldest GOSUB, the last is the most recent.
         """
-        # Extract just the return line numbers from GOSUB entries in the execution stack
-        return [entry['return_line'] for entry in self.execution_stack if entry['type'] == 'GOSUB']
+        # Extract return line and statement offset from GOSUB entries in the execution stack
+        return [(entry['return_line'], entry['return_stmt'])
+                for entry in self.execution_stack if entry['type'] == 'GOSUB']
 
     def get_execution_stack(self):
         """Export unified execution stack (GOSUB, FOR, WHILE) in nesting order.
@@ -1359,7 +1360,8 @@ class Runtime:
                 result.append({
                     'type': 'GOSUB',
                     'from_line': entry.get('return_line', 0),  # Line to return to
-                    'return_line': entry.get('return_line', 0)
+                    'return_line': entry.get('return_line', 0),
+                    'return_stmt': entry.get('return_stmt', 0)  # Statement offset
                 })
             elif entry['type'] == 'FOR':
                 # Get current value of loop variable
@@ -1374,12 +1376,14 @@ class Runtime:
                     'current': current_value,
                     'end': entry.get('end', 0),
                     'step': entry.get('step', 1),
-                    'line': entry.get('return_line', 0)
+                    'line': entry.get('return_line', 0),
+                    'stmt': entry.get('return_stmt', 0)  # Statement offset
                 })
             elif entry['type'] == 'WHILE':
                 result.append({
                     'type': 'WHILE',
-                    'line': entry.get('while_line', 0)
+                    'line': entry.get('while_line', 0),
+                    'stmt': entry.get('while_stmt', 0)  # Statement offset
                 })
 
         return result

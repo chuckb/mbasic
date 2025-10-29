@@ -2947,18 +2947,22 @@ Run                           Debug Windows
             indent = "  " * i  # Indent to show nesting level
 
             if entry['type'] == 'GOSUB':
-                line = f"{indent}GOSUB from line {entry['from_line']}"
+                # Show statement-level precision for GOSUB return address
+                return_stmt = entry.get('return_stmt', 0)
+                line = f"{indent}GOSUB from line {entry['from_line']}.{return_stmt}"
             elif entry['type'] == 'FOR':
                 var = entry['var']
                 current = entry['current']
                 end = entry['end']
                 step = entry['step']
+                stmt = entry.get('stmt', 0)
                 line = f"{indent}FOR {var} = {current} TO {end}"
                 if step != 1:
                     line += f" STEP {step}"
-                line += f" (line {entry['line']})"
+                line += f" (line {entry['line']}.{stmt})"
             elif entry['type'] == 'WHILE':
-                line = f"{indent}WHILE (line {entry['line']})"
+                stmt = entry.get('stmt', 0)
+                line = f"{indent}WHILE (line {entry['line']}.{stmt})"
             else:
                 line = f"{indent}Unknown: {entry}"
 
