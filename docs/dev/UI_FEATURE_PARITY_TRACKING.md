@@ -242,5 +242,49 @@ docs/help/ui/
 
 ---
 
-**Last Updated:** 2025-10-29
+**Last Updated:** 2024-10-29
 **Next Review:** Weekly to track progress
+
+---
+
+## User-Facing Feature Comparison (2024-10-29)
+
+**Based on actual menu/toolbar/keyboard availability, not code existence**
+
+### Execution Control Discrepancies
+
+| Feature | Curses | Tkinter | Web | Notes |
+|---------|--------|---------|-----|-------|
+| Step Line | ❌ Missing | ✅ Toolbar "Step" | ❌ Missing | Tk has both line & stmt stepping |
+| Step Statement | ✅ Ctrl+T | ✅ Toolbar "Stmt" | ✅ Toolbar "Step" | **Web labels stmt as "Step"** |
+| Stop | ❌ Missing | ✅ Button | ✅ Button | **Curses can't stop running programs** |
+
+### Critical Findings
+
+**Tkinter is MOST complete:**
+- Has both Step Line and Step Statement (labeled "Step" and "Stmt")
+- Complete menu system with all features
+- 29/32 features (91%)
+
+**Web UI mislabeling:**
+- Button labeled "Step" actually does statement stepping (`_menu_step`)
+- **Missing Step Line** entirely (no toolbar button or menu item for `_menu_step_line`)
+- Missing breakpoint management
+- 20/32 features (63%)
+
+**Curses UI critical gaps:**
+- **No way to stop running program** - major usability issue
+- No Step Line functionality
+- Missing clipboard operations
+- 14/32 features (44%)
+
+### Recommendation
+
+**Web UI needs:**
+1. Add "Step Line" button (implement `_menu_step_line` in UI)
+2. Rename current "Step" button to "Step Stmt" for clarity
+3. Add breakpoint toggle button/menu
+
+**Curses UI needs:**
+1. Add Stop command (Ctrl+K or Ctrl+Esc)
+2. Add Step Line command
