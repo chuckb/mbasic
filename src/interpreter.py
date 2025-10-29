@@ -2464,31 +2464,6 @@ class Interpreter:
         # - Pausing after each one
         # - Showing current position
 
-    def execute_watch(self, stmt):
-        """Execute WATCH statement (debug command)
-
-        WATCH displays variable values for debugging.
-        This is a minimal implementation.
-        """
-        if stmt.variable:
-            # Watch a specific variable
-            var_name = stmt.variable.lower()
-            # Try to get the variable value
-            try:
-                # Try with no suffix first
-                value = self.runtime.get_variable(var_name, None, token=None)
-                self.io.output(f"{stmt.variable} = {value}")
-            except:
-                try:
-                    # Try with $ suffix for strings
-                    value = self.runtime.get_variable(var_name, '$', token=None)
-                    self.io.output(f"{stmt.variable}$ = {value}")
-                except:
-                    self.io.output(f"?Undefined variable: {stmt.variable}")
-        else:
-            # Show all variables - minimal implementation
-            self.io.output("WATCH - Variable inspection (full implementation pending)")
-
     # ========================================================================
     # Expression Evaluation
     # ========================================================================

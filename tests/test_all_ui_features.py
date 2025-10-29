@@ -303,28 +303,6 @@ class CLIFeatureTests(UIFeatureTest):
         except:
             return False
 
-    def test_watch(self):
-        """WATCH command (variable inspection)"""
-        try:
-            proc = subprocess.Popen(
-                [sys.executable, "mbasic.py", "--backend", "cli"],
-                cwd=self.project_root,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
-            proc.stdin.write("10 X = 5\n")
-            proc.stdin.write("WATCH\n")
-            proc.stdin.write("SYSTEM\n")
-            proc.stdin.flush()
-            stdout, _ = proc.communicate(timeout=3)
-            # Should not produce "Unknown statement" error
-            combined = stdout.lower()
-            return "unknown statement" not in combined
-        except:
-            return False
-
     def test_stack(self):
         """STACK command"""
         try:
@@ -486,7 +464,6 @@ class CLIFeatureTests(UIFeatureTest):
 
         # Variable Inspection
         print("\n4. VARIABLE INSPECTION")
-        self.test("Variables Window", self.test_watch)
         self.test("Execution Stack", self.test_stack)
 
         # Help System

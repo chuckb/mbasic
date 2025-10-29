@@ -690,20 +690,6 @@ class StepStatementNode:
 
 
 @dataclass
-class WatchStatementNode:
-    """WATCH statement - variable inspection (debug command)
-
-    Syntax: WATCH [variable]
-
-    WATCH displays variable values during debugging.
-    If no variable specified, shows all variables.
-    """
-    variable: str = None
-    line_num: int = 0
-    column: int = 0
-
-
-@dataclass
 class RandomizeStatementNode:
     """RANDOMIZE statement - initialize random number generator
 

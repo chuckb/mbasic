@@ -526,8 +526,6 @@ class Parser:
             return self.parse_cont()
         elif token.type == TokenType.STEP:
             return self.parse_step()
-        elif token.type == TokenType.WATCH:
-            return self.parse_watch()
         elif token.type == TokenType.RANDOMIZE:
             return self.parse_randomize()
         elif token.type == TokenType.SWAP:
@@ -1987,29 +1985,6 @@ class Parser:
         from src.ast_nodes import StepStatementNode
         return StepStatementNode(
             count=count,
-            line_num=token.line,
-            column=token.column
-        )
-
-    def parse_watch(self):
-        """Parse WATCH statement (debug command)
-
-        Syntax: WATCH [variable]
-
-        WATCH shows variable values during debugging.
-        """
-        token = self.advance()
-        variable = None
-
-        # Check if there's a variable argument
-        next_token = self.peek()
-        if next_token and next_token.type == TokenType.IDENTIFIER:
-            var_token = self.advance()
-            variable = var_token.value
-
-        from src.ast_nodes import WatchStatementNode
-        return WatchStatementNode(
-            variable=variable,
             line_num=token.line,
             column=token.column
         )
