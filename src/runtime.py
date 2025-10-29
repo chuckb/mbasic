@@ -1145,15 +1145,6 @@ class Runtime:
         """
         return self.npc is not None
 
-    def is_sequential_execution(self):
-        """
-        Check if execution should continue sequentially (no jump pending).
-
-        Returns:
-            True if no jump pending, False if GOTO/GOSUB jump is waiting
-        """
-        return self.npc is None
-
     def has_error_handler(self):
         """
         Check if an error handler is installed (ON ERROR GOTO).
