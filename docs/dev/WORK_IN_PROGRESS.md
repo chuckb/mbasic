@@ -2,11 +2,46 @@
 
 ## No Active Work
 
-Last session completed: 2025-10-29 - AST/line_table_dict redundancy removal (v1.0.300)
+Last session completed: 2025-10-29 - UI updates for line_table removal (v1.0.301)
 
 All work committed and pushed.
 
-### Session Summary
+### Session Summary - 2025-10-29 (Part 7) - UI Updates for line_table Removal
+
+**Background:** In the previous session (v1.0.300), we removed `self.ast` and `self.line_table_dict` fields from Runtime, replacing them with `self._ast_or_line_table`. However, the cross-reference analysis revealed that two UIs (curses_ui.py and tk_ui.py) were still referencing the removed `runtime.line_table` field.
+
+**Changes Made:**
+
+1. **curses_ui.py** (src/ui/curses_ui.py)
+   - Changed `_format_line()` signature from `line_node` parameter to `statements` (list)
+   - Changed `_update_display()` signature from `line_table` parameter to `statement_table`
+   - Updated call sites to use `runtime.statement_table.get_line_statements(line_num)`
+   - All 4 references to `runtime.line_table` replaced with `runtime.statement_table`
+
+2. **tk_ui.py** (src/ui/tk_ui.py:813)
+   - Replaced `runtime.line_table = new_line_table` assignment
+   - Now uses `runtime.statement_table.replace_line(line_num, line_node)` for each line
+   - After program edits, properly rebuilds statement_table instead of assigning to removed field
+
+3. **cross_reference.py** (utils/cross_reference.py - NEW)
+   - Created custom Python AST-based cross-reference analyzer
+   - Finds unused variables/functions and undefined references
+   - Used to discover the orphaned line_table references
+
+**Verification:**
+- ✓ Verified no line_table field exists in runtime.py
+- ✓ Verified no line_table references in cli_ui.py or web UI
+- ✓ Python syntax check passed for all modified files
+- ✓ Basic program execution test passed (error handling, FOR loops, GOSUB)
+
+**Impact:**
+- Fixed crash bug where UIs would fail when accessing removed `runtime.line_table` field
+- UIs now properly use the new `statement_table` with PC-based execution
+- Cleaner architecture - no duplicate state tracking
+
+---
+
+### Session Summary - Previous Sessions
 Removed multiple redundant state fields from Runtime after identifying they were only needed temporarily during initialization.
 
 **Part 1: Error state redundancy (v1.0.299)**
