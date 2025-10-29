@@ -2,13 +2,20 @@
 
 ## No Active Work
 
-Last session completed: 2025-10-29 - PC_OLD_EXECUTION_METHODS refactoring (v1.0.300)
+Last session completed: 2025-10-29 - line_order redundancy removal (v1.0.299)
 
-All work committed and ready to push.
+All work committed and pushed.
+
+### Session Summary
+Removed redundant `line_order` field from Runtime. It was just maintaining `sorted(line_table.keys())`, causing unnecessary data duplication and sync overhead.
+
+- Eliminated ~22 references across 5 files
+- Replaced with on-demand `sorted(line_table.keys())` calls
+- Fixed execute_while() to use statement_table.next_pc()
+- All tests passing (FOR, WHILE/WEND, GOSUB/RETURN)
 
 ### Next Session Recommendations
-- Test old test files that used step_once() - may need updating
-- Consider additional UX improvements
+- Consider other data redundancy optimizations
 - Review remaining TODOs
 
 ---
