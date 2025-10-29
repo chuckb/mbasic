@@ -90,15 +90,6 @@ class InterpreterState:
                     return getattr(stmt, 'char_end', 0)
         return 0
 
-    @property
-    def current_statement_index(self) -> int:
-        """Get current statement offset from runtime.pc (computed property)"""
-        if self._interpreter and hasattr(self._interpreter, 'runtime'):
-            pc = self._interpreter.runtime.pc
-            return pc.stmt_offset if pc and not pc.halted() else 0
-        return 0
-
-
 class Interpreter:
     """Execute MBASIC AST with tick-based execution for UI integration"""
 

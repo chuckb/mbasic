@@ -1005,7 +1005,8 @@ class MBasicWebIDE:
                 # Hit breakpoint
                 self.paused_at_breakpoint = True
                 state = self.interpreter.state
-                stmt_info = f' statement {state.current_statement_index + 1}' if state.current_statement_index > 0 else ''
+                pc = self.runtime.pc if self.runtime else None
+                stmt_info = f' statement {pc.stmt_offset + 1}' if pc and pc.stmt_offset > 0 else ''
                 self.status_label.text = f'Paused at breakpoint (line {self.interpreter.current_line_number}{stmt_info})'
                 ui.notify(f'Breakpoint at line {self.interpreter.current_line_number}', type='info')
                 self.running = False
@@ -1023,7 +1024,8 @@ class MBasicWebIDE:
 
             # Continue execution - show current position
             state = self.interpreter.state
-            stmt_info = f' [stmt {state.current_statement_index + 1}]' if state.current_statement_index > 0 else ''
+            pc = self.runtime.pc if self.runtime else None
+            stmt_info = f' [stmt {pc.stmt_offset + 1}]' if pc and pc.stmt_offset > 0 else ''
             self.status_label.text = f'Running... line {self.interpreter.current_line_number}{stmt_info}'
             ui.timer(0.01, self.execute_ticks, once=True)
 
@@ -1050,7 +1052,8 @@ class MBasicWebIDE:
             self.update_stack_window()
 
             state = self.interpreter.state
-            stmt_info = f' statement {state.current_statement_index + 1}' if state.current_statement_index > 0 else ''
+            pc = self.runtime.pc if self.runtime else None
+            stmt_info = f' statement {pc.stmt_offset + 1}' if pc and pc.stmt_offset > 0 else ''
 
             if result == 'DONE':
                 self.status_label.text = 'Program completed'

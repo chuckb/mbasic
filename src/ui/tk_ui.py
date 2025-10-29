@@ -728,7 +728,8 @@ class TkBackend(UIBackend):
 
             # Handle state
             if state.status == 'paused' or state.status == 'at_breakpoint':
-                stmt_info = f" statement {state.current_statement_index + 1}" if state.current_statement_index > 0 else ""
+                pc = self.runtime.pc if self.runtime else None
+                stmt_info = f" statement {pc.stmt_offset + 1}" if pc and pc.stmt_offset > 0 else ""
                 self._add_output(f"→ Paused at line {state.current_line}{stmt_info}\n")
                 self._set_status(f"Paused at line {state.current_line}{stmt_info}")
                 # Set breakpoint flag if we hit one

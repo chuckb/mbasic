@@ -1799,9 +1799,10 @@ class CursesBackend(UIBackend):
                 # Update editor display with statement highlighting
                 if state.status in ('paused', 'at_breakpoint') and state.current_line:
                     # Highlight the current statement in the editor
+                    pc = self.runtime.pc if self.runtime else None
                     self.editor._update_display(
                         highlight_line=state.current_line,
-                        highlight_stmt=state.current_statement_index,
+                        highlight_stmt=pc.stmt_offset if pc else 0,
                         statement_table=self.runtime.statement_table if self.runtime else None
                     )
 
@@ -1815,7 +1816,8 @@ class CursesBackend(UIBackend):
 
                 # Show where we paused
                 if state.status in ('paused', 'at_breakpoint'):
-                    stmt_info = f" statement {state.current_statement_index + 1}" if state.current_statement_index > 0 else ""
+                    pc = self.runtime.pc if self.runtime else None
+                    stmt_info = f" statement {pc.stmt_offset + 1}" if pc and pc.stmt_offset > 0 else ""
                     self.output_buffer.append(f"→ Paused at line {state.current_line}{stmt_info}")
                     self._update_output()
                     self.status_bar.set_text(f"Paused at line {state.current_line}{stmt_info} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
