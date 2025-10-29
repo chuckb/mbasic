@@ -1713,6 +1713,16 @@ class WebFeatureTests(UIFeatureTest):
         except:
             return False
 
+    def test_has_resource_usage(self):
+        """Test has Resource Usage feature"""
+        try:
+            with open('src/ui/web/nicegui_backend.py', 'r') as f:
+                source = f.read()
+                # Check for resource usage display
+                return 'resource_usage_label' in source and '_update_resource_usage' in source
+        except:
+            return False
+
     def run_all(self):
         """Run all Web tests"""
         print(f"\n{'='*60}")
@@ -1752,6 +1762,7 @@ class WebFeatureTests(UIFeatureTest):
         self.test("Edit Variable Value", self.test_has_edit_variable)
         self.test("Variable Filtering", self.test_has_variable_filtering)
         self.test("Variable Sorting", self.test_has_variable_sorting)
+        self.test("Resource Usage", self.test_has_resource_usage)
 
         print("\n5. EDITOR FEATURES")
         self.test("Line Editing", self.test_has_line_editing)

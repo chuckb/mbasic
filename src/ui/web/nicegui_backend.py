@@ -257,7 +257,9 @@ class NiceGUIBackend(UIBackend):
                 # Status
                 with ui.row().classes('w-full bg-gray-200 q-pa-xs').style('justify-content: space-between;'):
                     self.status_label = ui.label('Ready').mark('status')
-                    ui.label(f'v{VERSION}').classes('text-gray-600')
+                    with ui.row().classes('gap-4'):
+                        self.resource_usage_label = ui.label('').classes('text-gray-600')
+                        ui.label(f'v{VERSION}').classes('text-gray-600')
 
     def _create_menu(self):
         """Create menu bar."""
@@ -880,6 +882,9 @@ class NiceGUIBackend(UIBackend):
                 self._notify('No program running', type='warning')
                 return
 
+            # Update resource usage
+            self._update_resource_usage()
+
             # Create dialog with variables table
             with ui.dialog() as dialog, ui.card().classes('w-[800px]'):
                 ui.label('Program Variables').classes('text-xl font-bold')
@@ -1427,6 +1432,18 @@ class NiceGUIBackend(UIBackend):
         """Set status bar message."""
         if self.status_label:
             self.status_label.text = message
+
+    def _update_resource_usage(self):
+        """Update resource usage display."""
+        if hasattr(self, 'resource_usage_label') and self.resource_usage_label and self.runtime:
+            try:
+                # Count variables
+                var_count = len(self.runtime.variables) if hasattr(self.runtime, 'variables') else 0
+                # Get array count
+                array_count = len(self.runtime.arrays) if hasattr(self.runtime, 'arrays') else 0
+                self.resource_usage_label.text = f'{var_count} vars, {array_count} arrays'
+            except:
+                pass
 
     # =========================================================================
     # UIBackend Interface
