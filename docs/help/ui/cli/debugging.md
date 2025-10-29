@@ -7,9 +7,9 @@ The CLI backend provides powerful debugging commands for interactive debugging o
 The CLI debugger allows you to:
 - Set and manage breakpoints
 - Single-step through program execution
-- Inspect and modify variables
 - View the execution stack
 - Control program flow during debugging
+- Inspect variables using PRINT statement
 
 ## Debugging Commands
 
@@ -88,49 +88,6 @@ Ready
 - Shows current line before execution
 - Can be combined with breakpoints
 
-### WATCH - Variable Inspection
-
-Monitor and inspect variable values during debugging.
-
-**Syntax:**
-```
-WATCH                  - List all variables and values
-WATCH variable         - Show specific variable value
-WATCH variable=value   - Set variable value (immediate mode)
-WATCH variable, var2   - Watch multiple variables
-```
-
-**Examples:**
-```
-Ready
-10 A = 5
-20 B$ = "Hello"
-30 DIM C(3)
-40 C(1) = 10
-RUN
-[Program ended]
-Ready
-WATCH                  # List all variables
-Variables:
-  A = 5 (Integer)
-  B$ = "Hello" (String)
-  C() = Array[3] (Array)
-Ready
-WATCH A                # Show specific variable
-A = 5
-Ready
-WATCH C(1)             # Show array element
-C(1) = 10
-Ready
-```
-
-**Notes:**
-- Shows variable type and value
-- Arrays show dimensions
-- String variables show quoted values
-- Can be used during program execution or after
-- Setting values only works in immediate mode
-
 ### STACK - Call Stack Inspection
 
 View the current execution stack including GOSUB calls and FOR loops.
@@ -171,7 +128,7 @@ Ready
 When a breakpoint is hit or during STEP execution, you enter debug mode.
 
 **In debug mode you can:**
-- Examine variables with WATCH or PRINT
+- Examine variables with PRINT
 - Modify variables with assignment statements
 - Set/clear additional breakpoints
 - View the stack with STACK
@@ -190,9 +147,9 @@ LIST                   # Review the code
 BREAK 50               # Set breakpoint at suspicious line
 RUN                    # Run program
 [Break at line 50]
-WATCH                  # Check all variables
+PRINT A, B, C          # Check variables
 STEP                   # Execute one statement
-WATCH A                # Check specific variable
+PRINT A                # Check specific variable
 CONT                   # Continue execution
 ```
 
@@ -209,9 +166,9 @@ Ready
 BREAK 30               # Break inside loop
 RUN
 [Break at line 30]
-WATCH I, A, B          # Watch loop variables
+PRINT I, A, B          # Check loop variables
 STEP                   # Step through iterations
-WATCH I, A, B          # See values change
+PRINT I, A, B          # See values change
 CONT                   # Continue to next iteration
 ```
 
@@ -232,7 +189,7 @@ RUN
 [Break at line 200]
 STACK                  # See where we came from
 STEP 3                 # Execute subroutine
-WATCH X, Y             # Check subroutine variables
+PRINT X, Y             # Check subroutine variables
 CONT                   # Return to main program
 ```
 
@@ -240,7 +197,7 @@ CONT                   # Return to main program
 
 1. **Start with LIST**: Review your program before debugging
 2. **Use meaningful breakpoints**: Set them before suspicious code
-3. **Watch key variables**: Monitor variables that control program flow
+3. **Print key variables**: Use PRINT to monitor variables that control program flow
 4. **Step through loops once**: Understand loop behavior before continuing
 5. **Check the stack**: Useful when debugging nested subroutines
 6. **Clear breakpoints when done**: Use BREAK CLEAR to remove all
@@ -248,9 +205,9 @@ CONT                   # Return to main program
 ## Limitations
 
 - Breakpoints don't persist across program edits
-- WATCH can show but not modify arrays during execution
 - STEP INTO/OVER not yet implemented (use STEP)
 - No conditional breakpoints (must check conditions manually)
+- Variable inspection uses PRINT statement (no dedicated inspection command)
 
 ## See Also
 
