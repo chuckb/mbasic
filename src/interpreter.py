@@ -43,10 +43,12 @@ class InterpreterState:
     status: Literal['idle', 'running', 'paused', 'done',
                     'waiting_for_input', 'at_breakpoint', 'error'] = 'idle'
 
-    # Execution position for UI display (synced from runtime.pc during execution)
-    current_line: Optional[int] = None  # Current line number (set to pc.line_num)
-    current_statement_char_start: int = 0  # Character position for highlighting (from statement.char_start)
-    current_statement_char_end: int = 0    # Character position for highlighting (from statement.char_end)
+    # Execution position for UI display (CACHED - synced from runtime.pc during execution)
+    # NOTE: This is duplicated data! UIs should migrate to reading interpreter.runtime.pc directly.
+    # Kept for backwards compatibility with existing UIs.
+    current_line: Optional[int] = None  # Cached from runtime.pc.line_num
+    current_statement_char_start: int = 0  # Cached from statement.char_start
+    current_statement_char_end: int = 0    # Cached from statement.char_end
 
     # Input handling (THE CRITICAL STATE)
     input_prompt: Optional[str] = None
