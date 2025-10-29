@@ -574,14 +574,14 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # Let parent handle the key (allows arrows, backspace, etc.)
         return super().keypress(size, key)
 
-    def _format_line(self, line_num, code_text, highlight_stmt=None, line_node=None):
+    def _format_line(self, line_num, code_text, highlight_stmt=None, statements=None):
         """Format a single program line with status, line number, and code.
 
         Args:
             line_num: Line number
             code_text: BASIC code text
             highlight_stmt: Optional statement index to highlight (0-based)
-            line_node: Optional LineNode from parser (needed for highlight)
+            statements: Optional list of statement nodes for line (needed for highlight)
 
         Returns:
             Formatted string or urwid markup: "SNNNNN CODE" with optional highlighting
@@ -601,12 +601,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         prefix = f"{status}{line_num_str} "
 
         # If no highlighting requested, return simple string
-        if highlight_stmt is None or line_node is None:
+        if highlight_stmt is None or statements is None:
             return prefix + code_text
 
         # Find statement boundaries for highlighting
         try:
-            statements = line_node.statements
             if highlight_stmt < 0 or highlight_stmt >= len(statements):
                 # Invalid statement index, return without highlight
                 return prefix + code_text
@@ -638,13 +637,13 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             # If anything goes wrong, return without highlighting
             return prefix + code_text
 
-    def _update_display(self, highlight_line=None, highlight_stmt=None, line_table=None):
+    def _update_display(self, highlight_line=None, highlight_stmt=None, statement_table=None):
         """Update the text display with all program lines.
 
         Args:
             highlight_line: Optional line number to highlight a statement on
             highlight_stmt: Optional statement index to highlight (0-based)
-            line_table: Optional dict of line_num -> LineNode for getting statement positions
+            statement_table: Optional StatementTable for getting statement info
         """
         if not self.lines:
             # Empty program - start with first line number ready
@@ -659,9 +658,9 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 code_text = self.lines[line_num]
 
                 # Check if this line should be highlighted
-                if line_num == highlight_line and line_table and line_num in line_table:
-                    line_node = line_table[line_num]
-                    formatted = self._format_line(line_num, code_text, highlight_stmt, line_node)
+                if line_num == highlight_line and statement_table:
+                    statements = statement_table.get_line_statements(line_num)
+                    formatted = self._format_line(line_num, code_text, highlight_stmt, statements)
                 else:
                     formatted = self._format_line(line_num, code_text)
 
@@ -1804,7 +1803,7 @@ class CursesBackend(UIBackend):
                     self.editor._update_display(
                         highlight_line=state.current_line,
                         highlight_stmt=state.current_statement_index,
-                        line_table=self.runtime.line_table if self.runtime else None
+                        statement_table=self.runtime.statement_table if self.runtime else None
                     )
 
                     # Update variables window if visible
@@ -1878,7 +1877,7 @@ class CursesBackend(UIBackend):
                     self.editor._update_display(
                         highlight_line=state.current_line,
                         highlight_stmt=0,  # Highlight whole line, not specific statement
-                        line_table=self.runtime.line_table if self.runtime else None
+                        statement_table=self.runtime.statement_table if self.runtime else None
                     )
 
                     # Update variables window if visible

@@ -805,13 +805,11 @@ class TkBackend(UIBackend):
                     return
 
                 # Update the interpreter's runtime with new program
-                # Build line_table from ProgramNode.lines
-                new_line_table = {}
+                # Rebuild statement_table from ProgramNode.lines
                 for line in program.lines:
-                    new_line_table[line.line_number] = line
+                    self.runtime.statement_table.replace_line(line.line_number, line)
 
-                self.runtime.line_table = new_line_table
-                debug_log(f"Updated line_table with {len(new_line_table)} lines", level=1)
+                debug_log(f"Updated statement_table with {len(program.lines)} lines", level=1)
 
                 # Validate execution stack after program edits
                 valid, removed_entries, messages = self.runtime.validate_stack()
