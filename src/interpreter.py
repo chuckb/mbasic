@@ -660,22 +660,6 @@ class Interpreter:
 
         return None
 
-    def advance_to_next_statement(self):
-        """
-        Advance to the next statement in the current line.
-
-        This is the single point of control for statement advancement.
-        Should be called after executing a statement (if no jump occurred).
-
-        Returns:
-            bool: True if advanced successfully, False if at end of line or jump pending
-        """
-        if self.runtime.has_pending_jump():
-            return False
-
-        self.runtime.current_stmt_index += 1
-        return True
-
     def execute_statement(self, stmt):
         """Execute a single statement"""
         # Get statement type name
