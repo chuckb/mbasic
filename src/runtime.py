@@ -9,10 +9,12 @@ This module manages:
 - DATA statement indexing
 - User-defined functions (DEF FN)
 - File I/O state
+- Program counter (PC) based execution
 """
 
 import time
 from src.ast_nodes import DataStatementNode, DefFnStatementNode
+from src.pc import PC, StatementTable
 
 
 def split_variable_name_and_suffix(full_name):
@@ -67,7 +69,12 @@ class Runtime:
         self.array_base = 0           # Array index base (0 or 1, set by OPTION BASE)
         self.option_base_executed = False  # Track if OPTION BASE has been executed (can only execute once)
 
-        # Execution control
+        # Execution control - NEW PC-based design
+        self.pc = PC.halted_pc()      # Current program counter (line, stmt_offset)
+        self.npc = None               # Next program counter (set by GOTO/GOSUB/etc., None = sequential)
+        self.statement_table = StatementTable()  # Ordered collection of statements indexed by PC
+
+        # Execution control - OLD design (DEPRECATED - kept for compatibility during migration)
         self.current_line = None      # Currently executing LineNode
         self.current_stmt_index = 0   # Index of current statement in line
         self.halted = False           # Program finished?
@@ -152,9 +159,14 @@ class Runtime:
             # Sort line numbers for sequential execution
             self.line_order.sort()
 
-        # Extract DATA values and DEF FN definitions
+        # Build statement table and extract DATA values and DEF FN definitions
         for line in lines_to_process:
-            for stmt in line.statements:
+            for stmt_offset, stmt in enumerate(line.statements):
+                # Add to statement table with PC
+                pc = PC(line.line_number, stmt_offset)
+                self.statement_table.add(pc, stmt)
+
+                # Extract DATA and DEF FN
                 if isinstance(stmt, DataStatementNode):
                     # Store data values and track which line they came from
                     for value in stmt.values:
@@ -169,6 +181,9 @@ class Runtime:
                             self.data_items.append(value)
                 elif isinstance(stmt, DefFnStatementNode):
                     self.user_functions[stmt.name] = stmt
+
+        # Initialize PC to first statement
+        self.pc = self.statement_table.first_pc()
 
         return self
 

@@ -11,6 +11,7 @@ from typing import Literal, Optional, Callable, Any
 from src.runtime import Runtime
 from src.basic_builtins import BuiltinFunctions, TabMarker, SpcMarker, UsingFormatter
 from src.tokens import TokenType
+from src.pc import PC
 import src.ast_nodes as ast_nodes
 
 
@@ -1264,6 +1265,7 @@ class Interpreter:
             if stmt.then_line_number is not None:
                 # THEN line_number
                 self.runtime.next_line = stmt.then_line_number
+                self.runtime.npc = PC.from_line(stmt.then_line_number)
             elif stmt.then_statements:
                 # THEN statement(s)
                 for then_stmt in stmt.then_statements:
@@ -1275,6 +1277,7 @@ class Interpreter:
             if stmt.else_line_number is not None:
                 # ELSE line_number
                 self.runtime.next_line = stmt.else_line_number
+                self.runtime.npc = PC.from_line(stmt.else_line_number)
             elif stmt.else_statements:
                 # ELSE statement(s)
                 for else_stmt in stmt.else_statements:
@@ -1288,21 +1291,33 @@ class Interpreter:
         if self.runtime.in_error_handler:
             self.runtime.in_error_handler = False
             self.runtime.error_occurred = False
+        # Set both old and new PC
         self.runtime.next_line = stmt.line_number
+        self.runtime.npc = PC.from_line(stmt.line_number)
 
     def execute_gosub(self, stmt):
         """Execute GOSUB statement"""
         # Check resource limits
         self.limits.push_gosub(stmt.line_number)
 
-        # Push return address
-        self.runtime.push_gosub(
-            self.runtime.current_line.line_number,
-            self.runtime.current_stmt_index + 1
-        )
+        # Push return address (use PC if available, fallback to old method)
+        if not self.runtime.pc.halted():
+            return_pc = self.runtime.statement_table.next_pc(self.runtime.pc)
+            # Also update old-style stack for compatibility
+            self.runtime.push_gosub(
+                self.runtime.current_line.line_number,
+                self.runtime.current_stmt_index + 1
+            )
+        else:
+            # Fallback to old method
+            self.runtime.push_gosub(
+                self.runtime.current_line.line_number,
+                self.runtime.current_stmt_index + 1
+            )
 
         # Jump to subroutine
         self.runtime.next_line = stmt.line_number
+        self.runtime.npc = PC.from_line(stmt.line_number)
 
     def execute_ongoto(self, stmt):
         """Execute ON...GOTO statement - computed GOTO
@@ -1326,6 +1341,7 @@ class Interpreter:
                 self.runtime.in_error_handler = False
                 self.runtime.error_occurred = False
             self.runtime.next_line = stmt.line_numbers[index - 1]
+            self.runtime.npc = PC.from_line(stmt.line_numbers[index - 1])
         # If index is out of range, just continue to next statement (no jump)
 
     def execute_ongosub(self, stmt):
@@ -1355,6 +1371,7 @@ class Interpreter:
             )
             # Jump to subroutine
             self.runtime.next_line = stmt.line_numbers[index - 1]
+            self.runtime.npc = PC.from_line(stmt.line_numbers[index - 1])
         # If index is out of range, just continue to next statement (no jump)
 
     def execute_return(self, stmt):
@@ -1383,6 +1400,8 @@ class Interpreter:
         # Jump back to the line and statement after GOSUB
         self.runtime.next_line = return_line
         self.runtime.next_stmt_index = return_stmt
+        # Also set NPC for new PC-based execution
+        self.runtime.npc = PC(return_line, return_stmt)
 
     def execute_for(self, stmt):
         """Execute FOR statement"""
