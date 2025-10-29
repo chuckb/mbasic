@@ -27,11 +27,7 @@ class UIFeatureTest:
         """Run a single test"""
         try:
             result = test_func()
-            if result is None:
-                self.skipped.append(feature_name)
-                print(f"  ⊝ {feature_name} [SKIPPED]")
-                return None
-            elif result:
+            if result:
                 self.passed.append(feature_name)
                 print(f"  ✓ {feature_name}")
                 return True
@@ -47,7 +43,7 @@ class UIFeatureTest:
 
     def summary(self):
         """Return test summary"""
-        total = len(self.passed) + len(self.failed) + len(self.skipped)
+        total = len(self.passed) + len(self.failed)
         if total == 0:
             return f"{self.ui_name}: No tests run"
 
@@ -57,7 +53,6 @@ class UIFeatureTest:
             'total': total,
             'passed': len(self.passed),
             'failed': len(self.failed),
-            'skipped': len(self.skipped),
             'pass_pct': pass_pct
         }
 
@@ -347,7 +342,7 @@ class CLIFeatureTests(UIFeatureTest):
     def test_stop(self):
         """STOP/interrupt capability"""
         # CLI can be interrupted with Ctrl+C but can't test in subprocess
-        return None  # Skip - requires interactive terminal
+        return False  # FAIL - requires interactive terminal
 
     def test_merge_files(self):
         """MERGE command"""
@@ -378,7 +373,7 @@ class CLIFeatureTests(UIFeatureTest):
         """AUTO command for automatic line numbering"""
         # AUTO command exists but is complex to test in CLI
         # It would require testing interactive line-by-line entry
-        return None  # Skip - requires interactive testing
+        return False  # FAIL - requires interactive testing
 
     def run_all(self):
         """Run all CLI tests"""
@@ -443,37 +438,37 @@ class CursesFeatureTests(UIFeatureTest):
     def test_ui_creation(self):
         """Test UI creates successfully"""
         # Curses UI requires terminal environment - use utils/test_curses_comprehensive.py instead
-        return None  # Skip - requires terminal
+        return False  # FAIL - requires terminal
 
     def test_parse_program(self):
         """Test program parsing"""
         # Curses UI requires terminal environment - use utils/test_curses_comprehensive.py instead
-        return None  # Skip - requires terminal
+        return False  # FAIL - requires terminal
 
     def test_breakpoint_toggle(self):
         """Test breakpoint toggle"""
         # Curses UI requires terminal environment - use utils/test_curses_comprehensive.py instead
-        return None  # Skip - requires terminal
+        return False  # FAIL - requires terminal
 
     def test_variables_window(self):
         """Test variables window exists"""
         # Curses UI requires terminal environment - use utils/test_curses_comprehensive.py instead
-        return None  # Skip - requires terminal
+        return False  # FAIL - requires terminal
 
     def test_stack_window(self):
         """Test stack window exists"""
         # Curses UI requires terminal environment - use utils/test_curses_comprehensive.py instead
-        return None  # Skip - requires terminal
+        return False  # FAIL - requires terminal
 
     def test_help_system(self):
         """Test help system exists"""
         # Curses UI requires terminal environment - use utils/test_curses_comprehensive.py instead
-        return None  # Skip - requires terminal
+        return False  # FAIL - requires terminal
 
     def test_syntax_checking(self):
         """Test syntax checking"""
         # Curses UI requires terminal environment - use utils/test_curses_comprehensive.py instead
-        return None  # Skip - requires terminal
+        return False  # FAIL - requires terminal
 
     def run_all(self):
         """Run all Curses tests"""
@@ -872,27 +867,25 @@ def print_results(results):
     print("COMPREHENSIVE UI FEATURE TEST RESULTS")
     print(f"{'='*80}\n")
 
-    print(f"{'UI':<12} {'Total':<8} {'Passed':<8} {'Failed':<8} {'Skipped':<10} {'Pass %':<10}")
+    print(f"{'UI':<12} {'Total':<8} {'Passed':<8} {'Failed':<8} {'Pass %':<10}")
     print("-" * 80)
 
     total_tests = 0
     total_passed = 0
     total_failed = 0
-    total_skipped = 0
 
     for result in results:
         total_tests += result['total']
         total_passed += result['passed']
         total_failed += result['failed']
-        total_skipped += result['skipped']
 
         print(f"{result['ui']:<12} {result['total']:<8} {result['passed']:<8} "
-              f"{result['failed']:<8} {result['skipped']:<10} {result['pass_pct']:>6.1f}%")
+              f"{result['failed']:<8} {result['pass_pct']:>6.1f}%")
 
     print("-" * 80)
     overall_pct = (total_passed / total_tests * 100) if total_tests > 0 else 0
     print(f"{'OVERALL':<12} {total_tests:<8} {total_passed:<8} "
-          f"{total_failed:<8} {total_skipped:<10} {overall_pct:>6.1f}%")
+          f"{total_failed:<8} {overall_pct:>6.1f}%")
     print(f"{'='*80}\n")
 
     if overall_pct == 100.0:
