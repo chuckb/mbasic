@@ -79,10 +79,10 @@ class SettingsWidget(urwid.WidgetWrap):
         content.append(urwid.Divider())
 
         buttons = urwid.Columns([
-            ('weight', 1, urwid.Button('OK', on_press=lambda btn: self._on_ok())),
-            ('weight', 1, urwid.Button('Cancel', on_press=lambda btn: self._on_cancel())),
-            ('weight', 1, urwid.Button('Apply', on_press=lambda btn: self._on_apply())),
-            ('weight', 1, urwid.Button('Reset', on_press=lambda btn: self._on_reset())),
+            ('weight', 1, urwid.Button('OK', on_press=lambda _btn: self._on_ok())),
+            ('weight', 1, urwid.Button('Cancel', on_press=lambda _btn: self._on_cancel())),
+            ('weight', 1, urwid.Button('Apply', on_press=lambda _btn: self._on_apply())),
+            ('weight', 1, urwid.Button('Reset', on_press=lambda _btn: self._on_reset())),
         ], dividechars=2)
         content.append(urwid.AttrMap(buttons, 'body'))
 

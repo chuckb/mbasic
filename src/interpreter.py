@@ -162,7 +162,7 @@ class Interpreter:
 
     def _setup_break_handler(self):
         """Setup Ctrl+C handler to set break flag"""
-        def signal_handler(sig, frame):
+        def signal_handler(_sig, _frame):
             self.runtime.break_requested = True
 
         # Save old handler to restore later

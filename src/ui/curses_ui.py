@@ -1136,7 +1136,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # Mark that a refresh is pending
         self._needs_refresh = True
 
-    def _perform_deferred_refresh(self, loop=None, user_data=None):
+    def _perform_deferred_refresh(self, loop=None, _user_data=None):
         """Perform deferred screen refresh (alarm callback).
 
         Called when input has been idle for the delay period.
@@ -1372,7 +1372,7 @@ class CursesBackend(UIBackend):
         # Set up signal handling for clean exit
         import signal
 
-        def handle_sigint(signum, frame):
+        def handle_sigint(_signum, _frame):
             """Handle Ctrl+C (SIGINT) gracefully."""
             raise urwid.ExitMainLoop()
 
@@ -1394,7 +1394,7 @@ class CursesBackend(UIBackend):
                 pass
 
         # Schedule cursor setup to run after screen initializes
-        self.loop.set_alarm_in(0, lambda loop, user_data: setup_cursor())
+        self.loop.set_alarm_in(0, lambda _loop, _user_data: setup_cursor())
 
         # Run the main loop
         try:
@@ -1446,20 +1446,20 @@ class CursesBackend(UIBackend):
     def _create_toolbar(self):
         """Create toolbar with common action buttons."""
         # Create button widgets - use urwid.Button with callback
-        new_btn = urwid.Button("New", on_press=lambda btn: self._menu_new())
-        open_btn = urwid.Button("Open", on_press=lambda btn: self._menu_load())
-        save_btn = urwid.Button("Save", on_press=lambda btn: self._menu_save())
+        new_btn = urwid.Button("New", on_press=lambda _btn: self._menu_new())
+        open_btn = urwid.Button("Open", on_press=lambda _btn: self._menu_load())
+        save_btn = urwid.Button("Save", on_press=lambda _btn: self._menu_save())
 
         sep1 = urwid.Text("│")  # Separator
 
-        run_btn = urwid.Button("Run", on_press=lambda btn: self._menu_run())
-        stop_btn = urwid.Button("Stop", on_press=lambda btn: self._menu_stop())
+        run_btn = urwid.Button("Run", on_press=lambda _btn: self._menu_run())
+        stop_btn = urwid.Button("Stop", on_press=lambda _btn: self._menu_stop())
 
         sep2 = urwid.Text("│")  # Separator
 
-        step_btn = urwid.Button("Step", on_press=lambda btn: self._menu_step_line())
-        stmt_btn = urwid.Button("Stmt", on_press=lambda btn: self._menu_step())
-        cont_btn = urwid.Button("Cont", on_press=lambda btn: self._menu_continue())
+        step_btn = urwid.Button("Step", on_press=lambda _btn: self._menu_step_line())
+        stmt_btn = urwid.Button("Stmt", on_press=lambda _btn: self._menu_step())
+        cont_btn = urwid.Button("Cont", on_press=lambda _btn: self._menu_continue())
 
         # Create horizontal layout with buttons
         toolbar_columns = urwid.Columns([
@@ -1771,7 +1771,7 @@ class CursesBackend(UIBackend):
                 self.status_bar.set_text("Continuing execution...")
                 self.interpreter.cont()
                 # Schedule next tick
-                self.loop.set_alarm_in(0.01, lambda loop, user_data: self._execute_tick())
+                self.loop.set_alarm_in(0.01, lambda _loop, _user_data: self._execute_tick())
             else:
                 self.status_bar.set_text(f"Not paused (status: {state.status})")
         except Exception as e:
@@ -2878,7 +2878,7 @@ Run                           Debug Windows
 
         # Show dialog with custom key handler
         self.loop.widget = overlay
-        urwid.connect_signal(edit, 'change', lambda w, t: None)  # dummy handler
+        urwid.connect_signal(edit, 'change', lambda _w, _t: None)  # dummy handler
 
         # Override unhandled_input temporarily
         old_handler = self.loop.unhandled_input
@@ -3130,7 +3130,7 @@ Run                           Debug Windows
             # Handle state transitions
             if state.status == 'running':
                 # Schedule next tick
-                self.loop.set_alarm_in(0.01, lambda loop, user_data: self._execute_tick())
+                self.loop.set_alarm_in(0.01, lambda _loop, _user_data: self._execute_tick())
 
             elif state.status == 'waiting_for_input':
                 # Prompt user for input
@@ -3235,7 +3235,7 @@ Run                           Debug Windows
         self.interpreter.provide_input(result)
 
         # Continue execution
-        self.loop.set_alarm_in(0.01, lambda loop, user_data: self._execute_tick())
+        self.loop.set_alarm_in(0.01, lambda _loop, _user_data: self._execute_tick())
 
     def _list_program(self):
         """List the current program."""

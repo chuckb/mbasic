@@ -773,7 +773,7 @@ class BuiltinFunctions:
     # System Functions
     # ========================================================================
 
-    def PEEK(self, addr):
+    def PEEK(self, _addr):
         """
         Peek memory (compatibility implementation).
 
@@ -792,7 +792,7 @@ class BuiltinFunctions:
         # Can't actually read from hardware ports
         return 0
 
-    def POS(self, dummy):
+    def POS(self, _dummy):
         """
         Current print position.
 

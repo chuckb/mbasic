@@ -5169,7 +5169,7 @@ class SemanticAnalyzer:
                 if isinstance(stmt, LetStatementNode):
                     self._check_expression_for_promotions(stmt.expression, line.line_number, stmt.variable.name.upper())
 
-    def _check_expression_for_promotions(self, expr, line: int, result_var: str = ""):
+    def _check_expression_for_promotions(self, expr, line: int, _result_var: str = ""):
         """
         Check an expression for type promotions.
 
