@@ -43,10 +43,10 @@ class InterpreterState:
     status: Literal['idle', 'running', 'paused', 'done',
                     'waiting_for_input', 'at_breakpoint', 'error'] = 'idle'
 
-    # Execution position (UI should use runtime.pc for authoritative position)
-    current_line: Optional[int] = None  # Cached line number (for backwards compat)
-    current_statement_char_start: int = 0  # Character position for statement highlighting
-    current_statement_char_end: int = 0    # Character position for statement highlighting
+    # Execution position for UI display (synced from runtime.pc during execution)
+    current_line: Optional[int] = None  # Current line number (set to pc.line_num)
+    current_statement_char_start: int = 0  # Character position for highlighting (from statement.char_start)
+    current_statement_char_end: int = 0    # Character position for highlighting (from statement.char_end)
 
     # Legacy fields (DEPRECATED - only used by tick_old reference implementation)
     current_statement_index: int = 0  # DEPRECATED - use runtime.pc.stmt_offset
