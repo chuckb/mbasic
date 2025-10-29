@@ -620,8 +620,8 @@ class Interpreter:
         # Start searching from the statement after the WHILE
         depth = 1  # Track nesting depth
 
-        # Get the line index to start searching
-        line_numbers = sorted(self.runtime.line_table.keys())
+        # Get all line numbers from statement_table
+        line_numbers = sorted(set(pc.line_num for pc in self.runtime.statement_table.statements.keys()))
         try:
             line_idx = line_numbers.index(start_line)
         except ValueError:
@@ -632,11 +632,11 @@ class Interpreter:
 
         while line_idx < len(line_numbers):
             line_num = line_numbers[line_idx]
-            line = self.runtime.line_table[line_num]
+            line_statements = self.runtime.statement_table.get_line_statements(line_num)
 
             # Search through statements in this line
-            while stmt_idx < len(line.statements):
-                stmt = line.statements[stmt_idx]
+            while stmt_idx < len(line_statements):
+                stmt = line_statements[stmt_idx]
 
                 if isinstance(stmt, ast_nodes.WhileStatementNode):
                     depth += 1
@@ -1009,13 +1009,13 @@ class Interpreter:
             self.runtime.error_occurred = False
 
         # Validate that the return address still exists
-        if return_line not in self.runtime.line_table:
+        if not self.runtime.statement_table.line_exists(return_line):
             raise RuntimeError(f"RETURN error: line {return_line} no longer exists")
 
-        line_node = self.runtime.line_table[return_line]
+        line_statements = self.runtime.statement_table.get_line_statements(return_line)
         # return_stmt can be == len(statements), meaning "past the end, go to next line"
         # but it can't be > len(statements)
-        if return_stmt > len(line_node.statements):
+        if return_stmt > len(line_statements):
             raise RuntimeError(f"RETURN error: statement {return_stmt} in line {return_line} no longer exists")
 
         # Jump back to the line and statement after GOSUB
@@ -1148,13 +1148,13 @@ class Interpreter:
             return_line = loop_info['return_line']
             return_stmt = loop_info['return_stmt']
 
-            if return_line not in self.runtime.line_table:
+            if not self.runtime.statement_table.line_exists(return_line):
                 raise RuntimeError(f"NEXT error: FOR loop line {return_line} no longer exists")
 
-            line_node = self.runtime.line_table[return_line]
+            line_statements = self.runtime.statement_table.get_line_statements(return_line)
             # return_stmt can be == len(statements), meaning the FOR is the last statement
             # but it can't be > len(statements)
-            if return_stmt > len(line_node.statements):
+            if return_stmt > len(line_statements):
                 raise RuntimeError(f"NEXT error: FOR statement in line {return_line} no longer exists")
 
             # Continue loop - update variable and jump to statement AFTER the FOR

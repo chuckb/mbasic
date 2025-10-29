@@ -294,18 +294,18 @@ class InteractiveMode:
                 if line_num in self.lines:
                     del self.lines[line_num]
                     del self.line_asts[line_num]
-                    # Update runtime's line_table if program is running
-                    if self.program_runtime and line_num in self.program_runtime.line_table:
-                        del self.program_runtime.line_table[line_num]
+                    # Update runtime's statement_table if program is running
+                    if self.program_runtime:
+                        self.program_runtime.statement_table.delete_line(line_num)
             else:
                 # Add/replace line - store both text and parsed AST
                 self.lines[line_num] = line
                 line_ast = self.parse_single_line(line)
                 if line_ast:
                     self.line_asts[line_num] = line_ast
-                    # Update runtime's line_table if program is running
+                    # Update runtime's statement_table if program is running
                     if self.program_runtime:
-                        self.program_runtime.line_table[line_num] = line_ast
+                        self.program_runtime.statement_table.replace_line(line_num, line_ast)
         else:
             # Direct command
             self.execute_command(line)
@@ -539,7 +539,7 @@ class InteractiveMode:
                 if self.program_runtime:
                     for line_num in self.program.line_asts:
                         line_ast = self.program.line_asts[line_num]
-                        self.program_runtime.line_table[line_num] = line_ast
+                        self.program_runtime.statement_table.replace_line(line_num, line_ast)
 
                 print(f"Merged from {filename}")
                 print(f"{lines_added} line(s) added, {lines_replaced} line(s) replaced")
@@ -1027,9 +1027,9 @@ class InteractiveMode:
             line_ast = self.parse_single_line(full_line)
             if line_ast:
                 self.line_asts[line_num] = line_ast
-                # Update runtime's line_table if program is running
+                # Update runtime's statement_table if program is running
                 if self.program_runtime:
-                    self.program_runtime.line_table[line_num] = line_ast
+                    self.program_runtime.statement_table.replace_line(line_num, line_ast)
 
         except KeyboardInterrupt:
             # Ctrl+C cancels edit
@@ -1136,9 +1136,9 @@ class InteractiveMode:
                 line_ast = self.parse_single_line(full_line)
                 if line_ast:
                     self.line_asts[current_line] = line_ast
-                    # Update runtime's line_table if program is running
+                    # Update runtime's statement_table if program is running
                     if self.program_runtime:
-                        self.program_runtime.line_table[current_line] = line_ast
+                        self.program_runtime.statement_table.replace_line(current_line, line_ast)
 
                 # Move to next line number
                 current_line += increment

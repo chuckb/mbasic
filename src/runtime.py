@@ -84,8 +84,7 @@ class Runtime:
         # Quick lookup: var_name -> index in execution_stack (for FOR loops only)
         self.for_loop_vars = {}
 
-        # Line number resolution
-        self.line_table = {}          # line_number -> LineNode
+        # Line text mapping (for error messages)
         self.line_text_map = line_text_map or {}  # line_number -> source text (for error messages)
 
         # DATA statements
@@ -139,15 +138,12 @@ class Runtime:
         Initialize runtime by building lookup tables.
         Call this once before execution starts.
         """
-        # Build line number table
+        # Determine which lines to process
         if self.line_table_dict:
-            # New style: line_table already provided
-            self.line_table = self.line_table_dict
-            lines_to_process = self.line_table.values()
+            # New style: line_table_dict already provided
+            lines_to_process = self.line_table_dict.values()
         else:
             # Old style: build from AST
-            for line in self.ast.lines:
-                self.line_table[line.line_number] = line
             lines_to_process = self.ast.lines
 
         # Build statement table and extract DATA values and DEF FN definitions
@@ -1064,7 +1060,7 @@ class Runtime:
                 return_line = entry['return_line']
 
                 # Check if return line still exists
-                if return_line not in self.line_table:
+                if not self.statement_table.line_exists(return_line):
                     should_remove = True
                     messages.append(f"FOR {var_name} loop removed - line {return_line} no longer exists")
 
@@ -1072,7 +1068,7 @@ class Runtime:
                 return_line = entry['return_line']
 
                 # Check if return line still exists
-                if return_line not in self.line_table:
+                if not self.statement_table.line_exists(return_line):
                     should_remove = True
                     messages.append(f"GOSUB removed - return line {return_line} no longer exists")
 
@@ -1080,7 +1076,7 @@ class Runtime:
                 while_line = entry.get('while_line')
 
                 # Check if while line still exists
-                if while_line and while_line not in self.line_table:
+                if while_line and not self.statement_table.line_exists(while_line):
                     should_remove = True
                     messages.append(f"WHILE loop removed - line {while_line} no longer exists")
 
@@ -1100,37 +1096,6 @@ class Runtime:
 
         # Stack is valid if we processed everything (even if we removed some entries)
         return (True, removed_entries, messages)
-
-    def find_line(self, line_number):
-        """
-        Find LineNode by line number.
-
-        Args:
-            line_number: BASIC line number
-
-        Returns:
-            LineNode or None
-        """
-        return self.line_table.get(line_number)
-
-    def get_next_line(self, current_line_number):
-        """
-        Get the next line number in sequence.
-
-        Args:
-            current_line_number: Current line number
-
-        Returns:
-            Next line number or None if at end
-        """
-        line_numbers = sorted(self.line_table.keys())
-        try:
-            index = line_numbers.index(current_line_number)
-            if index + 1 < len(line_numbers):
-                return line_numbers[index + 1]
-        except ValueError:
-            pass
-        return None
 
     def has_pending_jump(self):
         """

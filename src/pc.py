@@ -180,3 +180,60 @@ class StatementTable:
     def __repr__(self):
         """String representation for debugging"""
         return f"StatementTable({len(self.statements)} statements)"
+
+    def get_line_statements(self, line_num):
+        """
+        Get all statements for a given line number.
+
+        Args:
+            line_num: Line number to get statements for
+
+        Returns:
+            List of statement nodes for that line, in order by stmt_offset
+        """
+        result = []
+        for pc, stmt in self.statements.items():
+            if pc.line_num == line_num:
+                result.append(stmt)
+        return result
+
+    def line_exists(self, line_num):
+        """
+        Check if a line exists in the program.
+
+        Args:
+            line_num: Line number to check
+
+        Returns:
+            True if line has any statements
+        """
+        return any(pc.line_num == line_num for pc in self.statements.keys())
+
+    def delete_line(self, line_num):
+        """
+        Delete all statements for a given line number.
+
+        Args:
+            line_num: Line number to delete
+        """
+        # Remove all PCs for this line
+        to_remove = [pc for pc in self.statements.keys() if pc.line_num == line_num]
+        for pc in to_remove:
+            del self.statements[pc]
+        self._keys_cache = None  # Invalidate cache
+
+    def replace_line(self, line_num, line_node):
+        """
+        Replace all statements for a given line with new statements from LineNode.
+
+        Args:
+            line_num: Line number to replace
+            line_node: LineNode containing new statements
+        """
+        # Delete old statements for this line
+        self.delete_line(line_num)
+
+        # Add new statements
+        for stmt_offset, stmt in enumerate(line_node.statements):
+            pc = PC(line_num, stmt_offset)
+            self.add(pc, stmt)

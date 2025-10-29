@@ -184,10 +184,10 @@ class ImmediateExecutor:
 
                                 # Get char positions from the newly parsed line
                                 # (state.current_statement_char_start/end are now computed properties)
-                                if line_num in ui.runtime.line_table:
-                                    line_node = ui.runtime.line_table[line_num]
-                                    if stmt_idx < len(line_node.statements):
-                                        stmt = line_node.statements[stmt_idx]
+                                if ui.runtime.statement_table.line_exists(line_num):
+                                    line_statements = ui.runtime.statement_table.get_line_statements(line_num)
+                                    if stmt_idx < len(line_statements):
+                                        stmt = line_statements[stmt_idx]
                                         char_start = getattr(stmt, 'char_start', 0)
                                         char_end = getattr(stmt, 'char_end', 0)
 

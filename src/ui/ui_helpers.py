@@ -539,8 +539,8 @@ def delete_lines_from_program(program_manager, args: str, runtime=None):
 
         # Update runtime if provided
         if runtime:
-            if hasattr(runtime, 'line_table') and line_num in runtime.line_table:
-                del runtime.line_table[line_num]
+            if hasattr(runtime, 'statement_table'):
+                runtime.statement_table.delete_line(line_num)
 
     return to_delete
 
@@ -657,8 +657,15 @@ def renum_program(program_manager, args: str, renum_callback, runtime=None):
 
     # Update runtime if provided
     if runtime:
-        if hasattr(runtime, 'line_table'):
-            runtime.line_table = new_line_asts
+        if hasattr(runtime, 'statement_table'):
+            # Rebuild statement table from new line_asts
+            runtime.statement_table.statements.clear()
+            runtime.statement_table._keys_cache = None
+            for line_node in new_line_asts.values():
+                for stmt_offset, stmt in enumerate(line_node.statements):
+                    from src.pc import PC
+                    pc = PC(line_node.line_number, stmt_offset)
+                    runtime.statement_table.add(pc, stmt)
 
     return old_lines, line_map
 
