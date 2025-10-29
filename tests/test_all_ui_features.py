@@ -344,7 +344,7 @@ class CLIFeatureTests(UIFeatureTest):
             proc.stdin.write("SYSTEM\n")
             proc.stdin.flush()
             stdout, _ = proc.communicate(timeout=3)
-            return "BREAK" in stdout or "STEP" in stdout or "WATCH" in stdout
+            return "BREAK" in stdout or "STEP" in stdout or "STACK" in stdout
         except:
             return False
 
@@ -981,7 +981,7 @@ class TkFeatureTests(UIFeatureTest):
             from src.ui.tk_ui import TkBackend
             import inspect
             methods = [m[0] for m in inspect.getmembers(TkBackend, predicate=inspect.isfunction)]
-            return any('variable' in m.lower() or 'watch' in m.lower() for m in methods)
+            return any('variable' in m.lower() for m in methods)
         except:
             return False
 
