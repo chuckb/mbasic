@@ -43,12 +43,14 @@ class InterpreterState:
     status: Literal['idle', 'running', 'paused', 'done',
                     'waiting_for_input', 'at_breakpoint', 'error'] = 'idle'
 
-    # Execution position
-    current_line: Optional[int] = None
-    current_statement_index: int = 0
-    line_index: int = 0  # Index into runtime.line_order
+    # Execution position (UI should use runtime.pc for authoritative position)
+    current_line: Optional[int] = None  # Cached line number (for backwards compat)
     current_statement_char_start: int = 0  # Character position for statement highlighting
     current_statement_char_end: int = 0    # Character position for statement highlighting
+
+    # Legacy fields (DEPRECATED - only used by tick_old reference implementation)
+    current_statement_index: int = 0  # DEPRECATED - use runtime.pc.stmt_offset
+    line_index: int = 0  # DEPRECATED - use runtime.line_order.index(runtime.pc.line_num)
 
     # Input handling (THE CRITICAL STATE)
     input_prompt: Optional[str] = None
