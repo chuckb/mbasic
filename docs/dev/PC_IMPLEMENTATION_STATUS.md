@@ -82,45 +82,56 @@
 
 **Key achievement**: Single simple execution loop, no more nested line/statement iteration!
 
-### ⏸️ Phase 3: Statement-Level Breakpoints (PENDING)
+### ✅ Phase 3: Statement-Level Breakpoints and Trace (COMPLETED - v1.0.278)
 
-**What needs to be done:**
+**What was done:**
 
-1. **Update InterpreterState:**
-   - Change `breakpoints` from `Set[int]` (line numbers) to `Set[PC]`
-   - Store breakpoint as `PC(100, 2)` for "line 100, 3rd statement"
+1. ✅ **Updated breakpoint storage** to support both line and statement-level:
+   - `breakpoints` now holds both `int` (line numbers) and `PC` objects
+   - `set_breakpoint(100)` - line-level (backwards compatible)
+   - `set_breakpoint(100, 2)` - statement-level (3rd statement on line 100)
 
-2. **Update breakpoint UI:**
-   - Visual editor: click on specific statement to set breakpoint
-   - CLI: `BREAK 100.2` syntax for statement-level breakpoints
-   - Show breakpoint markers at statement level, not just line level
+2. ✅ **Updated breakpoint checking** in `tick_pc()`:
+   - Checks exact PC first: `if pc in breakpoints`
+   - Falls back to line-level: `if pc.line_num in breakpoints`
+   - Fully backwards compatible with existing line-level breakpoints
 
-3. **Update breakpoint checking:**
-   ```python
-   if pc in breakpoints:  # Now checks exact PC, not just line
-       pause()
-   ```
+3. ✅ **Added statement-level TRACE**:
+   - Added `runtime.trace_detail` setting: `'line'` or `'statement'`
+   - Line mode (default): `[100]` once per line
+   - Statement mode: `[PC(100.0)]`, `[PC(100.1)]`, `[PC(100.2)]` per statement
 
-### ⏸️ Phase 4: Enhanced TRACE (PENDING)
+**Tests passed:**
+- ✅ PC equality and hashing work correctly
+- ✅ PC objects can be stored in sets alongside integers
+- ✅ Breakpoint checking supports both formats
 
-**What needs to be done:**
+**UI integration pending:**
+- CLI commands for `BREAK 100.2` syntax
+- Visual editor statement-level breakpoint clicking
 
-1. **Add `trace_detail` setting:**
-   - `'line'` - show `[100]` on line boundary (current behavior)
-   - `'statement'` - show `[100.0]`, `[100.1]`, `[100.2]` for each statement
+### ✅ Phase 4: Enhanced TRACE (COMPLETED - integrated in v1.0.278)
 
-2. **Update TRACE output:**
+**What was done:**
+
+All trace enhancements were completed as part of Phase 3:
+
+1. ✅ **Added `trace_detail` setting** to runtime
+   - `'line'` - show `[100]` on line boundary (default, backwards compatible)
+   - `'statement'` - show `[PC(100.0)]`, `[PC(100.1)]`, `[PC(100.2)]` for each statement
+
+2. ✅ **Updated TRACE output** in `tick_pc()`:
    ```python
    if trace_on:
        if trace_detail == 'statement':
-           output(f"[{pc}]")  # [100.2]
-       elif trace_detail == 'line' and pc.line_num != last_traced_line:
+           output(f"[{pc}]")  # [PC(100.2)]
+       elif pc.line_num != last_traced_line:
            output(f"[{pc.line_num}]")  # [100]
    ```
 
-3. **Add TRON/TROFF variants:**
-   - `TRON` - line-level trace (default)
-   - `TRON STATEMENT` - statement-level trace
+**UI integration pending:**
+- `TRON` - line-level trace (already works)
+- `TRON STATEMENT` - command to enable statement-level trace
 
 ### ⏸️ Phase 5: Cleanup (PENDING)
 
