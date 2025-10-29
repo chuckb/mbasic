@@ -1,0 +1,54 @@
+# All 38 Features - Canonical Names
+# These are the standard feature names used in test scripts
+
+## FILE OPERATIONS (8 features)
+New Program
+Open/Load File
+Save File
+Save As
+Recent Files
+Auto-Save
+Delete Lines
+Merge Files
+
+## EXECUTION & CONTROL (6 features)
+Run Program
+Stop/Interrupt
+Continue
+List Program
+Renumber
+Auto Line Numbers
+
+## DEBUGGING (6 features)
+Breakpoints
+Step Statement
+Step Line
+Clear All Breakpoints
+Multi-Statement Debug
+Current Line Highlight
+
+## VARIABLE INSPECTION (6 features)
+Variables Window
+Edit Variable Value
+Variable Filtering
+Variable Sorting
+Execution Stack
+Resource Usage
+
+## EDITOR FEATURES (8 features)
+Line Editing
+Multi-Line Edit
+Cut/Copy/Paste
+Undo/Redo
+Find/Replace
+Smart Insert
+Sort Lines
+Syntax Checking
+
+## HELP SYSTEM (4 features)
+Help Command
+Integrated Docs
+Search Help
+Context Help
+
+# TOTAL: 38 features

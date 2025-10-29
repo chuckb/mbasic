@@ -1731,6 +1731,70 @@ class TkBackend(UIBackend):
         from .web_help_launcher import open_help_in_browser
         open_help_in_browser(topic="help/ui/tk/", ui_type="tk")
 
+    def _context_help(self):
+        """Show context-sensitive help for keyword at cursor"""
+        try:
+            # Get current cursor position
+            cursor_pos = self.text_editor.index(tk.INSERT)
+
+            # Get current line
+            line = self.text_editor.get(f"{cursor_pos} linestart", f"{cursor_pos} lineend")
+
+            # Get word at cursor
+            # Find word boundaries
+            col = int(cursor_pos.split('.')[1])
+            start = col
+            end = col
+
+            # Expand left
+            while start > 0 and (line[start-1].isalnum() or line[start-1] in '_$%'):
+                start -= 1
+
+            # Expand right
+            while end < len(line) and (line[end].isalnum() or line[end] in '_$%'):
+                end += 1
+
+            keyword = line[start:end].upper().strip()
+
+            if keyword:
+                # Open help for specific keyword
+                from .web_help_launcher import open_help_in_browser
+
+                # Map to help topics
+                topic_map = {
+                    'PRINT': 'help/common/statements/print',
+                    'INPUT': 'help/common/statements/input',
+                    'IF': 'help/common/statements/if',
+                    'FOR': 'help/common/statements/for',
+                    'NEXT': 'help/common/statements/next',
+                    'GOTO': 'help/common/statements/goto',
+                    'GOSUB': 'help/common/statements/gosub',
+                    'RETURN': 'help/common/statements/return',
+                    'DIM': 'help/common/statements/dim',
+                    'LET': 'help/common/statements/let',
+                    'REM': 'help/common/statements/rem',
+                    'END': 'help/common/statements/end',
+                    'STOP': 'help/common/statements/stop',
+                    'RUN': 'help/common/statements/run',
+                    'LIST': 'help/common/statements/list',
+                    'NEW': 'help/common/statements/new',
+                    'SAVE': 'help/common/statements/save',
+                    'LOAD': 'help/common/statements/load',
+                    'CLS': 'help/common/statements/cls',
+                    'WHILE': 'help/common/statements/while',
+                    'WEND': 'help/common/statements/wend',
+                }
+
+                topic = topic_map.get(keyword, f"help/ui/tk/")
+                open_help_in_browser(topic=topic, ui_type="tk")
+            else:
+                # No keyword, open general help
+                self._menu_help()
+
+        except Exception as e:
+            # Fall back to general help
+            self._menu_help()
+
     def _menu_about(self):
         """Help > About"""
         import tkinter as tk
