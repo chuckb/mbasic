@@ -1743,6 +1743,16 @@ class WebFeatureTests(UIFeatureTest):
         except:
             return False
 
+    def test_has_delete_lines(self):
+        """Test has Delete Lines feature"""
+        try:
+            with open('src/ui/web/nicegui_backend.py', 'r') as f:
+                source = f.read()
+                # Check for delete lines functionality
+                return '_menu_delete_lines' in source
+        except:
+            return False
+
     def run_all(self):
         """Run all Web tests"""
         print(f"\n{'='*60}")
@@ -1759,6 +1769,7 @@ class WebFeatureTests(UIFeatureTest):
         self.test("Save File", self.test_has_save_file)
         self.test("Save As", self.test_has_save_as)
         self.test("Recent Files", self.test_has_recent_files)
+        self.test("Delete Lines", self.test_has_delete_lines)
 
         print("\n2. EXECUTION & CONTROL")
         self.test("Run Program", self.test_has_run)

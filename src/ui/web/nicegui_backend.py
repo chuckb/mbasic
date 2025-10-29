@@ -282,6 +282,7 @@ class NiceGUIBackend(UIBackend):
             # Edit menu
             with ui.button('Edit', icon='menu').props('flat color=white'):
                 with ui.menu():
+                    ui.menu_item('Delete Lines...', on_click=self._menu_delete_lines)
                     ui.menu_item('Renumber...', on_click=self._menu_renumber)
                     ui.menu_item('Sort Lines', on_click=self._menu_sort_lines)
 
@@ -879,6 +880,63 @@ class NiceGUIBackend(UIBackend):
             self._set_status('Lines sorted by line number')
         except Exception as e:
             log_web_error("_menu_sort_lines", e)
+            self._notify(f'Error: {e}', type='negative')
+
+    def _menu_delete_lines(self):
+        """Delete a range of line numbers from the program."""
+        try:
+            # Show dialog for line range
+            with ui.dialog() as dialog, ui.card():
+                ui.label('Delete Lines').classes('text-lg font-bold')
+
+                start_input = ui.number(label='From Line', value=10, min=1, max=65529).classes('w-32')
+                end_input = ui.number(label='To Line', value=100, min=1, max=65529).classes('w-32')
+
+                def do_delete():
+                    try:
+                        start = int(start_input.value)
+                        end = int(end_input.value)
+
+                        if start > end:
+                            self._notify('Start line must be <= end line', type='warning')
+                            return
+
+                        # Get existing lines
+                        lines = self.program.get_lines()
+                        if not lines:
+                            self._notify('No program to delete from', type='warning')
+                            dialog.close()
+                            return
+
+                        # Filter out lines in the range
+                        kept_lines = []
+                        deleted_count = 0
+                        for line_num, line_text in lines:
+                            if start <= line_num <= end:
+                                deleted_count += 1
+                            else:
+                                kept_lines.append(line_text)
+
+                        # Update editor
+                        self.editor.value = '\n'.join(kept_lines)
+
+                        # Reload into program
+                        self._save_editor_to_program()
+
+                        dialog.close()
+                        self._notify(f'Deleted {deleted_count} line(s)', type='positive')
+                        self._set_status(f'Deleted lines {start}-{end}')
+                    except Exception as ex:
+                        self._notify(f'Error: {ex}', type='negative')
+
+                with ui.row():
+                    ui.button('Delete', on_click=do_delete).classes('bg-red-500')
+                    ui.button('Cancel', on_click=dialog.close)
+
+            dialog.open()
+
+        except Exception as e:
+            log_web_error("_menu_delete_lines", e)
             self._notify(f'Error: {e}', type='negative')
 
     def _menu_renumber(self):
