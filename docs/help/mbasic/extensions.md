@@ -71,7 +71,6 @@ The GUI interfaces (Curses, Tk, Web) are **NOT in MBASIC 5.21**.
 - Syntax highlighting (Tk, Web)
 - Find/Replace (Tk only currently)
 - Cut/Copy/Paste (Tk, Web)
-- Undo/Redo (Tk, Web)
 - Mouse support (Tk, Web)
 - Auto-save (Web)
 

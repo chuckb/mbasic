@@ -140,8 +140,6 @@ Type expressions without line numbers for immediate execution.
 | **Ctrl+S** | Save file |
 | **Ctrl+R** | Run program |
 | **Ctrl+F** | Find |
-| **Ctrl+Z** | Undo |
-| **Ctrl+Y** | Redo |
 | **F1** | Help |
 
 ## File Operations

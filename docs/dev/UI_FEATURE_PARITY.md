@@ -55,7 +55,6 @@ Comprehensive feature comparison across all MBASIC user interfaces (CLI, Curses,
 | Multi-Line Editing | ❌ | ❌ | ✅ | ✅ | ⚠️ |
 | Cut/Copy/Paste | ❌ | ❌ | ✅ Ctrl+X/C/V | ✅ Ctrl+C/V | ❌ |
 | Select All | ❌ | ❌ | ✅ Ctrl+A | ✅ Ctrl+A | ❌ |
-| Undo/Redo | ❌ | ❌ | ✅ Ctrl+Z/Y | ✅ Browser-dependent | ❌ |
 | Find Text | ❌ | ❌ | ⚠️ Not documented | ❌ | ❌ |
 | Find & Replace | ❌ | ❌ | ⚠️ Not documented | ❌ | ❌ |
 | Smart Insert Line | ❌ | ❌ | ✅ Ctrl+I | ❌ | ❌ |
@@ -296,8 +295,6 @@ Comprehensive feature comparison across all MBASIC user interfaces (CLI, Curses,
 - **Ctrl+E** - Renumber
 - **Ctrl+F** - Find
 - **Ctrl+H** - Find & Replace
-- **Ctrl+Z** - Undo
-- **Ctrl+Y** - Redo
 - **Ctrl+Shift+S** - Save As
 - **F1** - Help (or Ctrl+H)
 - **Mouse clicks** - Line breakpoints
