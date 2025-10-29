@@ -91,7 +91,20 @@ markdown_extensions:
 # This avoids hard-coding non-existent files
 nav:
   - Home: index.md
-  - ...
+  - Getting Started:
+    - help/mbasic/getting-started.md
+    - help/mbasic/features.md
+    - help/mbasic/compatibility.md
+  - Language Reference:
+    - help/common/language/...
+  - User Guides:
+    - help/ui/...
+    - user/...
+  - Design & Architecture:
+    - design/...
+  - Developer Documentation:
+    - dev/...
+    - history/...
 
 extra:
   social:
@@ -109,5 +122,3 @@ site_dir: site
 # Exclude files that conflict or shouldn't be in the site
 exclude_docs: |
   README.md
-  dev/
-  history/
