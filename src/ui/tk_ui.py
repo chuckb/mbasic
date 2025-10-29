@@ -1729,7 +1729,7 @@ class TkBackend(UIBackend):
         import webbrowser
         # Open help documentation in web browser
         from .web_help_launcher import open_help_in_browser
-        open_help_in_browser(topic="ui/tk/index", ui_type="tk")
+        open_help_in_browser(topic="help/ui/tk/", ui_type="tk")
 
     def _menu_about(self):
         """Help > About"""

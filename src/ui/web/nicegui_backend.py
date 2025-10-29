@@ -829,8 +829,10 @@ class NiceGUIBackend(UIBackend):
             self._notify(f'Error: {e}', type='negative')
 
     def _menu_help(self):
-        """Help > Help Topics."""
-        self._notify('Help system coming soon', type='info')
+        """Help > Help Topics - Opens in web browser."""
+        from ..web_help_launcher import open_help_in_browser
+        open_help_in_browser(topic="help/ui/web/", ui_type="web")
+        self._notify('Opening help in browser...', type='info')
 
     def _menu_about(self):
         """Help > About."""

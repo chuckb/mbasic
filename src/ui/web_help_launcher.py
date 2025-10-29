@@ -5,11 +5,16 @@ Points to a web server serving the built MkDocs documentation.
 """
 
 import webbrowser
+import subprocess
+import socket
+import time
+from pathlib import Path
+from typing import Optional
 
 
 # URL where help documentation is served
-# This will be updated once the web server is configured
-HELP_BASE_URL = "http://YOUR_SERVER_URL_HERE"
+# Local web server serving the built MkDocs site
+HELP_BASE_URL = "http://localhost/mbasic_docs"
 
 
 def open_help_in_browser(topic=None, ui_type="tk"):
