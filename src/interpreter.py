@@ -2652,7 +2652,9 @@ class Interpreter:
     def evaluate_functioncall(self, expr):
         """Evaluate function call (built-in or user-defined)"""
         # First, check if it's a built-in function
-        func = getattr(self.builtins, expr.name, None)
+        # Strip $ suffix for builtin lookup (CHR$ -> CHR, INPUT$ -> INPUT, etc.)
+        func_name = expr.name.rstrip('$')
+        func = getattr(self.builtins, func_name, None)
         if func:
             # It's a builtin function
             args = [self.evaluate_expression(arg) for arg in expr.arguments]

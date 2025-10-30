@@ -970,7 +970,7 @@ class BuiltinFunctions:
                 # If anything goes wrong with terminal operations, return empty string
                 return ""
 
-    def INPUT_STR(self, num, file_num=None):
+    def INPUT(self, num, file_num=None):
         """
         INPUT$ - Read num characters from keyboard or file.
 
