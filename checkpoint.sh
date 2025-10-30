@@ -44,12 +44,19 @@ DOCS_CHANGED=$(git diff --name-only docs/ mkdocs.yml 2>/dev/null || echo "")
 if [ -n "$DOCS_CHANGED" ]; then
     echo "Documentation changed - validating mkdocs build..."
     if command -v mkdocs &> /dev/null; then
-        if mkdocs build --strict --quiet 2>&1 | grep -q "WARNING\|ERROR"; then
+        # Run mkdocs build in strict mode and capture output
+        BUILD_OUTPUT=$(mkdocs build --strict 2>&1)
+
+        # Check for warnings or errors
+        if echo "$BUILD_OUTPUT" | grep -q "WARNING\|ERROR"; then
             echo "❌ ERROR: mkdocs build has warnings or errors in strict mode!"
-            echo "Run 'mkdocs build --strict' to see details"
+            echo ""
+            echo "$BUILD_OUTPUT" | grep "WARNING\|ERROR"
+            echo ""
+            echo "Run 'mkdocs build --strict' to see full details"
             exit 1
         else
-            echo "✓ mkdocs build validation passed"
+            echo "✓ mkdocs build validation passed (no warnings or errors)"
         fi
     else
         echo "⚠ Warning: mkdocs not installed, skipping build validation"
