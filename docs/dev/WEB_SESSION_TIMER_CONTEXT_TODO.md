@@ -34,9 +34,69 @@ def _execute_tick(self):
 - `_get_session_state()` accesses `app.storage.client['mbasic_state']`
 - When `ui.timer()` fires the callback, `app.storage.client` might not be bound to the correct client
 
-## Potential Solutions
+## Correct Solution
 
-### Option 1: Store Client ID with Timer (Recommended)
+### Store UI Elements in Session State (Required)
+
+UI elements need to be stored per-session, not as instance variables. However, UI elements cannot be stored in `app.storage.client` because they're not serializable.
+
+**Solution:** Store UI element references in a dictionary keyed by client ID:
+
+```python
+class NiceGUIBackend(UIBackend):
+    def __init__(self, io_handler, program_manager):
+        ...
+        # Per-client UI elements (cannot go in app.storage.client)
+        self._client_ui_elements = {}  # Dict[client_id, dict]
+
+    def _get_ui_elements(self):
+        """Get UI elements for current client."""
+        from nicegui import context
+        client_id = context.client.id
+
+        if client_id not in self._client_ui_elements:
+            self._client_ui_elements[client_id] = {
+                'output': None,
+                'editor': None,
+                'status_label': None,
+                'current_line_label': None,
+                # ... all UI elements
+            }
+
+        return self._client_ui_elements[client_id]
+
+    # Properties for UI elements:
+    @property
+    def output(self):
+        return self._get_ui_elements()['output']
+
+    @output.setter
+    def output(self, value):
+        self._get_ui_elements()['output'] = value
+```
+
+This way:
+- Tab A's timer → uses context.client.id to find Tab A's UI elements
+- Tab B's timer → uses context.client.id to find Tab B's UI elements
+- No cross-contamination
+
+### Cleanup on Disconnect
+
+Need to clean up UI elements when client disconnects:
+
+```python
+from nicegui import context
+
+context.client.on_disconnect(lambda: self._cleanup_client(context.client.id))
+
+def _cleanup_client(self, client_id):
+    if client_id in self._client_ui_elements:
+        del self._client_ui_elements[client_id]
+```
+
+## Potential Solutions (Old - Wrong Approach)
+
+### Option 1: Store Client ID with Timer (NOT THE ISSUE)
 Store the client ID when creating the timer, then restore the context in the callback:
 
 ```python
@@ -94,6 +154,30 @@ def tick_callback():
 
 self.exec_timer = ui.timer(0.01, tick_callback, once=False)
 ```
+
+## Root Cause Found
+
+**The Real Problem:**
+
+The issue is NOT with timer context or `app.storage.client` access. The debug logs show that:
+- ✓ `self.interpreter` IS found correctly in timer callbacks
+- ✓ The interpreter IS running
+- ✓ The timer callbacks ARE firing
+
+**The ACTUAL issue:** UI elements (`self.output`, `self.editor`, etc.) are instance variables on the single shared `NiceGUIBackend` instance.
+
+When Tab B's page loads, it runs `build_ui()` and sets:
+```python
+self.output = ui.textarea(...)  # Tab B's textarea
+self.editor = ui.textarea(...)  # Tab B's editor
+```
+
+When Tab A's timer fires and calls `_append_output()`, it does:
+```python
+self.output.value = self.output_text  # Updates Tab B's textarea!
+```
+
+So Tab A's program output goes to Tab B's UI!
 
 ## Investigation Needed
 
