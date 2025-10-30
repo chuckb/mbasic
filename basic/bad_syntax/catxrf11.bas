@@ -1,188 +1,133 @@
-10	REM *************************************
-	* CAT-XREF.BAS
-	* by Simon J. Ewins
-	* December 1, 1982
+10	REM                                      
+	* CAT-REFBAS
+R)$<O
+$on J. Ewins
+R) +dIember 1, 198>%	$%	  Tis progHmI=kes th 
+T.CAT file
+	* created bETCAT3
+IIC"$* d provides prieed
+	* crBs-reference by:
+R)1$NDisk #$C=KB
+I	1IiP STNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN1I%	Nilename
+	                        File extension
 	*
-	* This program takes the MAST.CAT file
-	* created by NCAT32.COM and provides printed
-	* cross-references by:
-	* 			Disk # (-xxxx.###)
-20	REM                       Filename
-	*                       File extension
-	*
-	* This program is written to run on an
-	* Osborne-1. Check throughout for chr$ etc. 
-	* to locate Osborne specific code.
-	*****************************************
+	 ThB program is writtenI run on n
+	* Osborne-1. CPNITPA CM=
+AoJ for chr$ etc. L* to locate OsborneSPNIific code.
+	******************************************B
+300 1"2.)980
+40	DIM;(103%O$ eB0H7SHS$
+	2" C"yOR$T-LPRINTCatalogue Cros1.Herene":
+	PRINT STRING$(B e	1iII(I.%AT "by)sI$s
+E eNins": P2":
+	V" "Portions of omT$ls; 	Tersion (c)  MicrBoft"
+60	PRINT$
+	2" "MENU:COLP2" "=====================================================-
+:	2" "1. Print by Dik Number">%eV" "2. Print by Fld $Uy
+1I=lTAabetical)COLP2" "3. Prin by  lJ 3Gnion":LPRINT4. End (3EOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOLiled th   reu  s toG/M)"
+70	PRINT$
+	2" "Mo)$:$P$$TScT' disk in d 2I$
+X$OLPRINT "and ENTEyo)r%INoice :";:
+	SELECTION$ = INPUT4
+$COLIO
+pEOT= 7< "1" OR SELECTION$ > 
+T
+	CNTHENIR )50
+8> B 2rI$2
+pECT0 $CORN SEON%T C*A END
+9E0  p GOPL 1
+97)0%6r=0	GOTO 50
+X=	RR D IA & D FILE SUBROUTIN-----
+9K%eV": REC%=0: OP  TI",1TB:M	CITTX6%0 "TIT(1) THEN 160                                                  9(OR"E33 T                                                                                "dTAN%)
+HSTN%L2Oo$TRX1:I % U000000000000000000000000000000000000000000000000000000009N$%=%L$r"NF1T
+STNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN$E) ERRi0ANDLIN::::::::::::::::::::
+% I.%ATFILE NONOUND ERRG"CC%eVneV" "Remount 'NST.CAT' in drive 5eo
+T
+9Ri%	2"O 203- NEXT I%: GOTO 50
+200	V" "DISK I/O ERNEOXA9SUc % 6S
+09NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN$ED) PRINTER OPTION0t
+ER3%"$EM%B>G =H9C
+	2": PR nTSend to T1 7 ter ";: INPUTFS$
+24	6 2FS$="Y" OR ANSNE<nCA 245 %E
+	GOTO 250 =EU9hPUT "Serial or Parallel G=C: TANS$
+ R%0 ORE	PFE	T ORFS$="s" T A IOBYTE=12
+
+	GO OKG =E$ 	IF ANSNRM  2TOREH"c" T A IOBYTE=12
+
+	GO OKG =ETUc % =BP HS%0 ORE	PFRr  AiTNSNR  C*A IOBNE=F .I(=:% EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEA0K2.R )22222222222222222222222222222222222222222222222222222222222222222222222222222222222222222A
+K%eV" STR1:B0H7e	1i)$04$0E
+YTE: FURN
 
-30	ON ERROR GOTO 980
-40	DIM CAT$(1000),EXT$(50)
-50	PRINT CHR$(26);:
-	PRINT "Catalogue Cross-Reference":
-	PRINT STRING$(25,34):
-	PRINT "by Simon J. Ewins": PRINT:
-	PRINT "Portions of compiled version (c)1981 Microsoft"
-60	PRINT: PRINT "MENU:":
-	PRINT "====":
-	PRINT "1. Print by Disk Number":
-	PRINT "2. Print by Filename (alphabetical)":
-	PRINT "3. Print by File extension":
-	PRINT "4. End (if compiled then returns to CP/M)"
-70	PRINT: PRINT "Mount 'MAST.CAT' disk in drive B:":
-	PRINT "and ENTER your choice :";:
-	SELECTION$ = INPUT$(1):
-	IF SELECTION$ < "1" OR SELECTION$ > "5"
-	   THEN GOTO 50
-80	SEL = VAL(SELECTION$):
-	IF SEL = 4 THEN END
-90	ON SEL GOSUB 290, 510, 640
-100	GOTO 50
+28NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN$ED) AR yO"$TISK NUMBER ------------B
+290	GOSUB 120: GOSU =H $u1
+9S1 2TOV"O REC%:LIF LEFT$PTT$(I%), <>"+" THEN 320
+310	EXT$(O%O	&F$(CAT$(I%),3)>Se%=J%+1: NEXT I%$N=Uc	GL" 06'30	LONG  NOR I%=1 TO J%-1:
+	PRINT NIS" T;EXT$(I%):
+C
+	CneVCOLLI%=L$T/.HEITOR K%=TO REC%:
+	IF RIGHTAdT$9Hi(T$
+"$(I%) TH O0o
+39	EuINSTR(CAT$(K% IR%$COLB(2OAR(C y1SO ,"."II(	2GOS(0P$N	T$=LE NdT$(K%),A%- :
+	PU21$(A$,B%- :
+	xIN$(X	DR
+P0iII($$+S%AG$(8-LEN(B$),32NRP:
+6 2Fr *2 wn("
+39	6 TL2RraE410
+380	ITLor0N" A PRINT $(
+( "";: GO %0
+390	IF C%
+ "HEN P2" TAoA
+% T";: GO %0
+4006 TLT
+K)	OneNT: LI%=L$TR'10	PRINTId2 eEGO"=90"PrSO.E0	P2": PRINT "	2$(50,34):	VBCT		.E%6%0 $S1RS=T"HEN P2" CHR4		 : LI%=1
+450	N)8RIGO"	I.%AT CHR$(12):cTfER	N X eV": 	OS.4	I.%ATPress < R> for menu...... ";
+ OA$=INKEY8RN A$="" THEN 48.S9NNFURN
+1H2TNi4+nOINR yO"1OpENAME (ALPHABETICAn$COB
+510	G2J)K6X1O=t)=HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH-=9(1u1: Ai1u1%"N%L-
+	C%=Po07S
+530	IF C%=1 TH 1 01L19N C7AF"HEN P2" TAMNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN"": G )55555555555555555555555555555555555555555555555f%0 "LoY N"HEN PRINTNB(41)"";: GOTO 570
+560	IF C=a  eV": LI%	I%+1
+570	A%=INSTRPTT$(I%),I")>ST$	EFNdT$(I%),A%-1II( gT$+STRINyT LEN(A$)+$TRP"CCOLB0IID$(C y%	%O IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIHiII(A=RI=T$(CAT$(O HiP1;O	 oT6"$(B$, ="," TH $H"    "
+590	IF LI06rEN PR 8$HR$00i)o%																																																																																									0K9ChT eELPN E
+"C$;N9SF)8RIG 0O0POTO 460
 
-110	REM ----- OPEN & READ FILE SUBROUTINE ----
+630	RE :::::::::::::::::::::::::::::::::O"8<4"PrT2R2nR%U4 ::::::::::
 
-120	PRINT: REC%=0: OPEN "I",1,"B:MAST.CAT"
-130	IF EOF(1) THEN 160
-140	LINE INPUT #1, CAT$(REC%)
-150	REC%=REC%+1: GOTO 130
-160	REC%=REC%-1: RETURN
-
-170	REM ----- ERROR HANDLING-------------------
-
-180	PRINT "FILE NOT FOUND ERROR.":
-	PRINT: PRINT "Remount 'MAST.CAT' in drive 'B:'"
-190	FOR I%=1 TO 2000: NEXT I%: GOTO 50
-200	PRINT "DISK I/O ERROR"
-210	GOTO 190
-
-220	REM ----- PRINTER OPTION SUBROUTINE ------
-
-230	PRINT: PRINT "Send to printer ";: INPUT ANS$
-240	IF ANS$="Y" OR ANS$="y" THEN 245 ELSE
-	GOTO 250
-245	INPUT "Serial or Parallel (S/P)";ANS$
-246	IF ANS$="S" OR ANS$="s" THEN IOBYTE=129:
-	GOTO 270
-247	IF ANS$="C" OR ANS$="c" THEN IOBYTE=128:
-	GOTO 270
-248	GOTO 245
-250	IF ANS$="N" OR ANS$="n" THEN IOBYTE=128:
-	GOTO 270
-260	GOTO 230
-270	PRINT STRING$(50,34): POKE 3,IOBYTE: RETURN
-
-280	REM ----- SORT BY DISK NUMBER -----------
-
-290	GOSUB 120: GOSUB 230: J%=1
-300	FOR I%=1 TO REC%:
-	IF LEFT$(CAT$(I%),1)<>"+" THEN 320
-310	EXT$(J%)=RIGHT$(CAT$(I%),3):
-	J%=J%+1: NEXT I%
-320	GOSUB 860
-330	LI%=1: FOR I%=1 TO J%-1:
-	PRINT "DISK #";EXT$(I%):
-	PRINT: PRINT:
-	LI%=LI%+3
-340	FOR K%=1 TO REC%:
-	IF RIGHT$(CAT$(K%),3)<>EXT$(I%) THEN 420
-350	A%=INSTR(CAT$(K%),","):
-	B%=INSTR(CAT$(K%),"."):
-	C%=POS(0)
-360	A$=LEFT$(CAT$(K%),A%-1):
-	B$=LEFT$(A$,B%-1):
-	A$=MID$(A$,B%+1,3):
-	B$=B$+STRING$(8-LEN(B$),32)+".":
-	IF A$="" THEN A$="   "
-370	IF C%=1 THEN 410
-380	IF C%<19 THEN PRINT TAB(19)"";: GOTO 410
-390	IF C%<37 THEN PRINT TAB(37)"";: GOTO 410
-400	IF C%>45 THEN PRINT: LI%=LI%+1
-410	PRINT B$;A$;
-420	NEXT K%
-430	PRINT: PRINT STRING$(50,34): LI%=LI%+2
-440	IF LI%>50 THEN PRINT CHR$(12): LI%=1
-450	NEXT I%
-460	PRINT CHR$(12): POKE 3,128: PRINT: CLOSE
-470	PRINT "Press <ENTER> for menu..... ";
-480	A$=INKEY$: IF A$="" THEN 480
-490	RETURN
-
-500	REM ----- SORT BY FILENAME (ALPHABETICAL) -
-
-510	GOSUB 120: GOSUB 230
-520	LI%=1: FOR I%=1 TO REC%:
-	C%=POS(0)
-530	IF C%=1 THEN 570
-540	IF C%<21 THEN PRINT TAB(21)"";: GOTO 570
-550	IF C%<41 THEN PRINT TAB(41)"";: GOTO 570
-560	IF C%>50 THEN PRINT: LI%=LI%+1
-570	A%=INSTR(CAT$(I%),"."):
-	A$=LEFT$(CAT$(I%),A%-1):
-	A$=A$+STRING$(8-LEN(A$),32)+".":
-	B$=MID$(CAT$(I%),A%+1,3):
-	C$=RIGHT$(CAT$(I%),3)
-580	IF LEFT$(B$,1)="," THEN B$="   "
-590	IF LI%>60 THEN PRINT CHR$(12): LI%=1
-600	PRINT A$;B$;"-";C$;
-610	NEXT I%
-620	GOTO 460
-
-630	REM ----- SORT BY EXTENSION TYPE ---------
-
-640	GOSUB 120: GOSUB 230
-650	J%=1: FOR I%=1 TO REC%:
-	CAT$=CAT$(I%):
-	A%=INSTR(CAT$,".")+1:
-	CAT$=MID$(CAT$,A%,3)
-660	FOR K%=1 TO J%:
-	IF EXT$(K%)=CAT$ THEN 690
+640	GOSUB 120: GOSU =H:650	J%=1: Ai1u1%"N%L-
+	CAT$=CA	-
+	A%=INSTR(CA
+%CO 1:
+NdT$=MID$(CA
+%,3)
+69RiT89u1 TO J%>S1TXR	IiTT$ THEN 690
 670	NEXT K%
-680	EXT$(J%)=CAT$: J%=J%+1
-690	NEXT I%
-700	GOSUB 860
-710	LI%=1:
-	FOR I%=1 TO J%-1:
-	FOR K%=1 TO REC%:
-	A%=INSTR(CAT$(K%),".")+1:
-	CAT$=MID$(CAT$(K%),A%,3)
-720	IF CAT$<>EXT$(I%) THEN 820
-730	C%=POS(0):
-740	IF C%=1 THEN 780
-750	IF C%<21 THEN PRINT TAB(21)"";: GOTO 780
-760	IF C%<41 THEN PRINT TAB(41)"";: GOTO 780
-770	IF C%>50 THEN PRINT: LI%=LI%+1
-780	A%=INSTR(CAT$(K%),"."):
-	A$=LEFT$(CAT$(K%),A%-1):
-	A$=A$+STRING$(8-LEN(A$),32)+".":
-	B$=MID$(CAT$(K%),A%+1,3):
-	C$=RIGHT$(CAT$(K%),3)
-790	IF LEFT$(B$,1)="," THEN B$="   "
-800	IF LI%>60 THEN PRINT CHR$(12): LI%=1
-810	PRINT A$;B$;"-";C$;
-820	NEXT K%
-830	PRINT: PRINT: LI%=LI%+2: NEXT I%
-840	GOTO 460
+680	ET$(J =CAT$: JG:IAP 01	NEXT I%E9SUc	GL" 06E)9SI%=COLFi1u1 TO J%-1:
+	A89u1 TO REC%:
+	A%=INSTAdT$9T.")+1:
+	CAT$=MI$(CAT$9N%,3P 
+O0RN CAT$<>EXT$(O =EN9KG =9NL2GOS(0): 
+0	IF u1 THEN 77777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+UKS TLoENF"HEN PRINT TAB(21)"";: GOTO 780 
+0	IF CME N"HENI%AhB E"";:IR )780
+
+KS1T C%>50 THEN PRINT:	VBCTR'$ 8	EuI2T0AdT$(K%),"."II( g	E yT"$(Ii 3O$):
+	A$=A$+STRINyT LEN(A$)+$TRP"CCOLB0IID$(C y1SO ,A%+1,3):LC$=Se0 yTdT$(K%),3) 
+0	IF  0B5I:%( ="," THEN BNn("" 	1T LI%>F"HEN PRINT3I BE9%$8u1
+9S$
+	2" ATpPN
+";CTS
+820	NET K% xS$
+	2": PRINTo%	2B%		5 FEXT I% 
+	GOTO 460B
+850	REM ( SR%A"ER3%AE FOR EXT$ --------
 
-850	REM ----- SORTING ROUTINE FOR EXT$ -------
-
-860	NUMB%=J%-1
-870	SWITCH%=0
-880	NUMB%=NUMB%-1
-890	FOR K%=1 TO NUMB%
-900	IF EXT$(K%)<=EXT$(K%+1) THEN 950
-910	TEMP$=EXT$(K%)
-920	EXT$(K%)=EXT$(K%+1)
-930	EXT$(K%+1)=TEMP$
-940	SWITCH%=1
-950	NEXT K%
-960	IF SWITCH%=1 THEN 870
-970	RETURN
-
-980	REM ----- ERROR ROUTING ------------------
-
-990	IF ERR = 53 THEN RESUME 180
-1000	IF ERR = 57 THEN RESUME 200
-1010	PRINT "ERROR #";ERR:
-	END
-TING ------------------
-
-99
+860	N
+s%=O$r'T (%WITCH%(. O 2FUMI0NUMB%-.S9RiT89u1 TNUMB%
+9S%0Pr 1SOI0EXT$9CTR
+  C*A foA		 (U*"$(IiP 		0STPr BR	Ii*e iR	IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+930	EXT$(IAR0TEMP$ 	0	S.xu1
+950	N)n0	S
+96	6 OstFCI01 THEN 87X4	ANFURN
+ 	0	REM ------ NENrT%5cNG -------------------
+ 	0	IF NiFU C*A RESUME 18020IS1T ERR = 57 THEN REyO"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO9T		I.%ATERROR #";E5M(A2S
+

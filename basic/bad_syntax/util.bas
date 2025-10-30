@@ -1,673 +1,1021 @@
 160 '
-180 ' RBBSUTIL.BAS ==> UTILITY PROGRAM FOR THE RBBS REMOTE BULLETIN BOARD SYS
-200 ' BY RON FOWLER, WESTLAND, MICH RBBS (313)-729-1905 (RINGBACK)
-220 ' Please report any problems, bugs, fixes, etc. to the above RBBS if
-221 ' if in USA or to: 
-230 ' Bill Bolton, "Software Tools" RCPM (02)997-1836 (modem)
-235 ' if in Australia
-240 '
-260 ' 06/Jun/82
-280 ' Passwords in messages were being killed during purges only if
-300 ' the messages were renumbered, fixed now. Added code to 
-320 ' read date from LASTCALR (lifted from MINIRBBS) and default
-340 ' to current date if new date not specifically entered. Added
-360 ' password check so that this utility can be left out for remote
-380 ' use (but make it an unusual name, SYS and TAG as well).
-400 ' Bill Bolton (Australia)
-420 '
+180 'BBSUTIL.BAS ==> ' 	 1 y:4Ac4 THEBBS RETE B 5ETIN BOARD SYS
+200 ' BY RON F#	 T'#E,13) MICH RBBS (313)-729-1905 (M$N,M=  3N P"Pln242hP 9s	TFeT r2eN	2 mAI+Ma',i1
+y"ec. to
+yFr		Bc RBBS if
+25nHa6'o1CA or (R 
+0 ' Bill BoltoA0Coft T :PEols" RCPM (0DX5 n?36 (modem)
+235 ' if iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiitralia
+2"PO
+260.0
+0
+	 18	
+PRI ' PasswordH mesf
+nFA
+Tt being killed durin purges  1 Pr221N2N	nc6 me?A
+                                                                                   hP F	S O6red, fixed now. Sded code to 
+320 ' reaZa s,(G LASTCALR (lT 
+lP(G MIN:Nd"=  1default
+340 ' t
+eurrent ree if  FDdee not specifically ente Z. Added="
+ .Layx TB	c6c."F
+ RP t 
+? s tility c EPs f
+NE	 s,or remo B9	RI ' use (but ake itPEo"0E	 	Tl	Tme, 	E	and TAH well	G
+	1iNPll Bolt EAustrali=
+420O
 430 ' 14/Jun/82
-440 ' Upper case conversion added to file name entered with D option
-445 ' and UTIL status permanetly written to CALLERS for those who
-446 ' find this file. Also TW status written to LASTCALR and 
-447 ' immediate log out for those that ignore warning. Bill Bolton
-450 '
-460 ' 21/Mar/82
-470 ' Added password check for "*" in messages to ALL. Version 2.5
-480 ' Bill Bolton
-490 '
-500 ' 07/Jul/83
-510 ' Added more stringent password check from ENTRBBS version 3.1
-520 ' and fixed some bugs in the command processor code. Added freeze
-530 ' and abort code to D option. Added uppercase conversion to F
-540 ' option. Version 2.6 Bill Bolton
-550 '
-560 ' 13/Jul/83
-570 ' Added file renaming and deletion options. Version 2.7 Bill Bolton
-580 '
-980	DEFINT A-Z
-990	VERS$ = "Vers 2.7"
-1000	ON ERROR GOTO 4030
-1010	DIM M(200,2)
-1020	SEP$ = "=============================================="
-1030	CRLF$ = CHR$(13) + CHR$(10)
-1040	PURGED = 0:
-	BACKUP = 0
-1050	GOSUB 4210		' BUILD MSG INDEX
-1060	N$ = "SYSOP":
-	O$ = "":
-	MAGIC$ = "SUPER"
-1070	GOSUB 4390		'Test for SYSOP
-1080	PRINT:
-	PRINT "             RCPM Utilty ";VERS$
-1090	PRINT SEP$
-1100	MSGS = 1:
-	CALLS = MSGS + 1:
-	MNUM = CALLS + 1
-1110	PRINT:
-	INPUT "Command? ",PROMPT$
-1120	PRINT:
-	PRINT:
-	IF PROMPT$ = "" THEN
-		GOSUB 1160:
-		GOTO 1110
-1130	B$ = MID$(PROMPT$,1,1):
-	GOSUB 2330:
-	SM$ = B$:
-	SM = INSTR ("TFDPEBKRA",SM$):
+4"PLk  5r
+ H  PttoBc? on added
+S2 le	Tme eeered5e 0=tEpPon0  ' and UT 	status permanetly wrieen to CALLd for
+VNyF ,F E
+44il,ind this file. AlsaW stats writ FNto MA1U"	2P1S 
+4SRnH$NOePate log out for F Ese that bI(Tt warning. Bill (	R
+m UR4nN"
+"Pb,gINTr/82
+470 ' AddS  Tyx TB	c6cl,or "*" in messageco5L. trsion 2.5
+480 ' Pl$	(	R
+( O 2L4nNR n$o 	
+lU	,
++= 2 A' APZ more strinent p?i,(TB	chtk from ENTRBU$	rsion 3.1
+520 ' al,i1
+.FNGe bugs in the cGmand p(Ftssor code. AddS reez	2 M "P.rg
+ 'c(PtS)tE  H$  1 0,3=T
+.U,R
+T
+ H   conversi Eo F
+540 ' o  H$  1 0scrsion 2.6 Bill Bolt O 2 URm " ' 13I
+	EUX
+R=	 SI ' Added	Ple renaming and delePon options. Versio
+T :" Pl$	(	R
+( O 2s4nN
+*n	EF TUtd,2 Us$  (= t 2b,#TTN$R ,TOmN ERROR GOTO 40M $R "1 DIM Mi	L.RO	020D6(= "==============================================="
+1030	 5F$ =e4t	N13) + CHRN10)
+1040	L:	 = tO 1CKUP	0
+1050SSUB 4210	0Zg		M:3
+M)oX
+T
+1 N$ 1E3OP":
+	(= "":
+	MAGIC$ =SUPER"0 n.OSUB 4390		'Tes2.	TR"o3TB
+"sk80NTm:INT "              RCPM  H0FT0T 1FERS$
+1,1 PRINT SEP$
+1 1RS = 1:
+	CALLS = 4S + 1:NMNYCALLS + 1
+11110	sDT:
+	INPUT "Com 1:R4L?S" T$
+11UiRIRtO PR Tmh28ST$ = "" THEN
+	GOSUB 11ltO 	GOI A00A30	B$ = 10EiROMP1LT D   GO	d
+M 	R
+	SM$	B$:
+SN=EE"4 TPw PEBKRA",SM$R
 	GOSUB 1140:
-	GOTO 1110
-1140	IF SM = 0 THEN
-		1160
-1150	ON SM GOTO 1730,1630,1430,2500,1300,3210,4800,4900
+STO 11110
+1140	IFM = 0 THEN
+		11600A50	ON SM GOTO 1730,95A00,2500AN	L1YT4 ss L1R900
 1160	PRINT:
-	PRINT "Commands allowed are:"
-1170	PRINT "B   ==> build summary file from message file"
-1180	PRINT "D   ==> display an ascii file"
-1190	PRINT "E   ==> end the utility program"
-1200	PRINT "F   ==> prints the disk directory
-1210	PRINT "K   ==> kill a file"
-1220	PRINT "P   ==> purge the message files"
-1230	PRINT "R   ==> rename a file"
-1240	PRINT "T   ==> transfers a disk file to the message file"
-1250	RETURN
-1260 '
-1300 ' END OF PROGRAM
-1310 '
-1320	PRINT:
-	PRINT:
-	END
-1400 '
-1410 ' DISPLAY A FILE
-1420 '
-1430	B$ = MID$(PROMPT$,2):
-	IF B$ = "" THEN
-		INPUT "Filename? ",B$:
-		PRINT
-1440	IF B$ = "" THEN
-		RETURN
-	ELSE
+8a "Commands allo6d a +"0A708a "B    ==> buildRUGmary	Ple	T$ G messbh,	P03
+1180	PR TD    =KRe RLl r2	ascii file $, pk80NT "E    ==l
+ 1S the utilite5rogram"
+1200	sDT "F    ==> prints the disk Prectory
+14k0NT "K    =Ki' ,02l,ile"0 Rk80NT "P    ==>  SgF
+ PtOe?AFT Ples"
+123iRINT "R    ==lP  Te a	Ple"wR0	PRILT,2T==K2y'  r	 2.Re 1 ,2Iit 
+Sc6 me?AFT Ple"
+A  U:E	 $we0 '1N	1ilM)sF:OGRO	$10 '1NP'sDT:NPR TmND1: 1iO1111111111111111111111111111111111111111111111111 ' DISPLAY A FILE
+sR4nN$100	B$	MIIEiROMPT$,2R
+	I$	o)" PS	
+INPUT "Filename? 	Y0R
+		PRIO
+1  U$h$	o) ""H
+G 	RE	  ELSE
 		GOSUB 2330:
-		FILN$ = B$
-1450	OPEN "I",1,FILN$
-1460	IF EOF(1) THEN
-		1500
-1470	BI = ASC(INKEY$+" "):
+		FILE) B$10	 UGPEN "I",1,FILN$0"1
+1 IF EOF(1) THEN
+	153
+1SI	BI = A"E	KEY$+" "):
 	IF BI = 19 THEN
-		BI = ASC(INPUT$(1))
-1480	IF BI = 11 THEN
-		PRINT:
-		PRINT "++ Aborted ++":
-		PRINT:
+		BI = A"E	PUL	1))
+1480	I$	0 =1 PS	
+PRINT:
+		PMa R+  FNTFtd ++":
+PRINT:
 		CLOSE:
-		RETURN
-1490	LINE INPUT #1,LIN$:
-	PRINT LIN$:
+		RE	 B
+U  U0nE7$RA,+A,LIN$:
+	PRIl  1	$:
 	GOTO 1460
-1500	CLOSE:
-	PRINT:
-	PRINT:
-	PRINT "++ End Of File ++":
-	PRINT
-1510	RETURN
-1600 '
-1610 ' DISPLAY DIRECTORY
-1620 '
-1630	B$ = PROMPT$:
-	GOSUB 2330:
-	IF LEN(B$) > 1 THEN
-		SPEC$ = MID$(B$,3)
-	ELSE
-		SPEC$ = "*.*"
-1640	FILES SPEC$:
-	PRINT:
+1500T "NR
+8a:
+	PMa:
+PRINT "++ End Of Filet S8$280NT
+151:ETBYI"
+	1 $1
+"1i	ISPLAY DIRECTORY
+1i"PO19	UvE) PROM6	  m GOSUB 233tO V	C	Y
+00	TEN
+		S"S$	MIIEv11E$oLSE
+		SPEC$ = l08	
+1640
+L CUESE 0R
+8a:
 	RETURN
 1700 '
-1710 ' TRANSFER A DISK FILE
-1720 '
-1730	PRINT "Active # of msg's ";:
-	OPEN "R",1,"COUNTERS",5:
-	FIELD#1,5 AS RR$:
-	GET#1,MSGS:
-	M = VAL(RR$)
-1740	PRINT STR"$(M) + " "
-1750	PRINT "Last caller was # ";:
-	GET#1,CALLS:
-	PRINT STR$(VAL(RR$))
-1760	PRINT "This msg # will be ";:
-	GET#1,MNUM:
-	U = VAL(RR$):
-	PRINT STR$(U + 1):
-	CLOSE
-1800 '
-1810 ' ***ENTER A NEW MESSAGE***
+1710 ' 137tN 	A DISK FILER"2'
+"308a "Active  of msg's ";:
+	OPEN "R",1,"COUNTERS"	   m FIELD#1,5 AS RR$:
+	GET#1O4tO ) VAL(RR3N$R"40	PMa PS
+1	3
+R " "
+1750	PRIL4  Tst 2,* 22 Ts  "   m GE UTTU"	5S:
+	PRINT STR$(VAL 4$))
+1760	PRINT "This msg # will2+Tl  $S"'0A UM:
+'Y w,R	RR$):
+8a STR$(U + 1):
+	CSE
+1800 '0 44n9FAENTER A NEW MESSAGE****
 1820 '
-1830	IF NOT PURGED THEN
-		PRINT "Files must be purged before messages can be added":
-		RETURN
-1840	OPEN "R",1,"COUNTERS",5:
-	PRINT "Msg # will be ";:
-	FIELD#1,5 AS RR$:
-	GET#1,MNUM:
-	V = VAL(RR$)
-1850	PRINT STR$(V + 1):
-	CLOSE
-1860	INPUT "Message file name? ",B$:
-	GOSUB 2330:
-	FIL$ = B$
-1870	INPUT "Todays date (DD/MM/YY)?",B$:
-	GOSUB 2330:
-	IF B$ = "" THEN
-		D$ = DT$
-	ELSE
+1830	IF NOT PURGED PS	
+PRINT "Fil bst be  STcd2
+Tat messages can be =T
+R
+		RE	 B
+":PmM:47,UT"MaERS",5:
+	PRINT "Msg # w	,00H#f0R
+	FI0N#1,5 AS RR$:
+GET#1,MNUM:
+	V = ,5 4$)
+18508a STR$(V + 1):
+T "SN$?60	INP5TC
+ R
+ kIV	Tme44lNtO B 20:
+
+L  (vO $?70	IN1,1Edays date (DD/MM/YY)Ax	IRNGOSUB 2330:
+	IF B) "" THEN
+		D$ = P0$oLSE
 		D$ = B$
-1880	INPUT "Who to (C/R for ALL)?";B$:
-	GOSUB 2330:
-	IF B$ = "" THEN
-		T$ = "ALL"
-	ELSE
-		T$ = B$
-1890	INPUT "Subject?",B$:
-	GOSUB 2330:
-	K$ = B$
-1900	INPUT "Password?",B$:
-	GOSUB 2330:
-	PW$ = B$:
-	IF T$ = "ALL" AND LEFT$(PW$,1) = "*" THEN
-		PRINT CHR$(7);"You CANNOT use '*' with ALL.":
-		GOTO 1900
-1910	F = 0			' F IS MESSAGE LENGTH
-1920	PRINT "Updating counters":
-	OPEN "R",1,"COUNTERS",5:
-	FIELD#1,5 AS RR$
-1930	GET#1,MNUM:
-	LSET RR$ = STR$(VAL(RR$) + 1):
-	PUT#1,MNUM
-1940	GET#1,MSGS:
-	LSET RR$ = STR$(VAL(RR$) + 1):
-	PUT#1,MSGS:
+1880	I UT "W E
+S$,
+: for ALL)? LNIR
+	GOSe,		G I$	o)" PS	
+T$ = "ALeG BD$6N= B$
+19$EiU"Subjec RlNIR
+SSUB 233tO $ = B$
+,lg1	PUT "PasswordAx	IRNGOSUB 2330:
+	PW$ = IR
+	IF$ = "ALL" AND LEFL	P	05N= "*" THEG 	PRINT CHRN7);"You CANNOT usPRlPpe 
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnL.":
+		GOT0 	1N$eA	F = 0	
+ C MdAGE LENGT
+1920	PR TUpdating counter'tO OPE"R",1,"SDTERS",5:
+	FIEN#1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,R$0 0	GET#1,MNUMm=f:E) STR$(VAL 4$) + 1)m1TW1,MNU	$eRgC0"ARS:
+	LSET RR$ = STR$(VANRR$) + 1):
+	PUT#1,MS"R
 	CLOSE#1
-1950	PRINT "Updating msg file":
-	OPEN "R",1,"MESSAGES",65:
-	RL = 65
-1960	FIELD#1,65 AS RR$
-1970	RE = MX + 7:
-	F = 0
-1980	OPEN "I",2,FIL$:
-	IF EOF(2) THEN
-		PRINT "File empty.":
-		CLOSE#1:
-		CLOSE#2:
-		END
-1990	IF EOF(2) THEN
-		S$ = "9999":
-		GOSUB 2400:
+1950	PRILTk ating msg fi 0
+	OPEN "R	"ATCMdCMR1e5mL = 650  $b
+L		M
+fL AS RR$
+,E 1 RE	MX + 7:NF =  $e- 1 OP:6U gT.
+e	   IFOF(2) THEN
+	PRINT "File empty.":
+CLOS U   m 	CSE#2:
+		E	eg5g.FN 	2) THEN
+	S$ =9"mOOSUB 2400:
 		PUT #1,RE:
 		CLOSE #2:
-		GOTO 2030
-2000	LINE INPUT #2,S$
-2010	IF LEN(S$) > 63 THEN
-		S$ = LEFT$(S$,63)
-2020	PRINT S$:
-	GOSUB 2400:
-	PUT #1,RE:
-	RE = RE + 1:
+		GO
+4TNM 
+P	,TOINE IN1,+ rMe	
+P	b sI=EoE= > 63 THEG 	S$ = LEP0E0Ae3)
+202iRINT S$:NGOSUB 240tO 1,+A,RE:
+C2NRE + 1:
 	F = F + 1:
 	GOTO 1990
-2030	RE = MX + 1
-2040	S$ = STR$(V + 1):
+"0	RE = g00 
+P"  UE (= STR$(V + ER
 	GOSUB 2400:
+	P'0"5
+2050C2NRE + 1:
+	S$ =
+LtmC d
+A: ltO PU UT  CN "-C2NRE + 1:
+ (=$ + " " + O$:
+	GOSe,I:
 	PUT#1,RE
-2050	RE = RE + 1:
-	S$ = D$:
+	E 1 RE = RE + 1:
+	S$ rIR
 	GOSUB 2400:
-	PUT#1,RE
-2060	RE = RE + 1:
-	S$ = N$ + " " + O$:
-	GOSUB 2400:
-	PUT#1,RE
-2070	RE = RE + 1:
-	S$ = T$:
-	GOSUB 2400:
-	PUT#1,RE
-2080	RE = RE + 1:
-	S$ = K$:
-	GOSUB 2400:
-	PUT#1,RE:
-	RE = RE + 1:
-	S$ = STR$(F):
-	GOSUB 2400:
-	PUT#1,RE
-2090	CLOSE #1
-2100	IF PW$ <> "" THEN
-		PW$ = ";" + PW$
-2110	PRINT "Updating summary file."
-2120	OPEN "R",1,"SUMMARY",30:
-	RE = 1:
-	FIELD#1,30 AS RR$:
-	RL = 30
-2130	RE = MZ * 6 + 1:
-	S$ = STR$(V + 1) + PW$:
-	GOSUB 2400:
-	PUT#1,RE
-2140	RE = RE + 1:
-	S$ = D$:
-	GOSUB 2400:
-	PUT#1,RE
-2150	RE = RE + 1:
-	S$ = N$ + " " + O$:
-	GOSUB 2400:
-	PUT#1,RE
-2160	RE = RE + 1:
-	S$ = T$:
-	GOSUB 2400:
-	PUT#1,RE
-2170	RE = RE + 1:
-	S$ = K$:
-	GOSUB 2400:
-	PUT#1,RE
-2180	RE = RE + 1:
-	S$ = STR$(F):
-	GOSUB 2400:
-	PUT#1,RE
-2190	RE = RE + 1:
-	S$ = " 9999":
-	GOSUB 2400:
-	PUT#1,RE
-2200	CLOSE#1
-2210	MX = MX + F + 6:
-	MZ = MZ + 1:
-	M(MZ,1) = V + 1:
-	M(MZ,2) = F
-2220	U = U + 1
-2230	RETURN
-2300 '
-2310 ' Convert the string B$ to upper case
-2320 '
-2330	FOR ZZ=1 TO LEN(B$):
-		MID$(B$,ZZ,1) = CHR$(ASC(MID$(B$,ZZ,1)) + 32 * (ASC(MID$(B$,ZZ,1)) > 96)):
-	NEXT ZZ:
-	RETURN
-2400 '
-2410 ' FILL AND STORE DISK RECORD
-2420 '
-2430	LSET RR$ = LEFT$(S$ + SPACE$(RL - 2),RL - 2) + CHR$(13) + CHR$(10)
-2440	RETURN
-2500 '
-2510 ' PURGE KILLED MESSAGES FROM FILES
-2520 '
-2530	IF PURGED THEN
-		PRINT "Files already purged.":
-		RETURN
-2540	INPUT "Today's date (DD/MM/YY) ?",DATE$
-2550	IF LEN(DATE$) > 8 THEN
-		PRINT "Must be less then 8 characters.":
-		GOTO 2540
-2560	IF DATE$ = "" THEN
-		DATE$ = DT$
-2570	OPEN "R",1,DATE$+".ARC"
-2580	IF LOF(1) > 0 THEN
-		PRINT "Archive file: ";DATE$ + ".ARC";" exists.":
-		CLOSE:
-		RETURN
-2590	CLOSE
-2600	MSGN = 1:
-	INPUT "Renumber messages?",PK$:
-	PK$ = MID$(PK$,1,1)
-2610	IF PK$ = "y" THEN
-		PK$ = "Y"
-2620	IF PK$ <> "Y" THEN
-		2650
-2630	INPUT "Message number to start (CR=1)?",MSG$:
-	IF MSG$ = "" THEN
-		MSG$="1"
-2640	MSGN = VAL(MSG$):
-	IF MSGN = 0 THEN
-		PRINT "Invalid msg #.":
-		RETURN
-2650	PRINT "Purging summary file...":
-	OPEN "R",1,"SUMMARY",30
-2660	FIELD#1,30 AS R1$
-2670	R1 = 1
-2680	OPEN "R",2,"$SUMMARY.$$$",30
-2690	FIELD#2,30 AS R2$
-2700	R2 = 1
-2710	PRINT SEP$:
-	GET#1,R1:
-	IF EOF(1) THEN
-		2840
-2720	IF VAL(R1$) = 0 THEN
-		R1 = R1 + 6:
-		PRINT "Deletion":
-		GOTO 2710
-2730	IF PK$ = "Y" AND VAL(R1$) < 9999 THEN
-		IF INSTR(R1$,";") THEN
-			PASS$ = MID$(R1$,INSTR(R1$,";"),27)
+	P'0"5
+2080	RE =E  1m$ = K$mMC d
+ 	ltO PUT#1,RE:
+	RE = RE + 1:NS$	STR$(=:
+	GC d
+A: ltO PU UT  CN 	2 E5OSE #1T4 1 IF PW$ <> 4PiSO 	PW$ = ";" + #	
+fA0	sDT "UpdaPng E	Omary fi Io
+f lPEN "R	"ATM1331	1111111111111111111111111111111111111111111111111111111111111111111111111111 R
+	RE	1:
+
+L		M
+ UTTN",li 0RNRL	30
+ANU:E = d * 
+R 1:NS$	STR$(e: 1) + PW$:
+	GOSUB 24 RNPUT#1,RE
+2140	RE	RE + 1:
+ (=
+LtOMC d
+ 	ltO PUT#1,RETA  U:E = RE00  7o) N$01RT
+R O$:
+GOSU
+A: ltO1TW1,RE
+2
+1 RE =E  1m$ = T$:
+GOSU
+A: ltO1TW1,RE
+2"0	RE	RE + 1:
+ (=t	  m GOSUB 2400:
+	PUT1,R 
+ R838S
+1:
+S$ = STR$(F):
+SSUB 2400:
+	PUT1,R 
+ p-C2N6: tO E) " 99999":
+	GOSUB 24 RNPUT#1,RE
+225E5OSE#1HR5Dg = MX + F + 6:
+	d = MZ + 1:
+	NMZ4Y3F e: 1:NM(MT YF
+A0	U 16: 1
+2230	RE	 B
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	nN
+,1' CoBce t6 stPng oF$6SRLer
+ryvY '
+2330	FOR"BTU	T0=EB$):
+		MID$(B$dZ4Y3)e4t	NASC(1E
+	NIgn"54E
+ 	,2o,1"E0D$(B.f1)
+0
+C
+=):
+	NEXT"B   m TE	 B
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 1iO
+2410 ' FILL  D STORE DISK REC0N
+2420 'A00	T"-4$	LEFT$(E
+ 	SPACE$(R,:
+4E5p - 2) + CHR$(N3
+CHR$(10)
+2440	RE	 B
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 	1iO
+	A0 ' PUE KIL"N ME14ES FRYL C
+252'
+	M U$h2RGEDH
+G 	PRINT "Files,aR
+rPpured.":N	RETBY
+A "Rg1	1,1Eday's date))I
+1E	
+YF AE,"G 
+,	URg.F	C	(DT	I= biPS	
+PRINT "MusIHF	Phche
+ eharacters":
+	GOTO 2540
+	"
+U$h)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))E$ = ""H
+G 	DA o) DT	
+,	 SI	OPEN "R	"AE,"DI#4 0" MN
+,  1 IF LOF(Y	0 THEN
+	PRINT "Archiva P + ";DATE$ + ".ARC";" exists.":
+		CLO RN	RETBY
+A  U=,=SN
+, 1 4N =:
+	INPUT "Renumbe
+6?A
+                                        N 0R
+	PK$ = MID$(PK$,	"=
+ I U$ PK$ =y" THENN	PK$ 1B03
+2620	V'(<> 	1RPiSO 	2650
+2630	INPUT "Messae nm6r thtTFeNCR=1)?",M$:NIF MSo) "" THEG 	MSGORCY
+AHR53"ON = ,53"O$):
+	IF MSGN	0 THEN
+	PRINT "Invalid msg .tO C=LBY
+A9:k80NT "Purgi. S Oa ra Ple....":
+	OPE"R",1,EU31RY",3 
+2
+1
+	N	MUTT AS R1$
+2E R1 = 1
+2680	OM:47,16OEU31RY.$$$$",3 
+
+pge0ELD#2,30 AS2$4"0:2 =  
+44k80NSEP  m GW1,R1:
+	IoOF(1aHEN
+		240
+272$hF ,5(R1$) = THEN
+R1 = R10P+
+	PRINT "Delet( d8$0OTO 27104"30	I2>) "Y" AND VAL(e	3 P99999 THEN
+		IF INSTR(e"UT d TEN
+				PASE) MID$ A$,INP NR11TlS2"	iS2	m 	ELSE
+"T" AeN= SPACE$(28)
+274$h2>$ 1B041ND ,5 A$) <                                                                                 THEG 	LSET R2$ =DsP0EE"0E14N) + PAS1.?) + CHRN13
+R CHR$(10R
+		MSG= MSGN00  0mOTO 2760
+S,R =f:2$ =1$
+2760	Pgr	  =	
+'"0	PR TDsP0E:2$PR2	
+PS+I	IF ,5 A$) > 99998 THENN	2840
+2790	FOR I 0	TO 5
+2800		R1 = R1 + 1:N	R2 = g0 O 	GET#1,R1:
+		LTlseN= R1$:
+		PUT#2,R	
+PR0 Ul?0l Ds	NR2$,R2	
+t45	.0
+2830	R= R1 + 1:
+	R2 = g0 O GT 2710'a:5ER
+	OM:4",1,"SUMM) 0#""7:
+CLOStO ILL "SUMMARY.BAK":
+	NAME "SUM" 1R1S "SUMMARY.BAK"mAME "$SUM" 0FL1" AS "SUMMARY"
+250	sDT "Puring message file....":
+	MSGN	VAL(4$N
+P $loN "R",1,"MESSAGES"    m FIELD #1,666666666666666666666666666666666666666666666666666666666666666666666666666666666661$HE OPEN "R"rU SMdA"	tr41e5:
+	FIEN 2,65 AS2$'t  1 OP:4",DATE$+".ARC"m1 0 O KIL I
+2890	R1	1:
+ ,)
+2900	PR TEP$:
+S"gRA,RtO VN eE3aHEN
+ 3100H"1 IF VAL(R1$)	0 THEN
+	KIL	-1:
+		PMa TPF
+ ReY2FS tOessagetO STO 2970
+2920	IL =  
+CNU$ PK$ =YAND VAL(R1$)	P99999 PS	
+IF  SR	R1$,";") THEN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ASS$ = 1E
+	Ne"	0NSTR A$,";"Ae2)
 		ELSE
-			PASS$ = SPACE$(28)
-2740	IF PK$ = "Y" AND VAL(R1$) < 9999 THEN
-		LSET R2$ = LEFT$(STR$(MSGN) + PASS$,28) + CHR$(13) + CHR$(10):
-		MSGN = MSGN + 1:
-		GOTO 2760
-2750	LSET R2$ = R1$
-2760	PUT #2,R2
-2770	PRINT LEFT$(R2$,28)
-2780	IF VAL(R1$) > 9998 THEN
-		2840
-2790	FOR I = 1 TO 5
-2800		R1 = R1 + 1:
-		R2 = R2 + 1:
-		GET#1,R1:
-		LSET R2$ = R1$:
-		PUT#2,R2
-2810		PRINT LEFT$(R2$,28)
-2820	NEXT I
-2830	R1 = R1 + 1:
-	R2 = R2 + 1:
-	GOTO 2710
-2840	CLOSE:
-	OPEN "O",1,"SUMMARY.BAK":
-	CLOSE:
-	KILL "SUMMARY.BAK":
-	NAME "SUMMARY" AS "SUMMARY.BAK":
-	NAME "$SUMMARY.$$$" AS "SUMMARY"
-2850	PRINT "Purging message file...":
-	MSGN = VAL(MSG$)
-2860	OPEN "R",1,"MESSAGES",65:
-	FIELD #1,65 AS R1$
-2870	OPEN "R",2,"$MESSAGS.$$$",65:
-	FIELD #2,65 AS R2$
-2880	OPEN "O",3,DATE$+".ARC":
-	R1 = 1:
-	KIL = 0
-2890	R1 = 1:
-	R2 = 1
-2900	PRINT SEP$:
-	GET #1,R1:
-	IF EOF(1) THEN
-		 3100
-2910	IF VAL(R1$) = 0 THEN
-		KIL = -1:
-		PRINT "Archiving message":
-		GOTO 2970
-2920	KIL = 0
-2930	IF PK$ = "Y" AND VAL(R1$) < 9999 THEN
-		IF INSTR(R1$,";") THEN
-			PASS$ = MID$(R1$,INSTR(R1$,";"),62)
-		ELSE
-			PASS$ = SPACE$(62)
-2940	IF PK$ = "Y" AND VAL(R1$) < 9999 THEN
-		LSET R2$ = LEFT$(STR$(MSGN) + PASS$,63) + CHR$(13) + CHR$(10):
-		MSGN = MSGN + 1:
-		PRINT LEFT$(R2$,63):
-		GOTO 2960
-2950	LSET R2$ = R1$:
-	PRINT LEFT$(R2$,6)
-2960	PUT #2,R2
-2970	IF KIL THEN
-		GOSUB 4310:
-		PRINT #3,KL$
-2980	IF VAL(R1$) > 9998 THEN
-		3100
-2990	FOR I = 1 TO 5
-3000		R1 = R1 + 1:
-		IF NOT KIL THEN
-			R2 = R2 + 1
-3010		GET #1,R1:
-		IF KIL THEN
-			GOSUB 4310:
-			PRINT #3,KL$:
-			GOTO 3030
-3020		LSET R2$ = R1$:
-		PUT #2,R2:
-		PRINT LEFT$(R2$,63)
-3030	NEXT I
-3040	FOR I = 1 TO VAL(R1$):
-		R1 = R1 + 1:
-		IF NOT KIL THEN
-			R2 = R2 + 1
-3050		GET #1,R1:
-		IF KIL THEN
-			GOSUB 4310:
-			PRINT #3,KL$:
-			GOTO 3070
-3060		LSET R2$ = R1$:
-		PUT #2,R2:
-		PRINT LEFT$(R2$,63)
-3070	NEXT I:
-	R1 = R1 + 1:
-	IF NOT KIL THEN
-		R2 = R2 + 1
-3080	GOTO 2900
-3090 '
+"T" AeN= SPACE$(62)
+2940	V'(= 	1R1NF ,E:13
+2
+,	Hr2u 
+		LSlseN= L rIAP 0E142N+ PASS$,K# i   13
+Re4t	N10):
+	MSGN = MSGN + 1:
+PRINT LEFL	R2$,6D  m STO 2960
+250	T"- P(= R1$:
+PRINT LEFL	R2$,6N
+P $lTb0aL 
+Pp"$h>IL PS	
+GOSUiMA0m'sDT #3,KL$
+2980	IF VAL(R1$)																																																										H
+G 	3100H2 Ucb'Ur	5N	,TO0:1 = R100  0$h"	KIL THEN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2 = R2 +  2N	"1 	GET #1,R1:
+		IFs 		THEN
+				GOSRR310:
+				PRINT #3,KL$:
+				GOTO 30M 2N	5 LTlseN= R1$:
+		PUT #2sRtO 	sDT LEFL	R2$,63N2N"0	 ,2b2N"b$S0$w	TO VAL(R1D  m A = R1 + 1:
+		IF NOT KIL PS	
+"T"w R
+  2N"	 U.b0"55555555555555555555555555555555555555555555555555555555555N	IF KIL PS	
+"T	3lSiMA0:
+				PRIbu"	p$:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OTO 	E 1N2N" $L=f:(= e	   	PUTlfR2:N	PRINT LEFT$(R0Ae3)
+3070	N.0:
+R1 = R100  
+	s(OT KIL PS	
+R2 = R2 +  2N	:$STO 290 2N	2PO
 3100	CLOSE:
-	OPEN "O",1,"MESSAGES.BAK":
+	OM:4",1,"MESSAGE+= S8$5OSE:
+	KI 	"MESSAGESBAK":NNA"11ME14ES" AS "MdAGES.BAK"mAME "$MESSAGS.$$$$" AS "MESSAGES"=A10	PMa 	,=R
+P.
+EuntPw+1"
+34;SnD "O	"ATE3SDTd.BAK":
+T "NR
+  L 5 "COUNTE,#""TN230	OPE"R",1,"SDTERS",15m
+	N	M UT "111111111111111111111111111111111111111111111111111111111111111111111111111111111111, 0AL ASym 2SA:;Sn0 XT1TE3SD  ,""7,15m
+	N	M 	r	UAS R2$
+A  UmET #1,1:
+	LTlseN= C1$ + C2$:NPUT #2,1
+3160	IF PK$ = "Y"H
+G 	LSETyou 0O4- 1):
+PUT #1,1S4"=,=TM 2S'sk0	S"N =s4tO GOSUB 421tO TE	 B9	I '= f "P.Sg		 SUM" ee0LE FROM MdAGE FILENPP"PO
+3230	PMa NE	'  'o	t RUGma ra Ple...."N,  UGPEN "O",1,"SUM" 0#""7:
 	CLOSE:
-	KILL "MESSAGES.BAK":
-	NAME "MESSAGES" AS "MESSAGES.BAK":
-	NAME "$MESSAGS.$$$" AS "MESSAGES"
-3110	PRINT "Updating counters..."
-3120	OPEN "O",1,"COUNTERS.BAK":
-	CLOSE:
-	KILL "COUNTERS.BAK"
-3130	OPEN "R",1,"COUNTERS",15:
-	FIELD #1,10 AS C1$,5 AS C2$
-3140	OPEN "R",2,"COUNTERS.BAK",15:
-	FIELD #2,15 AS R2$
-3150	GET #1,1:
-	LSET R2$ = C1$ + C2$:
-	PUT #2,1
-3160	IF PK$ = "Y" THEN
-		LSET C2$ = STR$(MSGN - 1):
-		PUT #1,1
-3170	CLOSE
-3180	PURGED = -1:
-	GOSUB 4210:
-	RETURN
-3200 '
-3210 ' BUILD SUMMARY FILE FROM MESSAGE FILE
-3220 '
-3230	PRINT "Building summary file..."
-3240	OPEN "O",1,"SUMMARY.BAK":
-	CLOSE:
-	KILL "SUMMARY.BAK"
-3250	OPEN "R",1,"MESSAGES",65:
-	FIELD #1,65 AS R1$:
-	R1 = 1
-3260	OPEN "R",2,"SUMMARY.$$$",30:
-	FIELD #2,30 AS R2$:
-	R2 = 1
+	KILLSUMMARY.BAK"N,	 U'M:47,1,"MESSAGES" p:
+	FIELD #1,65 AS1$:
+	R1	1
+3 $loN "R",2,EU31RY.$$$$",	R
+	FIEN 2,30 AR2$:
+ ,)
 3270	PRINT SEP$
-3280	FOR I = 1 TO 6
-3290		GET #1,R1:
-		IF EOF(1) THEN
-			3340
-3300		LSET R2$ = LEFT$(R1$,28) + CRLF$:
-		PUT #2,R2
-3310		R1 = R1 + 1:
-		R2 = R2 + 1:
-		PRINT LEFT$(R2$,28):
-		IF EOF(1) THEN
-			3340
-3320		IF I = 1 THEN
-			IF VAL(R1$) > 9998 THEN
-				3340
-3330	NEXT I:
-	R1 = R1 + VAL(R1$):
-	GOTO 3270
-3340	CLOSE:
-	NAME "SUMMARY" AS "SUMMARY.BAK":
-	NAME "SUMMARY.$$$" AS "SUMMARY"
-3350	PRINT "Summary file built.":
-	RETURN
-4000 '
-4010 ' Error handlers
-4020 '
-4030	IF (ERL = 1640) AND (ERR = 53) THEN
-		PRINT "File not found.":
-		RESUME 1110
-4040	IF (ERL = 1450) AND (ERR = 53) THEN
-		PRINT "File not found.":
+3280	4 I = 1 TO 6NPp5 GET #1,R1:
+		IF EOF"= THEG    3  M 2K 1 	T"- P(= LEP0E6"	  = + CRLF$:
+PUT #2,3 2d4838U
+ 	tO  ,)2 + 1:
+PRINT LEFL	R2$,28):
+		IF EOE0 3aHEN
+				3340=M PUb s
+"I	THEN
+				IF VAL(R1$) > 99998 THEN
+
+
+
+R0
+33330	NEXT I:
+	R1 = R1 + VAL(R1$)mMS=N3270
+40	CLT	R
+	NES0CUMM) 1R1S "SUMMAR.1K":NNA"1ESAdT) 0FT="LTM13T) 1Y)MURk80N"Summary	Ple# lt.":
+	RETBYi 	,TnN2:1il	Ta$ TesandlenN2:0 N2:TNU$h( 5 = 1640) ANDoRR = 53) THEN
+	PRINT "File not found.":
+		REUS"A0
+4040	IF (ERL 0"1  	= A	 (ER= 53aHEN
+PRINT "Fils Et fond.":
 		CLOSE:
-		RESUME 1510
-4050	IF (ERL = 4970) AND (ERR = 53) THEN
-		PRINT "You cannot rename a file that doesn't already exist":
-		RESUME 1110
-4060	IF (ERL = 4850) AND (ERR = 53) THEN
-		PRINT "That file doesn't exist so you can't erase it":
-		RESUME 1110
-4070	PRINT "Error number ";ERR;" in line number ";ERL
-4080	RESUME 1110
-4200 '
-4210 ' build message index
-4220 '
-4230	MX = 0:
-	MZ = 0
+		REUS"	A0
+"	 U$ (ERL = 4970))tNERR = 53) THENN	PRINT "You cannot renae a	Ple thatn  hn't alrea rtxist":
+		RESUM11110
+4060	IF (ERL P R,R = AN$ ERR	53)H
+G 	PRINT "That file doe Eh
+,0Pst 7 (ENcan't era t6 0 R
+		RESUME 11110
+	E 1 PRINT "Error	S Ober;ERRSe'o0:V"F LU	2
+TRTlD 5
+4080	REUS410P P	1 2s, "P
+ ' =Oessage in 9m 2sy1i2s1NU1	g = 0:
+	M	= 0
 4240	OPEN "R",1,"SUMMARY",30:
-	RE = 1:
-	FIELD#1,28 AS RR$
-4250	GET#1,RE:
-	IF EOF(1) THEN
-		4290
-4260	G = VAL(RR$):
-	MZ = MZ + 1:
-	M(MZ,1) = G:
+	RE = 1:NFIELD#1,28 -4	2s1  UmET#1,RE:
+ soOF(1) THEN
+	420
+4260	G = VAL(RR$)m d = MZ  1m Nd,1) = G:
 	IF G = 0 THEN
-		4280
-4270	IF G > 9998 THEN
-		MZ = MZ - 1:
-		GOTO 4290
+		4RI
+420	IF G																																																										H
+G 	MZ = MZ s4tO 	GT 420
 4280	GET#1,RE + 5:
-	M(MZ,2) = VAL(RR$):
-	MX = MX + M(MZ,2) + 6:
-	RE = RE + 6:
-	GOTO 4250
-4290	CLOSE:
-	RETURN
-4300 '
-4310 ' unpack record
-4320 '
-4330	ZZ = LEN(R1$) - 2
-4340	WHILE MID$(R1$,ZZ,1) = " "
-4350	ZZ = ZZ - 1:
-	IF ZZ = 1 THEN
-		4370
-4360	WEND
-4370	KL$ = LEFT$(R1$,ZZ)
-4380	RETURN
-4390 '
-4400 ' Test to only allow the SYSOP to use UTIL remotely
-4410 '
-4420	OPEN "I",1,"A:LASTCALR":
-	INPUT #1,N$,O$,F$,DT$:
+	M(MZ,2)	VAL(e	D  m MsKDg + M(MZP3
+R 6mE :E + 6mMS=N4250
+4290T "NR
+C=LBYiM 	1iO010 ' npF,*
+eordPM P"P2030	ZZ	LEN(RLKlt=	2040R L CID$(R1$, d,Y"  2050	ZZ =  d - 1:
+	I
+n3I	PS	
+4370
+4 $lEND
+4SI	KL$ = LEFT$(R1.SZ)
+4380	TE	 BH1Np4nN20  	1iLht
+S
+N 1 Pr2,n  =che SYSRco se ' 		remotely
+444nN2 PUGPEN "I",1,"A:LASTC 4":
+	INPU#M
+1	0g 
+""NLtO CLOSE
+44UGPE"I"T1T1:PS	S":
+	INPUT #1,6"	6	  m CLOSE #1
+4iRINT0 0	IF N$ = "OIC,)sN= ""H
+G    GOSUB 4610mT=IFYSR2LPiSO     RETURN
+441 sDT
+440	OPEN "R",1,"A:CA D E Ae0:NFIELD #1, 60 AS RR$:NGET #1,1
+4RI	RE = VAL(RR$)00  8	N60
+4pgC,+A)8$
+M20"'(1,S$PUR 1 IF INSTR(S$,"' 	S2NTHENN	GT 4690
+4510	S$ E #0"' 	  m GC d
+A: ltO PU#	 DR
+CLOS# 20	 PUiMa 	$ ENkn =F	ES2P sI(e theYSwVg RP r4h2$ ENdoing here??"
+4530	sDT
+4540	sDT "Go away, your name has 6en logged for further action!"0	URk80N 20	"
+Uu D0 1iO
+4610 'TNE3Tt5?i,(TB	chtk
+4i"PO0 0	PRINT "2ndn PF; TB'i";:
+	B$ =EiUT$(10):
+GOSU
+AK R
+	
+E) IR
+4640	sDT
+465$h
+MurR	X$,P0= THEN
+	IF (MID$(DT$,14Y30N1EE2 
+1 	54E= A	 (MID$(DT$r	") MN$(X$,,1)) THEN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$ 118$ASYSR2NtO TE	 BH1H
+UPE	yFehisFNplace of 5680 if yENdoe have a real time clock
+	IFEE"4(X$,P3aHEN
+F$ 118$7"TsY"R
+RETURN
+ $'TNE3TsYl	TE	 BH1
+:I	'
+4690
+(= "TW"		'Use
+?4I2e 
+? eved tempora rFsc stats
+SI0" :4	a1RpASTCALR. " + CHRN&HA0):
+PRINT#2,N$;"f	uZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZl eo	dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddlZ$:
 	CLOSE
-4430	OPEN "I",1,"A:PWDS":
-	INPUT #1,P1$,P2$:
-	CLOSE #1
-4440	PRINT
-4450	IF N$ = MAGIC$ AND O$ = "" THEN
-			GOSUB 4610:
-			IF SYSOP = 1 THEN
-				RETURN
-4460	PRINT
-4470	OPEN "R",1,"A:CALLERS",60:
-	FIELD #1, 60 AS RR$:
-	GET #1,1
-4480	RE = VAL(RR$) + 1:
-	RL = 60
-4490	GET #1,RE:
-	INPUT# 1,S$
-4500	IF INSTR(S$,"UTIL") THEN
-		GOTO 4690
-4510	S$ = S$ + " UTIL":
-	GOSUB 2400:
-	PUT #1,RE:
-	CLOSE #1
-4520	PRINT "You know you're not the SYSOP, what are you doing here??"
-4530	PRINT
-4540	PRINT "Go away, your name has been logged for further action!"
-4550	PRINT
-4560	END
-4600 '
-4610 '  SYSOP password check
-4620 '
-4630	PRINT "2nd Codeword? ";:
-	B$ = INPUT$(10):
-	GOSUB 2330:
-	X$ = B$:
-4640	PRINT
-4650	IF INSTR(X$,P2$) THEN
-		IF (MID$(DT$,1,1) = MID$(X$,10,1)) AND (MID$(DT$,2,1) = MID$(X$,9,1)) THEN
-			F$ = "":
-			SYSOP = 1:
-			RETURN
-4660	'Use this in place of 5680 if you dont have a real time clock
-	IF INSTR(X$,P$) THEN
-		F$ = "":
-		SYSOP = 1:
-		RETURN
-4670	SYSOP = 0:
-	RETURN
-4680	'
-4690	F$ = "TW"		'User has achieved temporary twit status
-4700	OPEN "O",2,"A:LASTCALR. " + CHR$(&HA0):
-	PRINT#2,N$;",";O$;",";F$;",";DZ$:
-	CLOSE
-4710	PRINT "You were warned to stay out of the SYSOP's domain"
-4720	PRINT
-4730	PRINT "You are being logged off this system IMMEDIATELY"
+S0 UiRINT "You we s2rned to stay E	 tE the SYSOP'sn Ga dYi SH1 PRINT:"30	PMa 	$ ENare being logged off this system IMM	IA 	3I3
 4740	PRINT
-4750	CHAIN "BYE"
+4750	CHAI"BYE"
 4760	END
 4800	'
-4810	' Kill (Erase) a file
-4820	'
-4830	B$ = MID$(PROMPT$,3):
-	IF B$ = "" THEN
-		INPUT "Filename? ",B$:
-		PRINT
-4840	IF B$ = "" THEN
-		RETURN
+4810	' Ki	.	'P ) a fileP RH1 '
+4830	B$	MIIEiROMPT$,3R
+	I$	o)" PS	
+INPUT "Filename? 	Y0R
+		PRIO
+4840	VY(11RPiS	
+		RE	 
+oLSE
+GOSU
+AK R
+FILN) B$
+R,RN ,b
+L 
+O 2sa
+PRINT
+4870	RE	 2t5 1 '
+4910	' RerGe a fi BHeR5nN )Kg1	PUT "Existi.2IiF	Tme? ",B  m PRINTtC:g.FY(=" PS	
+RETURN
+0dE
+		GOSUB 23	R
+		EFILN$ vO 2tCl?0NTmEiUT "New FilenGe? ",B$:NPR TP )U$h$	o) 4PiSO 	RETURN
 	ELSE
+		GOSUB 2330m	FILN$ = B$
+4970	NESoF 
+E,L	FILO 2t- PRINT:
+	RETBY
+ PRINT
+4960	IF B$ = ""H
+G 	RE	  ELSE
 		GOSUB 2330:
-		FILN$ = B$
-4850	KILL FILN$
-4860	PRINT
-4870	RETURN
-4900	'
-4910	' Rename a file
-4920	'
-4930	INPUT "Existing Filename? ",B$:
-	PRINT
-4940	IF B$ = "" THEN
-		RETURN
-	ELSE
-		GOSUB 2330:
-		EFILN$ = B$
-4950	PRINT:
-	INPUT "New Filename? ",B$:
-	PRINT
-4960	IF B$ = "" THEN
-		RETURN
-	ELSE
-		GOSUB 2330:
-		NFILN$ = B$
-4970	NAME EFILN$ AS NFILN$
-4980	PRINT:
-	RETURN
-	PRINT
-4960	IF B$ = "" THEN
-		RETURN
-	ELSE
-		GOSUB 2330:
-		NFILN$ = B$
-4970	NAME
+		NFILN$	B$
+47E,S	$36Tction!"0	URk80N 20	"
+Uu D0 1iO
+4610 'TNE3Tt5?i,(TB	c

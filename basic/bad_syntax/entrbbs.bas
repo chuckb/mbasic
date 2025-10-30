@@ -1,1008 +1,848 @@
-5 '    ------------->> ENTERBBS V3.2 17/Jul/83 <<-------------
-10 '
-11 '  As run on Software Tools/RCPM, Australia (61-2)-997-1836)
-12 '
-13 '   : Entry/name-logging module of RBBS version 2.2,    :
-14 '   : from Howard Moulton's original SJBBS (in Xitan    :
-15 '   : Basic), converted to MBASIC and called RBBS or    :
-16 '   : RIBBS by Bruce Ratoff, and extensively revised/   :
-17 '   : expanded by Ron Fowler to become RBBS22.          :
-18 '   :---------------------------------------------------:
-19 '   : The Fowler version, RBBS22, was split into 2 mod- :
-20 '   : ules, ENTERBBS and MINIRBBS, by Ben Bronson.      :
-21 '   :---------------------------------------------------:
-22 '   : Both were revised and given RBBS-compatible ver-  :
-23 '   : sion nos. in 03/81 by Tim Nicholas, to incorporate:
-24 '   : updates from his version 2.4 of RBBS.             :
-25 '  ------------------------------------------------------
-26 '	 Added test for "*" in CALLERS file (from RBBS) and
-27 '	 if CALLERS file finds "*" in beginning of caller's
-28 '	 name, it will not allow him system access, and log
-29 '	 him off immediately. (For those who persist in log-
-30 '	 ging in with fictitious names, e.g. BUG BYTE). Also
-31 '	 added "PWDS" file (from RBBS) for "P2$" only. So
-32 '	 Sysop can get msgs for "SYSOP" or his name.
-33 '	 by Tim Nicholas  05/Mar/81
-34 '	------------------------------------------------------
-35 '	 Changed sequence of response to question "Did I mis-
-36 '	 anything?", so that a response other than "Y" or "y"
-37 '	 or "N"/"n" will re-ask the question. So in noisy line
-38 '	 conditions it won't automaticaly default to "N"/"n".
-39 '	 Added suggestion by Ben Bronson to move printing of
-40 '	 "BULLETIN" file to after name-taking, and other sign
-41 '	 in procedures.  by Tim Nicholas 12/Mar/81.
-42 '	------------------------------------------------------ 
-43 '  More modifications by BB (14/Mar/81): checking-for-msgs
-44 '  code transferred from MINIRBBS, lines 810-965.  No new
-45 '  version number.  AND sysop now drops direct to disk
-46 '  without incrementing COUNTERS.
-47 ' -------------------------------------------------------- 
-48 '  Modifications by Bill Bolton (up to 01/Jun/82). Godbout
-49 '  System Support 1 clock routines, DATA file read moved to
-50 '  before menus and BULLETIN choice so it can be used to show
-51 '  date of latest update to BULLETIN, code "structured" for
-52 '  easier reading/maintenance (but now MUST use MBASIC editor).
-53 '  MAGIC$ added for SYSOP password . Password no longer echoed for
-54 '  more secure remote use. SUMMARY check for new callers
-55 '  too. Numerous other small changes. Version to 2.7A (for Australia)
-56 ' --------------------------------------------------------
-57 '  Twit log out changed. Twits are written out to LASTCALR with
-58 '  TW tag. Then logged out through EXITRBBS for consistancy. Note
-59 '  that EXITRBBS and RBBSUTIL have been simultaneously updated to
-60 '  make use of this TW status in LASTCALR. ST$ reset if something was
-61 '  misspelled in name log to stop redundant info getting into CALLERS
-62 '  If comma entered between town and state it is changed to a period
-63 '  to make life easier for EXITRBBS. RESET statement added at
-64 '  start to allow for changes to disk between calls without having
-65 '  to cold boot. Version to 2.7D, Bill Bolton
-66 '----------------------------------------------------------------------
-67 '  10/Apr/81 additions: another PWD step for SYSOP to go
-68 '	 thru, to discourage villians...
-69 '  11/Apr/81: Change "SYSOP" to another word, to ditto..
-70 '    (see lines 600-610)
-71 '  02/May/81: add Y/N for skipping BULLETIN
-72 '  09/May/81: add routine for reading special user messages (=SPECIAL) 
-73 '  20/Jun/81: add putting P$ (SP or RG) into LASTCALR so user 
-74 '    privilege status can be passed to MINIRBBS
-75 '  08/Aug/81: change special user introduction
-76 '  18/Aug/81: insert Bill Earnest's routines for counting
-77 '    callers & putting times in USERS, CALLERS, & LASTCALR
-78 '  01/Sep/81: add Brian Kantor's CHAIN MINIRBBS & system user quiz
-79 '  07/Sep/81: drop re-caller straight to CP/M
-80 '  09/Sep/81: CALL TIMEX added (Dummy routine compiled with M80 and
-81 '    linked to the BASCOMed pgm with L80, calling an ASM
-82 '    pgm above CP/M for reading the MH clock; other clocks
-83 '  	can probably be handled with direct port reads)
-84 '  19/Sep/81: Give special (SP) users a command menu 
-85 '  10/Sep/81: Improve twit sign-out; POKE reset bits for PMMI
-86 '  27/Sep/81: Add Hank Szyszka's time interval stuff.
-87 '  9/Oct/81: Add 3rd user category, NW, without direct MINIRBBS access
-88 '  10/Oct/81: And add cp/m knowledge test at 390 & 32000
-89 '  24/Oct/81: Limited command menu for RG users too.
-90 '  01/Jun/82: Numerous Aussie changes, see above. Bill Bolton
-91 '  15/Jun/82: Twit logout changed, see above. Bill Bolton
-92 '  26/Mar/83: More demanding user name check added. 24 hour elapsed
-93 '  time bug fixed. Version 2.8 Bill Bolton
-94 '  04/Apr/83: Added SYSOP access logging into DIRECT file, closing
-95 '  of LASTCALR wasn't handled properly for SYSOP. Ver 2.8A. Bill Bolton
-96 '  06/Apr/83: Added MAXTRY tests so that turkeys can't monopolise the
-97 '  by writing programs that just send occasional carriage return as
-98 '  endless answers to prompts (BYE 7.2K also fixed). Ver 2.9 Bill Bolton
-99 '---------------------------------------------------------------------
-100 ' 19/Jun/83: Added Code at 20000 to write current caller to status
-101 ' line of terminal directly (bypassing BYE) so SYSOP can know who
-102 ' is on the system and how long they have been there when not running
-103 ' a hardcopy log. Very useful for deciding if you want to CHAT or
-104 ' not. Put a RETURN at 20000 if you dont need this. Ver 3.0 Bill Bolton 
-105 '---------------------------------------------------------------------
-106 ' 02/Jul/83: Moved SYSOP password check to subroutine at 21000 and
-107 ' added code to incorporate day of the month as part of the password
-108 ' to be entered. Use line 20145 instead of 21040 if you dont have a
-109 ' real time clock in your system.  Ver 3.1 Bill Bolton 
-110 '---------------------------------------------------------------------
-111 ' 17/Jul/83: Added code to New User Survey routine to count the number
-112 ' of questions skipped. If more than 2 are <ommitted> the caller is
-113 ' given a message about being co-operative and given temporary TW
-114 ' (twit) status which gets them kicked off the system immediately.
-115 ' The caller will have already been logged into USERS but the
-116 ' USERS record counter is decremented and written back to USERS.
-117 ' Decrementing the USERS record counter means that the last record in
-118 ' the USERS file is effectively ignored by the whole ENTRBBS program.
-119 ' The record for the next new caller will be written over the data in
-120 ' the last record under these circumstances, effectively erasing the
-121 ' entry for the unwelcome caller. The message displayed to the
-122 ' unwelcome caller is contained in the GOODBYE file for easy customis-
-123 ' ation. The New User Survey is now done straight after the display
-124 ' of NEWCON (line 690) so that the status of the new caller can be
-125 ' changed to TW if necessary before logging to CALLERS and LASTCALR
-126 ' and can be processed (i.e. chucked off the system) by the TW trapping
-127 ' routines. Vers 3.2 Bill Bolton
-199 '---------------------------------------------------------------------
-200 ' NOTE that user privilege status is read from the USERS file, where
-201 ' the following characters are inserted (with an editor) in the first
-202 ' space of the line:  * = 'Twit',  + = 'Special User',  - = 'Regular
-203 ' User', and (space) = 'New User'
-204 ' NOTE ALSO that the code for other clocks made to run with this program
-205 ' will be welcomed.  Use similar line #s if you can but separate the
-206 ' relevant lines and call the result RBBTIME1.BAS, RBBTIME2.BAS, etc.
-207 '----------------------------------------------------------------------
-208 ' Howard Booker's suggested additions at 13030 were removed as they
-209 ' didn't work and even when corrected were no better than the INKEY$
-210 ' when running under BYE. Bill Bolton
-211 '----------------------------------------------------------------------
-300 '
-310	POKE 0,&HCD '<-- Change "JMP" to "CALL" to prevent Ctl-C
-315	VERS$ = "3.2"  '<---- Current version number
-320	DEFINT A-Z
-325	MODEMPORT=&H5C:
-	CONSOLEPORT=&H0:
-	MAXTRY = 4
-330	DIM A$(17),M(200,2),H(6),HT(6),HD(6),TOD(5),DOY(5)
-335	RESET		'<----- In case disk was changed between calls
-340	INC=1
-350	ON ERROR GOTO 15000
-355	XX=0:
-	YY=0
-358	MAGIC$="SUPER"	'The magic sysop pasword
-360	'TIMEX=&HE800  -disabled Call to MHTIME.COM; unnecessary for most non-MH
-365	'CALL TIMEX     clocks, but you'll have have to modify 14000- & 44000-.
+5 '     -------------->> ENT)B' = B s)s17/Ju 1s<)"o
+VG)=o96ft on S $ware ToU"doM, Australia lR8lo-997-183o
+12 '5.-o: En2A gme-loggin"RBT tln1B)esi 
+rfd2.2,     (r cRLM$from Hoard Mou02BE  or  "al t 5=
+	  0g
+R025k15 '    : Bas 1p Ce,0t  to13Pem lpBpc0nso8RBBS or     :
+1-o:	1BL De: ftae Ratoff, and extensiu 
+Y 7ised/    :
+17 '    : expanded by 2dFoler to become RBBS22.   0 '    :-----------------------------------------------------------------------------------------------------(r  or$$Byhe Foler ver0f38RBBS22, was spliinto 2 mod- :
+20 '    : uleS"u uA1B)ecnd 	NIRBBS,2A B23 on.       :
+21 '  t O:A=E2RLM$Both were revised and givdRBB8aompatiblver-  :,6 '    : s2dnos. Rr3/81 by Tiu 	aholas, to i                                                                                                                   orate:
+24LM$BTlr
+FcD16iis ver0fd24 of RBBS.              (,:G-0"o6
+26I AF1  test for "*" Rpd1r
+RS r 	D11Gn1B)1s d,vI if C 1A =hle finaiC  Ihn beginningf calletpt,S.IE =Qit wi,not an2NH
+M694uGs a2
+98a8log
+29 '	 him off imme	 NsT. (For 0f e who persist R2)g-
+30 '	 ging in withTa0
+0E0ftcA =4Y 'U BUG eyE). Also
+31 '	 aF1  "83, I0H6; i)m:Bbo foiNwi :s dSo
+32I Sysop can N		2 gs foie
+ t INr "cAame.
+ GI DeHim Nich"
+a
+1'L  0/81
+34 '	-------------------------------------------------------
+35I C  ged o $2CUmPb
+Pnsto q2hon2T:cI	2E
+(. anything?STe#Tt i FPnsether than "Y" or+k37 'or "N""n" will r    Ut ie que
+0fW33" noisy lint,  '	 condit23  iwB1	e(o Mi f T defN z06	N"/"E & 69 '	 Add  suggestion by FVonson to mou4cl
+ing of
+40I "BULLEmS	0H6 06 Ou,0gme-ttT
+ e Nther 0an
+41 'in procedures.  by Tim 	r1 	
+Pnr$ar/81.
+42I------------------------------------------------------- 
+4R8More modifications yB=I30$ar/81): ch.E'"L2or-msgs
+44 '                                                                                                     e tr6 ferred 0om MINIRBBS, lines 8109dG ) new
+45 '  ve
+rfdNGS lS  AND sysYow drops 	0ect tohsk
+3 '  witfoIhncrem5 "g COUN .Hs8' --------------------------------------------------------- 
+   '  Modifications by Bill Bolton $
+SO61: OI : 1U8dGodboutH4s'  Tstem $
+anSRgd Pck roE	 , DATAT6 bWG2N8ttL=oc=eformenus a8BULLEm6aho  $4o( cR0ee RN show
+51 '  date of latest udate to BULLETIN,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,e "structured" - :e.-, ier reading/maintenance (ut now MUST use MBASIC editor)
+5R8MAGIt =F1  -p$o1	
+
+9N-Bpt
+
+9N-B95>)nger ecbru E54 '  more secure t'uTE e. SUMnRY ieck for Do4  f3 l2
+55 '  '  dN7)us ot21T"$0nahang . Vers2dto 2.7A (for Aus$0s	 1St= G-LN8
+57 '  Twit loel1  ianNF Twits areglZ
+F# NI$LASTCA'HE1G
+58 '    =a	  G Then l"  N8out through EXITRBBS for consistC9s 11E
+59 '  that EXITRBBS a8RBBSUTIL have been sim Xp=Nv
+Ye  lr
+(nh=oc ke utNf this   D 0
+$in LASTC Ol ST$ reset iTe(SMhingI
+
+iVS" 
+4ons
+"gme logo 0SY0edundant Rl1"
+o0
+	T
+55555555555:r Mn 8(nY8If comma enteredSMween FEdand a0
+0Ihs ianged to a eriod
+63 '  to make lifeasier for Et oB'   d eT stateme	cdd  at
+64 '  a
+1O6 low for ianges to disk between calls without havR  k65 '  to col011E dVersio$o 2.7D, Bill R0 (nAs'-----------------------------------------------------------------------n48'  5	npr/81 add
+0f3 :Aoth6)WD 
+l0 e,to1e"0Stn,  '	 thrueeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeedisct0a$sD1
+I
+4'M$k69 '  11/Apr81: Change "SYSOP" to an ier wordeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeedit8W v0 '     (see lines 600610)
+71 '  02May/81: a8YN f6UtTas  R md CC$IN
+72 ' 9May/81: a8routine for rea	g special
+ C7FTsIs (=SPE	AL) 
+73 ' r/Ju 1odadd utting P$ (SP or.hnto LAi8LR suser
+74 ' ,8cla2r ae status can be pa
+N8to MINIB'  (tR1 E6oa81: change specr,user :
+1Tg0
+0f& v-0WLAuL81: inlRmd0 6s 0nest's)utiFcl-3atting
+77 ' ,8  f3 l2 (sU10 R m
+S c =
+RS, C 1A 8S7EP91pdOlts  '  01/Sep/81: ad: fA KanL5 Kp( MImoB'=E94uGTE C82t"(  v9 ' 7Sep/81: 1-,re-call6?raight to CP/M
+1-r9/Se/PdCALL TI
+X addeZ+oG7T rouE#44444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444pil  with-cndad'     linuW=
+"$: r t)
+o8pgm withCi calling an ASM
+82 '     pgm above01LMeLFS  1 ing the M4f)ck; other  PckseGs'
+ n probabl be	
+:w
+r bsMSRE0eads)
+84 '  TLSe/PdGivesvaial (o) useac 1GpBc =Au
+85 '  10/Sep/81:	S41-2$$wit signout; POKE reset bits -1$MIe
+3827/Se/PdAdd	
+PE SeHszka's time interval so2f.
+87 '  9/OO 1c)dA83rd user categor, N SH(hout direI0	( 'B5=s a2
+ptS.-0O/Oct/81: d add 
+$6(T' e3 	
+t$esat 390 &  rrrrrrrrrrrrrr
+89 '  .Sr0 1c="r70Eo8cpBc =Au fo wl2  too.
+90801/Jun/85elMrouslE sie ianges, see abov 0  Bolton
+91 '  15/J/82: eI2)gout changed,,$cbove. Bn,Bo02& sY '  26/Mar/83:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::e de  ding user n =
+ahe(Ur=F.T90ft0 elased
+93 '  MSg=ugTR
+ NF Version 2.8 Bill B02
+94 ' 4/Apr/83: Added eOP   aess X	
+	"hntDIREC0H6 F f)sing
+5 '  of LAS8LR wasoIT	
+:=so8properly -p$o-RCr 2.8A. 0  Bolton
+96 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+C
+C41L83:B ed MAXTRYest4o that turkeys can't' :SARU
+ e the
+97 ' 2Yuriting pro0amshat just senNccas2(0,  0riage return a(4,  'FBev9  answea$o prompts (B	Ues)npsf1rHRN=-RC>1. Bill Bolton
+99 '----------------------------------------------------------------------
+100L8n"(EBr  5TB ed 13$c200000 to wriEaurrent calle$o status
+1VS 
+E#e)sterminaRhreOsT (bypassing e) so SYSOP can know whtrO2 ' aNn 	$4ysI6 d hNet	$2T have been 	2b
+ien not runnR  k103 c hardcopy lU V2Ye 
+$DN SSC32  r3"g l+Pu wanto TAT or
+1aRD5'sdPut a Rs 0=6 M P2SDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDyou dont need 	"pdlCD (Vl63=BR02d
+105 '----------------------------------------------------------------------
+106 ' 02/Jul/8500F1  Se$o
+	
+
+9N-B9cko NS 1fo
+#sM 210000 :FtreGf 1 ded code to incorporaml9,ofhe month as"
+1INe ts"
+
+9N-BA
+1aR=0CS t, 0 . Use 	EFP .thnstead  
+tFiDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDou do	T	FE  0 s' r0,time clo(9Edyour systeG  Ve6.1 Bill B02(roO ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+1111 ' 17/Jul/83: Addeddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddde to NN4
+ er $0vey routine to counthe numer)f Nf 2t2h3  skipped. If more than 2 are <o7$ed> the callehs
+113 ' "7en a 2
+U"E OfoS Fg co-oper
+	e :8give$emporary TW) c0
+e 0O1Te  e uhich gets then
+icuWi TT+
+ tem immedr
+os & 0oBGf4"aall6uill	
+ FE f bcdy been l"  N8into USERS buthe
+11f
+b
+RS re- counter is dect ted :8writte0e  t?o USER & 0omb areme
+	g the USE FSNrd cou
+lC78 s that thlast rrS:  CtroW t$s0e  =rH6 thsffectively ignored yhe whole ENTRBBS prog" 8
+119 ' "$i                                                                                                                   d forhe next ne casl6ui,be writ ver thecta in
+1C)e iegst re- unlCE"2
+$srcumstances, effectiu 
+Yt
+
+"g thtrf1 'ntry fo$he unwelcomcaller. The me
+ u isplayed to theoY ' unwelcome call6"cstaC1  i$he GOO5,	cDNr eas customa8k123 '$ion. T$e=Tf
+ 
+21, Se,H is)w done s$
+0rIcfter the display
+124 ' of NEWCOZs	e 60) so th	$he s0
+$of the Do4  f3 l6aan beont4 iR  N8to TW lT=s9i T before loggi m06KC$n =s d
+P91pdOltFlf  d canSE
+a'  9 ed (ie. iuckedff the system)2W trappingrf7 i)utC p Vea6.2 Bil:)lton
+199 '----------------------------------------------------------------------
+200 ' NOTE 	 TE er privit Te  Mchs rea0TR(CE"$SERST6 9	2bn
+201 ' the fol2$"g c  0ac 0cre inserted (with Ru3rOS:6"the first
+202 4pace ofhe line:  * = se 0Otea+7V0cslp	0,Us:E8 - = 't 3grhdGf
+21(e
+  d (spacC V0w
+ :mE204 e(Dt9:"=0 thathe code fC1E"3alocks  1 trun withhis prog" =E20RD$r 6L =
+Ns                                                                                                              ed  Usehmila2 	etchf you can but separ
+t$2(,r6FSf lecnt lines and call 	$i FT1n	1B3eItE1.B8Sn1 u	tE2BAS, etc.
+$Ss(,r8 ' Howard)oker's suggested additions at 13030 were re-1 4 theyh  s' di:oIT1SNcnd even when correct  were no better thR$hee5
+,e k(V2uhei $ni Ee :F 0 BY dBill Bolton
+211 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+$VG
+310	0KE = 3h= s'<-- iange "JMP$o "CALL$o prevent Ctl-C
+BLC'A LISF0 s)TR  o----------------------------------------------------qaL F4F 0sion NGS lStY0	DEFINT S0Y5	MT
+MPORT=&H5C:
+	CO ttnZRT 3hE	nXTRY = k330	DIM A$(17),M($l 2),H(6),HTlo,HDlo,TTt5),DOY(5(nnLI,ha1gN------ In casdisk was changed betwees  f3 
+k3MI  && dMIo OR GOTO50000
+35Ga(COTt ,T SO
+35ItAGIC$=" 0n 		'The magiT+
+ op paswordAhI'TtEX=&HEMW3"U"=led	0nOC$HTtE.CO(fe 6>  2
+UU20 f t n' O
+4(AnLRALL ItEX      cS.
+s,2oI+)u'll	
+ FEi Fm0CG13r2y 140000- & 440 oG
 370	 '	
-372	GOSUB 14000:
-	GOSUB 14200   'Set time counters (HK routine)
-374	HT(1)=H(1):
-	HT(2)=H(2):
-	HT(3)=H(3):
-	HT(4)=H(4):
-	HT(5)=H(5):
-	HT(6)=H(6)
-376	M=74:
-	FOR I=1 TO 6:
-		POKE M,HT(I):
-		M=M+1:
-	NEXT I   'Save the time in lo memory
-379	'
-380	'  Signon Functions...
-381	'
-385	PRINT:
-	PRINT "Version ";VERS$
-390	GOSUB 32000    'CP/M familiarity test
-400	MSGS=1:
-	CALLS=MSGS+1:
-	MNUM=CALLS+1
-425	BK=0
-430	OPEN "I",1,"A:P"+CHR$(&HD7)+"DS. "+CHR$(&HA0):
-	IF EOF(1) THEN
-		450  '<-- Password file
-440	INPUT #1,P1$,P2$   'use editor to make the file. e.g.: BANANA,APPLE,COW
+372	GOSUB 140000:
+  'Nc50 U r0    'Set time counters A  pRl1
+	1St7E4nIBR2nIBN(AsnmnR2nmnE	AO  DR):
+	HT. AEN(A	AO)1nO)))))))))))))))))))))))))))))))))))))))))A	HTlo=Hlo4lF	t=74:
+	0R I=1 TAtA )OKE M,AIOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOgO0$+1:t Aar$O"
+ Fm
+"$$ime in lo=	RL (4FH0E380-ranon e 0
+0f3 ....
+c(1mE385	PRIN'Tt )RfeiC>f ioi	(n LE(TH$  -5620 o e1r1$ f l6  0ity test
+MtO7mb )1tA	nLLS=LS+1:
+	MNU o50 O9i=U :B  e$=E43Io16	I"6F
+o"+CHR$(&HD7)"DS. "+CHRO 340'TtIfS
+OF(1) T
+N
+ E.L(o"Lgsswo8file
+4MI -= o6lo
+2)2$  otpENDor totG
+e the fil g.: BANoA,APP
+,COW
 450	CLOSE #1
 460	BEL=-1:
-	XPR=0      ' (initial bell on, not expert)
-470	GOSUB 13020
-480	SAV$=""
-510	OPEN "I",1,"A:LASTCALR":
-	INPUT #1,Y$,Z$,F$:
-	CLOSE
-530	GOSUB 4050:
-	GOSUB 13020   ' Print WELCOME File
-540	BK = 0:
-	A$ = "(Prompting bell means system is ready for input).":
-	GOSUB 13020:
-	GOSUB 13020:
-	XX = 0:
-	COUNT1 = 0:
-	COUNT2 = 0
-545	N$ = "":
-	O$ = "":
-	ST$ = "":
-	COUNT2 = COUNT2 + 1:
-	IF COUNT2 = MAXTRY THEN
-		GOTO 18080
-550	COUNT1 = COUNT1 + 1:
-	IF COUNT1 = MAXTRY THEN
-		GOTO 18080
-560	A$ = "What is your FIRST name ?":
-	GOSUB 13020:
-	C = 1:
-	GOSUB 13260:
-	C = 0:
-	N$ = B$:
-	IF N$ = "" THEN
-		GOTO 550
-570	IF N$<"A" OR LEN(N$)=1 THEN 
-		550
-575	COUNT1 = 0
-580	COUNT1 = COUNT1 + 1:
-	IF COUNT1 = MAXTRY THEN
-		GOTO 18080
-585	A$ = "What is your LAST name ?":
-	GOSUB 13020:
-	C = 1:
-	GOSUB 13260:
-	C = 0:
-	O$ = B$:
-	IF O$ = "" THEN
-		GOTO 580
-590	IF O$<"A" OR LEN(O$)=1 THEN 
-		580
-591 '
-595 '
-598	IF N$<>MAGIC$ THEN 
-		610  
-600	IF N$=MAGIC$ AND O$<>P1$ THEN 
-		GOTO 545
-605	IF N$=MAGIC$ AND O$=P1$ THEN 
-		GOSUB 21000:
-		IF SYSOP = 1 THEN
-			GOTO 730
-		ELSE
-			GOTO 545
-610	IF INSTR(N$,"SYSOP") THEN 
+	XPR=0       ' (61
+	 feNn,38noexert(Hsl$  'NcL5if0
+4M 8V$=""
+510	OPEN "ES6F
+:LAi8LR":
+I oPUT #1,Y$,M,F$:
+	 Moe n
+5$  'N:3s050:t                                                                                                    50dr2222' 0int WE#P73 ltD	BK r:
+	A$F0m-'tSA
+(	023Le 4ystem is 81 y for input).":
+	0SUB3020:
+	GO :/5if0:
+	XXlN(A	COUNd= 0:
+	C 0f =
+5dmN	hitA	O$ =itm9M = "'Tt #Sif7 ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt2 + 1:
+	IF$8027EXTR
+4wwE		GuC:UR
+bE55 #SiN=ne-r2 + 1:
+	Y#SDo=r
+X3e99$u( gDt/d 080
+F$ ISF0iat is2tFIRST n =
+itA	GOSUB 13h1tA =r1tA	GOSUB 13FN(A	C = 0:
+	N$='m(A0Yo$ = "" THEN
+		GuC'dbEer	Yo$<"A" OR$u'e)=1 THEN t 1L (8=/e-r2edr
+U$ - u*l=ifed 1TtIf ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt1 = MAXTRY THETt gRfe1rxd 0o.LTo	SF0   " T
+  your LASTgme ?'Tt  'Nc50d r:
+	C 01tA	GO :/5,h1tA	e66666666666666666666666666666666666666666AN	S='m(A	IF O$ = "" THETt gRfe1oUSt9IfS0 o" OR LENNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN1 )D9$ulTt O 0lTRR 595 '
+598	IF N$<>M 'G
+4wwlTm 0O 
+600	IFM=MAGIt oD O$<>P1$ THEN t '2e1D 5 r5	IF N$tAGICToR4Oe)1$ THEN		GOSUB 2)$$5I	IF eOP 0D9$uE																																																																								OTO 730
+		EL 9(O$$ '2e1Dn
+610	IF INSTR(N$,  e,to-16uwlTt)RIN'Tt mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm2eiT Nn
+now you're not the SYSOPOo$$	:
 		PRINT:
-		PRINT "You know you're not the SYSOP!!!":
-		PRINT:
-		GOTO 545
-612 '
-620	A$="Checking user file...":
-	GOSUB 13020:
-	V=0:
-	OPEN "R",1,"A:U"+CHR$(&HD3)+"ERS. "+CHR$(&HA0),62:
-	FIELD#1,50 AS RZ$,4 AS NC$,6 AS DT$:
-	GET#1,1:
+ gR$V s(nios' eE$="Che(T
+'"wse0H6 l:
+	GO :/5if0:
+	V=0:tIouFG Ll :U"CHR$(ylo+"ERS. "+CHRO 340232:tf$I3eSd1H RZ$s Aeo M,6 AS DT$Tt  '+do6L
 	NU=VAL(RZ$)
-625	FIELD #1,62 AS RR$
-628	NT$ = N$ + " " + O$
-630	FOR I=2 TO NU+1:
-		GET#1,I:
-		J = INSTR(RZ$,NT$):
-		IF J  > 0 THEN 
-			LENGTH = LEN(NT$):
-			IF MID$(RZ$,J+LENGTH,1) = " " THEN
-				MF$=LEFT$(RZ$,1):
-				GOSUB 15990:
-				PUT#1,I:
-				CLOSE:
-				GOSUB 13020:
-				XX=1:
-				GOTO 700
-640	NEXT I   ' If recognized, caller is passed to CALLER-logging routine
-649	' But a caller not in the USER file gets quizzed further...
-650	V=1:
-	A1$="Where (Suburb/Town AND State) are you calling from ?":
-	GOSUB 13020:
-	C=1:
-	GOSUB 13260:
+625	FIELD o  ePe dt
+6U i 3o$ + "
+y"o
+630	FOR I 
+6oU+1Tt gR H#1,ITt mIv/-h)mmmmmmmmmmm2oT$):
+		IFE  > 0 THEN 
+				LETH = LEN(NT$):
+				IFIfuX&&&&&&&&&&&2+tum s4S:1e6" THEN
+																																										0hOMesi d(o
+S:::::::::::::::::::::::::::::::::::::::::A					GOSUB 15990:tO2S1SsN6LGtIoCLOSE:
+O2Smtoc50d r:
+					X&)(A																																																																																																																					Rfe1sl
+64 ot
+e	go' If recoized, caller as"
+
+p1  to CALLER-loggR E0ouE>649	' But a calleAot inhe USERT6   N
+aC,$"( oIS1D$0ther..............
+650	V=(A	A1$=" "2bG7 NS PLTown AND State) at+)u cal	g from  	Tt  'Nc50drN(A	 )1tA	GOSUB 13260:
 	C=0:
 	ST$=B$:
-	IF ST$="" THEN 
-		545
-655	POINTER = INSTR(ST$,","):
-	IF POINTER THEN
-		MID$(ST$,POINTER,1) = "."
-660	A$="Hello "+N$+" "+O$+" from "+ST$:
-	GOSUB 13020
-662	A1$="Is any of this misspelled ?":
-	GOSUB 13020:
+	IF STe	" wwlTt O3.ltnno/ZINTER = INSTR(ST$,","):
+If2)OINTER wE	IOHOmM,POINTER,C 3" 	A$=4onnEyyyyyyyyyyy+Iy
++I0)m y0GtARRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR50drStnA"A1$IEacny of this misspelo8?":
+	G   :/5if0:
 	C=1:
-	GOSUB 13260:
-	C=0
-665	IF LEFT$(B$,1) = "Y" THEN 
-		GOTO 545
-667	IF LEFT$(B$,1) <> "N" THEN 
-		545
-670	PRINT:
-	A1$="This checking is only done the first time you call.":
-	GOSUB 13020
-680	LSET NC$ = MKI$(0):
-	LSET RZ$="  "+N$+" "+O$+" "+ST$+SPACE$(44):
+	GO :/5,h1tA	 t L	f0
+FT$(B$,1) = "Y" THE9	GOT:TltnA4	fS MesiOO'ES:14o> "N" THEN t  s5
+60	PRINT:
+	A1$Es""checking is 59eRNne the ff t time you  f3  /tA	GOSUB 1302tn, 0	LSET1r	r0  " t(0)Tt-b
+ $="  y +	+t+" "+STy2P t(44):
 	GOSUB 15990:
 	NU=NU+1:
-	PUT#1,NU+1:
-	S$=STR$(NU):
-	GOSUB 16000:
-	PUT#1,1:
-	CLOSE
-690	MF$ = " ":
-	FIL$ = "NEWCOM":
-	GOSUB 18000:
-	PRINT:
-	GOSUB 35000  '...and made to read the NEWCOMer file
-695	PRINT
-700	GOSUB 14200    '  Now everybody gets logged to CALLERS
-705	A$="Logging "+N$+" "+O$+" to disk...":
+	PUT#1oU+1:
+	S$=i#XA	GOSU01ho$$5IPUT#1P(A	C0SE
+690	MF$F	itA		L$ = "NE1e1$":
+	0SUB80000:
+	'	NT:
+	GOSUB 350 ogRoa8made to rea$he NEWCOMer file
+695	'	NT
+700	0SUB4200     '  Now eveTbody ge  logN8to CA Mn
+705	A$="Logging+t+" "+O$" to diss'M$	:
 	N=1:
-	GOSUB 13020:
-	OPEN "R",1,"A:C"+CHR$(&HC1)+"LLERS. "+CHR$(&HA0),60:
-	FIELD#1,60 AS RR$:
-	GET#1,1
-710	RE=VAL(RR$)+1:
+	G   :/5if0:
+	OPEN 3ES6Fo)  Ey8h#Z 3 o+0   yi#ZTA0)30:
+		ELD#1,60 AS RR$:
+	GET#L=E71 '
+=VAL(RR$)+1:
 	S$=STR$(RE):
-	RL=60:
-	GOSUB 16000:
-	PUT#1,1:
-	RE=RE+1
-715	S$=N$+" "+O$+" "+ST$+" "+TI$:
-	GOSUB 16000:
-	PUT#1,RE:
-	CLOSE#1
-720	'  Recallers (who are not "twits") go straight to CP/M
-723	IF N$=Y$ AND O$=Z$ AND MF$ <> "*" AND XX<>0 THEN 
-		GOSUB 13020:
-		A$="Welcome back.  Since you just signed off, go straight to CP/M":
-		GOSUB 13020:
-		F$ = F$ + " Rentered":
-		GOSUB 20000:
-		GOTO 2240
-724	'
-725	'  User privilege level (from USERS) & date (DT$) is added to LASTCALR...
-726	IF MF$="*" THEN
-		F$="TW"
-727	IF MF$="+" THEN 
-		F$="SP"
-728	IF MF$=" " THEN 
-		F$="NW"
-729	IF MF$="-" THEN 
-		F$="RG"
-730	OPEN "O",1,"A:L"+CHR$(&HC1)+"STCALR. "+CHR$(&HA0):
-	PRINT #1,N$;",";O$;",";F$;",";DZ$:
-	CLOSE#1:
-	GOSUB 20000:
-	IF N$=MAGIC$ THEN 
-		GOSUB 19000:
-		GOTO 2240
-736	' Now log out the twits through exit routines
-737	IF MF$="*" THEN
+ ' 1e30:
+	GOSU01ho$$5IPUT#1P(A	RE=RE+1
+715	S$=E+Ii+	o
++Ii+e
+r
++I+ n	GOSU01ho$$5IPUT#1'
+:
+	 Moe CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC7$1-aall2  (who are no"twits")))))))))))))))))))))))))))))))))s$
+0rI$o CPM
+723	IuM=Y$ AND O$=ZToR4 r	so> "*" AND XX520 THEN t 'Nc: r20:t )0ecNs                                                                                                              e back.  	ce you Ee 
+9M
+C1  off, go stpTz06/o/M"Tt gRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR50dr20Tt OhIS=hI+
+	 Ren 0 ":
+		GO :3FP2S1tA		GOTO  Ti (,TiR (sLR8Ul6
+avilege level0TR(6
+b
+ '= ( Me (hO1T addedo nSTCAdGGGG
+726	f00e	aE4wwE		t="TW(sl v	IFf00e	+" THEN t r0er- k72IOf=" " wlTt OhOe	NW(sl sh	fS$F$="-" THEN t r0e8/n
+73Io16	O"6F
+"	+CHR$(&HC1)+"STCALR. "+CHR$(&HA0):
+ )RINT #1,N$;",";O$a ei	30GE2	;DZ$:
+	CLOS otA	G   :3FP2S1tA0Yo$=MAGIC$ T
+N 
+  'Nc50  ho$$5 a  '2l eHi (s=hRl1oeX NI$he twits through exit roE	 pt4l	Of00eeaE4w( mI oT:
 		PRINT:
+ mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm2e,Nu have lo	cccess privilege$o thi4ystem":
 		PRINT:
-		PRINT "You have lost access privileges to this system":
-		PRINT:
-		CHAIN "BYE"
-740	BK=0:
-	GOSUB 13020:
-	OPEN "R",1,"A:C"+CHR$(&HCF)+"UNTERS. "+CHR$(&HA0),5:
-	FIELD#1,5 AS RR$
-750	PRINT
-760	A$="You are caller # : ":
-	N=1:
-	GOSUB 13020:
-	GET#1,CALLS
-770	CN=VAL(RR$)+INC:
-	A$=STR$(CN):
-	LSET RR$=A$:
-	GOSUB 13020:
-	PUT#1,CALLS
-790	CLOSE:
-	GOSUB 13020
-792	'And now the user gets to choose whether to answer the survey at 35000,
-793	IF XX=0 THEN 
-		GOTO 800   'except that new users have no choice
-795	A1$="Have you answered the user survey questions yet?":
-	GOSUB 13020:
-	C=1:
-	GOSUB 13260:
-	C=0
-798	IF LEFT$(B$,1)="N" THEN 
-		GOSUB 35000
+ m  Rm6	BYE(sD
+M1B t
+	GOSUB 1302(A	O
+N "R"6F
+8Ey8h#Z r 3RDT
+ 02e  8 d"+CHR$(&HA0),5:tf$I3eS'HoVe k75 )RINT
+760	A$="You are cnslC=2BhtA	P(A	GOSU0dr20:
+	Gn o6l8LLS2 l$ 1 3:rtRR$)+INC:t Oe8i1Gr:E	=
+T RRen$:
+	GOSU0dr20:
+	PA o6l8 O.
+790	 Moe tARRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR50drStsFhR B  now the use	
+o
+a$chootTE	N
+"21eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeanswe$he sur,H at 350 t(sFTF22(0m t34wwlTt gRfe  00tN(N  
+  n	$h	Aew users have) cfg
+ltsFTdE1$="H FEfos sere$he user $0vey questions et?":t                                                                                                    50dr2(A	C=1:
+	G   :/5,h n	C=0sFT  	IF LEFTO'ESdLeL
+4wwlTt goc56500000000000000
 799	'
-800	' The SUMMARY file is now checked for messages to the caller
-830	'
-835	GOSUB 13020:
-	A1$="Wait while I check to see if you have messages waiting ...":
-	GOSUB 13020:
-	GOSUB 13020
-838	L=0
-840	FT=1:
+800f4"$eaetMARY file iAow checked -e2
+	 c$o the cnslS  30	'
+835	GOSU0dr20:
+	A0e	W0ITE	r "Eaheck to,$hf you have=4sag  waiting ....":t                                                                                                    50dr2(A	GOSUB 13h (68	L=te
+s0	FT=1:
 	MX=0:
 	MZ=0:
-	IU=0:	 ' (Flag first time for printing heading)
-850	OPEN "R",1,"A:S"+CHR$(&HD5)+"MMARY. "+CHR$(&HA0),30:
-	RE=1:
-	FIELD#1,28 AS RR$
-860	BK=0:
-	GET#1,RE:
-	IF EOF(1) THEN 
-		960
-870	G=VAL(RR$):
-	MZ=MZ+1:
-	M(MZ,1)=G:
-	IF G=0 THEN 
+	IU=0:	 '26gg first time f6
+alting7 ing)
+850N1
+i 	,1,"A:S"+CHR$(&HD5)"MMARY. "+CHR$(&HA0),30:
+	RE)(A		ELD#1,28 AS RR$e
+31Bp to	GET#1,R'TtIfS
+OF(1) T
+N 
+ 
+r
+ l$  5: L(RR$):
+	(d)G0+1:
+	tMZ,1)=G:
+	IF G64wwlTt E/, 80	IFsCO THEN 
+		IU=Ge
+
+iIIF5299998 THE9	MZ=MZ-1Tt gRfe14Ah (4haR H#1,RE+3:
+  'Nc501nLO:
+	IF INS)mr
+N01r AT" oSTmr
+S01= TH1sn		930
+10	IF N$<>MAGIC$ T
+N 
+ 
+0 
+9200|oSTR(S$,"Br g=0 THEN 
 		950
-880	IF IU=0 THEN 
-		IU=G
-890	IF G>9998 THEN 
-		MZ=MZ-1:
-		GOTO 960
-900	GET#1,RE+3:
-	GOSUB 16500:
-	IF INSTR(S$,N$)>0 AND INSTR(S$,O$)>0 THEN 
-		930
-910	IF N$<>MAGIC$ THEN 
-		950  
-920	IF INSTR(S$,"BILL")=0 THEN 
-		950
-930	IF FT THEN 
-		L=L+1
-931	IF FT THEN 
-		A$="The following messages for "+N$+" "+O$+" are waiting in MINIRBBS: ":
-		GOSUB 13020:
-		FT=0
-940	A$=STR$(G):
-	N=1:
-	GOSUB 13020:
-	GOSUB 13020
-950	GET#1,RE+5:
-	M(MZ,2)=VAL(RR$):
-	MX=MX+M(MZ,2)+6:
+930	IF
+eHH1sn		L=yE931	IF FT THEN 
+		A$="The fon2$""	S 9 ages for "+N$+" "O$+" are waiti E" MINIB' 13	:
+		G   :/5if0:
+		FebE940	A$=STR$(G):t P1tARRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR50drN(A	0SUB3020
+50	
+T#1, +:tA	M(MZ,2)=VAL(ROOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOA	MX=MX+M(MZ,2)+6:
 	RE=RE+6:
-	GOTO 860
-960	IF L=0 THEN 
-		PRINT "No, there aren't any messages for you, "+N$+".":
-		PRINT "But check MINIRBBS anyway for public messages.":
-		GOSUB 13020
-965	CLOSE
-2000 '
-2020 '  Everyone comes here, to get ready to go to CP/M
-2040 '
-2045	GOSUB 4070	'Everyone sees the DATA file before menus
-2046 '
-2049 '  They get menus according to their status....
-2050 '
-2051	IF MF$<>"+" THEN 
-		2100
-2052	GOSUB 13020:
-	A$="As a special user, you have the following options:":
-	GOSUB 13020:
+	GO1e
+30
+9600r y
+N 
+ )RINT "N8thetcren'tAy messa2a0u+e "+N$+"":
+		'	NT "NIs ie(ctImoB'  yway fosUUUUUUUUUUUUUU 
+g =4"  2
+G":
+		GOSU0dr20
+965	 Moe n
+2MNmE202'  EveTone ce2aT70e,o N	i 81e$oooooooooooooooooooooooooooooooooto CP/M
+204'
+2GL.OSBHimio
+veTone sees the DATA file befot	Sus
+2046 'h pT  The get menucccor	g to thei4tatus.....
+205'
+:t(IfS$F$<>"+" T
+N 
+ lZ0
+2052RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR50drN(A	t="Ac seciawl28yoH	
+ Fm
+"$0llowing optionsm(A	G   :/5if0:
 	GOSUB 13020
-2053	A$=" CON  Read CONFIDENTIAL msgs    MIN  Go to MINIRBBS":
-	GOSUB 13020
-2054	A$=" NEW  Latest system data        CPM  Go straight to CP/M":
-	GOSUB 13020
-2055	A$=" OFF  Log Off immediately":
-	GOSUB 13020:
-	COUNT1 = 0
-2056	GOSUB 13020:
-	A1$="Which ?":
-	GOSUB 13020:
+2053	t=" CON  Re8CONFIDENTL msgs     MINo to MINIRBBS":
+	GOSU0dr20
+2054	A$Ie(v Latest syst at02SPP	
+ 53 00aht to CP/M":t                                                                                                    50dr2t,r5
+$I	dQL"	)i 
+rG7oD$ely":
+	GOSUB 13020:t - u*lSF:= "GOSUB 13020:t )0eciich ?":
+	G   :/5if0:
 	C=1:
-	GOSUB 13260:
-	C=0
-2060	IF B$="CON" THEN 
-		4100   'the SPECIAL file
-2065	IF B$="MIN" THEN 
-		CHAIN "MINIRBBS"  'to the message module
-2070	IF B$="NEW" THEN 
-		2220   'the BULLETIN file
-2075	IF B$="CPM" THEN 
-		2230   'the DATA file, then CP/M
-2076	IF B$="OFF" THEN 
-		CHAIN "BYE"  'straight to log-off module
-2078	COUNT1 = COUNT1 + 1:
-	IF COUNT1 = MAXTRY THEN
-		GOTO 18080
-2080	GOTO 2056
+	GO :/5,h1tA	 t e30	'Leeeeeeeeeee4wwlTEc(tMN)E"$e01
+CL file
+2065	IF B$=tIN" T
+N 
+ Kp( o "MINIRBBS"  'to thmess  $	RBT1n
+2070	'Le(c	 THEN 
+		22220tN)E"$:  CC$yIN file
+2075	I)0 /o	 wlTt mY30    'theHD  fsF hen CP/M
+2076	IFM="OF	 wlTt m  4132E"  ig  it to log-o2 m ult,r78	COUNd= COUNT1 + 1:
+	IF COUu*L)gh3e99$uE		GuC:UR
+bE2080	0TO 2056
 2099	'
-2100	IF MF$=" " THEN 
-		2200    ' Note that new callers don't get a menu
-2110	GOSUB 13020:
-	A$="Now you can do one of the following:":
-	GOSUB 13020:
+2100	f00e	
+4wwlTmY/=' Note that new call2  don't N	c 26tk2110RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR50drN(A	t="Now you can do one of thfoll$"gm(A	G   :/5if0:
 	GOSUB 13020
-2120	A$=" NEW  Latest system data         CPM  Go straight to CP/M":
-	GOSUB 13020
-2125	A$=" MIN  Go to message subsystem    OFF  Log Off immediately":
-	GOSUB 13020
-2127	COUNT1 = 0
-2130	GOSUB 13020:
-	A1$="Which do you want ?":
-	GOSUB 13020:
-	C=1:
-	GOSUB 13260:
-	C=0
-2135	IF B$="MIN" THEN 
-		CHAIN "MINIRBBS"
-2140	IF B$="NEW" THEN 
-		2220    ' RG callers can do everything SP callers can
-2145	IF B$="CPM" THEN 
-		2230    ' except read the SPECIAL file
-2150	IF B$="OFF" THEN 
-		CHAIN "BYE"
-2155	COUNT1 = COUNT1 + 1:
-	IF COUNT1 = MAXTRY THEN
-		GOTO 18080
-2160	GOTO 2130
+2120	A$="tv Lat t+Et VsMa          C$  Go$raiit to01LM'Tt  'Nc50d r
+2125	A$="I o  Goo 2
+U"E9oS 
+H
+t /fStdQLogoi 
+rGoDI0
+osT":
+	0SUB3020
+)4lGe-r2ei (,0M  'NcL5if0:
+	A1e	Whii do you want ?":t                                                                                                    50dr2(A	C=1:
+	G   :/5,h n	C=0,0d:ObtIN" T
+N 
+ Kp( o "MINIRBBS"iFiIIF B$="NEW" THEN		22220     ' RG callers    do everthin,16aalleas   
+2145	IF B$="C$" THEN		2230                                                                   2N   2 	i 81  the SPE	AL file
+BLIIFM="OF	 wlTt m  4132E"
+215Ge-r2 = COUu3yr1;	F C 0o=Togh3e99$uE		GOTO 18080
+2160Rfe1,0dr
 2170 '
-2197 ' To discourage new callers from thinking this is a bulletin board system,
-2198 ' this is the only choice they get
-2199 '
-2200	COUNT1 = 0
-2202	COUNT1 = COUNT1 + 1:
-	IF COUNT1 = MAXTRY THEN
-		GOTO 18080
-2205	A1$ = "Want latest system information before entering CP/M ?":
-	GOSUB 13020:
-	C = 1:
-	GOSUB 13260:
-	C = 0
-2210	IF LEFT$(B$,1) = "N" THEN 
-		2230
-2215	IF LEFT$(B$,1) <> "Y" THEN 
-		2202
-2220	GOSUB 3040 ' Print BULLETIN file
-2225	IF MF$="+" THEN 
-		2052
-2226	IF MF$="-" THEN 
-		2110
-2230 '			Used to be DATA file read, moved to 2045
-2235	CLOSE ' (just in case any files are still open)
-2236	PRINT
-2237	GOTO 44620  ' Then to the time-on-system routine, and then...
-2240	GOSUB 13020:
-	POKE 4,0:
-	A$="Entering CP/M...":
-	GOSUB 13020
-2260	POKE 0,&HC3:
-	SYSTEM ' we restore the "JMP" and go to CP/M.
-3000 '
-3010 ' The main program has now ended.  It's just subroutines from here on
+2197 ') discourage new call2  from 	"hng this ic bulletin board Tstem,
+2198=
+""chs the only choice they geti8TTmE2200	COUNd= 0
+2202	COUNT1 =$802 + 1:
+	Y#SDo=r
+X3e99$u( gDt/d 080
+ r5	A1SF0  t latest system information before entering CP/M ?":
+  'Nc50dr20Tt *1:
+  'Nc50denh1tA	C = 0
+2210	IF LEFOO'E5* oHHEN 
+		2230,erBO,9M(B$:14o> "Y" THEN t ,r2iM$M  -56040 ' Print  CC$yI0H6 lt,	OM="+" THEN t iBeAiM$3	IF MF$=8	 THEN		2110
+223'				Used to be DA r hrD8mouWl r45
+223Gr0SE ' (just in case any r 7c0e stn,open)Y36	PRf.
+22e"GO1HHnY0  ' The$o the time-on-sysI60outine, andhen....
+2240	0SUB3020:
+	PO"9
+e'Tt n$I A 0R E/o/M...."Tt  'Nc50drSt,enhIPOKE 0,&HC3:
+	e, uiIRt$i Fe0e the "JMPcnd go to CPM.
+30000 '
+3010 ' The main rogr 3ias now ended  It's Ee 
+9o0outines 0om hetNn
 3015 '
-3020 ' The display BULLETIN file subroutine
-3040 '
-3050	PRINT:
-	GOSUB 13000
-3060	GOSUB 12220
-3080	FIL$="BULLETIN":
-	GOSUB 18000:
-	PRINT:
-	RETURN
-4000 '
-4020 ' The display WELCOME file subroutine
-4030 '
-4050	GOSUB 12220
-4060	FIL$="WELCOME":
-	GOSUB 18000:
-	RETURN
-4065 '
-4070 ' The display DATA file subroutine*
-4075 '
-4080	GOSUB 12220
-4090	FIL$="DATA":
-	GOSUB 18000:
-	RETURN
+3020 ' Thehsplay BUL
+TIN file subroE	 k3040 '
+3050	Pm2r(ARRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR50dr t6060RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR50ffff0
+3080u0"t="BU MyIm(A	G   :/d M$5 n	Pm2r(At 
+1 o
+40 o
+4020 ' The d
+
+6g WELCtE file subrouE>4030 'HiBr	GOSU0ffff0Hi1hIFIL$="WELCO
+":
+	0SUB80000:
+	 HURN
+4065 (H lCThe display DATA file subroutine*
+MS'
+408  'Nc50f tE4090	FILe	DA":
+	0SUB80000:
+	 HURN
 4095 '
-4100 ' The display SPECIAL file subroutine*
-4120 '
-4140	GOSUB 12220
-4160	FIL$="SPECIAL":
-	GOSUB 18000:
-	GOTO 2052
-5000 '
-12220	RETURN
-12999 '
-13000	A$="Use ctl-K to abort, ctl-S to pause."
-13020 '
-13040 ' Routine to print string from A$ on console
-13060 '
-13080	IF SAV$<>"" AND A1$<>"" THEN 
-		A1$="":
-		RETURN
-13100	IF A1$<>"" THEN 
-		A$=A1$:
-		A1$=""
-13120	IF RIGHT$(A$,1)="?" OR N=1 THEN 
-		PRINT A$;:
-		PP$=A$:
-		GOTO 13180
-13140	BI=ASC(INKEY$+" "):
-	IF BI=19 THEN 
-		BI=ASC(INPUT$(1))
-13160	IF BI=11 THEN 
+41V24"$Rp"
+T SPECIAL filsubroE	eG
+4h=tk4140	0SUB22220
+41Mf$-M="SPECIAL":
+	0SUB80000:
+	0TO 2052Lo$N
+122220	RETdooTTN 'rdrrrr	A$="Use ctL8?abort, Ou  tp$p G(rdrC(k13040 ' RouE#eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeprinstring fromo	Nssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssole
+1N r 'rdr80	IF M<>"" AND A
+ ehi
+4wwlTt Eo0e	":t IyURN
+1(ttF A1$<>IHHEN		A$=A1$:
+		A1$EE(rPhIIF RITT$(t,1)="?" OR N=1 THEN 
+		Pm2eT;:t NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNen$:
+	Rfe1rd00
+13140	OenSC(IN"H +"):
+	IF BI=1 TH1sn		BI=ASC(INPUT$(1bBio r	IF BI=11 THEN 
 		BK=-1:
-		GOTO 13220 
-	ELSE 
-		PRINT A$
-13180	A=A+LEN(A$)
-13220	A$="":
+		GO1rde,r 
+,Oe 
+ n																																																																																																																					m2eTo
+(rdU$ en+LEE$)
+1322 n$="":
 	N=0
-13240	RETURN
-13260 '
-13280 ' Routine to accept string into B$ from console
+13240	RETURNrdenh=tk13280 'Nutit$os aept string :0C5th)m console
 13300 '
-13320	IF BEL AND SAV$="" THEN 
-		PRINT CHR$(7);
-13340	B$="":
-	BK=0
-13360	IF SAV$="" THEN 
-		LINE INPUT SAV$
-13380	SP=INSTR(SAV$,";"):
-	IF SP=0 THEN 
-		B$=SAV$:
-		SAV$="":
-		GOTO 13420
-13400	B$=LEFT$(SAV$,SP-1):
-	SAV$=MID$(SAV$,SP+1)
-13420	IF LEN(B$)=0 THEN 
-		RETURN
+133$IfSB
+L AND SAV$="" THEN 
+		PRINT TR$();rd640	B$Em(A	BK=0
+13360	IF SAV$=IHHEN		LINEeo-9lBM
+13380	SP=INSTR(SAV$,tg1N(A	IF SP=0 THEN t o0e8V$:t 
+: 'Oe	":t '2e1rdT0
+13400	O Mes17 M,SP1):
+	V$=MID$(S=o
+rfT:bE13420	IF L1tB1 y
+N 
+ '
+TURN
 13440	IF C=0 THEN 
 		13480
-13460	FOR ZZ=1 TO LEN(B$):
-		MID$(B$,ZZ,1)=CHR$(ASC(MID$(B$,ZZ,1))+32*(ASC(MID$(B$,ZZ,1))>96)):
-	NEXT ZZ
-13480	IF LEN(B$)<63 THEN 
+13460	FOR ZZ=1 TS$u':M):
+		MID$'E2(2L5do  h#kStMID$(B$,10,1))+3 =tASC(	D$(E2(oO,1))>96)):t AaY(oO
+13480	IF LEN(B$)<6HHEN 
 		13580
-13500	A$="Input line too long - would be truncated to:":
+nLO	t="Input lit$olong	T165a=e trunc
+o8to:":
 	GOSUB 13020
-13520	B$=LEFT$(B$,62):
-	PRINT B$
-13540	LINE INPUT "Retype line (Y/N)?";QQ$:
-	GOSUB 35600:
-	QQ$=LEFT$(QQ$,1)
-13560	IF QQ$="Y" OR QQ$="y" THEN 
-		PRINT PP$;:
-		SAV$="":
-		GOTO 13260
-13580	D=D+LEN(B$):
-	RETURN
-13600	RETURN
-13620 '
-14000 ' Date getting subroutine
-14010	BASEPORT = &H50
-14013	CMDPORT = BASEPORT + 10
-14016	DATAPORT = CMDPORT + 1
-14019 '**********************************************************
-14022 '*		READ THE DATE DIGITS			*
-14025 '**********************************************************
-14028	FOR DIGIT = 12 TO 7 STEP -1
-14031		OUT CMDPORT,(&H10 + DIGIT)
-14034		DOY(DIGIT - 7) = INP(DATAPORT)
-14037	NEXT DIGIT
-14040	YEAR= (DOY(5) * 10) + DOY(4)
-14043	MONTH10 = DOY(3)
-14046	MONTH1  = DOY(2)
-14049	DAY10 = DOY(1)
-14052	DAY1  = DOY(0)
-14055 '**********************************************************
-14058 '*		FORMAT THE FIRST DATE STRING		*
-14061 '**********************************************************
-14064	DATE1$="        "
-14067	MID$(DATE1$,1,1) = RIGHT$(STR$(DAY10),1)
-14070	MID$(DATE1$,2,1) = RIGHT$(STR$(DAY1),1)
-14073	MID$(DATE1$,3,1) = "/"
-14076	MID$(DATE1$,4,1) = RIGHT$(STR$(MONTH10),1)
-14079	MID$(DATE1$,5,1) = RIGHT$(STR$(MONTH1),1)
-14082	MID$(DATE1$,6,1) = "/"
-14085	MID$(DATE1$,7,2) = RIGHT$(STR$(YEAR),2)
-14088	DZ$ = DATE1$
-14091	DT$ = LEFT$(DATE1$,5)
-14093	DD$ = MID$(DATE1$,1,2)
-14095	DM$ = MID$(DATE1$,4,2)
-14100	RETURN
+13520)0 2
+r0O'E232):
+	'	NT B(rd:0	LINE INPUi N
+Tpe line (YN)?";QQ$:t                                                                                                    56F$o(Ee
+uS/EFTEe
+u)
+13560	IF QQ$=ehaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaT  Q$="y" wlTt mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm2eNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN	1tA 8Ve	"Tt gRfe1rd305otfeR+ e51)00000000000000000000000000000000000000000A	RETURNrdhGIyURNrdY0 'r UtNHr
+t	
+o0
+(	4ubroutC k11Z	BA 1 = &H50
+14013	CMDPORT : SEPORT + 10Fio1h2HD PORT = CMDPORT  1r U9d=N:r Ue.1 La '
+ sTHE DATE DIGi IIII*r U:G1 =N:
+1402OwNt2" E,= 12 TO  STEr"& U:it0UT CMDPORT,(y3yeha AbE
+1DUDOY(DIG,- 7)L1:0+6po1DR=E1403	NEXT"  '
+s(r U2
+M EAR= (DOY)1rO) + 0Y(4)
+1fGh0																																																			9NO=T0Y(b3
+f
+3	MONTH1  = DOY(2(r U2
+
+i2HFO = DOYBStr U:=h2HF8= 0Y(0)
+1405Rd=N(r U:oc=" OwNt6eHHE$ d8,DATE S(m$.Fi1i1                                        UN 	nTE1$="         (r UN vIOHOO+6e 0M,1,1)l(g6s17  t+lZ),1)
+14070	MIDO+6e 0M,S:1e6'	TT$(i#Z621):bE14SF	tID$(nTE1$,3,1) =  g k14076	MIt(DATE1$s,1)l(g6s17  ttONTH10S:bE14079		D$(nTE1$,5,1) = g6siO
+r=0ItONTH1),1)
+14082	MIDO+6e 0M,e0'3	/"
+11 "MID$+$rM,7,2) I  3siOm1 
+e"112Sts088	DZ$ = nTE1$
+1401	DT$ S$esiOO+60M,5)
+14093Yu/fuZ+6e 0M,1,2)
+1- OT$$ = MID$(DATE1$,4,2)
+141t +RN
 14190 '
-14200 ' Time-finding subroutine
-14205	FOR DIGIT = 5 TO 0 STEP -1
-14210		OUT CMDPORT,(&H10 + DIGIT)
-14215		TOD(DIGIT) = INP(DATAPORT)
-14220		IF DIGIT = 5 THEN TOD(DIGIT) = TOD(DIGIT) AND 3
-14225	NEXT DIGIT
-14230	H(1) = TOD(5)
-14235	H(2) = TOD(4)
-14240	H(3) = TOD(3)
-14245	H(4) = TOD(2)
-14250	H(5) = TOD(1)
-14255	H(6) = TOD(0)
-14260	DH$ = "  ":
-	DI$ = "  ":
-	DS$ = "  "
-14265	MID$(DH$,1,1) = RIGHT$(STR$(H(1)),1):
-	MID$(DH$,2,1) = RIGHT$(STR$(H(2)),1):
-	MID$(DI$,1,1) = RIGHT$(STR$(H(3)),1):
-	MID$(DI$,2,1) = RIGHT$(STR$(H(4)),1):
-	MID$(DS$,1,1) = RIGHT$(STR$(H(5)),1):
-	MID$(DS$,2,1) = RIGHT$(STR$(H(6)),1)
-14280	TI$=DD$+"-"+DH$+":"+DI$
-14285	TD$=DH$+":"+DI$+":"+DS$
-14290	RETURN
-14999 '
-15000 ' The ON-ERROR handler...
-15001 '
-15020	IF ERL=18030 THEN 
-		RESUME 18050
-15030	IF ERL=700 THEN 
-		RE=0:
+14200 ' Time-findR E9oS 1foE	eF,r5	FOR DIGIT :
+w61, u/=E14(t I-9l=HoORSt&H1+"  '
+nbE1l:/"TTtDI	T) = INP+
+P10RT)r UiI	IF DIT = 5 THEN TTtDI	T) = TODT	GI1HoR43
+142/
+XT DIGIT
+14230	H(C 3RA0)E142/(2) = TOD(4)
+142M T P = TOD(3)F,TL(4) = TOD(b3
+ldM T(5) = TODBStr U ::Am PDe1 na
+14260+7	
+	:
+	DI$ =aitA	DS$ iainF,nLID$(Dt,1,C 3a6siOm91 t(HB:2L5o(A	MID$+ ee0'3'	GhOm91 t(H(2)S:::::::::::::::::::::::::::::::::::::::::AIOHOOT	$6L5*l(g600m91 t(H(3)),1):
+O	OHf" l ) = g6siO
+r=0EAE.:2L5o(A	MHOOH M,1:1e(g6si 8i1
+AO)1o,1):
+	MID$H M,S:1e6'	TT$(i#kGn:2L
+14280em0 ,+Si+2+M+":"+DI(r U SLHD$=DH$+":"+DI+L+2,MF,shIRETUR(r pTN '
+150000 Hhe ON-E(((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((Tndler....
+15001 (rBr20	IF-&5
+1F64wwlTt mt eaetE 18L (d1F$F Er t2M34wn		 SO:
 		RESUME 710
-15100	RESUME NEXT
-15887 '
-15888 ' Small routine for writing date, etc., to USERS file (see lines 630 & 680))
-15889 '
-15990	S$=LEFT$(RZ$,50)+RIGHT$("   "+STR$(VAL(NC$)+1),4)+" "+RIGHT$("0"+DD$,2)
-15992	S$=S$+"/"+RIGHT$("0"+DM$,2):RL=62   ' (now fall thru...).
-16000 '
-16010 ' Fill and store disk record...
-16020 '
-16030	LSET RR$=LEFT$(S$+SPACE$(RL-2),RL-2)+CHR$(13)+CHR$(10)
-16040	RETURN
-16500 '
-16510 ' Unpack disk record...
-16520 '
-16530	ZZ=LEN(RR$)-2
-16540	WHILE MID$(RR$,ZZ,1)=" "
-16550		ZZ=ZZ-1:
-		IF ZZ=1 THEN 
-			16570
-16560	WEND
-16570	S$=LEFT$(RR$,ZZ)
-16580	IF MID$(S$,ZZ,1)="?" THEN S$=S$+" "
-16590	RETURN
-17000 '
-17010 ' Toggle expert user mode
-17020 '
-17030 ' XPR=NOT XPR:RETURN  (inactivated here but kept for future use)
-17040 '
-17050 ' Toggle bell prompt
-17060 '
-17070 ' BEL=NOT BEL:RETURN  (ditto)
-18000 '
-18010 ' Subroutine to print a file
-18020 '
-18030	OPEN "I",1,"A:"+FIL$:
-	BK=0
-18040	IF EOF(1) OR BK THEN 
-		18050 
-	ELSE 
-		LINE INPUT #1,A$:
-		GOSUB 13020:
+15100t 
+o	 
+oEXT
+1v 7 '
+15888888888888888888888888888888888' Small rouE#ru 1Hgl"g date, etc., 3
+b
+ L hle (lms	 cnh= (i'' (rBSe
+
+.mE15990	S$=
+FT$&&&&&&&&&&&&&&L' y(g6siOEI0$$H  i#Z 50tLOfT: 4)" "+RIGHT$("0"+DD$loB 
+4Y	S$=S$+"/"+RIGhOEgL+2rYlo:RL=62    ' (2Nr4fe ftGGGG)
+160000 'o (VS 33lpB tSmDE k recoFo  r '
+16hILSE 0 MesiOmr2P tuX)  lo,rSe2H8h#;52H8h#;t5 0040	RETdoo MV 0510FsChU.
+ d
+(pS aord....
+16 r '
+16 r	ZZr
+N(RR$)-2
+16541cTI
+ 	D$(#Y(2L5dL k16/G0Z=ZZ-1:t f2(oRHHEN tO$NP :vtr1hIWEND
+ :v0	S$r
+FTm==
+OZ)
+1658IfS$ID$(S2(oO,1)="?" wl M M+"n
+1d
+iIRETUb(21N 'rmioRDX	 t  
+ v0t user mode
+222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222=tk21FC)na)R=NOT XPR( Hdo  (inacg2 N8here but kept fo0H1
+$0e uobE1040 '
+17050 ' Toale bell rompt
+17060 'rmimiSB
+L10Tte	5'
+ 08(ditto(rx)$NmE11Z ' SS 1foE=N print a file
+18h=tk11F$ItuF	 e2	A:H eO"tTt1 e
+18040	IF EOt1)1mB  9N 
+	d 050 
+	EL 
+I	LI am8
+eC,A$:
+		GOSU0dr20:
 		GOTO 18040
-18050	CLOSE #1:
-	RETURN
-18060 '
-18070 '
-18080 ' Subroutine to log off an unwanted caller
-18090 '
-18100 '
-18110	'POKE 0,&HC3	'<-----Restore "Jump" at BASE for CP/M (doesn't
-			 really matter if this isn't done if you use BYE
-			 to load this program
-18120	RUN "A:SUPER.COM" 'Neatest log off is through BYE
+1805 &00SE #1:
+	 HURN
+1801mE1800 (rxd ' SubrouE#eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeelogff an wanted callerrx8 '
+1Z0 '
+18110	'POKE 0,&HC3gN------Restore "HMS4IcBASE for1$ (doesn't
+MNh 8f3 T matter if thahsn't donif ou use BYE
+	 o1e$08this program
+1PhIRUN "58 tn GCOM" '8Mest log off ishroug32E
 18140	END
-18150 '
-19000	GOSUB 14200	'Now log SYSOP acceses for later check
-19020	OPEN "R",1,"A:D"+CHR$(&HC9)+"RECT. "+CHR$(&HA0),40:
-	FIELD#1,40 AS RR$:
-	GET#1,1
-19040	RE = VAL(RR$)+1:
-	S$ = STR$(RE):
+aBL=tk190000000000GOSBr U r0	'Now lo, e,to  aceFcl->gter ieck8hf0	OPEN Ll :D"CHR$(y
+2GIn9  d"+CHR$(&HA0),40:tf$I3e2s0 AS RR'Tt  '+do 1r  h U$ '
+ = VAL(ROfTP(mr	S
+r=0mt P:
 	RL = 40:
-	GOSUB 16000:
-	PUT#1,1:
-	RE = RE + 1
-19060	IF N$ = MAGIC$ THEN
-		N$ = "SYSOP"
-19080	S$ = N$ + " " + TI$ + " " + MID$(X$,7,2):
-	GOSUB 16000:
-	PUT#1,RE:
-	CLOSE #1
-19100	RETURN
-19110 '
-20000 '
-20020 ' Optional HARDWARE DEPENDENT routine to write caller
-20040 ' data to status line of your terminal if it has one
-20060 ' This routine must access the console directly (bypassing
-20080 ' BYE) so is necessarily hardware dependent
-20100 '
-20120	STATUS$ = CHR$(27) + "g" + CHR$(27) + "f" + N$ + " " + O$ + " " + ST$ + ", " + TD$ + ", " + DZ$ + ", " + F$ + CHR$(13) + CHR$(10)
-20140	FOR I = 1 TO LEN(STATUS$)
-20160		CHAR = ASC(MID$(STATUS$,I,1))
-20180		WHILE (INP(CONSOLEPORT+1) AND &H1) <> 1
+	GO :/o rrrr:
+	PUT#Lo(A	RE = RE + tr  h0	IuM = MA	C$ THETt mN	he
+2SOP"r  hxt LISllllllllll+
+" + TI+E	 + MHOmgt Dlo(A	GOSUB 160000:t  
+o6l(tA	C0SE #1
+19100t 
+1 o
+19110 (,o ',r02' Optional HAR8 RE DEPET
+NT roE	m06ur
+tsller
+2004' datao a0
+  linof your terminal if it has one
+20060Dp
+E  2oE	elE t accea$heeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeesotRhrr0sT (yassi  k20080 ' BYE) so aAU 9 arily   0dware deendent
+2010'
+Pf0	sTUISl8h17v) + "	  CHR$(27) + "f"sN$ + i
+y"o	+
+" + ST+ eEyyD$ + ", " + DZ$ + ", " + F$ + TR$(n6yn90;t5=E2014f$ot	myS$u'e
+pD  $)
+20160		CHAR =or '0	OHOm  0|e0'' 201M OTILE (Io(CO ttnZRT1) AND &H1)o> 1
 20200		WEND
-20220		OUT CONSOLEPORT,CHAR
-20240	NEXT I
-20260	RETURN
-20280 '
-21000 '  SYSOP password check
-21010 '
-21020	O$ = "":
-	A1$ = "2nd Codeword?":
-	GOSUB 13020:
-	C = 1:
-	B$ = INPUT$(10):
-	GOSUB 13420:
-	C = 0:
-	X$ = B$:
-21030	PRINT
-21040	IF INSTR(X$,P2$) THEN
-		IF (MID$(DT$,1,1) = MID$(X$,10,1)) AND (MID$(DT$,2,1) = MID$(X$,9,1)) THEN
-			F$ = "":
-			SYSOP = 1:
-			RETURN
-21045	'Use this in place of 21040 if you dont have a real time clock
-	IF INSTR(X$,P$) THEN
-		F$ = "":
-		SYSOP = 1:
-		RETURN
-21050	SYSOP = 0:
-	RETURN
-21060 '
-32000 '  The CP/M familiarity testing routine  (feel free to make changes)
+20220I8
+eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeedMn1 l84R
+20240	NEX	 eif60	RETURN,r280 ',0OOOO '  e,to14"4word ieck
+()O 'ito	O$ = "":
+	A1$F7Ad Codeword?":
+	GOSUB 13020:t SLo(O'IS o
+ 1	(:
+RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR50dT0:
+ * o(A	XS='m& er r	PRINT
+21040	|oSTmgt,P2$) THEN
+		IF0	O0O+r
+S6L5C$ID$t0
+SZ,1)ToR4tID$+YD5*	OHOat,9,1)) THETtO$N 7
+m(A				SYSOeCP(AM$'
+ 0 (,2GLR  e 	"chn pl  $Nf 21040osyo 5EiausE00,time clo(sn	IF INSTR(X$,P1yHENt r	SFtA		SYSo 01tA		 HURN
+21050	SYSOP = 0:t +RN
+21060 'Y0000 
+4"$P/M f l6  0ity testing routine  (2o,free to mtw4 iang )
 32001 '
 32010	XX=0
-32020	GOSUB 13020:
-	A1$="What is the name of Digital Research's standard debugger?":
-	GOSUB 13020:
-	C=1:
-	GOSUB 13260:
-	C=0
-32040	IF INSTR(B$,"DDT") THEN 
+ r20	G   :/5if0:
+	A1e	Whais thegme of Digital,p   9 a4
+:lUG ebugger?":
+	GOSUB 13020:t P(A	GOSU0der:
+	C=tY0MIfS	NSTR(B$,T + O1yHEN 
 		32400
-32050	IF INSTR(B$,"ddt") THEN 
-		32400
-32055	IF INSTR(B$,"SID") THEN
-		PRINT "Not ";B$;", try the other one...":
-		GOTO 32020
-32060	XX=XX+1:
- 	IF XX=3 THEN 
-		18080   ' Log the caller off...
-32070	IF XX=1 THEN
-		PRINT "You only get 3 tries...":
-		GOTO 32020
-32080	IF XX=2 THEN
-		PRINT "One last try...":
-		GOTO 32020
-32400	RETURN
-32499 '
-35000 '   BK's system user survey module  (again, make changes)
-35001 '
-35002	PRINT:
-	PRINT "     ***   SYSTEM USER SURVEY  ***"
-35005	OPEN "R",1,"A:S"+CHR$(&HD5)+"RVEY.B"+CHR$(&HC2)+"S",40:
-	FIELD#1,40 AS RR$:
-	GET#1,1
-35006	RE = VAL(RR$)+1
-35007	IF RE = 1 THEN 
-		RE = 2
-35008	S$=N$+" "+O$+" "+DZ$
-35009	GOSUB 35200
-35010	GOSUB 13020:
-	GOSUB 13020:
-	A$="Please answer all the following questions. The data"
-35020	GOSUB 13020:
-	A$="about what you are doing helps to ensure that this":
-	GOSUB 13020:
-	A$="system takes your needs into account as it develops.":
-	GOSUB 13020
-35023	NOANSW = 0
-35025	PRINT:
-	PRINT "(Keep each answer to 35 characters maximum.)"
-35026	PRINT "(There are 8 questions in all)":
-	PRINT
-35030	PRINT "What kind of computer (or terminal) are you using? (S-100, Osborne,"
-35035	PRINT "  NEC-APC, IBM-PC etc.; if S-100, which controller & CPU card?":
-	GOSUB 35600:
+ r50	IF INSTR(B$,==
+O1yHEN 
+		32400Y055	IF INSTR(B$,"SI	) THEN
+		PRfeie'( ";B$;", try the ot21ee....":t '2e1Y020
+32060	1Ge(0gyP(i	f2X=3 wlTt I5x/MNLog the calleNff....Y070	Y(0m )D9$u( mI oT "You onT gm i2
+GGGG":
+		GuCF  r
+320800Y(0msTHEN
+		PRfei	l=7	$ try....":
+		GO1Y0StTiO	RETUb esTTmE35MN-oBK's system use4urvey module  (aga68make cha  2GStnLd'
+35002	PRIN'Tt )RfeiaSN =N    SYSTt =
+R SURVecC o$$	
+35005	OPEN Ll :S"+CHR$(& nofyG1tH sB/+90=0O 3hL P+"S",40:tf$I3e2s0 AS RR'Tt  '+do 1nLOmt 7&:rtRR$)+1
+/e"IF	v/34wwlTt mt 73D(nLO8r0e
++Ii+	o
+Ii+2n
+(r09	0SUB:eiO
+35010	G   :/5if0:
+	GOSUB 13020:t Oe	 7  pE  ser allhe followinU $2hons. Thecta"nLf0	GO :/5if0:
+	A$="about wh	+)u are doinH a?o ensurthat this"Tt  'Nc50drN(A	t="system takes2tneeahntaccou	cs it,7elops.":
+	0SUB3020
+/FtFod =i (r25	PRIN'Tt )RfeiZ  Yleach ane =0ClcharaEl2   1imum.)"
+3502mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm2OEs"=
+  0e 8 2t2h3  in23' m(A	PRINT
+350$ )RINT " " M kind offffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffputer SCElX 	al) aryoTE in =S0O0, OsborF "nLdmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm2I
+o=STooooooooooooooooooooooooooooooooo S"M-PC  a.; if S-100, whichhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhtrslC CPU   0d?":
+	G   :&600:
 	Q$=" 1":
-	GOSUB 35100
-35040	PRINT "With which operating systems? (CP/M-80?  CP/M-86?  CP/M-68K?"
-35045	PRINT "  MSDOS, P-system?  More than one?)":
+	GOSU65100
+35040	'	NT " 0fuhich operating systemsmm 1:r$80?  CLM-86?  CP/M-684t"
+35045	PRINT atSD  SnPp+
+ tem?  More thRNne?)":
+  'Nc5656o(A	Q$IehtA	0SUB:0O0
+/M )m2eiow =out the modeaCp	0	0e0:8& baud rat
+GSe 	:
 	GOSUB 35600:
-	Q$=" 2":
-	GOSUB 35100
-35050	PRINT "How about the modem?  What brand & baud rate(s)?":
-	GOSUB 35600:
-	Q$=" 3":
-	GOSUB 35100
-35060	PRINT "Where did you learn of this system":
-	PRINT " (If an RCPM or BBS, which one)? ":
-	GOSUB 35600:
+	Q$=6":
+  'Nc565100nL1hIPRINT "Where did you 8 0nf this system"Tt )RI," Ils  RCPMr BBS, whichne)? ":
+	G   :&600:
 	Q$=" 4":
-	GOSUB 35100
-35070	PRINT "Do you work with computers professionally?  Which kind?":
-	GOSUB 35600:
-	Q$=" 5":
-	GOSUB 35100
-35080	PRINT "How long have you been involved with microcomputers?":
-	GOSUB 35600:
-	Q$=" 6":
-	GOSUB 35100
-35085	PRINT "If you write your own programs, which languages do you usually use?":
-	GOSUB 35600:
-	Q$=" 7":
-	GOSUB 35100
-35090	PRINT "Are you interested in 16/32 bit CPUs or other"
-35091	PRINT "  leading-edge equipment & software?  Which?":
-	GOSUB 35600:
+	0SUB:0O0
+/r	PRfei2+eDN-oE ith comuters rofessionalT?   ""ah kind 	Tt  'Nc56560(A	Q$=" 5'Tt  'Nc565100
+3508000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000m2eiyow long have you been involv  withla
+1-0X  U1
+l2 ?":t                                                                                                    56F$o(Ee
+S	tA	GOSU65100
+35085	Pm2ei2 you rite your own programs, wh  i lang I
+F. yoTE ually pEm(A	GOSUB 3F$o(Ee
+S	v":t                                                                                                    56(t=E3500	PRINT "Are you interested R011 rerIr-U<r other(nL0IPRfeiaSrDE'"8NLU1U $"
+ F'k<ftwaregCp
+g
+"i'Nc= :hO:
 	Q$=" 8":
-	GOSUB 35100
-35092	PRINT:
-	PRINT "If you'd care to give further details, leave a msg in MINIRBBS"
-35094	S$=STR$(RE)
-35095	GOSUB 16000:
-	PUT#1,1:
-	CLOSE
-35096	IF NOANSW >= 3 THEN
-		GOSUB 35700:
-		RETURN		'Get rid of the nusiance callers
-35099	PRINT:
-	PRINT "Thanks for the information.  Now back to the log-in routine...":
-	PRINT:
-	RETURN
-35100 ' PUT IN FILE
+	0SUB:0O0
+/ei	 r(A	'	NT "l+Pu'd   0e to "7e f0ther details, leavea l"	hn MINIRBBS"
+35094	Oe8i1GIStnL  nGOSUB60000:
+	
+ N6Lo(A	CLOSEnL F	OYoNSW >= HHEN
+		GOSU65700:
+		RETURa1ICh 0Wsthe n9Ace callersnL  hNtm2r(mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm2Es"  Es for thinfo tion.  Now back tohe log-in 2oE	eeee":
+ )RINT:
+	RETdont(tV2)UTe>$-tA
 35120	GOSUB 13280:
-	IF B$="" THEN 
-		S$="<omitted>":
-		NOANSW = NOANSW + 1
-	ELSE 
-		S$=B$
-35140	S$=Q$+": "+S$
-35200	RL=40
-35220	GOSUB 16000
-35240	PUT#1,RE
-35260	RE = RE + 1
-35280	RETURN
+	IF B$EIHHE9	S$="<omitte Dm(A		fPN  =utFoN DT n	ELSE 
+		S$=E(nt3
+M LF  $+": "S$
+352t 0 r
+>2  'Nc501ho$tnTiIPU o RE
+35260	REl( 
+yr (ee
+M '
+TURN
 35290 '
-35300 ' Display a ruler line to show how long answer may be
-35310 '
-35600	PRINT "---------10---------20--------30----|"
-35620	RETURN
-35630 '
-35640 ' Throw away callers who wont answer questions
-35650 '
-35700	FIL$ = "GOODBYE":
-	GOSUB 18000
-35710	OPEN "R",1,"A:U"+CHR$(&HD3)+"ERS. "+CHR$(&HA0),62:
-	FIELD#1,50 AS RZ$:
-	GET#1,1:
-	NU = VAL(RZ$):
-	NU = NU - 1:
-	S$ = STR$(NU):
-	RL = 62:
-	GOSUB 16000:
-	PUT#1,1:
-	CLOSE:
-	MF$ = "*":
-	RETURN
-35720 '
-44620 '  Routines for printing the time & time-on-system 
-44625 '   (for MH clock, but adaptable for other clocks)
-44630 '    a. Print just time
-44640	GOSUB 14200  
-44650	PRINT "The time now is (Hrs:Mins:Secs).... "TD$
-44659 '    b. Print elapsed time too
-44660	GOSUB 44940
-44670	GOTO 2240
-44830 '    (calculate the time difference...)
-44835	IF H(1) < HT(1) THEN
-		H(1) = H(1) + 2:
-		H(2) = H(2) + 4
-44840	IF H(6)<HT(6) THEN 
-		H(6)=H(6)+10:
-		H(5)=H(5)-1
-44850	IF H(5)<HT(5) THEN 
-		H(5)=H(5)+6:
-		H(4)=H(4)-1
-44860	IF H(4)<HT(4) THEN 
-		H(4)=H(4)+10:
-		H(3)=H(3)-1
-44870	IF H(3)<HT(3) THEN 
-		H(3)=H(3)+6:
-		H(2)=H(2)-1
-44880	IF H(2)<HT(2) THEN 
-		H(2)=H(2)+10:
-		H(1)=H(1)-1
-44890	HD(6)=H(6)-HT(6):
-	HD(5)=H(5)-HT(5):
-	HD(4)=H(4)-HT(4)
-44900	HD(3)=H(3)-HT(3):
-	HD(2)=H(2)-HT(2):
-	HD(1)=H(1)-HT(1)
-44910	RETURN
-44920	INPUT "TIME= H,H,M,M,S,S ";HT(1),HT(2),HT(3),HT(4),HT(5),HT(6)
-44930	INPUT "LATER TIME H,H,M,M,S,S ";H(1),H(2),H(3),H(4),H(5),H(6)
-44940	GOSUB 44830
-44950	PRINT "You've been on the system for...... ";
-44960	TF$="#"
-44970	FOR I=1 TO 6
-44980		PRINT USING TF$;HD(I);
-44990		IF I=2 THEN 
-			PRINT ":";
-45000		IF I=4 THEN 
-			PRINT ":";
-45010	NEXT I
-45020	PRINT
-45030	RETURN
-G TF$;
+3530' D
+
+6g a ruler line to show hNet	cnswert
+TS k3 0R (n=O	PRfei0"o	10---------------------------------------------------------------------------------------------------------o"o30-----Iin
+3562 '
+TURN
+35630 'n= Ti24"0Ns uay call2  who125E  ser qu t23 
+35650 'n8l	FIL$ =.1  e":
+	GO :/d 0000
+W 10	OP1h 	,F
+:U"+CHRO 3ATlo+"ERS. "CHR$(y1o,6'TtfELD#1,50 AS RZ$:
+	Gn o6Lo(A	NU= dL(RZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZA	NU = Nr"01tA	S$ = STR$(NU)Tt ' bnY:
+	0SUB60000:
+	
+ N6Lo(A	CLOSE:
+	 r	SF0":
+	RETURNn8l=tk44620 ' NutiFcl-3
+al
+ing the time & MSOr2' y
+t 3k44625 0$Ntfor T clock, ut adaptable for oth6alo(TStHHnr '     a. Print just time
+s640	GOSU0 hO 
+4465 )RINT "T$$ime now is (Hrs:Min'  lpS "TD$
+4359 ' ,)eG Print el UwWE07t$oo
+s660	GO :3s4940HHn4l$  '2e1,eHi (HHei=or2S's  f   e3Et$htime dl2erence....)
+s83	OYT(6DsnID9$uE		HBC nIB6y, n		H(1e6T(2) + 4
+s840	IF H(6)D
+m34wwlTt EAm  DRP+10:
+		H(1 ':P-1HHeGLIIF H(5)D
+O)1yHEN t O)1 D5)+6:
+	nE.R2 s)-1
+44860	IF H(4 oAE.64wwlTt EAE.RR s)+10:
+		H P=t3)-1
+s870	IF H(3)D
+O P THEN t O P=H(fHF'Tt EAmnR2nmnP"& 488If2T(2)<HT(1yHEN		H(2)Amn2T1tA		H(R2nIo"& THe
+
+iIHD(6)Am PHT(6)Tt TD(5)=H(1SyT(5):
+	 n
+.R2n )-HE.StHshO	 n0 PAO SyT(3'Tt TD(2)=H P-HT(2):
+	HD(1)=H(P99'0'ysitt '
+TURN
+44920UT u	tE= ey,M,M,2=h4nIB2Dsnmn2Dsn2Ds s),HT(5),HT(6)
+44930	IN
+ 	LATER ItE H,H,e0
+282=;H(1),H P,H P,H.+'o,H(6)
+44940RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR5THeG
+4450	'	NT "Nu've been on the system fS "G
+44960	TFe	#"
+44970	FO	b1 TO 6
+s980		Pm2esING TF$;HD(I);
+44990		IF I=HHEN 
+				PRfeiL	y0000		IF I=4 THEN tO$$)RINT dmI (H10	NEXT IGLf0	PRIN(HLdr	Rs 0=StH ImDhm,OR n	Gn o6Lo(A	NU= dL(RZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZA	NU = Nr"01

@@ -1,42 +1,36 @@
-0  ' Revision 1.2 10/23/84
-10 ' MTIMER10.BAS by Lawrence Davis 9/25/84
-12 ' Insert your own clock routine at line 190
-13 ' Clear screen string currently CHR$(26) - ^Z
-15 ' This program must be compiled using BASCOM
-16 ' Compile as follows: BASCOM in A drive   MTIMER.BAS in B drive
-17 ' A>BASCOM =B:MTIMER12 /O
-18 ' A>L80 B:MTIMER12,B:MTIMER/N/E
-19 DIM L$(128)
-20 PRINT CHR$(26);TAB(20)"Mex Timer Program - Version 1.2
-25 PRINT TAB(27);"For Epson QX-10
-30 PRINT:PRINT:PRINT
-40 INPUT "Set the STARTUP TIME:  (Enter as HH:MM) ",A$
-45 PRINT:PRINT"Enter the Mex COMMAND LINE (eg. LOAD PHONE.PHN;READ BBS) "
-47 INPUT "MEX>",M$
-50 PRINT CHR$(26);"The STARTUP TIME is set for ";A$
-55 PRINT:PRINT;"The Mex COMMAND LINE is <"+M$+">"
-60 PRINT:PRINT;"You must leave the computer and modem ON"
-80 GOSUB 190		'read clock
-90 IF TM$=A$ THEN 164 	'Is it time?  Yes, then run MEX
-100 OLDTM$=TM$		'If not, then try again
-110 GOSUB 190		'Read clock
-120 IF TM$>OLDTM$ THEN 80 
-130 GOTO 110
-164 L=LEN(M$)+1		'Length of command line + space (20h)
-165 POKE &H80,L		'Poke length into default buffer
-166 POKE &H81,&H20	'poke space (20h)
-168 J=130		'Decimal equivalent of 82h
-169 FOR I%=1 TO LEN(M$)	'Loop times number of chars in command line
-170   L$(I%)=MID$(M$,I%,1)'Assign a string variable to each char in comm. line
-171   POKE J,ASC(L$(I%)) 'Poke command line into default buffer addresses
-172   J=J+1		'Increment address counter
-175 NEXT I%		'Do it again
-180 PRINT CHR$(26):RUN "MEX"
-190 OUT &H3D,4:TH=INP(&H3C):GOSUB 220:DH$=TH$	'Clock routine for
-200 OUT &H3D,2:TH=INP(&H3C):GOSUB 220:DI$=TH$	'Epson QX-10
-210 TM$=DH$+":"+DI$:RETURN
-220 TH$=""
-230 IF TH<10 THEN TH$="0"
-240 TH$=TH$+HEX$(TH)				'End clock routine
-250 RETURN
-
+0 n 	rNr0wtT 10/23/84
+10 ' MoiNA$oBelM by LsMcnce Davi'65vT)24
+12 ' In rt yoiF1,RF
+ M1D2 at lo 9R%%' Clear $t en st2Ihoo1iiRo0  t0oo"-I- Mm 0IH0 ' tNN:ograIPshf  coIiled f2IhfMCOM
+1
+l 	 ilas follows: BAS$MoT0
+ MP2IMER.BAoT0fnCiGIE H' A>BAS$M05S2IM
+hH/O sT ' ADsnCcGinoiNAi1nE:MTiN0 89+(o(S MAi1l)20 PRINT CHR$T6)TAB(20)" x TimJD1MOIO/ Version 1.2
+25'  NT TAB(27);"For:q QX-10 
+oHnT:PRINT:PRINT
+40NPUTL(BUheuARTiA  MI(Enter N1%:MM) ",A$
+45'  NT:PRINT"EntdBiaSex COMMAND L2de+EgNn1x ONE.PHN;READs$+I"
+47 INPUT "M 1T,M$ oHnT O cMo"
+ 2he STARTUP TIMENaDoESysA$
+55 
+ns1NI";"ThMex COMMbrns66666666666LG(r38m  ,P NT:PR2,8P mrHmustcave the compu r and mode0UA ' 20 GOSU
++$I'read cloc
+90 IF TM$=A"HEN64 	 s itr;$R0nyesoUBIET06 	HR;0ML1M +"M:: 
+0?ot, thenM,lag2I' sOPaMUB9p$qRR	'	RgT0 IF TM$>ML1MTHEN 80 
+1,GOTO10
+16 L=Lf M:e
+	'LeSUN> omma Rnuo   sp$  (20h)B meaE &H80,L		'Poke length in(CRLg"ebuffer
+166 POKE H8nn%25) 
+e spa  (20)0InT J=130		'R$2  &equivalent P0Ese0Is2 o)c'	HE"O LENM =RK$ times "
+N(of charPC omI  line
+10 La	H)rnL MoN I%,1)TbLn6lstrIhlogDc NToIto each char 0oF l1line
+AE0$	hOKE J,ASCS M%p'Poe Y c  4 liIin(CRLg"ebuffer ndresse' E EHJ;1		'IncremPeadiaNNS"oLo9
+15 N "'	H		'Do it
+r1 ' sT0 PRIHCHR$(26):RUN "MEX"
+190 OUT &H3D,4:TH=INP(&H3C
+NEidT=Ut0P3333333333333333333333333333333333333	'vkiPMl(cM9
+2;u &HhdT:TH=It$n%3)poHUB 220:n "H$	e
+1nd Q-10TO7Se+fNOr 
+ 0O  fDH020 TH$T"vpF TH<10 THEN TH$="0"
+240 TH$1O M3 EX$(TH)	'End clock M1D2
+2,RET U5ggggggggggggggggggggggggggggggggggggggggggMl MEPTCcino'-N/E+(o(S MAi1l)20 PRINT CHR$T6)T

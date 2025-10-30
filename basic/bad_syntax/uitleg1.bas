@@ -1,152 +1,117 @@
-10 GOTO 1000
-20 REM
-21 GOTO 1010
-22 REM COMPUTERS DIE DIT NODIG HEBBEN
-23 REM MOETEN OP REGEL 20 HEBBEN STAAN:
-24 REM     CLEAR A
-25 GOTO 1010
-100 PRINT CHR$(26);:RETURN
-101 REM 100:VEEG HET SCHERM SCHOON
-102 REM    OP APPLE : HOME
-103 REM    OP TRS   : CLS
-104 REM    OP CBM/PET : PRINTCHR$(147)
-105 REM    OP ....  : ....
-1000 A=500:GOTO 20
-1010 GOTO 2500
-1020 READ RE$
-1030 IF RE$="***"THEN END
-1040 BK=1
-1050 IF BK>LEN(RE$)THEN 1020
-1060 AK=0
-1070 AK=AK+1
-1080 IF BK+AK>LEN(RE$)THEN 1100
-1090 IF MID$(RE$,BK+AK,1)<>" "THEN 1070
-1100 WO$=MID$(RE$,BK,AK)
-1110 BK=BK+LEN(WO$)+1
-1120 IF PL+LEN(WO$)>=RL THEN GOSUB 1210
-1130 IF WO$="&"THEN WO$="":GOSUB 1210:GOTO 1170
-1140 IF WO$<>"#"THEN 1170
-1150 GOSUB 1210:IF AR<>0 THEN 1150
-1160 GOTO 1050
-1170 PRINT WO$;
-1180 PL=PL+LEN(WO$)+1
-1190 IF PL<RL-1 THEN PRINT" ";
-1200 GOTO 1050
-1210 PRINT
-1220 AR=AR+1
-1230 IF AR<SH-2 THEN 1290
-1240 PRINT
-1250 PRINT"  VERVOLG: 'n TOETS en <return>";
-1260 INPUT SP$
-1270 AR=0
-1280 GOSUB 100
-1290 PL=0
-1300 RETURN
+10 GOTO 11A2' n
+SjuDhn0GOTO 101'   eREM COMPUTERS DIEOeo ODIG HEBB0
+23 REM MOETEN OP REGE 20 HO eje ST. Dh
+Sja$rgrrDij ieD5 GO  1010
+100 P .cH0'eU
+6O riRETURN
+101 REM 100:VEEG HETls> at"eL ON
+102 REM     OP APPLE5afa kDE8 REM     OP TRS    : Ll#04 REM     OP CBM/PoO5   .c"e'e
+G47)
+ 5 REM     OP .....  : .....E$leeA=500:GOTOn+EEgneeTO 2500
+1020 REA&AeU0  0Ae90"**** an
+jeD
+1040 B s1
+1050<
+ Urtd
+A.aheUBTjU0
+1060 AK0
+1070 AKAK+1
+1080 IF BK+AK>LEN(RE)THEN 1100E$= Ibv YU
+E$,BK+AK,1)<>"THEN 1070
+1100 WO$=MID(RE$,BK,AK)
+11110 BK=BK+LEN(WO$)+1EW0 IF PL+LEti  an 3 nLHEN GOSUB 121LGO<Pe$="t
+>A  W90""GaUB 1210:GOTO 1beE,ft0 WO$<>"#"THEN 1170
+1150 GOSUB  nk:IF ARzEe TH0 Au0ElA0 GOTO 1 s
+1170 PRINT WO$;EIae P=t
+DEN(WO$)+1
+1190 IF PL<
+tdg> PRncrirg DWgneeTlnr
+1Ae PRIgDW2AR=All DW30 IbeRB BhaV  1 DW40 PRIgDW50 P .crg 0HlOG 'n TOETS e<retEzEo DW60 INPUT SP$
+120 u00W80 GOSUB 10Lss PL=0Gs0AerERN
 1310 :
-2500 GOSUB 100
-2510 PRINT"Hoeveel karakters kunnen bij Uw computer"
-2520 PRINT"op een regel ? ";
-2530 INPUT RL
-2540 PRINT:PRINT
-2550 PRINT"Hoeveel regels kunnen bij Uw computer"
-2560 PRINT"op het scherm ? ";
-2570 INPUT SH
-2580 GOSUB 100
-2590 PL=0:AR=0
-2600 GOTO 1020
+2500 GOSUB  0h3E
+S .coai I0araBiA2nOG32bj w computer"
+2520 P .co""BtregeEbirg 2530.URL
+eaae PRINiPRIN' 3i sm3a0T""  el TOls kunnen bij Uw comeouAol&8iA0 PRINT"opOt scherm ? ";
+250 n2$eoRB l&Rae GOA) 100
+25s P=iAR0
+2600 GO  1020
 2610 :
-3000 DATA"Hallo HOBBYSCOOPVRIENDEN ! & &"
-3010 DATA"& Hier is de uitleg over de nieuwe"
-3020 DATA"& &          === BASICODE-2 === & &"
-3030 DATA"& Voortaan is dit de standaard die bij de uit te"
-3040 DATA"zenden HOBBYSCOOP programma's wordt gebruikt."
-3050 DATA"& & Wat betekent dat. & Dat betekent, dat"
-3060 DATA"het vanaf nu niet meer nodig is dat U zelf elk"
-3070 DATA"door HOBBYSCOOP uitgezonden programma moet"
-3080 DATA"aanpassen voordat het op Uw computer zonder"
-3090 DATA"fouten werkt. & & Hoe kan dat? # Een voorbeeld:"
-3100 DATA"& & De opdracht 'CLEAR-SCREEN' is in elke"
-3110 DATA"computer anders. & Daarom zal"
-3120 DATA"in BASICODE-2 voortaan elk"
-3130 DATA"uitgezonden programma dat op een zeker ogenblik"
-3140 DATA"het scherm wil schoonmaken, op die plek de"
-3150 DATA"instructie   GOSUB100   bevatten. & & Als U dan"
-3160 DATA"op regel 100 een subroutine hebt staan die"
-3170 DATA"voor Uw machine het scherm schoonveegt, dan"
-3180 DATA"is dus het probleem voor 'clear-screen' vanzelf"
-3190 DATA"opgelost. &"
-3200 DATA"& Voordat U het uitgezonden BASICODE-2"
-3210 DATA"programma gaat laden, moet U wel eerst de"
-3220 DATA"benodigde"
-3230 DATA"subroutine voor 'CLEAR SCREEN' klaarzetten."
-3240 DATA"# Zo zijn er diverse subroutines, die"
-3250 DATA"elk een bepaalde nuttige taak kunnen verrichten,"
-3260 DATA"en wel allerlei taken die in de diverse gangbare"
-3270 DATA"computers verschillende commando's nodig"
-3280 DATA"hebben. &"
-3290 DATA"& Bijvoorbeeld: & &"
-3300 DATA"Zet de cursor op een bepaalde plek, &"
-3310 DATA"& Kijk of er een toets is ingedrukt, &"
-3320 DATA"& Wacht tot er een toets is ingedrukt, &"
-3330 DATA"& Print getallen volgens een opgegeven aantal"
-3340 DATA"cijfers voor en/of na de komma &"
-3350 DATA"& enzovoort, enzovoort,"
-3360 DATA"#"
-3370 DATA"Deze subroutines zijn zeer zorgvuldig uitgekozen."
-3380 DATA"& De ervaringen na een jaar uitzendingen in"
-3390 DATA"BASICODE liggen daar natuurlijk aan"
-3400 DATA"ten grondslag."
-3410 DATA"& Vrijwel alle eerder uitgezonden programma's"
-3420 DATA"zouden met deze nieuwe subroutines zonder"
-3430 DATA"enig probleem meteen op Uw computer kunnen"
-3440 DATA"werken. & Wat er dan nog over blijft zijn"
-3450 DATA"dingen als bijvoorbeeld: & -De tijd opvragen,"
-3460 DATA"& -Knipperende teksten, & -Kleur,"
-3470 DATA"& -Muziekjes, & -Hiresolution,"
-3480 DATA"&   en meer van dat moois."
-3490 DATA"# De belangrijkste redenen om hiervoor in"
-3500 DATA"BASICODE-2 geen voorziening te treffen zijn:"
-3510 DATA"& -1- Het komt te weinig voor,"
-3520 DATA"& -2- Er zijn (nog) te weinig computers &"
-3530 DATA"  die het kunnen."
-3540 DATA"& & Zodra uitbreiding nodig blijkt zal de"
-3550 DATA"redaktie van HOBBYSCOOP dat zeker bekijken."
-3560 DATA"& Met de nu vastgelegde serie subroutines kunnen"
-3570 DATA"we echter beslist een flinke tijd vooruit."
-3580 DATA"& & Natuurlijk wilt U precies weten welke"
-3590 DATA"subroutines op welke plaats moeten staan.
-3600 DATA"& Die informatie komt zo direkt. #"
-3610 DATA"Allereerst echter dit: & Voor alle computers"
-3620 DATA"waarvoor een BASICODE vertaalprogramma bestaat"
-3630 DATA"zal dat programma opnieuw worden uitgezonden."
-3640 DATA"& De nieuw uit te zenden versie zal U dan tevens"
-3650 DATA"de benodigde subroutines kant en klaar leveren."
-3660 DATA"& Het is dus helemaal niet nodig dat U deze"
-3670 DATA"nieuwe subroutines zelf gaat zitten bedenken."
-3680 DATA"& (Het mag natuurlijk wel) #"
-3690 DATA"Het spreekt vanzelf, dat U bij het maken van"
-3700 DATA"programma's deze nieuwe standaard dient toe te"
-3710 DATA"passen. & Zonder dat zou Uw programma op geen"
-3720 DATA"enkele andere machine kunnen werken. &"
-3730 DATA"& & De nieuwe standaard zal nog niet meteen"
-3740 DATA"van kracht zijn: & eerst moeten de nieuwe"
-3750 DATA"lees- en schrijfprogramma's zijn uitgezonden."
-3760 DATA"& Dat zal een maand of twee duren, dus vanaf"
-3770 DATA"pakweg eind maart zal het zover zijn."
-3780 DATA"& & Het juiste moment wopdt tijdig aangekondigd"
-3790 DATA"en vanaf dat ogenblik vinden alle verdere"
-3800 DATA"uitzendingen plaats volgens het nieuwe BASICODE-2"
-3810 DATA"protocol. #"
-3820 DATA"Hoe is dat protocol nu precies."
-3830 DATA"& & Laad daartoe het tweede deel van dit"
-3840 DATA"programma en run het. #"
-3850 DATA"***"
-5000 REM        HOBBYSCOOP
-5010 REM    UITLEG BASICODE-2
-5020 REM      (EERSTE DEEL)
-5030 REM    VRIJ VAN COPYRIGHT
-5040 REM          1983
-OBBYSCOOP
-5010 REM    UITLEG BASICODE-2
-5020 REM      (EERSTE DEEL)
-5030 RE
+30000r "Hallo HOBB&Aru  VRIE>A  ! & &"8E2p0"& Hier is de uitleg ovede nieuweLhnVr ontIl
+==== BAS"eeDE-2 ==== & &"
+3030 DAD o tA
+4Y2kz-n
+0tA1rd0Torn0de uit te"
+3040 DATA"zendeHOBBYSCOOH z 
+ramma's wordt gebruikt."
+3050r "& & Wg AiOko-3)n & Dabet ent, dat"
+3060 DATA" trEHOO-T0meer not A2jadi" IO0"
+3070 DATA"door HO U
+SCOOPT(faidtz 
+ramma moo 3080r "aanpaeevoordat h
+""BkEm"
+Router zondeVSA= 0ont:Bi'dTd t. & & Hoe kan dat? # tvoor eld:"8 0r "& & De opatiht 'CLEARSCREEN
+o0 in elk D8110 DAD iomp er ander,Bzz &iAaVSAWDATbn BASICODE-2 voDHUBE "
+3130r "uifrU0n programma dat op een z er ogenble"
+3140 DATA"h
+0ch hwil scho mU epiaoE A2"sk de" 0ontAe0tructie    GOSB100    bevatten meAls U dan"
+Aak DATA"op regelns e
+0uz eoTgTu z
+San die"8be DATA"ttA$eEmSchine hescheTmT rO , dan" DATA"iE5s het p  " m ttAHmileaGonI3 TriA45DOpaAG s DATA"t
+elost. &"
+322p0onto tAja2A0het uitgezonden BASIODE-2LAe DATA"programmgaaladen, moBd&kl r  deL2  DATA"benot  "8ae DATA"subroutin:r aE
+s&Ar $UN' k""ltten."8rs DATA"eZo zijnA0Msrs0ubroutines, die"
+32e DATA"elk een be4d  nuttigeaak kunnen verricBNn" a6DATsn wel allerlei ta n AE-n-eMsrs
+angbare"
+3270 DAD iomp ers ve chillende tmmUE"am0 nodig"
+3280 DAD 2 bbaDmpa 0s DATA"2 rn1ibitAOl 5R"
+330DATEtnE0 curbeoOen bepaalde pe, &"
+3310r "& Kijk of er een toe  is ingea t, tD8320 DATA"& WaTobT"2 r ebTv
+is inD3et, &L1A"so& PEo
+oHD1 volgens een opgegeveaantal"
+3340 D"D iifA2:bieen/of na de kmRuRtaM50 DATA"& et":biLD en":biLD"
+3360 D"D lplS7DAT,rg0iroutiner
+A1n zeezoTe5no
+ uhI0o n"
+3380r "& DeA:":ngen na een jaauit nAe
+en in"
+339DAToas"eeDbgg-p0natuurlijk aanL6o0onztgrA1 lag."
+3410 D"D oeA1 l alle ed0rT(faidtz 
+ramma's"
+rTN DATA"zoutm-4T0u  subroutin2aidTD D843DATsniab"2rAOm iOen op Uw t&"BieeG3,tD8440 DAD E rken. & M  er danogverrtA1ft zijn"3zes D"Dd Ae
+en als bijvoorbeeld: &dr2
+rn o:gen,"
+3460 DATA"& -Klro0ndBE=ten, & -KA"olSzr  D"D 3eer
+Aejes, & Hireso oren"VSzeaAo0ontfAletmeerrE-37miiTA$" a6 DATA1 De belangrijk e redenen om hi3o tADtD852p0on"Hr"eeDE-2 geen voorr ET2Bi0ffen zijn:"
+3510 DATA"& -1- Hekomt te weiniribiA"ta" TN DATA"& -2- Er rDaR0t
+bO  iP
+T"maB rmplS" aA2p0onE AgT:2nOG3,
+3540 D"D I"E"OTLiTd Ae
+ nodig blijkt zal0"
+355DATonE0tie van HOBBYSCOOP dat zeker bernd1,tD850 0ontfavd  nu vastgelegde TeAg0ubro i2n13,tD8570 DATA"  echieb+o0t ni7j0e tijd vo3ct."
+3580 DATA"meNatuurlijk wzBdH A cies wetennEolS" aes DATA"subrouting""klke D4Le riOsta6 ak0 DATA"& D
+r0O"i &ie ko  zo diEi$tplS"A10 DATA"AllerrstT Or dit: & Vo0algT""OoolS" r "waarvoor e
+ SICODEsrtrAorogramma be aiVS"A30 DAD3 CIn3  proatmeopsuw worden uitgezonden."84DAT
+ODe suw uit te zekn versie zvA0dan teve "850 DATA"de benodigde subroutines UI> laar leveren."
+3660 DATA"& Het is  Bsmrv0r t nodig dat U deze"
+3670 DATA"nieuweO2op i2atIhH3LB,2sdenken."
+3680 DATA"& (Het mag natuurlU0l
+l an0sr "Hespreekt v"" lf, dat U bi het makb 6p D8700 DATA"p 
+
+mRlm0 deze nieuw0tandaard d, oBo D8710r "passen. & Zonder dat zoaneprogrammop geen"
+3720 DAD0n le Akre tihine kunnen weeen tD8730 DATA"& & De nieE  standaard zal nog niet meteo 3740 DATA"U roTobtr0e5ee ti:On0 suwe"
+3750r "lees- eschrijfprogramma2a1n uitge"1d6"VSzoU  DAD f)7rBAIOmaaniR wee duren, de vaneplSzr  D"DD U wegr1kmoDbtCuT:2oe0r zijn."
+3780 DATA"& &  ta ete 
+R&DzA tUg aaneondigd"
+379DATsn vanaf dat ogenblii Utal2I kreL6o0on" T74GnrOn pla=o fgT:20r uwe BASICOD  D8810 DATA"p"T T"lDD D8820 DAD 7v0 zBtz"T T"IeeBtA c$"VS aM0 D"D I"AkdaartoT:2
+Ode0el van dit"eaz DATAtz 
+ramma en run haDRAolS" lr on&&&&"
+50000 REM         HO U
+SCOOPi Ae RE     UITEG B40eDE-2 s20 REM       (EOaTlUL)
+503REM      8a0VAN COPYRIGHL 40A1aoG SM
+O U
+"eeOP
+50  REM     UITLE BASICODE-2
+5020 REM (EEaTEUL)
+e30 Rus&eo  zo diEi$tplS"A10 DATA"AllerrstT Or dit: & Vo0algT""OoolS" r "waarvoor e
+ SICODEsrtrAorogramma be aiVS"A30 DAD3 CIn3  proatmeops

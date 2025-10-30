@@ -1,227 +1,263 @@
-10 REM *************FUNKEY.BAS 9/17/86********************************
-20 REM WRITTEN IN MICROSOFT BASIC
-30 REM AL BRENDEL... 9/20/86
-40 REM TERMINAL FUNCTION KEY PROGRAMMER AND LABELER
-50 REM WORKS WITH EITHER WYSE OR TELEVIDEO..MAYBE OTHERS
-60 REM COULD BE CONVERTED TO .COM PROGRAM BUT I CHANGE MY MIND SO OFTEN I WANTED
-70 REM SOMETHING EASY TO CHANGE..
-80 REM COULD BE USED FOR ALL 32 FUNCTION KEYS BUT ONLY THOSE CAPABLE OF BEING
-90 REM DISPLAYED WERE USED.
-100 REM TO USE..CHANGE FUNCTIONS AND LABELS TO SUIT,SAVE,REMOVE STATEMENT 500
-110 REM AND THEN TYPE...... MBASIC FUNKEY
-120 REM **************** DEFINITIONS *****************************
-130 DIM M$(16),C$(16)
-140 CLR$=CHR$(26)		'CLEAR SCREEN
-150 CR$=CHR$(13)			'CARRIAGE RETURN
-160 ESC$=CHR$(27)		'ESCAPE
-170 DEL$=CHR$(127)		'DELETE
-180 DEF FNWYSE$=ESC$+"A"+"1"+"4"		'REVERSE FUNCTION MESSAGE--WYSE ONLY
-190 DEF FNTVI$=ESC$+"\"+"1"+"4"		'REVERSE FUNCTION MESSAGE--TVI-920 ONLY
-200 DEF FNHEAD$(MSG$)=ESC$+"F"+MSG$+CR$	'HEADER MESSAGE
-210 DEF FNMSG$(N,MSG$)=ESC$+"z"+CHR$(N)+MSG$+CR$	'FUNCTION KEY FIELD MSG.
-220 DEF FNFUN$(V,SEQ$)=ESC$+"z"+CHR$(V)+SEQ$+DEL$	'FUNCTION KEY FUNCTION
-230 REM ******************PROGRAM *******************************
-240 PRINT FNWYSE$;FNTVI$;
-250 PRINT CLR$;
-260 PRINT"	FUNCTION KEY PROGRAMMER AND LABELER PROGRAM":PRINT:PRINT
-270 PRINT"PROGRAM WILL PROGRAM AND LABEL F1 THRU F8 AND (SHIFT)F1 THRU (SHIFT)F8"
-280 PRINT:PRINT
-290 PRINT"FUNCTIONS AVAILABLE:":PRINT:PRINT
-300 PRINT"1.....NO FUNCTIONS"
-310 PRINT"2.....TURBODOS"
-320 PRINT"3.....WORDSTAR"
-330 PRINT"4.....BASIC"
-340 PRINT"5.....MEX"
-350 PRINT"6.....DBASE II"
-360 PRINT"7.....ADVENTURE"
-370 PRINT "INPUT CHOICE";
-380 N=ASC(INPUT$(1))-48
-390 IF N<0 OR N>7 THEN 380
-400 IF N=1 THEN PRINT ESC$+"A"+"1"+"1":PRINT ESC$+"\"+"1"+"1"
-410 ON N GOSUB 560,750,940,1130,1320,1510,1700
-420 PRINT FNHEAD$(HEAD$)"
-430 FOR X=1 TO 8
-440 PRINT FNMSG$(47+X,M$(X));FNFUN$(63+X,C$(X));
-450 NEXT X
-460 FOR X=9 TO 16
-470 PRINT FNMSG$(71+X,M$(X));FNFUN$(87+X,C$(X));
-480 NEXT X
-490 PRINT CLR$
-500 END	'REMOVE THIS STATEMENT AFTER CHECKING AND SAVING YOUR VERSION****
-510 SYSTEM
-520 REM******************DATA***********************************
-530 REM DATA FORMAT:   M$(N)="MSG DISPLAYED AT SCREEN BOTTOM" (8 CHARACTERS)
-540 REM                C$(N)=COMMAND STRING STORED UNDER F(N) KEY (8 CHARACTERS)
-550 REM                HEAD$="MSG DISPLAYED AT TOP OF SCREEN"(46 CHARACTERS)
-560 REM***********NO FUNCTIONS**************
-570 HEAD$=""
-580 M$(1)="        ":C$(1)=""
-590 M$(2)="        ":C$(2)=""
-600 M$(3)="        ":C$(3)=""
-610 M$(4)="        ":C$(4)=""
-620 M$(5)="        ":C$(5)=""
-630 M$(6)="        ":C$(6)=""
-640 M$(7)="        ":C$(7)=""
-650 M$(8)="        ":C$(8)=""
-660 M$(9)="        ":C$(9)=""
-670 M$(10)="        ":C$(10)=""
-680 M$(11)="        ":C$(11)=""
-690 M$(12)="        ":C$(12)=""
-700 M$(13)="        ":C$(13)=""
-710 M$(14)="        ":C$(14)=""
-720 M$(15)="        ":C$(15)=""
-730 M$(16)="        ":C$(16)=""
-740 RETURN
-750 REM***********TURBODOS******************
-760 HEAD$="                            TURBODOS FUNCTIONS"
-770 M$(1)="  DIR   ":C$(1)="DIR"+CR$
-780 M$(2)=" BISHOW ":C$(2)="BISHOW "
-790 M$(3)=" NSWPT  ":C$(3)="NSWPT"+CR$
-800 M$(4)="WORDSTAR":C$(4)="WS"+CR$
-810 M$(5)="FAST-WS ":C$(5)="FWS"+CR$
-820 M$(6)=" HELP   ":C$(6)="HELP"+CR$
-830 M$(7)="MBASIC  ":C$(7)="MBASIC"+CR$
-840 M$(8)="SYSTEM  ":C$(8)="SYSTEM"+CR$
-850 M$(9)="  0A:   ":C$(9)="0A:"+CR$
-860 M$(10)="  2A:   ":C$(10)="2A:"+CR$
-870 M$(11)="  6A:   ":C$(11)="6A:"+CR$
-880 M$(12)="  10A:  ":C$(12)="10A:"+CR$
-890 M$(13)="  30A:  ":C$(13)="30A:"+CR$
-900 M$(14)="        ":C$(14)=""
-910 M$(15)="        ":C$(15)=""
-920 M$(16)="        ":C$(16)=""
-930 RETURN
-940 REM***********WORDSTAR******************
-950 HEAD$="                            WORDSTAR FUNCTIONS"
-960 M$(1)=" DONE   ":C$(1)=CHR$(11)+"D"
-970 M$(2)="SAV&CONT":C$(2)=CHR$(11)+"S"
-980 M$(3)="ABANDON ":C$(3)=CHR$(11)+"Q"
-990 M$(4)="READFILE":C$(4)=CHR$(11)+"R"
-1000 M$(5)="PAGE UP ":C$(5)=CHR$(17)+"R"
-1010 M$(6)="PAGE DN ":C$(6)=CHR$(17)+"C"
-1020 M$(7)=" FIND   ":C$(7)=CHR$(17)+"F"
-1030 M$(8)=" TAB    ":C$(8)=CHR$(15)+"G"
-1040 M$(9)="        ":C$(9)=""
-1050 M$(10)="        ":C$(10)=""
-1060 M$(11)="        ":C$(11)=""
-1070 M$(12)="        ":C$(12)=""
-1080 M$(13)="        ":C$(13)=""
-1090 M$(14)="        ":C$(14)=""
-1100 M$(15)="        ":C$(15)=""
-1110 M$(16)="        ":C$(16)=""
-1120 RETURN
-1130 REM***********BASIC*********************
-1140 HEAD$="                              MBASIC FUNCTIONS"
-1150 M$(1)=" LIST   ":C$(1)="LIST"+CR$
-1160 M$(2)=" LLIST  ":C$(2)="LLIST"+CR$
-1170 M$(3)="  AUTO  ":C$(3)="AUTO"+CR$
-1180 M$(4)=" FILES  ":C$(4)="FILES"+CR$
-1190 M$(5)="  RUN   ":C$(5)="RUN"+CR$
-1200 M$(6)=" RENUM  ":C$(6)="RENUM"+CR$
-1210 M$(7)=" MBASIC ":C$(7)="MBASIC"+CR$
-1220 M$(8)=" SYSTEM ":C$(8)="SYSTEM"+CR$
-1230 M$(9)="        ":C$(9)=""
-1240 M$(10)="        ":C$(10)=""
-1250 M$(11)="        ":C$(11)=""
-1260 M$(12)="        ":C$(12)=""
-1270 M$(13)="        ":C$(13)=""
-1280 M$(14)="        ":C$(14)=""
-1290 M$(15)="        ":C$(15)=""
-1300 M$(16)="        ":C$(16)=""
-1310 RETURN
-1320 REM***********MEX***********************
-1330 HEAD$="                                 MEX FUNCTIONS"
-1340 M$(1)="CMD LEVL":C$(1)=CHR$(10)+"E"
-1350 M$(2)="COPY TXT":C$(2)=CHR$(10)+"S"
-1360 M$(3)="NO COPY ":C$(3)=CHR$(10)+"U"
-1370 M$(4)="  HELP  ":C$(4)=CHR$(10)+"?"
-1380 M$(5)="PRT TOGL":C$(5)=CHR$(10)+"P"
-1390 M$(6)="XMITFILE":C$(6)=CHR$(10)+"T"
-1400 M$(7)="XMODEM _":C$(7)="XMODEM "
-1410 M$(8)="TURBODOS":C$(8)="CPM"+CR$
-1420 M$(9)="ALBERT  ":C$(9)=CHR$(10)+"A"
-1430 M$(10)="BRENDEL ":C$(10)=CHR$(10)+"B"
-1440 M$(11)="PASSWORD":C$(11)=CHR$(10)+"C"
-1450 M$(12)="XMODEM S":C$(12)=CHR$(10)+"D"
-1460 M$(13)="        ":C$(13)=""
-1470 M$(14)="        ":C$(14)=""
-1480 M$(15)="        ":C$(15)=""
-1490 M$(16)="        ":C$(16)=""
-1500 RETURN
-1510 REM***********DBASEII*******************
-1520 HEAD$=""
-1530 M$(1)="        ":C$(1)=""
-1540 M$(2)="        ":C$(2)=""
-1550 M$(3)="        ":C$(3)=""
-1560 M$(4)="        ":C$(4)=""
-1570 M$(5)="        ":C$(5)=""
-1580 M$(6)="        ":C$(6)=""
-1590 M$(7)="        ":C$(7)=""
-1600 M$(8)="        ":C$(8)=""
-1610 M$(9)="        ":C$(9)=""
-1620 M$(10)="        ":C$(10)=""
-1630 M$(11)="        ":C$(11)=""
-1640 M$(12)="        ":C$(12)=""
-1650 M$(13)="        ":C$(13)=""
-1660 M$(14)="        ":C$(14)=""
-1670 M$(15)="        ":C$(15)=""
-1680 M$(16)="        ":C$(16)=""
-1690 RETURN
-1700 REM***********ADVENTURE*****************
-1710 HEAD$="                           ADVENTURE FUNCTIONS"
-1720 M$(1)=" LOOK   ":C$(1)="LOOK"+CR$
-1730 M$(2)="INVNTORY":C$(2)="INVENT"+CR$
-1740 M$(3)="  TAKE  ":C$(3)="TAKE "
-1750 M$(4)="  DROP  ":C$(4)="DROP "
-1760 M$(5)="  HELP  ":C$(5)="HELP"+CR$
-1770 M$(6)="  QUIT  ":C$(6)="QUIT"+CR$
-1780 M$(7)="  SAVE  ":C$(7)="SAVE"+CR$
-1790 M$(8)="RESTORE ":C$(8)="RESTORE"+CR$
-1800 M$(9)="        ":C$(9)=""
-1810 M$(10)="        ":C$(10)=""
-1820 M$(11)="        ":C$(11)=""
-1830 M$(12)="        ":C$(12)=""
-1840 M$(13)="        ":C$(13)=""
-1850 M$(14)="        ":C$(14)=""
-1860 M$(15)="        ":C$(15)=""
-1870 M$(16)="        ":C$(16)=""
-1880 RETURN
-1890 REM***********         *****************
-1900 HEAD$=""
-1910 M$(1)="        ":C$(1)=""
-1920 M$(2)="        ":C$(2)=""
-1930 M$(3)="        ":C$(3)=""
-1940 M$(4)="        ":C$(4)=""
-1950 M$(5)="        ":C$(5)=""
-1960 M$(6)="        ":C$(6)=""
-1970 M$(7)="        ":C$(7)=""
-1980 M$(8)="        ":C$(8)=""
-1990 M$(9)="        ":C$(9)=""
-2000 M$(10)="        ":C$(10)=""
-2010 M$(11)="        ":C$(11)=""
-2020 M$(12)="        ":C$(12)=""
-2030 M$(13)="        ":C$(13)=""
-2040 M$(14)="        ":C$(14)=""
-2050 M$(15)="        ":C$(15)=""
-2060 M$(16)="        ":C$(16)=""
-2070 RETURN
-2080 REM***********         *****************
-2090 HEAD$=""
-2100 M$(1)="        ":C$(1)=""
-2110 M$(2)="        ":C$(2)=""
-2120 M$(3)="        ":C$(3)=""
-2130 M$(4)="        ":C$(4)=""
-2140 M$(5)="        ":C$(5)=""
-2150 M$(6)="        ":C$(6)=""
-2160 M$(7)="        ":C$(7)=""
-2170 M$(8)="        ":C$(8)=""
-2180 M$(9)="        ":C$(9)=""
-2190 M$(10)="        ":C$(10)=""
-2200 M$(11)="        ":C$(11)=""
-2210 M$(12)="        ":C$(12)=""
-2220 M$(13)="        ":C$(13)=""
-2230 M$(14)="        ":C$(14)=""
-2240 M$(15)="        ":C$(15)=""
-2250 M$(16)="        ":C$(16)=""
-2260 RETURN
-
+10 REM              FUNKEY.BAM(/17"86*********************************P"EM WRITCC ( M33333333333333333333333333333333333333333333333333333333333333A1T BA"C
+30 REM AL BRENDEY.. 9/20/86
+40 ROTERMINAL FUNCTION KE15ROGRAMMER AND LABELER
+50 7 WORKS WITH  )ER WYSE0421VI1O..MAYBE=MEERS
+60 7 CT7A BE CONVERTED TO .COM PROGRAM 4T )DCM11 MY MINDC$1
+FTEN I WANT9$120 RE58METHING EASY TO CHAE1..
+80 ROCOUA BE USED FOR ALL 32 FUNM"ON (KS BUT ONLYX=E CAPO71 OF BEIE"
+90 REL0$DVM)I,(FE USED. REM TM)SE..CHE61 FUNCTIONS:=IVABELSB
+SUIT,SAVE,RE1LE=CUC=G3C6 R 10 REM EC THE4.PE.............................................................. MBASIC 4NKEY(LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLREM                  DEFINIT NS ******************************
+ CP"BR HOO$=0$$M)0CG DC(M6)		'M1AR 3NHN
+150(
+1)D$( M7L	CARRIA1 UYN
+160 ESC$=CHR27)		'ESCA1
+170 DEL$=CHR$(1272L	DELCC  180 DEF FNWY0E0PA$ C"+"+"4"		'REERSGCS 4M"ON6SSA1--WYSE E2U"
+190 DEF FNTI$=ESC$+"\"+"1"+(1L	REVERSE FU:B0=")G55DGY\TVI-920 E2U"
+200 DEF FNHEAD$(M(T=C$+"F"	MR)I
+M26EAD2E5LE1
+5"L(X"G*$(8*X$)=ESC$ Q"CHR$$B1PX$+CR$	'4NC"ON KEY)ELD 2EY
+22L(X"G)1RUN$(V,SEQ$)=ESC$+"z"+CHR$(V)+SEOC AEL$	'FUNCTIO-1Y FU:B0=$  230 7 *******************PR6$A	"
+240 PRINT)(YSE$;(TVIH"
+0IM0$RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRF$;
+2603333333333333333333333333333333333333	FUNM"ON (K P1H$AMMER AN17C1LE*1H$AM":PRRATS$INT
+2703333333333333333333333333333333333333PROGRAM WID15ROGR8AND LABEL FTHRU F8 AND (SHIFT)F1X:$R71I)T ",15RINTS$IC  290 PRINT)4NCTIR3=V7CBLE:":PRINT:PRINT
+300 PRINT"1...................................................................................E  FU:B0=$3$  310 $INT"2......T$BODOS"
+*=$INT"3......WOR=TAR"
+33* (1))))))BD"+($1N40 PRINT"5......MEX"CE0IM=$INT"U0DBASE I$ 11* (1M......ALENTURE(CEM03333333333333333333333333333333333333
+"INPUTCM ICE";
+3801=4TR0$E)T$(1))-48
+N0 IF N<0 O3>7 THE980T C = NOTHEN PRINT T
+CC"+"+"1":PRINT ESC$+"\"+"+"1"N5"8N N 
+SUB 560,750940,113+Y)PMI*1+VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+42* (M$NHEA(EEEAD"
+430 FO,OTO 8
+4403333333333333333333333333333333333333
+FNMSG$(47G,M$R:NFU$0YXC$(X));
+450 NET X
+46G00,S9 TO 16
+47* (M$NMSG71+X,M$(X));F$UN87+X,C$(X));
+480(;T 
+4IM=$RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRDG ($1111111111111111111111111111111111111111111111111111111111111111111111111111111109D	'RE1LEX= STATEME0=D))6R 1ECKING AN1=AVING YOUR VERSIE55555
+510 S=TE$1P"EM*******************DATA************************************C5
+$EM DATA FORMAT: M$(N)="M1A7=7C1D AT SCREEN BOTTOM" (8 CHARACTERS)
+540 7                 C$(N)=$VDN1=TRING S RED U9F F(N) KE$E
+ CHARACTERS)
+0I0B5MBGP81( *X DISPCYED:OTO1
+F)3NHN"(46 CCRACC)=)
+560 RES0NO)4NCTIR7S0
+570CCP8"$580 M$(1)========="O$ :3"$  5I)F(2)="1$E
+$)U=""
+
+)F(3)========="O$= )N" 610 M$))10":C$(4)"(E20R(5)========="O$=RS""
+632$(6)"50)$()N"$  640 M$(7)="         ":C$(7)=""
+0I)F(8)="                                     N8 )"(E60R(9         ":C$
+)N"$  670R(10)="         ":C$(10)=
+6I)F(11)="         ":C$(11)=""
+690 M$(12)="                                     N87)=
+700 M$3)="         ":C$(13)"(210 M14)="         ":C$(14"
+722$(15         ":C$5)=""
+7)F6)="         ":C$(16)"(240 RETURN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+0N7************TURBODOS*******************C,5"G6AD$="                                         TURBODOM$U:B0=$3$  770R(1)="  DIR ":C$(1)="R"+CR$(2)=BISHO "O$)U="BISH+$ "
+30 M$ )1(85T  ":C$(3NSPT"+
+($1O00 M$(4WOR=TAR":$=))N18="+CR$
+8"2$(5FAS.)N($N8$=RS"FWS"+CR$ 20 M6)=" HELP   ":C$4="HELP"+CR$
+830 M$(7)="MCSIC  ":$=U1,)+C"9
+(O40 M$(8)="SYSTEM  ":C8)=M:5A=++CR$M 50 $C
+)N"()R
+ ":$C
+)N RC"9
+($1O60 M10)="  2A: "O$                                          )V)ICR(M 70 M$(11)="  6A:   ":C$1)0L)ICR(M 80 M$(12)"
+10A((C$(12)=0A:"+CR$
+890 M13)="  30A((C$(13)= RUICR(M(00 M14)="         ":C$(14"
+910 M$5)="         ":C$(15)"(320 M$(16)"50)$(4=""(30 RMT$N
+940(7************WORDSTAR*******************
+950 HEAD$="                             WORDSTAR FUNCTION$  9)F)=" DR0((($N8$ :4DC((6)+" "(70R(2)==7MP1(T":C$(2AHR$(11)+"S"(80R(3)=2 CNDON ":C$(3)=1R$(11)+"I($13I)F(4)="L=D)LEE
+$=))TAC(04+"R"
+1000 $=RS"CGE UP ":C$(5)AC((TI"($I5"R04C4711 DN ":$04=CH$ )+"C"(5)P"2$(7)=" FIND "O$=U=C$$7)+"F"
+1030 M8)=TAB     ":C8)=1R$(15)+"G"
+10)F
+)N"=E$E
+$C
+" E052$(10)========="O$                                          "(=E10 M$1)"50)$()=""
+1070R(12)="1$E
+$ 7)=""
+1 0 M$(13)"50)$( ) """"""""""""""""""""""""""""""""""""""""""""""""""""""""""0 M$(14)="         ":C$(14)="((
+)F(15)="1$E
+$ P)=""
+10 M$(16         ":C$6)=""
+1120 UYN
+1130 REM************BD"LS, 1)M1EAD$"5M.2BASIGCS)+ONS"(652$(1)=" LIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII(($N8$ :LIST"+CR$
+15"22)=" LLIST  ":C$(2)C'+ST"+CR$
+1P"2$(3)= AUTO  ":C$ )CUTO"9
+$0WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWM4)=" FILE((C$(4)="LES"+CR$(690 M$(5)="  RUN   ":C$(5)(ASCR$700 M$(6 RENB
+"O$04="RE)M"+CR$
+15"27)=MBASI:C$(7)="MBASIC"9  LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLM$(8)=" SYSTEM ":C$$T($7:5A=ICR((30 M$
+)N"=E$E
+$C
+" E240 M$(10         ":C$0)=""
+*2$(11)="         ":C$(11)=""760 M$(12)="         ":C$(12)="((70 $ T("=E:C$(13)=""
+W)F(14)="                                     N8U)=
+1290R(15)="1$E
+$ P)=""
+1
+)F(16)="1$E
+$ H)=""
+15"MT$N
+130N7************ME*I930 HEA(3"=EL6X F(CTION$ 340 M$(1)="C+VEVL":C$(1)=CHR10)+"($N50R(2)=0M=91),4:C$4=C$$0)+($1362$(3))1COPY ":C$ )HR$0)+N$  1370 M4)="  HELP  ":C$))HR$0)+ "
+1382$(5)C3:OTOGL":C5)=CHR10)+" "990 M$4="XMITLE":C6)=CHR10)+"$ 400R(7XMO1M _":C$(7XMO1M "
+1410 M$(8)="TU
+
+DOS":C$$T( D6I+CR$
+1*(9)="ALBERT  ":C$(9AHR$(10)+"A((30 M$0)="BREN1L ":C$(10)=1R$(10)+"B((40 M$1)C44S2O
++)(8$ E)=CH$ M""C"
+C6")F(12XMO1M S":C$(12)AC((2""D"
+1460R(13)="1$E
+$ 9)=""
+1M0 M$(14)="         ":C$(14)="((80 $ T("=E:C$(15)=""
+M(0 M$(16)="                                     N8H)=
+1500 RETURNP10(7************DBASEI55555555555555555555
+1520CCP8"$1532$(1)="         ":C$(1)=""P40 M$(2)="                                     N8U="((50 M$ )10":C$(3)"(M=E0 $=))N"=E$E
+$=))N  SP"2$(5)="         ":C$(5)=
+1580R(6)========="O$04=""
+1N0 M$(7)="         ":C$(7)=""
+51")F(8)"50)$(T("$  1612$(9)="         ":C$(9"
+1620R(10)="         ":C$(10)=
+1630 M11         ":C$1)"(M140 $ T("=E:C$(12)=""
+*2$(13         ":C$3)=""
+1660 M$(14)="                                     N8U)=
+1670R(15)="1$E
+$ P)=""
+1
+0 M$(16)="         ":C$(16)="((90 UYN
+1700(7************ADENT$E******************LE0 HEAD$="                            ALENTURE)4NCTIR3$  1722$(1)=" LOY   ":C$(1)="LOY"+CR$(V90R(2)=$E7BY"O$)U="INVENT"+CR$
+1:I)E()="  TAKE":C$(3)="TYE ((P0 $=))N"(C99999999999999999999999999999999999
+":C4)="DROP ((H0 $=RS"HELP  ":C$(5)=CM21CR$
+1770R(6)= QUIT  ":C$(6)=PUIT"+CR$LBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB$=U"
+SAVE  ":C$(7SAVE"+CR$
+1790R(8RESTORE ":C$(8)="REST)1"9
+$M
+00R(9         ":C$
+)N"$  1810 M$(10)"50)$($S""
+1M0 M$(11)="1$E
+$ E)=
+1830R(12)="1$E
+$ 7)=""
+1:I)Y$"=E$":C$(13)="((P0 $ T("=E:C$(14)=""
+1E0 M$(15)="                                     N8P)=
+1870 M$(16)"50)$(4=""BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBUYN
+1890 RES0          ******************
+1900CCP8"$1910 $ ("":$ (" 1M0 M$(2)="                                     N8U="((= )F(3)="1$E
+$= )N  E)0 M$(4)="         ":C$(4)=
+1950R(5)========="O$=RS""
+1E0 M$(6)="                                     N8=)N"$  1972$(7)="         ":C$(7"
+1980 M$(8)="         ":C$(8)=""
+EN0 M9)========="O$C
+) "P1 )5$S"         ":C10)=""
+2010R(11)="                                     N8E)=""
+R*"2$(12)="                                     N87)=
+2
+)F(13)="1$E
+$ 9)=""
+2040 M$(14)="         ":C$(14)="(=PI)F(15)========="O$ P)=""
+E10 M$(16)="                                     N8H)=
+2*NUYN
+E
+0 R')EW          ******************
+EN0 HEAD$"(M100 M$)="         ":C$)=""
+2110 M$(2)="         ":C$(2)=
+25"23)="         ":C$(3"
+2130R(4)========="O$=))N" 2140 M$(5         ":C$RS""H50 M$(6)="                                     N8=)N"$  21)FU="1$E
+$=U=""
+2170 M8)========="O$C$T("$  2180 M$
+)N"=E$E
+$C
+" 7190 M10)="                                     N888888888888888888888888888888888888888888=""
+2200 M11         ":C$1)"(M210 $ T("=E:C$(12)=""
+	$G$ 9)="         ":C$(13"
+2230 M$(14)="         ":C$(14)="(=VU2$(15         ":C$5)=""
+2250R(16)="1$E
+$ H)=""
+220NUYNM,T1!_
+1)1"R) $)
+R111111111111111111111111111111111111($(6$)$B
+" " $":N))F"()6"
+$"NRRB
+$":N))F41"R) $)
+R1"C"00000000000$"NRRB
+"  
+(RN)R$"$$$$H"
+$"NRRB
+ 
