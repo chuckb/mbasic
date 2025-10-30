@@ -522,6 +522,37 @@ class LimitsStatementNode:
 
 
 @dataclass
+class ShowSettingsStatementNode:
+    """SHOWSETTINGS statement - display current settings
+
+    Syntax:
+        SHOWSETTINGS          - Display all settings
+        SHOWSETTINGS filter   - Display settings matching filter (e.g., "editor")
+
+    Shows current setting values with optional filter prefix.
+    """
+    filter: Optional[Any] = None  # Optional filter expression
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class SetSettingStatementNode:
+    """SETSETTING statement - modify a setting value
+
+    Syntax:
+        SETSETTING key value  - Set setting to value
+
+    Example:
+        SETSETTING editor.auto_number_step 100
+    """
+    key: Any  # Key expression (string)
+    value: Any  # Value expression
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
 class RunStatementNode:
     """RUN statement - execute program or line
 

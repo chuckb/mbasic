@@ -1822,6 +1822,67 @@ class Interpreter:
         report = self.limits.get_usage_report()
         self.io.output(report)
 
+    def execute_showsettings(self, stmt):
+        """Execute SHOWSETTINGS statement - display settings"""
+        from src.settings import get_settings_manager
+        from src.settings_definitions import SETTING_DEFINITIONS
+
+        settings_manager = get_settings_manager()
+
+        # Get filter if provided
+        filter_prefix = None
+        if stmt.filter:
+            filter_val = self.evaluate_expression(stmt.filter)
+            if isinstance(filter_val, str):
+                filter_prefix = filter_val.lower()
+
+        # Display settings
+        output_lines = []
+        for key in sorted(SETTING_DEFINITIONS.keys()):
+            # Apply filter if specified
+            if filter_prefix and not key.lower().startswith(filter_prefix):
+                continue
+
+            value = settings_manager.get(key)
+            output_lines.append(f"{key} = {value}")
+
+        if output_lines:
+            self.io.output("\n".join(output_lines))
+        else:
+            if filter_prefix:
+                self.io.output(f"No settings matching '{filter_prefix}'")
+            else:
+                self.io.output("No settings available")
+
+    def execute_setsetting(self, stmt):
+        """Execute SETSETTING statement - modify a setting"""
+        from src.settings import get_settings_manager
+        from src.settings_definitions import validate_value, SettingScope
+
+        settings_manager = get_settings_manager()
+
+        # Evaluate key
+        key = self.evaluate_expression(stmt.key)
+        if not isinstance(key, str):
+            raise RuntimeError("SETSETTING key must be a string")
+
+        # Evaluate value
+        value = self.evaluate_expression(stmt.value)
+
+        # Validate and set
+        try:
+            is_valid, error_msg = validate_value(key, value)
+            if not is_valid:
+                raise RuntimeError(f"Invalid value for {key}: {error_msg}")
+
+            settings_manager.set(key, value)
+            settings_manager.save(SettingScope.GLOBAL)
+
+            self.io.output(f"Setting updated: {key} = {value}")
+
+        except KeyError:
+            raise RuntimeError(f"Unknown setting: {key}")
+
     def execute_merge(self, stmt):
         """Execute MERGE statement"""
         # Evaluate filename expression

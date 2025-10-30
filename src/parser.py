@@ -502,6 +502,10 @@ class Parser:
             return self.parse_system()
         elif token.type == TokenType.LIMITS:
             return self.parse_limits()
+        elif token.type == TokenType.SHOWSETTINGS:
+            return self.parse_showsettings()
+        elif token.type == TokenType.SETSETTING:
+            return self.parse_setsetting()
         elif token.type == TokenType.RUN:
             return self.parse_run()
         elif token.type == TokenType.LOAD:
@@ -1553,6 +1557,47 @@ class Parser:
         token = self.advance()
 
         return LimitsStatementNode(
+            line_num=token.line,
+            column=token.column
+        )
+
+    def parse_showsettings(self) -> ShowSettingsStatementNode:
+        """Parse SHOWSETTINGS statement
+
+        Syntax:
+            SHOWSETTINGS          - Show all settings
+            SHOWSETTINGS filter   - Show settings matching filter
+        """
+        token = self.advance()
+
+        # Check for optional filter expression
+        filter_expr = None
+        if not self.is_at_end() and self.current_token().type not in (TokenType.COLON, TokenType.NEWLINE, TokenType.EOF):
+            filter_expr = self.parse_expression()
+
+        return ShowSettingsStatementNode(
+            filter=filter_expr,
+            line_num=token.line,
+            column=token.column
+        )
+
+    def parse_setsetting(self) -> SetSettingStatementNode:
+        """Parse SETSETTING statement
+
+        Syntax:
+            SETSETTING key value
+        """
+        token = self.advance()
+
+        # Parse key (must be a string expression)
+        key_expr = self.parse_expression()
+
+        # Parse value expression
+        value_expr = self.parse_expression()
+
+        return SetSettingStatementNode(
+            key=key_expr,
+            value=value_expr,
             line_num=token.line,
             column=token.column
         )

@@ -68,6 +68,8 @@ class TokenType(Enum):
     WHILE = auto()
     WEND = auto()
     LIMITS = auto()
+    SHOWSETTINGS = auto()
+    SETSETTING = auto()
 
     # Keywords - Data/Arrays
     CLEAR = auto()
@@ -285,6 +287,8 @@ KEYWORDS = {
     'while': TokenType.WHILE,
     'wend': TokenType.WEND,
     'limits': TokenType.LIMITS,
+    'showsettings': TokenType.SHOWSETTINGS,
+    'setsetting': TokenType.SETSETTING,
 
     # Data/Arrays
     'base': TokenType.BASE,
