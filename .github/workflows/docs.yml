@@ -6,7 +6,10 @@ on:
       - main
     paths:
       - 'docs/**'
+      - 'basic/*.bas'  # Games library source files
+      - 'basic/bas_tests/*.bas'  # Games library source files
       - 'mkdocs.yml'
+      - 'utils/build_library_docs.py'  # Library build script
       - '.github/workflows/docs.yml'
   workflow_dispatch:  # Allow manual triggering
 
@@ -37,6 +40,10 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install mkdocs mkdocs-material mkdocs-awesome-pages-plugin python-frontmatter
+
+      - name: Build library documentation
+        run: python3 utils/build_library_docs.py
+        # Generates docs/library/games/ with current .bas files
 
       - name: Build documentation
         run: mkdocs build --strict --verbose

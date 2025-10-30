@@ -4,8 +4,8 @@ Build MBASIC Documentation
 
 This script coordinates all documentation build tasks:
 1. Help system indexes (merging + validation)
-2. Web documentation compilation (future: MkDocs)
-3. Any other documentation generation tasks
+2. Library documentation (games, examples)
+3. Web documentation compilation (MkDocs)
 
 Usage:
     python3 utils/build_docs.py [--help-only] [--web-only] [--validate-only]
@@ -88,6 +88,18 @@ class DocBuilder:
 
         return self.run_command(cmd, "Building help indexes")
 
+    def build_library_docs(self) -> bool:
+        """
+        Build library documentation (games, examples, etc.).
+
+        Returns:
+            True if successful
+        """
+        return self.run_command(
+            [sys.executable, str(self.utils_dir / 'build_library_docs.py')],
+            "Building library documentation"
+        )
+
     def build_web_docs(self) -> bool:
         """
         Build web documentation (MkDocs).
@@ -142,6 +154,11 @@ class DocBuilder:
         # Build help indexes (unless web-only)
         if not web_only:
             if not self.build_help_indexes(validate_only):
+                success = False
+
+        # Build library docs (unless help-only or validate-only)
+        if not help_only and not validate_only:
+            if not self.build_library_docs():
                 success = False
 
         # Build web docs (unless help-only or validate-only)
