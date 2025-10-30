@@ -1592,7 +1592,7 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_load_program_to_editor", e)
             self._notify(f'Error: {e}', type='negative')
 
-    def _on_enter_key(self, e):
+    async def _on_enter_key(self, e):
         """Handle Enter key in editor for auto-numbering.
 
         If auto-numbering is enabled and current line has no line number,
@@ -1602,12 +1602,8 @@ class NiceGUIBackend(UIBackend):
             return  # Allow default behavior
 
         try:
-            # Get current editor content and cursor position via JavaScript
-            # This is complex in NiceGUI, so we'll use a simpler approach:
-            # Just add the next line number on a new line after Enter is pressed
-
-            # Get current text
-            current_text = self.editor.value
+            # Get current editor content
+            current_text = self.editor.value or ''
 
             # Find highest line number
             lines = current_text.split('\n')
@@ -1625,23 +1621,38 @@ class NiceGUIBackend(UIBackend):
             else:
                 next_line_num = self.auto_number_start
 
-            # Use JavaScript to insert line number after Enter
-            # The Enter key default behavior will happen, then we add the line number
-            ui.run_javascript(f'''
-                setTimeout(() => {{
-                    const textarea = document.querySelector('[data-ref="editor"] textarea');
-                    if (textarea) {{
-                        const start = textarea.selectionStart;
-                        const text = textarea.value;
-                        // Insert line number at cursor position
-                        const newText = text.substring(0, start) + "{next_line_num} " + text.substring(start);
-                        textarea.value = newText;
-                        textarea.selectionStart = textarea.selectionEnd = start + {len(str(next_line_num)) + 1};
-                        // Trigger input event to update Vue model
-                        textarea.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                    }}
-                }}, 10);
-            ''')
+            # Insert line number after a short delay to let Enter complete
+            await ui.context.client.connected()
+            await asyncio.sleep(0.05)  # Wait for Enter to process
+
+            # Run JavaScript to insert line number at cursor
+            result = await ui.run_javascript(f'''
+                (function() {{
+                    const editor = getElement({self.editor.id});
+                    if (!editor) return false;
+
+                    const textarea = editor.$el.querySelector('textarea');
+                    if (!textarea) return false;
+
+                    const cursorPos = textarea.selectionStart;
+                    const currentValue = textarea.value;
+
+                    // Insert line number at cursor
+                    const newValue = currentValue.substring(0, cursorPos) +
+                                   "{next_line_num} " +
+                                   currentValue.substring(cursorPos);
+
+                    textarea.value = newValue;
+                    const newCursorPos = cursorPos + {len(str(next_line_num)) + 1};
+                    textarea.selectionStart = newCursorPos;
+                    textarea.selectionEnd = newCursorPos;
+
+                    // Trigger input event to sync with Vue
+                    textarea.dispatchEvent(new Event('input', {{ bubbles: true }}));
+
+                    return true;
+                }})()
+            ''', timeout=1.0)
 
         except Exception as ex:
             log_web_error("_on_enter_key", ex)
