@@ -8,8 +8,8 @@ These test that the UI backend can be instantiated and has basic structure. They
 - **Menu System** (GUI UIs only) - Tests that menu structure exists
 - **Editor Area** (GUI UIs only) - Tests that text editing area exists
 
-## Feature Tests (37 Features)
-These test actual user-facing functionality from ALL_FEATURES_CANONICAL_NAMES.txt
+## Feature Tests (40 Features)
+These test actual user-facing functionality from ../docs/dev/ALL_FEATURES_CANONICAL_NAMES.txt
 
 ### 1. FILE OPERATIONS (8 features)
 1. New Program
@@ -54,29 +54,34 @@ These test actual user-facing functionality from ALL_FEATURES_CANONICAL_NAMES.tx
 32. Sort Lines
 33. Syntax Checking
 
-### 6. HELP SYSTEM (4 features)
+### 6. HELP SYSTEM (5 features)
 34. Help Command
 35. Integrated Docs
 36. Search Help
 37. Context Help
+38. Games Library
+
+### 7. SETTINGS (2 features)
+39. Settings Dialog
+40. Auto-Number Preferences
 
 ## Test Counts by UI
 
 ### CLI
 - Infrastructure: 0
-- Features: 16/37
+- Features: 16/40
 
 ### Curses
 - Infrastructure: 5 (UI Creation, Input Handlers, Program Parsing, Run Program, pexpect Integration)
-- Features: 37/37 (all features tested)
+- Features: 38/40 (Settings Dialog: ✅, Auto-Number Preferences: ✅, Games Library: ❌)
 
 ### Tkinter
 - Infrastructure: 2 (UI Creation, Menu System)
-- Features: 37/37 (all features tested)
+- Features: 39/40 (Settings Dialog: ✅, Auto-Number Preferences: ✅, Games Library: ✅, missing CLI features)
 
 ### Web
 - Infrastructure: 2 (UI Creation, Editor Area)
-- Features: 23/37
+- Features: 24/40 (Settings Dialog: ❌, Auto-Number Preferences: ❌ CRITICAL, Games Library: ✅)
 
 ## Total Test Count Breakdown
 

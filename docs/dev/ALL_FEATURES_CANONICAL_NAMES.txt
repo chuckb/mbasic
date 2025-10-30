@@ -10,6 +10,7 @@ Delete Lines
 Edit Variable Value
 Execution Stack
 Find/Replace
+Games Library
 Help Command
 Integrated Docs
 Line Editing
@@ -26,6 +27,7 @@ Run Program
 Save As
 Save File
 Search Help
+Settings Dialog
 Smart Insert
 Sort Lines
 Step Line
