@@ -5,6 +5,38 @@
 - **Check `docs/dev/WORK_IN_PROGRESS.md` on EVERY startup** - contains current task that may be incomplete
 - **Update `docs/dev/UI_FEATURE_PARITY_TRACKING.md` after ANY UI changes** - tracks implementation/documentation/testing status across all UIs
 
+## 🚨 CRITICAL: Adding New Features
+
+**A feature is NOT complete until ALL of these exist:**
+
+1. **Implementation** - Code that makes it work
+2. **Canonical List Entry** - Added to `docs/dev/ALL_FEATURES_CANONICAL_NAMES.txt`
+3. **Feature Tracking Entry** - Added to `docs/dev/UI_FEATURE_PARITY_TRACKING.md` with status for ALL UIs
+4. **Documentation** - User-facing docs in `docs/help/` or `docs/user/`
+5. **Tests** - At minimum, manual test procedure documented
+
+**NEVER mark a feature as "100% complete" or "✅ Done" without ALL FIVE.**
+
+**Why this matters:**
+- Auto-numbering was marked "working" but never tested → broken for months
+- Settings existed but wasn't in tracking table → Web UI gap went unnoticed
+- Games Library implemented but not tracked → appeared "missing"
+
+**Process for adding a feature:**
+1. Implement the code
+2. Add to `ALL_FEATURES_CANONICAL_NAMES.txt` (alphabetically)
+3. Add to `UI_FEATURE_PARITY_TRACKING.md` (appropriate category)
+4. Document status for EACH UI (CLI, Curses, TK, Web, Visual)
+5. Write user documentation
+6. Create test procedure or automated test
+7. Mark as [✅|📚|🧪] only when all above complete
+
+**Red flags that indicate incomplete feature:**
+- "Code exists" but no docs = INCOMPLETE
+- "Marked as working" but no tests = INCOMPLETE
+- "In tracking table" but missing from canonical list = INCOMPLETE
+- "Working in one UI" but not documented in all UIs = INCOMPLETE
+
 ## 🔧 Utility Scripts
 
 **BEFORE writing a new utility script, check if one already exists!**
