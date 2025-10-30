@@ -301,6 +301,13 @@ class NiceGUIBackend(UIBackend):
                 with ui.menu():
                     ui.menu_item('Run Program', on_click=self._menu_run)
                     ui.menu_item('Stop', on_click=self._menu_stop)
+                    ui.separator()
+                    ui.menu_item('List Program', on_click=self._menu_list)
+                    ui.menu_item('Clear Output', on_click=self._clear_output)
+
+            # Debug menu
+            with ui.button('Debug', icon='menu').props('flat color=white'):
+                with ui.menu():
                     ui.menu_item('Step Line', on_click=self._menu_step_line)
                     ui.menu_item('Step Statement', on_click=self._menu_step_stmt)
                     ui.menu_item('Continue', on_click=self._menu_continue)
@@ -308,11 +315,8 @@ class NiceGUIBackend(UIBackend):
                     ui.menu_item('Toggle Breakpoint', on_click=self._toggle_breakpoint)
                     ui.menu_item('Clear All Breakpoints', on_click=self._clear_all_breakpoints)
                     ui.separator()
-                    ui.menu_item('List Program', on_click=self._menu_list)
-                    ui.separator()
                     ui.menu_item('Show Variables', on_click=self._show_variables_window)
                     ui.menu_item('Show Stack', on_click=self._show_stack_window)
-                    ui.menu_item('Clear Output', on_click=self._clear_output)
 
             # Help menu
             with ui.button('Help', icon='menu').props('flat color=white'):
