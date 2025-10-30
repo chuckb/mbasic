@@ -135,10 +135,9 @@ class NiceGUIBackend(UIBackend):
         self.output_lines = []   # Output text lines
         self.current_file = None  # Currently open file path
 
-        # Auto-numbering configuration (like TK)
-        self.auto_number_enabled = True      # Enable auto-numbering
-        self.auto_number_start = 10          # Starting line number
-        self.auto_number_increment = 10      # Increment between lines
+        # Settings manager
+        from src.settings import get_settings_manager
+        self.settings_manager = get_settings_manager()
 
         # Recent files (stored in browser localStorage)
         self.recent_files = []  # List of recent file names
@@ -295,6 +294,8 @@ class NiceGUIBackend(UIBackend):
                     ui.menu_item('Renumber...', on_click=self._menu_renumber)
                     ui.menu_item('Sort Lines', on_click=self._menu_sort_lines)
                     ui.menu_item('Smart Insert...', on_click=self._menu_smart_insert)
+                    ui.separator()
+                    ui.menu_item('Settings...', on_click=self._menu_settings)
 
             # Run menu
             with ui.button('Run', icon='menu').props('flat color=white'):
@@ -1406,6 +1407,17 @@ class NiceGUIBackend(UIBackend):
         open_help_in_browser(topic="library/games/", ui_type="web")
         self._notify('Opening games library in browser...', type='info')
 
+    def _menu_settings(self):
+        """Edit > Settings - Open settings dialog."""
+        from .web_settings_dialog import WebSettingsDialog
+
+        def on_save():
+            """Callback when settings saved - reload settings."""
+            self._notify('Settings saved - will take effect on next auto-number', type='positive')
+
+        dialog = WebSettingsDialog(self.settings_manager, on_save_callback=on_save)
+        dialog.show()
+
     def _menu_about(self):
         """Help > About."""
         self._notify('MBASIC 5.21 Web IDE\nBuilt with NiceGUI', type='info')
@@ -1602,7 +1614,9 @@ class NiceGUIBackend(UIBackend):
         If auto-numbering is enabled and current line has no line number,
         automatically add one.
         """
-        if not self.auto_number_enabled:
+        # Get auto-number settings
+        auto_number_enabled = self.settings_manager.get('editor.auto_number')
+        if not auto_number_enabled:
             return  # Allow default behavior
 
         try:
@@ -1619,11 +1633,12 @@ class NiceGUIBackend(UIBackend):
                     line_num = int(match.group(1))
                     highest_line_num = max(highest_line_num, line_num)
 
-            # Calculate next line number
+            # Calculate next line number using settings
+            auto_number_step = self.settings_manager.get('editor.auto_number_step')
             if highest_line_num > 0:
-                next_line_num = highest_line_num + self.auto_number_increment
+                next_line_num = highest_line_num + auto_number_step
             else:
-                next_line_num = self.auto_number_start
+                next_line_num = 10  # Default start
 
             # Insert line number after a short delay to let Enter complete
             await ui.context.client.connected()
