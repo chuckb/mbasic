@@ -1,466 +1,62 @@
 # Notes for Claude
 
-## Workflow
-- Track all installed dependencies and update documentation
-- **Check `docs/dev/WORK_IN_PROGRESS.md` on EVERY startup** - contains current task that may be incomplete
-- **Update `docs/dev/UI_FEATURE_PARITY_TRACKING.md` after ANY UI changes** - tracks implementation/documentation/testing status across all UIs
+## Workflow Triggers
+- **On EVERY startup**: Check if `docs/dev/WORK_IN_PROGRESS.md` exists → Read it and ask user to continue or start new
+- **After ANY UI changes**: Update `docs/dev/UI_FEATURE_PARITY_TRACKING.md`
+- **When adding a feature**: Read `docs/dev/FEATURE_COMPLETION_REQUIREMENTS.md` for 5 requirements checklist
+- **Before committing**: Use `./checkpoint.sh "message"` - auto-increments version, rebuilds indexes, commits, pushes
 
-## 🚨 CRITICAL: Adding New Features
+## Utility Scripts
+- **Before writing a utility script**: Check `utils/UTILITY_SCRIPTS_INDEX.md` - one may already exist
+- **When importing old BASIC**: Read `utils/UTILITY_SCRIPTS_INDEX.md` for processing pipeline
 
-**A feature is NOT complete until ALL of these exist:**
-
-1. **Implementation** - Code that makes it work
-2. **Canonical List Entry** - Added to `docs/dev/ALL_FEATURES_CANONICAL_NAMES.txt`
-3. **Feature Tracking Entry** - Added to `docs/dev/UI_FEATURE_PARITY_TRACKING.md` with status for ALL UIs
-4. **Documentation** - User-facing docs in `docs/help/` or `docs/user/`
-5. **Tests** - At minimum, manual test procedure documented
-
-**NEVER mark a feature as "100% complete" or "✅ Done" without ALL FIVE.**
-
-**Why this matters:**
-- Auto-numbering was marked "working" but never tested → broken for months
-- Settings existed but wasn't in tracking table → Web UI gap went unnoticed
-- Games Library implemented but not tracked → appeared "missing"
-
-**Process for adding a feature:**
-1. Implement the code
-2. Add to `ALL_FEATURES_CANONICAL_NAMES.txt` (alphabetically)
-3. Add to `UI_FEATURE_PARITY_TRACKING.md` (appropriate category)
-4. Document status for EACH UI (CLI, Curses, TK, Web, Visual)
-5. Write user documentation
-6. Create test procedure or automated test
-7. Mark as [✅|📚|🧪] only when all above complete
-
-**Red flags that indicate incomplete feature:**
-- "Code exists" but no docs = INCOMPLETE
-- "Marked as working" but no tests = INCOMPLETE
-- "In tracking table" but missing from canonical list = INCOMPLETE
-- "Working in one UI" but not documented in all UIs = INCOMPLETE
-
-## 🔧 Utility Scripts
-
-**BEFORE writing a new utility script, check if one already exists!**
-
-See `utils/UTILITY_SCRIPTS_INDEX.md` for complete list and descriptions.
-
-**Common utilities you should know about:**
-- `utils/fix_keyword_spacing.py` - Fixes keywords running together (FORI→FOR I, IFK9→IF K9)
-- `utils/analyze_errors.py` - Analyzes parser/lexer errors across files
-- `utils/show_parse_tree.py` - Visualizes parse tree for debugging
-- `utils/detokenizer.py` - Converts tokenized BASIC to ASCII
-- `utils/clean_post_end.py` - Removes unreachable code after END
-- `utils/find_duplicates.py` - Finds duplicate BASIC programs
-
-**When importing old BASIC:** Run these in order if needed:
-1. `unsqueeze2.py` - If compressed
-2. `detokenizer.py` - If tokenized
-3. `fix_keyword_spacing.py` - If keywords lack spaces
-4. `clean_pdf_artifacts.py` - If from PDF
-5. `clean_post_end.py` - Remove unreachable code
-
-## 🚨 CRITICAL: Running Real MBASIC Comparisons
-
-**READ THIS FIRST when user asks to compare with real MBASIC 5.21**
-
-This section exists because every day I forget how to do this and it takes 10+ tries. DON'T BE THAT CLAUDE. Read this carefully.
-
-**Full documentation:** `tests/HOW_TO_RUN_REAL_MBASIC.md`
-
-**Quick Reference - DO THIS:**
-
-```bash
-# 1. MUST cd to tests directory FIRST
-cd /home/wohl/cl/mbasic/tests
-
-# 2. Create test program that MUST end with SYSTEM not END
-cat > test.bas << 'EOF'
-10 PRINT "Hello"
-20 FOR I = 1 TO 3
-30   PRINT I
-40 NEXT I
-50 SYSTEM
-EOF
-
-# 3. Run our implementation
-python3 ../mbasic.py test.bas > /tmp/our_output.txt 2>&1
-
-# 4. Run real MBASIC (pipe content, don't pass filename)
-(cat test.bas && echo "RUN") | timeout 10 tnylpo ../com/mbasic > /tmp/real_output.txt 2>&1
-
-# 5. Compare
-diff /tmp/our_output.txt /tmp/real_output.txt
-```
-
-**Critical requirements (NEVER forget these):**
-1. **MUST run from `tests/` directory** - tnylpo needs relative path to `../com/mbasic`
-2. **MUST pipe program content** - Cannot pass filename to tnylpo
-3. **MUST end with `SYSTEM`** - `END` hangs waiting for input
-4. **MUST use `(cat file && echo "RUN")`** - Pipes content then RUN command
-5. **Keep lines short** - MBASIC has line buffer limits
-
-**Why this exists:** User said "every day when i ask you to compare a basic program in our basic vs real it takes you like 10 tries to get it work". This is unacceptable. Follow the instructions above EXACTLY.
-
-## Git Commit and Push Workflow
-
-**Use checkpoint script for ALL commits:**
-
-```bash
-./checkpoint.sh "Your commit message"
-```
-
-This automatically:
-- Increments VERSION in src/version.py (1.0.5 → 1.0.6)
-- Rebuilds help indexes if docs/help/ files changed
-- Runs git add -A
-- Commits with version number in message
-- Pushes to remote
-
-**Always checkpoint when stopping to talk to user.**
-
-**Note:** If you modify files in `docs/help/`, the checkpoint script automatically runs `python3 utils/build_help_indexes.py` to rebuild search indexes before committing.
+## 🚨 CRITICAL: Comparing with Real MBASIC
+**When user asks to compare with real MBASIC 5.21**: Read `tests/HOW_TO_RUN_REAL_MBASIC.md` and follow instructions EXACTLY
+- Why: "every day when i ask you to compare... it takes you like 10 tries to get it work"
+- Key: Must cd to tests/, pipe content, end with SYSTEM not END
 
 ## Work-in-Progress Tracking
+- **Before starting multi-step work**: Create `docs/dev/WORK_IN_PROGRESS.md` with task/status/files/next steps
+- **When completing work**: Delete `WORK_IN_PROGRESS.md`
+- **Format details**: See existing WORK_IN_PROGRESS.md examples in docs/history/
 
-**CRITICAL: Track all immediate work in `docs/dev/WORK_IN_PROGRESS.md` to survive crashes/unexpected shutdowns.**
-
-### On Every Startup
-1. **ALWAYS check if `docs/dev/WORK_IN_PROGRESS.md` exists**
-2. **If it exists**: Read it and inform user what was being worked on
-3. **Ask user**: "Do you want to continue this work, or start something new?"
-
-### When Starting Immediate Work
-**Before implementing anything**, update `WORK_IN_PROGRESS.md` with:
-- What you're working on
-- Current status (what's done, what's next)
-- Files being modified
-- Any important context
-
-### When Completing Work
-**Delete or clear `WORK_IN_PROGRESS.md`** when task is complete and committed.
-
-### File Format
-```markdown
-# Work in Progress
-
-## Task
-Brief description of what's being implemented
-
-## Status
-- ✅ Step 1 completed
-- ⏳ Step 2 in progress
-- ⏸️ Step 3 pending
-
-## Files Modified
-- path/to/file1.py
-- path/to/file2.py
-
-## Next Steps
-1. Complete step 2
-2. Test feature
-3. Commit changes
-
-## Context/Notes
-Any important details needed to resume work
-```
-
-### Example Usage
-```
-User: "Can you fix the array bounds checking bug?"
-Claude: Updates WORK_IN_PROGRESS.md → starts fixing → crash
-User: Restarts Claude
-Claude: Checks WORK_IN_PROGRESS.md → "I see you were fixing array bounds checking. Continue?"
-```
-
-## TODO Tracking Rules
-
-**CRITICAL: When you agree to implement a feature or add something to a todo list, it MUST be documented in a file with "TODO" in the filename.**
-
-- **Why**: User searches for files with "TODO" in the name to resume work
-- **Where**: Create files in `docs/dev/` with pattern `*_TODO.md`
-- **When to create**:
-  - User requests a new feature for future implementation
-  - You agree to add something to a todo list
-  - Planning multi-step work that won't be completed immediately
-- **What to include**:
-  - Clear description of what needs to be done
-  - Implementation details and approaches
-  - Priority level (HIGH/MEDIUM/LOW)
-  - Status section (⏳ TODO at top of file)
-  - Test cases and acceptance criteria
-- **When complete**: Move file to `docs/history/` and rename TODO → DONE
-  - Example: `ARRAY_ELEMENT_SELECTOR_TODO.md` → `history/ARRAY_ELEMENT_SELECTOR_DONE.md`
-
-**Examples**:
-- User: "Can you add a way to edit array elements by typing indices?"
-- Claude: "Yes! Let me document that." → Creates `docs/dev/ARRAY_ELEMENT_SELECTOR_TODO.md`
-
-**Don't create TODO files for**:
-- Tasks you're implementing immediately in the same session
-- Simple bug fixes being done right now
-- Questions or discussions without actionable work
+## TODO Tracking
+- **When user requests future feature**: Create `docs/dev/*_TODO.md` (user searches for "TODO" in filenames)
+- **When complete**: Move to `docs/history/` and rename TODO → DONE
+- **Don't create for**: Tasks being done immediately, simple bug fixes
+- **Format/examples**: See existing TODO files in docs/dev/ or DONE files in docs/history/
 
 ## Debugging
-
-### Debug Mode
-When debugging errors, enable debug mode for detailed output:
-```bash
-MBASIC_DEBUG=1 python3 mbasic.py program.bas
-```
-
-This outputs detailed error traces to stderr (visible to Claude) while keeping the UI clean.
-See `docs/dev/DEBUG_MODE.md` for full details.
-
-### Persistent Debug Mode
-**CRITICAL: MBASIC_DEBUG must ALWAYS be enabled in .bashrc:**
-```bash
-export MBASIC_DEBUG=1
-```
-
-**Purpose:** Ensures ALL unexpected errors are automatically sent to Claude via the debug link.
-**Do NOT disable this** - it's not for controlling verbose debug output, it's for error visibility.
-
-After adding to .bashrc, restart the shell or run `source ~/.bashrc`.
-
-### Debug Levels
-Control verbosity with MBASIC_DEBUG_LEVEL (requires MBASIC_DEBUG=1):
-- **Level 1 (default)**: Errors only - unexpected errors sent to stderr
-- **Level 2 (verbose)**: Detailed debug output (e.g., FOR loop stack operations)
-
-```bash
-# For verbose debugging output:
-export MBASIC_DEBUG_LEVEL=2
-```
-
-### Checking Debug Output
-**When debugging, ALWAYS check the debug link for stderr output:**
-- Debug output is automatically sent via the debug link
-- Check the debug link/logs when investigating errors
-- Debug prints from Python code use debug_logger.debug_log()
-- User may reference "check your debug link" or "it was sent to stderr" - this means check the debug output system
-
-### Adding Debug Output
-Use the debug_logger module, not raw print statements:
-```python
-from src.debug_logger import debug_log
-
-# Error-level debug (always shown when MBASIC_DEBUG=1)
-debug_log("Important error info", level=1)
-
-# Verbose debug (only shown when MBASIC_DEBUG_LEVEL=2)
-debug_log("Detailed operation", context={'var': value}, level=2)
-```
+- **MBASIC_DEBUG=1 always enabled in .bashrc** - sends unexpected errors to stderr/debug link
+- **When debugging**: Check debug link for stderr output (user may say "check your debug link")
+- **Debug mode details**: Read `docs/dev/DEBUG_MODE.md` for levels and usage
+- **In code**: Use `from src.debug_logger import debug_log` not print statements
 
 ## Developer Setup
+- **For setup instructions**: Read `docs/dev/INSTALLATION_FOR_DEVELOPERS.md`
+- **Dependencies**: `pip install -r requirements.txt` (standard library + optional urwid, pexpect, frontmatter, mkdocs)
 
-### System Requirements
-- Python 3.8 or later (3.9+ recommended)
-- Git
-- pip
+# File Organization
 
-### Python Dependencies
-
-Install all dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-**Required dependencies:**
-- None (uses Python standard library only)
-
-**Optional UI dependencies:**
-- `urwid>=2.0.0` - For curses backend (full-screen terminal UI)
-
-**Development/testing dependencies:**
-- `pexpect>=4.8.0` - For automated UI testing
-
-**Help system dependencies:**
-- `python-frontmatter>=1.0.0` - For YAML front matter parsing in help files
-
-**Web deployment (optional):**
-- `mkdocs>=1.5.0` - Static site generator for documentation
-- `mkdocs-material>=9.0.0` - Material theme for MkDocs
-- `mkdocs-awesome-pages-plugin>=2.8.0` - Auto-discover pages plugin
-
-Install web deployment tools:
-```bash
-pip install mkdocs mkdocs-material mkdocs-awesome-pages-plugin
-```
-
-### Installation from Clean Linux
-
-```bash
-# Clone repository
-git clone https://github.com/avwohl/mbasic.git
-cd mbasic
-
-# Create virtual environment (recommended)
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Test installation
-python3 mbasic.py
-
-# Optional: Install web deployment tools
-pip install mkdocs mkdocs-material mkdocs-awesome-pages-plugin
-```
-
-See `docs/dev/INSTALLATION_FOR_DEVELOPERS.md` for complete setup guide.
-
-# MBASIC Project Rules
-
-## File Organization Rules
-
-### Utility Scripts
-**ALWAYS put utility scripts in `utils/` directory**
-- Python scripts for analysis, testing, debugging, etc.
-- Examples: categorize_files.py, find_duplicates.py, analyze_errors.py
-- Never create utility scripts in the root directory
-
-### BASIC Program Organization
-- `basic/` - Working BASIC programs that parse correctly with MBASIC 5.21
-- `basic/bad_syntax/` - Programs with syntax errors or non-MBASIC 5.21 features
-- `basic/bas_tests/` - Test programs and test files
-- `basic/tests_with_results/` - Test files with expected results
-
-### Source Code
-- `mbasic.py` - Main interpreter (root directory)
-- Core implementation files in root (parser.py, lexer.py, etc.)
-
-### Input Files
-- `in/` - Input files for testing and unsqueezing
-
-### Documentation
-**NEVER create documentation files in the root directory!**
-All documentation belongs in the `docs/` directory:
-
-- `README.md` - Main project README (root, only exception)
-- `docs/` - **ALL documentation goes here**
-  - `docs/dev/` - Current development notes and implementation guides
-    - Use for: feature implementations, fixes, current status, work-in-progress
-    - Examples: `*_IMPLEMENTATION.md`, `*_FIX.md`, `STATUS.md`
-  - `docs/help/` - In-UI help system documentation
-    - `docs/help/common/` - General help shared across all UIs (language, statements)
-    - `docs/help/ui/{backend}/` - UI-specific help (cli, curses, tk, visual)
-  - `docs/user/` - External user-facing documentation
-    - Use for: quick references, installation guides, tutorials
-  - `docs/history/` - Historical/archived development documentation
-    - Use for: session logs, completed milestones (move from dev/ when done)
-  - `docs/future/` - Deferred/someday projects
-    - Use for: nice-to-have features, enhancements that aren't priority
-    - Move to dev/ when project becomes active
+## Directory Structure
+- **Utility scripts**: `utils/` - NEVER create in root directory
+- **BASIC programs**: `basic/` (working), `basic/bad_syntax/` (broken), `basic/bas_tests/` (tests)
+- **Source code**: `mbasic.py` and core files in root (parser.py, lexer.py, etc.)
+- **Documentation**: `docs/` - NEVER create .md files in root (except README.md)
+  - `docs/dev/` - Current work, implementation notes, fixes, work-in-progress
+  - `docs/help/` - In-UI help system (common/ for language, ui/{backend}/ for UI-specific)
+  - `docs/user/` - External user guides, tutorials, quick references
+  - `docs/history/` - Archived/completed work (move from dev/ when done)
+  - `docs/future/` - Deferred/someday projects (move to dev/ when active)
   - `docs/design/` - Architecture and design documents
-  - `docs/external/` - External references (PDFs, specifications)
+  - `docs/external/` - External references (PDFs, specs)
 
-**When creating new documentation:**
-- Development notes → `docs/dev/`
-- Help content → `docs/help/common/` or `docs/help/ui/{backend}/`
-- User guides → `docs/user/`
-- Completed sessions → `docs/history/`
-- Future/deferred projects → `docs/future/`
-
-## Code Style
-- Python 3 with type hints where appropriate
-- Use pathlib for file operations when possible
-- Include docstrings for functions
-- Add comments explaining complex logic
-
-## UI/UX Rules
-- **NO FUNCTION KEYS** - User cannot use F1-F12 keys
-- Use Ctrl+letter combinations instead (Ctrl+G, Ctrl+T, etc.)
-- All keyboard shortcuts must be Ctrl, Alt, or plain keys
-- Document all keyboard shortcuts clearly
+## Code & UI Rules
+- **Code style**: Python 3, type hints, pathlib, docstrings, comments for complex logic
+- **UI/UX**: NO FUNCTION KEYS (F1-F12) - user cannot use them. Use Ctrl+letter instead (Ctrl+G, Ctrl+T, etc.)
 
 ## Testing
-
-### Testing with Python Implementation
-- Test files should be in `basic/bas_tests/`
-- Use MBASIC 5.21 syntax only
-- Test both successful parsing and error cases
-- Run with: `python3 mbasic.py <program.bas>`
-
-### Testing with Real MBASIC 5.21
-
-**IMPORTANT:** To verify behavior against authentic MBASIC 5.21, use the tnylpo CP/M emulator.
-
-**Location:** Real MBASIC 5.21 is at `com/mbasic.com`
-
-**How to run:**
-```bash
-cd tests/
-(cat test.bas && echo "RUN") | timeout 10 tnylpo ../com/mbasic
-```
-
-**Critical requirements:**
-1. **Must run from `tests/` directory**
-2. **Programs must end with `SYSTEM` not `END`**
-   - `END` hangs at "Ok" prompt waiting for input
-   - `SYSTEM` exits MBASIC cleanly
-3. **Keep lines short** (MBASIC has line buffer limits)
-
-**Example test file:**
-```basic
-10 PRINT "Hello"
-20 FOR I = 1 TO 3
-30   PRINT I
-40 NEXT I
-50 SYSTEM
-```
-
-**Comparing outputs:**
-```bash
-cd tests/
-
-# Our implementation
-python3 ../mbasic.py test.bas > /tmp/our.txt 2>&1
-
-# Real MBASIC 5.21
-(cat test.bas && echo "RUN") | timeout 10 tnylpo ../com/mbasic > /tmp/real.txt 2>&1
-
-# Compare
-diff /tmp/our.txt /tmp/real.txt
-```
-
-**Full details:** See `tests/HOW_TO_RUN_REAL_MBASIC.md`
-
-### Testing the Curses UI
-
-**IMPORTANT:** The curses UI cannot be tested manually in headless environments. Use the automated testing framework.
-
-**Quick test (recommended):**
-```bash
-python3 utils/test_curses_comprehensive.py
-```
-
-**What it tests:**
-- UI creation and initialization
-- Input handlers (Ctrl+H, Ctrl+L, Ctrl+N, Ctrl+R, etc.)
-- Program parsing from editor
-- Program execution with tick-based interpreter
-- Process lifecycle (startup/shutdown)
-
-**Exit codes:**
-- `0` - All tests passed
-- `1` - One or more tests failed (details in output)
-
-**When to use:**
-- Before committing changes to curses UI
-- After modifying interpreter tick-based execution
-- When debugging curses UI issues
-- To verify UI works without manual testing
-
-**Available test scripts:**
-- `utils/test_curses_comprehensive.py` - Full test suite (use this)
-- `utils/test_curses_pexpect.py` - Integration testing only
-- `utils/test_curses_pyte.py` - Terminal emulator (experimental)
-- `utils/test_curses_urwid_sim.py` - Direct simulation testing
-
-**Full documentation:** See `docs/dev/CURSES_UI_TESTING.md`
-
-**Common errors caught:**
-- `loop.draw_screen()` called before loop running
-- Missing interpreter initialization
-- Input handler exceptions
-- Tick execution errors
+- **Test files**: `basic/bas_tests/` - MBASIC 5.21 syntax only
+- **Run tests**: `python3 mbasic.py <program.bas>`
+- **Testing with real MBASIC**: See `tests/HOW_TO_RUN_REAL_MBASIC.md`
+- **Testing curses UI**: `python3 utils/test_curses_comprehensive.py` (see `docs/dev/CURSES_UI_TESTING.md` for details)
