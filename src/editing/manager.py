@@ -334,7 +334,7 @@ class ProgramManager:
         Returns:
             ProgramNode containing all LineNodes in order
         """
-        from ast_nodes import ProgramNode
+        from src.ast_nodes import ProgramNode
 
         # Get line ASTs in sorted order
         line_numbers = sorted(self.line_asts.keys())

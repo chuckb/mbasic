@@ -152,7 +152,7 @@ class ResourceLimits:
             Estimated size in bytes
         """
         # Import here to avoid circular dependency
-        from ast_nodes import TypeInfo
+        from src.ast_nodes import TypeInfo
 
         if var_type == TypeInfo.INTEGER:
             return 2  # 2 bytes for 16-bit integer

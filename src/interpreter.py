@@ -1339,7 +1339,7 @@ class Interpreter:
 
     def execute_dim(self, stmt):
         """Execute DIM statement"""
-        from ast_nodes import TypeInfo
+        from src.ast_nodes import TypeInfo
 
         for array_def in stmt.arrays:
             # array_def is an ArrayDeclNode with name and dimensions

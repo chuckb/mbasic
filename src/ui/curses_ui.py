@@ -848,11 +848,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         try:
             # Import here to avoid circular dependencies
-            from lexer import Lexer
-            from parser import Parser
-            from ast_nodes import RemarkStatementNode
-            from tokens import TokenType
-            from lexer import create_keyword_case_manager
+            from src.lexer import Lexer
+            from src.parser import Parser
+            from src.ast_nodes import RemarkStatementNode
+            from src.tokens import TokenType
+            from src.lexer import create_keyword_case_manager
 
             # Tokenize the code
             keyword_mgr = create_keyword_case_manager()

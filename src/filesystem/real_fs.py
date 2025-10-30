@@ -30,6 +30,11 @@ class RealFileHandle(FileHandle):
         """Write to file."""
         return self.file_obj.write(data)
 
+    def flush(self):
+        """Flush write buffers."""
+        if not self.closed:
+            self.file_obj.flush()
+
     def close(self):
         """Close the file."""
         if not self.closed:

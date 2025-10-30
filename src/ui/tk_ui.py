@@ -3357,7 +3357,7 @@ class TkBackend(UIBackend):
             stmt: Statement node to update
             line_map: dict mapping old line numbers to new line numbers
         """
-        import ast_nodes
+        import src.ast_nodes as ast_nodes
 
         stmt_type = type(stmt).__name__
 

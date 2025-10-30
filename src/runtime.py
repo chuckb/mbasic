@@ -415,7 +415,7 @@ class Runtime:
 
         # Track variable memory if limits provided
         if limits and not debugger_set:
-            from ast_nodes import TypeInfo
+            from src.ast_nodes import TypeInfo
             var_type = TypeInfo.from_suffix(resolved_suffix)
             limits.allocate_variable(full_name, value, var_type)
 
