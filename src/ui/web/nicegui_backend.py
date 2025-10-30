@@ -207,17 +207,13 @@ class NiceGUIBackend(UIBackend):
 
             # Toolbar
             with ui.row().classes('w-full bg-gray-100 p-2 gap-2'):
-                ui.button('New', on_click=self._menu_new, icon='description').mark('btn_new')
-                ui.button('Open', on_click=self._menu_open, icon='folder_open').mark('btn_open')
-                ui.button('Save', on_click=self._menu_save, icon='save').mark('btn_save')
-                ui.separator().props('vertical')
                 ui.button('Run', on_click=self._menu_run, icon='play_arrow', color='green').mark('btn_run')
                 ui.button('Stop', on_click=self._menu_stop, icon='stop', color='red').mark('btn_stop')
                 ui.button('Step', on_click=self._menu_step_line, icon='skip_next').mark('btn_step_line')
                 ui.button('Stmt', on_click=self._menu_step_stmt, icon='redo').mark('btn_step_stmt')
-                ui.button('Continue', on_click=self._menu_continue, icon='play_circle').mark('btn_continue')
+                ui.button('Cont', on_click=self._menu_continue, icon='play_circle').mark('btn_continue')
                 ui.separator().props('vertical')
-                ui.button('Check Syntax', on_click=self._check_syntax, icon='check_circle').mark('btn_check_syntax')
+                ui.button(icon='check_circle', on_click=self._check_syntax).mark('btn_check_syntax').props('flat').tooltip('Check Syntax')
 
             # Main content area
             with ui.element('div').style('width: 100%; display: flex; flex-direction: column;'):
