@@ -95,16 +95,17 @@ nav:
     - help/mbasic/getting-started.md
     - help/mbasic/features.md
     - help/mbasic/compatibility.md
-  - Language Reference:
-    - help/common/language/...
-  - User Guides:
-    - help/ui/...
-    - user/...
-  - Design & Architecture:
-    - design/...
-  - Developer Documentation:
-    - dev/...
-    - history/...
+  - Library:
+    - library/index.md
+    - Games: library/games/index.md
+    - Utilities: library/utilities/index.md
+    - Education: library/education/index.md
+    - Business: library/business/index.md
+    - Electronics: library/electronics/index.md
+    - Ham Radio: library/ham_radio/index.md
+    - Data Management: library/data_management/index.md
+    - Telecommunications: library/telecommunications/index.md
+    - Demos: library/demos/index.md
 
 extra:
   social:

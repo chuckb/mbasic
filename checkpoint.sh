@@ -47,11 +47,11 @@ if [ -n "$DOCS_CHANGED" ]; then
         # Run mkdocs build in strict mode and capture output
         BUILD_OUTPUT=$(mkdocs build --strict 2>&1)
 
-        # Check for warnings or errors
-        if echo "$BUILD_OUTPUT" | grep -q "WARNING\|ERROR"; then
+        # Check for warnings or errors (actual WARNING/ERROR lines, not filenames)
+        if echo "$BUILD_OUTPUT" | grep -E "^WARNING|^ERROR" > /dev/null; then
             echo "❌ ERROR: mkdocs build has warnings or errors in strict mode!"
             echo ""
-            echo "$BUILD_OUTPUT" | grep "WARNING\|ERROR"
+            echo "$BUILD_OUTPUT" | grep -E "^WARNING|^ERROR"
             echo ""
             echo "Run 'mkdocs build --strict' to see full details"
             exit 1

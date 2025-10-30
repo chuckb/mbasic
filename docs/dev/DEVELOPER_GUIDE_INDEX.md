@@ -17,7 +17,7 @@ Welcome to the MBASIC developer documentation! This index organizes all develope
 ## Development by Component
 
 ### Core Interpreter
-- **[Parser](PARSER_SUMMARY.md)** - How the parser works
+- **[Parser](../history/PARSER_SUMMARY.md)** - How the parser works
 - **[Lexer](../history/TOKEN_LIST_VERIFICATION_2025-10-22.md)** - Tokenization
 - **[AST](AST_SERIALIZATION.md)** - Abstract Syntax Tree structure
 
@@ -46,7 +46,7 @@ Welcome to the MBASIC developer documentation! This index organizes all develope
 
 ## Tools & Utilities
 
-- **[Utility Scripts Index](../utils/UTILITY_SCRIPTS_INDEX.md)** - Available development scripts
+- **Utility Scripts Index** - See `utils/UTILITY_SCRIPTS_INDEX.md` in the repository
 - **[Debug Mode](DEBUG_MODE.md)** - Using MBASIC_DEBUG for troubleshooting
 
 ## Current Work
