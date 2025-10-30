@@ -1,54 +1,22 @@
 {
   "title": "MBASIC Ham Radio Programs",
-  "description": "Amateur radio utilities including QSO loggers, callsign lookups, and radio tools",
+  "description": "Amateur radio utilities and tools",
   "programs": [
-    {
-      "filename": "qso.bas",
-      "source_path": "basic/ham_radio/qso.bas",
-      "title": "QSO Logger",
-      "description": "Log amateur radio contacts (QSOs) with callsign, frequency, and time.",
-      "year": "1980s",
-      "tags": ["ham-radio", "logging", "qso"]
-    },
     {
       "filename": "qsoedit.bas",
       "source_path": "basic/ham_radio/qsoedit.bas",
-      "title": "QSO Editor",
-      "description": "Edit and manage your QSO log entries.",
+      "title": "Qsoedit",
+      "description": "",
       "year": "1980s",
-      "tags": ["ham-radio", "logging", "qso", "editor"]
+      "tags": []
     },
     {
-      "filename": "qsofind.bas",
-      "source_path": "basic/ham_radio/qsofind.bas",
-      "title": "QSO Finder",
-      "description": "Search through QSO logs for specific contacts.",
+      "filename": "rsj.bas",
+      "source_path": "basic/ham_radio/rsj.bas",
+      "title": "Rsj",
+      "description": "",
       "year": "1980s",
-      "tags": ["ham-radio", "logging", "qso", "search"]
-    },
-    {
-      "filename": "qsolist.bas",
-      "source_path": "basic/ham_radio/qsolist.bas",
-      "title": "QSO List",
-      "description": "Generate formatted lists of QSO contacts.",
-      "year": "1980s",
-      "tags": ["ham-radio", "logging", "qso", "report"]
-    },
-    {
-      "filename": "rbsutl31.bas",
-      "source_path": "basic/ham_radio/rbsutl31.bas",
-      "title": "RBS Utilities",
-      "description": "Utilities for the Remote Base System (amateur radio).",
-      "year": "1980s",
-      "tags": ["ham-radio", "utility", "remote"]
-    },
-    {
-      "filename": "rbspurge.bas",
-      "source_path": "basic/ham_radio/rbspurge.bas",
-      "title": "RBS Purge",
-      "description": "Clean up old entries from Remote Base System logs.",
-      "year": "1980s",
-      "tags": ["ham-radio", "utility", "maintenance"]
+      "tags": []
     }
   ]
 }

@@ -26,7 +26,7 @@ ROOT = Path(__file__).parent.parent
 BASIC_DIR = ROOT / "basic"
 
 # Directories to exclude
-EXCLUDE_DIRS = {"incompatible", "bad_syntax"}
+EXCLUDE_DIRS = {"incompatible", "bad_syntax", "dev"}
 
 # Test results
 results = {
@@ -181,12 +181,16 @@ def main():
             print(f"\n{category}/{filename}")
             print(f"  {message}")
 
-    # Success stories
-    if results['ran_to_end']:
+    # Success stories - programs that work (ran_to_end or ran_to_input)
+    all_working = results['ran_to_end'] + results['ran_to_input']
+    if all_working:
         print("\n" + "=" * 80)
-        print(f"RAN TO COMPLETION ({len(results['ran_to_end'])})")
+        print(f"WORKING PROGRAMS ({len(all_working)})")
         print("=" * 80)
-        for category, filename, message in results['ran_to_end']:
+        print(f"Ran to completion: {len(results['ran_to_end'])}")
+        print(f"Stopped at INPUT:  {len(results['ran_to_input'])}")
+        print()
+        for category, filename, message in sorted(all_working):
             print(f"  ✅ {category}/{filename}")
 
     # Exit code

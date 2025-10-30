@@ -1,54 +1,5 @@
 {
   "title": "MBASIC Business Programs",
-  "description": "Financial calculators, budgeting tools, and productivity applications",
-  "programs": [
-    {
-      "filename": "budget.bas",
-      "source_path": "basic/business/budget.bas",
-      "title": "Budget Tracker",
-      "description": "Track your budget and expenses.",
-      "year": "1980s",
-      "tags": ["finance", "budget", "productivity"]
-    },
-    {
-      "filename": "mortgage.bas",
-      "source_path": "basic/business/mortgage.bas",
-      "title": "Mortgage Calculator",
-      "description": "Calculate mortgage payments and amortization schedules.",
-      "year": "1980s",
-      "tags": ["finance", "calculator", "mortgage"]
-    },
-    {
-      "filename": "finance.bas",
-      "source_path": "basic/business/finance.bas",
-      "title": "Finance Tools",
-      "description": "Financial calculation tools for business.",
-      "year": "1980s",
-      "tags": ["finance", "calculator", "business"]
-    },
-    {
-      "filename": "interest.bas",
-      "source_path": "basic/business/interest.bas",
-      "title": "Interest Calculator",
-      "description": "Calculate simple and compound interest.",
-      "year": "1980s",
-      "tags": ["finance", "calculator", "interest"]
-    },
-    {
-      "filename": "cpm-pert.bas",
-      "source_path": "basic/business/cpm-pert.bas",
-      "title": "CPM/PERT Chart",
-      "description": "Critical Path Method and PERT chart tool for project management.",
-      "year": "1980s",
-      "tags": ["project-management", "business", "planning"]
-    },
-    {
-      "filename": "log10k.bas",
-      "source_path": "basic/business/log10k.bas",
-      "title": "Log 10K",
-      "description": "Business logging and tracking tool.",
-      "year": "1980s",
-      "tags": ["business", "logging", "tracking"]
-    }
-  ]
+  "description": "Business applications and tools",
+  "programs": []
 }

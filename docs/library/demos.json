@@ -1,22 +1,44 @@
 {
   "title": "MBASIC Demos & Tests",
-  "description": "Test programs, benchmarks, and demonstration code",
+  "description": "Demonstration programs and test suites",
   "programs": [
-    {
-      "filename": "interpreter-vs-compiler.bas",
-      "source_path": "basic/demos/interpreter-vs-compiler.bas",
-      "title": "Interpreter Benchmark",
-      "description": "Benchmark comparing interpreter vs compiler performance.",
-      "year": "1980s",
-      "tags": ["benchmark", "performance", "test"]
-    },
     {
       "filename": "benchmk.bas",
       "source_path": "basic/demos/benchmk.bas",
-      "title": "System Benchmark",
-      "description": "Test and benchmark your BASIC system.",
+      "title": "Benchmk",
+      "description": "",
       "year": "1980s",
-      "tags": ["benchmark", "test", "performance"]
+      "tags": []
+    },
+    {
+      "filename": "test_curses_features.bas",
+      "source_path": "basic/demos/test_curses_features.bas",
+      "title": "Test Curses Features",
+      "description": "",
+      "year": "1980s",
+      "tags": [
+        "test"
+      ]
+    },
+    {
+      "filename": "test_curses_simple.bas",
+      "source_path": "basic/demos/test_curses_simple.bas",
+      "title": "Test Curses Simple",
+      "description": "",
+      "year": "1980s",
+      "tags": [
+        "test"
+      ]
+    },
+    {
+      "filename": "test_immediate_input.bas",
+      "source_path": "basic/demos/test_immediate_input.bas",
+      "title": "Test Immediate Input",
+      "description": "",
+      "year": "1980s",
+      "tags": [
+        "test"
+      ]
     }
   ]
 }

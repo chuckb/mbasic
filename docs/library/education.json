@@ -1,30 +1,16 @@
 {
   "title": "MBASIC Educational Programs",
-  "description": "Educational programs for learning math, science, and programming concepts",
+  "description": "Learning and educational programs",
   "programs": [
     {
       "filename": "mathtest.bas",
       "source_path": "basic/education/mathtest.bas",
-      "title": "Math Test",
-      "description": "Practice basic math skills with timed tests.",
+      "title": "Mathtest",
+      "description": "",
       "year": "1980s",
-      "tags": ["education", "math", "quiz"]
-    },
-    {
-      "filename": "astrnmy2.bas",
-      "source_path": "basic/education/astrnmy2.bas",
-      "title": "Astronomy",
-      "description": "Learn about astronomy with calculations and demonstrations.",
-      "year": "1980s",
-      "tags": ["education", "science", "astronomy"]
-    },
-    {
-      "filename": "windchil.bas",
-      "source_path": "basic/education/windchil.bas",
-      "title": "Wind Chill Calculator",
-      "description": "Calculate wind chill factor and learn about weather.",
-      "year": "1980s",
-      "tags": ["education", "science", "weather", "calculator"]
+      "tags": [
+        "test"
+      ]
     }
   ]
 }

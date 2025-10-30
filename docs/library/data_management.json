@@ -1,62 +1,30 @@
 {
-  "title": "MBASIC Data Management Programs",
-  "description": "Bibliography systems, database tools, file managers, and data organization programs",
+  "title": "MBASIC Data Management",
+  "description": "Database and file management programs",
   "programs": [
     {
-      "filename": "bibbld.bas",
-      "source_path": "basic/data_management/bibbld.bas",
-      "title": "Bibliography Builder",
-      "description": "Build and manage bibliographic databases.",
+      "filename": "sfamove.bas",
+      "source_path": "basic/data_management/sfamove.bas",
+      "title": "Sfamove",
+      "description": "",
       "year": "1980s",
-      "tags": ["database", "bibliography", "research"]
+      "tags": []
     },
     {
-      "filename": "bibsrch.bas",
-      "source_path": "basic/data_management/bibsrch.bas",
-      "title": "Bibliography Search",
-      "description": "Search through bibliography databases.",
+      "filename": "sfavoc.bas",
+      "source_path": "basic/data_management/sfavoc.bas",
+      "title": "Sfavoc",
+      "description": "",
       "year": "1980s",
-      "tags": ["database", "bibliography", "search"]
+      "tags": []
     },
     {
-      "filename": "biblio.bas",
-      "source_path": "basic/data_management/biblio.bas",
-      "title": "Bibliography Manager",
-      "description": "Complete bibliography management system.",
+      "filename": "xlabels.bas",
+      "source_path": "basic/data_management/xlabels.bas",
+      "title": "Xlabels",
+      "description": "",
       "year": "1980s",
-      "tags": ["database", "bibliography", "management"]
-    },
-    {
-      "filename": "cbasedit.bas",
-      "source_path": "basic/data_management/cbasedit.bas",
-      "title": "Database Editor",
-      "description": "Edit records in database files.",
-      "year": "1980s",
-      "tags": ["database", "editor", "data"]
-    },
-    {
-      "filename": "mfil.bas",
-      "source_path": "basic/data_management/mfil.bas",
-      "title": "File Manager",
-      "description": "Manage and organize data files.",
-      "year": "1980s",
-      "tags": ["database", "files", "management"]
-    },
-    {
-      "filename": "vocbld.bas",
-      "source_path": "basic/data_management/vocbld.bas",
-      "title": "Vocabulary Builder",
-      "description": "Build vocabulary or glossary databases.",
-      "year": "1980s",
-      "tags": ["database", "vocabulary", "education"]
-    },
-    {
-      "filename": "voclst.bas",
-      "source_path": "basic/data_management/voclst.bas",
-      "title": "Vocabulary List",
-      "description": "List and display vocabulary entries.",
-      "year": "1980s",
-      "tags": ["database", "vocabulary", "report"]
+      "tags": []
     }
   ]
 }
