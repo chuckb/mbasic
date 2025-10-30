@@ -130,44 +130,15 @@ class NiceGUIBackend(UIBackend):
         """
         super().__init__(io_handler, program_manager)
 
-        # Program state
-        self.program_lines = []  # List of program lines for display
-        self.output_lines = []   # Output text lines
-        self.current_file = None  # Currently open file path
-
-        # Settings manager
+        # Settings manager (shared across all sessions)
         from src.settings import get_settings_manager
         self.settings_manager = get_settings_manager()
 
-        # Recent files (stored in browser localStorage)
-        self.recent_files = []  # List of recent file names
+        # Shared configuration
         self.max_recent_files = 10
-
-        # Auto-save configuration
         self.auto_save_enabled = True       # Enable auto-save
         self.auto_save_interval = 30        # Auto-save every 30 seconds
-        self.auto_save_timer = None         # Timer for auto-save
-        self.last_save_content = ''         # Last saved content (to detect changes)
-
-        # Execution state
-        self.running = False
-        self.paused = False
-
-        # Output buffer limiting
         self.output_max_lines = 3000  # Maximum lines to keep in output buffer
-        self.breakpoints = set()  # Line numbers with breakpoints
-        self.interpreter = None
-
-        # Initialize a default runtime for immediate mode
-        # This gets replaced when a program runs
-        from src.runtime import Runtime
-        self.runtime = Runtime({}, {})
-
-        self.exec_io = None
-        self.tick_task = None  # Async task for execution
-
-        # Output buffer
-        self.output_text = 'MBASIC 5.21 Web IDE\nReady\n'
 
         # UI elements (created in build_ui())
         self.editor = None
@@ -182,7 +153,158 @@ class NiceGUIBackend(UIBackend):
         self.input_label = None
         self.input_field = None
         self.input_submit_btn = None
-        self.input_future = None  # Future for async input coordination
+
+    def _get_session_state(self):
+        """Get or create session-specific state.
+
+        Returns a dict with session-specific runtime, interpreter, and UI state.
+        Uses NiceGUI's app.storage.client for per-client isolation.
+        """
+        # Use NiceGUI's client storage for per-session state
+        if 'mbasic_state' not in app.storage.client:
+            # Initialize session state
+            from src.runtime import Runtime
+            app.storage.client['mbasic_state'] = {
+                'program_lines': [],  # List of program lines for display
+                'output_lines': [],   # Output text lines
+                'current_file': None,  # Currently open file path
+                'recent_files': [],   # List of recent file names
+                'auto_save_timer': None,  # Timer for auto-save
+                'last_save_content': '',  # Last saved content
+                'running': False,  # Execution state
+                'paused': False,
+                'breakpoints': set(),  # Line numbers with breakpoints
+                'interpreter': None,  # Per-session interpreter
+                'runtime': Runtime({}, {}),  # Per-session runtime
+                'exec_io': None,
+                'tick_task': None,
+                'exec_timer': None,  # Timer for program execution
+                'output_text': 'MBASIC 5.21 Web IDE\nReady\n',
+                'input_future': None,  # Future for async input coordination
+            }
+
+        return app.storage.client['mbasic_state']
+
+    # Session-specific state properties (for backward compatibility and convenience)
+    @property
+    def runtime(self):
+        """Get current session's runtime."""
+        return self._get_session_state()['runtime']
+
+    @runtime.setter
+    def runtime(self, value):
+        """Set current session's runtime."""
+        self._get_session_state()['runtime'] = value
+
+    @property
+    def interpreter(self):
+        """Get current session's interpreter."""
+        return self._get_session_state()['interpreter']
+
+    @interpreter.setter
+    def interpreter(self, value):
+        """Set current session's interpreter."""
+        self._get_session_state()['interpreter'] = value
+
+    @property
+    def running(self):
+        """Get current session's running state."""
+        return self._get_session_state()['running']
+
+    @running.setter
+    def running(self, value):
+        """Set current session's running state."""
+        self._get_session_state()['running'] = value
+
+    @property
+    def paused(self):
+        """Get current session's paused state."""
+        return self._get_session_state()['paused']
+
+    @paused.setter
+    def paused(self, value):
+        """Set current session's paused state."""
+        self._get_session_state()['paused'] = value
+
+    @property
+    def breakpoints(self):
+        """Get current session's breakpoints."""
+        return self._get_session_state()['breakpoints']
+
+    @breakpoints.setter
+    def breakpoints(self, value):
+        """Set current session's breakpoints."""
+        self._get_session_state()['breakpoints'] = value
+
+    @property
+    def output_text(self):
+        """Get current session's output text."""
+        return self._get_session_state()['output_text']
+
+    @output_text.setter
+    def output_text(self, value):
+        """Set current session's output text."""
+        self._get_session_state()['output_text'] = value
+
+    @property
+    def current_file(self):
+        """Get current session's current file."""
+        return self._get_session_state()['current_file']
+
+    @current_file.setter
+    def current_file(self, value):
+        """Set current session's current file."""
+        self._get_session_state()['current_file'] = value
+
+    @property
+    def recent_files(self):
+        """Get current session's recent files."""
+        return self._get_session_state()['recent_files']
+
+    @recent_files.setter
+    def recent_files(self, value):
+        """Set current session's recent files."""
+        self._get_session_state()['recent_files'] = value
+
+    @property
+    def exec_io(self):
+        """Get current session's exec_io."""
+        return self._get_session_state()['exec_io']
+
+    @exec_io.setter
+    def exec_io(self, value):
+        """Set current session's exec_io."""
+        self._get_session_state()['exec_io'] = value
+
+    @property
+    def input_future(self):
+        """Get current session's input_future."""
+        return self._get_session_state()['input_future']
+
+    @input_future.setter
+    def input_future(self, value):
+        """Set current session's input_future."""
+        self._get_session_state()['input_future'] = value
+
+    @property
+    def last_save_content(self):
+        """Get current session's last_save_content."""
+        return self._get_session_state()['last_save_content']
+
+    @last_save_content.setter
+    def last_save_content(self, value):
+        """Set current session's last_save_content."""
+        self._get_session_state()['last_save_content'] = value
+
+    @property
+    def exec_timer(self):
+        """Get current session's exec_timer."""
+        return self._get_session_state()['exec_timer']
+
+    @exec_timer.setter
+    def exec_timer(self, value):
+        """Set current session's exec_timer."""
+        self._get_session_state()['exec_timer'] = value
 
     def build_ui(self):
         """Build the NiceGUI interface.
@@ -764,7 +886,7 @@ class NiceGUIBackend(UIBackend):
                 # Hide current line highlight
                 if self.current_line_label:
                     self.current_line_label.visible = False
-                if hasattr(self, 'exec_timer') and self.exec_timer:
+                if self.exec_timer:
                     self.exec_timer.cancel()
             elif state.status == 'error':
                 error_msg = state.error_info.error_message if state.error_info else "Unknown error"
@@ -774,7 +896,7 @@ class NiceGUIBackend(UIBackend):
                 # Hide current line highlight
                 if self.current_line_label:
                     self.current_line_label.visible = False
-                if hasattr(self, 'exec_timer') and self.exec_timer:
+                if self.exec_timer:
                     self.exec_timer.cancel()
             elif state.status == 'paused' or state.status == 'at_breakpoint':
                 self._set_status(f"Paused at line {state.current_line}")
@@ -784,7 +906,7 @@ class NiceGUIBackend(UIBackend):
                 if self.current_line_label:
                     self.current_line_label.set_text(f'>>> Executing line {state.current_line}')
                     self.current_line_label.visible = True
-                if hasattr(self, 'exec_timer') and self.exec_timer:
+                if self.exec_timer:
                     self.exec_timer.cancel()
 
         except Exception as e:
@@ -936,7 +1058,7 @@ class NiceGUIBackend(UIBackend):
                 self.paused = False
                 self._set_status('Continuing...')
                 # Start timer to continue execution in run mode
-                if not hasattr(self, 'exec_timer') or not self.exec_timer:
+                if not self.exec_timer:
                     self.exec_timer = ui.timer(0.01, self._execute_tick, once=False)
             else:
                 self._notify('Not paused', type='warning')
