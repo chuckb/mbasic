@@ -1,7 +1,7 @@
 {
   "title": "MBASIC Games Library",
   "description": "Classic BASIC games from the CP/M era",
-  "games": [
+  "programs": [
     {
       "filename": "blackjack.bas",
       "source_path": "basic/games/blkjk.bas",

@@ -62,7 +62,7 @@ Strategic battle simulation game.
 
 ## How to Use
 
-1. **Download** the .bas file you want to play
+1. **Download** the .bas file you want to use
 2. **Open MBASIC** in your preferred UI (Web, Tkinter, Curses, or CLI)
 3. **Load the file:**
    - **Web/Tkinter UI:** Click File → Open, select the downloaded file
@@ -71,6 +71,5 @@ Strategic battle simulation game.
 
 ## About These Games
 
-These games are classic BASIC programs from the CP/M and early PC era (1970s-1980s). 
-They demonstrate the creativity and programming skills of early computer enthusiasts 
-who created engaging games within the constraints of 1980s hardware.
+These programs are from the CP/M and early PC era (1970s-1980s), 
+preserved from historical archives including OAK, Simtel, and CP/M CD-ROMs.

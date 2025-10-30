@@ -93,6 +93,7 @@ These programs represent the collaborative work of countless programmers, hobbyi
 
 ## Notes
 
+- **Testing:** These programs have had minimal testing by humans. If you encounter issues, please submit a bug report (link coming soon)
 - Some programs may require hardware or features not available in modern systems
 - Programs in the "Incompatible" category require CP/M-specific features or graphics hardware
 - Original authors are credited in program source code where available

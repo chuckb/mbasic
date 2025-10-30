@@ -1,0 +1,70 @@
+{
+  "title": "MBASIC Electronics Programs",
+  "description": "Circuit design calculators, IC timers, assembly language listers, and electronic engineering tools",
+  "programs": [
+    {
+      "filename": "555-ic.bas",
+      "source_path": "basic/electronics/555-ic.bas",
+      "title": "555 IC Timer Calculator",
+      "description": "Calculate component values for 555 timer IC circuits.",
+      "year": "1980s",
+      "tags": ["electronics", "calculator", "555", "timer"]
+    },
+    {
+      "filename": "567-ic.bas",
+      "source_path": "basic/electronics/567-ic.bas",
+      "title": "567 IC Tone Decoder Calculator",
+      "description": "Calculate component values for 567 tone decoder IC circuits.",
+      "year": "1980s",
+      "tags": ["electronics", "calculator", "567", "tone-decoder"]
+    },
+    {
+      "filename": "timer555.bas",
+      "source_path": "basic/electronics/timer555.bas",
+      "title": "555 Timer Design",
+      "description": "Design 555 timer circuits with component calculations.",
+      "year": "1980s",
+      "tags": ["electronics", "calculator", "555", "timer"]
+    },
+    {
+      "filename": "atten.bas",
+      "source_path": "basic/electronics/atten.bas",
+      "title": "Attenuator Calculator",
+      "description": "Calculate resistor values for attenuator circuits.",
+      "year": "1980s",
+      "tags": ["electronics", "calculator", "attenuator"]
+    },
+    {
+      "filename": "bearing.bas",
+      "source_path": "basic/electronics/bearing.bas",
+      "title": "Bearing Calculator",
+      "description": "Calculate bearing and navigation values.",
+      "year": "1980s",
+      "tags": ["electronics", "calculator", "navigation"]
+    },
+    {
+      "filename": "lst8085.bas",
+      "source_path": "basic/electronics/lst8085.bas",
+      "title": "8085 Assembly Lister",
+      "description": "List and format 8085 assembly language programs.",
+      "year": "1980s",
+      "tags": ["electronics", "assembly", "8085", "programming"]
+    },
+    {
+      "filename": "lstintel.bas",
+      "source_path": "basic/electronics/lstintel.bas",
+      "title": "Intel Assembly Lister",
+      "description": "List and format Intel assembly language programs.",
+      "year": "1980s",
+      "tags": ["electronics", "assembly", "intel", "programming"]
+    },
+    {
+      "filename": "tab8085.bas",
+      "source_path": "basic/electronics/tab8085.bas",
+      "title": "8085 Opcode Table",
+      "description": "Display 8085 instruction opcodes and mnemonics.",
+      "year": "1980s",
+      "tags": ["electronics", "assembly", "8085", "reference"]
+    }
+  ]
+}

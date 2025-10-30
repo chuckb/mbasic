@@ -1,0 +1,22 @@
+{
+  "title": "MBASIC Demos & Tests",
+  "description": "Test programs, benchmarks, and demonstration code",
+  "programs": [
+    {
+      "filename": "interpreter-vs-compiler.bas",
+      "source_path": "basic/demos/interpreter-vs-compiler.bas",
+      "title": "Interpreter Benchmark",
+      "description": "Benchmark comparing interpreter vs compiler performance.",
+      "year": "1980s",
+      "tags": ["benchmark", "performance", "test"]
+    },
+    {
+      "filename": "benchmk.bas",
+      "source_path": "basic/demos/benchmk.bas",
+      "title": "System Benchmark",
+      "description": "Test and benchmark your BASIC system.",
+      "year": "1980s",
+      "tags": ["benchmark", "test", "performance"]
+    }
+  ]
+}

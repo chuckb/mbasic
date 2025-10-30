@@ -1,0 +1,86 @@
+{
+  "title": "MBASIC Utilities Library",
+  "description": "Calculators, converters, tools, and helpful programs for everyday computing",
+  "programs": [
+    {
+      "filename": "calendar.bas",
+      "source_path": "basic/utilities/calendar.bas",
+      "title": "Calendar",
+      "description": "Display a calendar for any month and year between 1900 and 2099.",
+      "year": "1982",
+      "tags": ["date", "calendar", "utility"]
+    },
+    {
+      "filename": "dow.bas",
+      "source_path": "basic/utilities/dow.bas",
+      "title": "Day of Week Calculator",
+      "description": "Calculate what day of the week a date falls on.",
+      "year": "1980s",
+      "tags": ["date", "calculator", "utility"]
+    },
+    {
+      "filename": "convert.bas",
+      "source_path": "basic/utilities/convert.bas",
+      "title": "Unit Converter",
+      "description": "Convert between different units of measurement.",
+      "year": "1980s",
+      "tags": ["conversion", "calculator", "utility"]
+    },
+    {
+      "filename": "sort.bas",
+      "source_path": "basic/utilities/sort.bas",
+      "title": "Sort",
+      "description": "Sort text or data files.",
+      "year": "1980s",
+      "tags": ["sorting", "data", "utility"]
+    },
+    {
+      "filename": "search.bas",
+      "source_path": "basic/utilities/search.bas",
+      "title": "Search",
+      "description": "Search through files for text patterns.",
+      "year": "1980s",
+      "tags": ["search", "text", "utility"]
+    },
+    {
+      "filename": "uudecode.bas",
+      "source_path": "basic/utilities/uudecode.bas",
+      "title": "UU Decoder",
+      "description": "Decode uuencoded files (common format for transferring binary data in 1980s).",
+      "year": "1980s",
+      "tags": ["encoding", "decoder", "utility"]
+    },
+    {
+      "filename": "hex2data.bas",
+      "source_path": "basic/utilities/hex2data.bas",
+      "title": "Hex to Data",
+      "description": "Convert hexadecimal data to BASIC DATA statements.",
+      "year": "1980s",
+      "tags": ["hex", "conversion", "programming"]
+    },
+    {
+      "filename": "charfreq.bas",
+      "source_path": "basic/utilities/charfreq.bas",
+      "title": "Character Frequency",
+      "description": "Analyze character frequency in text files.",
+      "year": "1980s",
+      "tags": ["analysis", "text", "statistics"]
+    },
+    {
+      "filename": "fprime.bas",
+      "source_path": "basic/utilities/fprime.bas",
+      "title": "Prime Factorization",
+      "description": "Find prime factors of numbers.",
+      "year": "1980s",
+      "tags": ["math", "primes", "calculator"]
+    },
+    {
+      "filename": "million.bas",
+      "source_path": "basic/utilities/million.bas",
+      "title": "Million",
+      "description": "Calculate large number operations.",
+      "year": "1980s",
+      "tags": ["math", "calculator", "utility"]
+    }
+  ]
+}

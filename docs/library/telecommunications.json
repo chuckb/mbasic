@@ -1,0 +1,46 @@
+{
+  "title": "MBASIC Telecommunications Programs",
+  "description": "Modem programs, BBS utilities, and communication tools from the dial-up era",
+  "programs": [
+    {
+      "filename": "bmodem.bas",
+      "source_path": "basic/telecommunications/bmodem.bas",
+      "title": "BModem",
+      "description": "Modem communication program with file transfer protocols.",
+      "year": "1980s",
+      "tags": ["modem", "telecommunications", "file-transfer"]
+    },
+    {
+      "filename": "bmodem1.bas",
+      "source_path": "basic/telecommunications/bmodem1.bas",
+      "title": "BModem 1.0",
+      "description": "Early version of BModem communication program.",
+      "year": "1980s",
+      "tags": ["modem", "telecommunications", "file-transfer"]
+    },
+    {
+      "filename": "exitbbs1.bas",
+      "source_path": "basic/telecommunications/exitbbs1.bas",
+      "title": "BBS Exit Utility",
+      "description": "Utility for managing BBS (Bulletin Board System) exits.",
+      "year": "1980s",
+      "tags": ["bbs", "telecommunications", "utility"]
+    },
+    {
+      "filename": "dialog11.bas",
+      "source_path": "basic/telecommunications/dialog11.bas",
+      "title": "Dialog System",
+      "description": "Interactive dialog system for telecommunications.",
+      "year": "1980s",
+      "tags": ["telecommunications", "dialog", "interactive"]
+    },
+    {
+      "filename": "command.bas",
+      "source_path": "basic/telecommunications/command.bas",
+      "title": "Command Processor",
+      "description": "Command processor for modem or BBS systems.",
+      "year": "1980s",
+      "tags": ["telecommunications", "command", "utility"]
+    }
+  ]
+}
