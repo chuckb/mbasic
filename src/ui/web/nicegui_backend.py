@@ -290,6 +290,453 @@ class StackDialog(ui.dialog):
         self.open()
 
 
+class OpenFileDialog(ui.dialog):
+    """Reusable dialog for opening files."""
+
+    def __init__(self, backend):
+        super().__init__()
+        self.backend = backend
+
+    def show(self):
+        self.clear()
+        with self, ui.card().classes('w-96'):
+            ui.label('Open BASIC Program').classes('text-h6 mb-4')
+            ui.label('Select a .BAS or .TXT file to open:').classes('mb-2')
+            ui.upload(
+                on_upload=lambda e: self.backend._handle_file_upload(e, self),
+                auto_upload=True
+            ).classes('w-full').props('accept=".bas,.txt"')
+            with ui.row().classes('w-full justify-end mt-4'):
+                ui.button('Cancel', on_click=self.close).props('no-caps')
+        self.open()
+
+
+class SaveAsDialog(ui.dialog):
+    """Reusable dialog for Save As."""
+
+    def __init__(self, backend):
+        super().__init__()
+        self.backend = backend
+
+    def show(self):
+        self.clear()
+        with self, ui.card():
+            ui.label('Save As')
+            filename_input = ui.input(
+                'Filename:',
+                value=self.backend.current_file or 'program.bas',
+                placeholder='program.bas'
+            ).classes('w-full')
+
+            with ui.row():
+                ui.button('Save', on_click=lambda: self.backend._handle_save_as(filename_input.value, self)).props('no-caps')
+                ui.button('Cancel', on_click=self.close).props('no-caps')
+        self.open()
+
+
+class MergeFileDialog(ui.dialog):
+    """Reusable dialog for merging files."""
+
+    def __init__(self, backend):
+        super().__init__()
+        self.backend = backend
+
+    def show(self):
+        self.clear()
+        with self, ui.card().classes('w-[600px]'):
+            ui.label('Merge BASIC Program').classes('text-h6 mb-4')
+            ui.label('Select a .BAS or .TXT file to merge into current program:').classes('mb-2')
+            ui.label('Lines with same numbers will be replaced.').classes('text-sm text-gray-600 mb-2')
+            ui.upload(
+                on_upload=lambda e: self.backend._handle_merge_upload(e, self),
+                auto_upload=True
+            ).classes('w-full').props('accept=".bas,.txt"')
+            with ui.row().classes('w-full justify-end mt-4'):
+                ui.button('Cancel', on_click=self.close).props('no-caps')
+        self.open()
+
+
+class AboutDialog(ui.dialog):
+    """Reusable About dialog."""
+
+    def __init__(self, backend):
+        super().__init__()
+        self.backend = backend
+
+    def show(self):
+        self.clear()
+        with self, ui.card().classes('w-[400px]'):
+            ui.label('About MBASIC').classes('text-xl font-bold mb-4')
+            ui.label('MBASIC 5.21 Web IDE').classes('text-lg')
+            ui.label(f'{VERSION}').classes('text-md text-gray-600 mb-4')
+            ui.label('A modern implementation of Microsoft BASIC').classes('text-sm text-gray-600')
+            ui.label('Built with NiceGUI').classes('text-sm text-gray-600 mb-4')
+            ui.button('Close', on_click=self.close).classes('mt-4').props('no-caps')
+        self.open()
+
+
+class FindReplaceDialog(ui.dialog):
+    """Reusable Find & Replace dialog."""
+
+    def __init__(self, backend):
+        super().__init__()
+        self.backend = backend
+
+    def show(self):
+        """Show the find & replace dialog with proper cursor positioning."""
+        # If dialog already open, just bring it to front
+        if hasattr(self, '_is_open') and self._is_open:
+            self.open()
+            return
+
+        self.clear()
+
+        with self, ui.card().classes('w-[500px]'):
+            ui.label('Find & Replace').classes('text-lg font-bold')
+
+            find_input = ui.input(label='Find', placeholder='Text to find...').classes('w-full')
+            find_input.value = self.backend.last_find_text  # Restore last search
+            replace_input = ui.input(label='Replace with', placeholder='Replacement text...').classes('w-full')
+            case_sensitive = ui.checkbox('Case sensitive', value=self.backend.last_case_sensitive)
+
+            result_label = ui.label('').classes('text-sm text-gray-600')
+
+            def do_find():
+                """Find first occurrence from beginning."""
+                try:
+                    find_text = find_input.value
+                    if not find_text:
+                        result_label.text = 'Enter text to find'
+                        return
+
+                    # Reset position for new search
+                    self.backend.last_find_position = 0
+                    self.backend.last_find_text = find_text
+                    self.backend.last_case_sensitive = case_sensitive.value
+
+                    do_find_next()
+                except Exception as ex:
+                    result_label.text = f'Error: {ex}'
+
+            def do_find_next():
+                """Find next occurrence from current position."""
+                try:
+                    find_text = find_input.value
+                    if not find_text:
+                        result_label.text = 'Enter text to find'
+                        return
+
+                    # Update state
+                    self.backend.last_find_text = find_text
+                    self.backend.last_case_sensitive = case_sensitive.value
+
+                    editor_text = self.backend.editor.value
+
+                    # Search from current position
+                    if case_sensitive.value:
+                        index = editor_text.find(find_text, self.backend.last_find_position)
+                    else:
+                        index = editor_text.lower().find(find_text.lower(), self.backend.last_find_position)
+
+                    if index >= 0:
+                        # Move cursor to the match using JavaScript
+                        end_pos = index + len(find_text)
+                        ui.run_javascript(f'''
+                            const textarea = document.querySelector('[data-marker="editor"] textarea');
+                            if (textarea) {{
+                                textarea.focus();
+                                textarea.setSelectionRange({index}, {end_pos});
+                                textarea.scrollTop = Math.max(0, (textarea.scrollHeight * {index}) / textarea.value.length - 100);
+                            }}
+                        ''')
+
+                        # Update position for next search
+                        self.backend.last_find_position = index + 1
+                        result_label.text = f'Found at position {index}'
+                    else:
+                        # Wrap around or show not found
+                        if self.backend.last_find_position > 0:
+                            result_label.text = 'No more matches (wrapping to start)'
+                            self.backend.last_find_position = 0
+                        else:
+                            result_label.text = 'Not found'
+                except Exception as ex:
+                    result_label.text = f'Error: {ex}'
+                    log_web_error("do_find_next", ex)
+
+            def do_replace():
+                """Replace current selection and find next."""
+                try:
+                    find_text = find_input.value
+                    replace_text = replace_input.value
+
+                    if not find_text:
+                        result_label.text = 'Enter text to find'
+                        return
+
+                    editor_text = self.backend.editor.value
+                    # Find current occurrence (from last position - 1 to account for increment)
+                    search_pos = max(0, self.backend.last_find_position - 1)
+
+                    if case_sensitive.value:
+                        index = editor_text.find(find_text, search_pos)
+                    else:
+                        index = editor_text.lower().find(find_text.lower(), search_pos)
+
+                    if index >= 0:
+                        # Replace this occurrence
+                        new_text = editor_text[:index] + replace_text + editor_text[index + len(find_text):]
+                        self.backend.editor.value = new_text
+                        result_label.text = 'Replaced 1 occurrence'
+                        # Don't increment position - stay at same spot to see replacement
+                    else:
+                        result_label.text = 'Not found'
+                except Exception as ex:
+                    result_label.text = f'Error: {ex}'
+                    log_web_error("do_replace", ex)
+
+            def do_replace_all():
+                """Replace all occurrences."""
+                try:
+                    find_text = find_input.value
+                    replace_text = replace_input.value
+
+                    if not find_text:
+                        result_label.text = 'Enter text to find'
+                        return
+
+                    editor_text = self.backend.editor.value
+                    if case_sensitive.value:
+                        count = editor_text.count(find_text)
+                        new_text = editor_text.replace(find_text, replace_text)
+                    else:
+                        pattern = re.compile(re.escape(find_text), re.IGNORECASE)
+                        count = len(pattern.findall(editor_text))
+                        new_text = pattern.sub(replace_text, editor_text)
+
+                    self.backend.editor.value = new_text
+                    result_label.text = f'Replaced {count} occurrence(s)'
+                    self.backend._notify(f'Replaced {count} occurrence(s)', type='positive')
+
+                    # Reset search position
+                    self.backend.last_find_position = 0
+                except Exception as ex:
+                    result_label.text = f'Error: {ex}'
+                    log_web_error("do_replace_all", ex)
+
+            def on_close():
+                """Clear dialog reference when closed."""
+                self._is_open = False
+                self.close()
+
+            with ui.row().classes('gap-2'):
+                ui.button('Find', on_click=do_find).classes('bg-blue-500').tooltip('Find from beginning').props('no-caps')
+                ui.button('Find Next', on_click=do_find_next).classes('bg-blue-500').tooltip('Find next occurrence').props('no-caps')
+                ui.button('Replace', on_click=do_replace).classes('bg-green-500').props('no-caps')
+                ui.button('Replace All', on_click=do_replace_all).classes('bg-orange-500').props('no-caps')
+                ui.button('Close', on_click=on_close).props('no-caps')
+
+        self._is_open = True
+        self.open()
+
+
+class SmartInsertDialog(ui.dialog):
+    """Reusable Smart Insert dialog."""
+
+    def __init__(self, backend):
+        super().__init__()
+        self.backend = backend
+
+    def show(self):
+        """Show the smart insert dialog."""
+        # Get existing lines to calculate default
+        lines = self.backend.program.get_lines()
+        if not lines:
+            self.backend._notify('No program loaded', type='warning')
+            return
+
+        # Find first line number for default
+        line_numbers = [ln for ln, _ in lines]
+        first_line = min(line_numbers) if line_numbers else 10
+
+        self.clear()
+
+        with self, ui.card():
+            ui.label('Smart Insert').classes('text-lg font-bold')
+            ui.label('Insert a line between two existing line numbers').classes('text-sm text-gray-600')
+
+            after_input = ui.number(label='After Line', value=first_line, min=1, max=65529).classes('w-32')
+
+            def do_insert():
+                try:
+                    after_line = int(after_input.value)
+
+                    # Get existing lines
+                    lines = self.backend.program.get_lines()
+                    if not lines:
+                        self.backend._notify('No program loaded', type='warning')
+                        self.close()
+                        return
+
+                    # Find the line after the specified line
+                    line_numbers = [ln for ln, _ in lines]
+
+                    # Find next line number
+                    next_line = None
+                    for ln in sorted(line_numbers):
+                        if ln > after_line:
+                            next_line = ln
+                            break
+
+                    # Calculate midpoint
+                    if next_line:
+                        new_line_num = (after_line + next_line) // 2
+                        if new_line_num == after_line:
+                            new_line_num = after_line + 1
+                    else:
+                        # No line after, just add 10
+                        new_line_num = after_line + 10
+
+                    # Add to editor
+                    current_text = self.backend.editor.value
+                    if current_text:
+                        self.backend.editor.value = current_text + f'\n{new_line_num} '
+                    else:
+                        self.backend.editor.value = f'{new_line_num} '
+
+                    self.close()
+                    self.backend._notify(f'Inserted line {new_line_num}', type='positive')
+                    self.backend._set_status(f'Inserted line {new_line_num}')
+                except Exception as ex:
+                    self.backend._notify(f'Error: {ex}', type='negative')
+
+            with ui.row():
+                ui.button('Insert', on_click=do_insert).classes('bg-blue-500').props('no-caps')
+                ui.button('Cancel', on_click=self.close).props('no-caps')
+
+        self.open()
+
+
+class DeleteLinesDialog(ui.dialog):
+    """Reusable Delete Lines dialog."""
+
+    def __init__(self, backend):
+        super().__init__()
+        self.backend = backend
+
+    def show(self):
+        """Show the delete lines dialog."""
+        self.clear()
+
+        with self, ui.card():
+            ui.label('Delete Lines').classes('text-lg font-bold')
+
+            start_input = ui.number(label='From Line', value=10, min=1, max=65529).classes('w-32')
+            end_input = ui.number(label='To Line', value=100, min=1, max=65529).classes('w-32')
+
+            def do_delete():
+                try:
+                    start = int(start_input.value)
+                    end = int(end_input.value)
+
+                    if start > end:
+                        self.backend._notify('Start line must be <= end line', type='warning')
+                        return
+
+                    # Get existing lines
+                    lines = self.backend.program.get_lines()
+                    if not lines:
+                        self.backend._notify('No program to delete from', type='warning')
+                        self.close()
+                        return
+
+                    # Filter out lines in the range
+                    kept_lines = []
+                    deleted_count = 0
+                    for line_num, line_text in lines:
+                        if start <= line_num <= end:
+                            deleted_count += 1
+                        else:
+                            kept_lines.append(line_text)
+
+                    # Update editor
+                    self.backend.editor.value = '\n'.join(kept_lines)
+
+                    # Reload into program
+                    self.backend._save_editor_to_program()
+
+                    self.close()
+                    self.backend._notify(f'Deleted {deleted_count} line(s)', type='positive')
+                    self.backend._set_status(f'Deleted lines {start}-{end}')
+                except Exception as ex:
+                    self.backend._notify(f'Error: {ex}', type='negative')
+
+            with ui.row():
+                ui.button('Delete', on_click=do_delete).classes('bg-red-500').props('no-caps')
+                ui.button('Cancel', on_click=self.close).props('no-caps')
+
+        self.open()
+
+
+class RenumberDialog(ui.dialog):
+    """Reusable Renumber dialog."""
+
+    def __init__(self, backend):
+        super().__init__()
+        self.backend = backend
+
+    def show(self):
+        """Show the renumber dialog."""
+        self.clear()
+
+        with self, ui.card():
+            ui.label('Renumber Program').classes('text-lg font-bold')
+
+            start_input = ui.number(label='Start Line', value=10, min=1, max=65529).classes('w-32')
+            increment_input = ui.number(label='Increment', value=10, min=1, max=100).classes('w-32')
+
+            def do_renumber():
+                try:
+                    start = int(start_input.value)
+                    increment = int(increment_input.value)
+
+                    # Get existing lines
+                    lines = self.backend.program.get_lines()
+                    if not lines:
+                        self.backend._notify('No program to renumber', type='warning')
+                        self.close()
+                        return
+
+                    # Renumber lines
+                    renumbered = []
+                    new_line_num = start
+                    for old_line_num, old_line_text in lines:
+                        # Extract the statement part (after line number)
+                        match = re.match(r'^\d+\s*(.*)', old_line_text)
+                        if match:
+                            statement = match.group(1)
+                            renumbered.append(f'{new_line_num} {statement}')
+                            new_line_num += increment
+
+                    # Update editor
+                    self.backend.editor.value = '\n'.join(renumbered)
+
+                    # Reload into program
+                    self.backend._save_editor_to_program()
+
+                    self.close()
+                    self.backend._notify(f'Renumbered {len(renumbered)} lines', type='positive')
+                    self.backend._set_status('Program renumbered')
+                except Exception as ex:
+                    self.backend._notify(f'Error: {ex}', type='negative')
+
+            with ui.row():
+                ui.button('Renumber', on_click=do_renumber).classes('bg-blue-500').props('no-caps')
+                ui.button('Cancel', on_click=self.close).props('no-caps')
+
+        self.open()
+
+
 class NiceGUIBackend(UIBackend):
     """NiceGUI web UI backend.
 
@@ -361,7 +808,6 @@ class NiceGUIBackend(UIBackend):
         self.output_update_count = 0
 
         # Find/Replace state
-        self.find_dialog = None
         self.last_find_text = ''
         self.last_find_position = 0
         self.last_case_sensitive = False
@@ -382,6 +828,14 @@ class NiceGUIBackend(UIBackend):
         # Create reusable dialog instances (NiceGUI best practice: create once, reuse)
         self.variables_dialog = VariablesDialog(self)
         self.stack_dialog = StackDialog(self)
+        self.open_file_dialog = OpenFileDialog(self)
+        self.save_as_dialog = SaveAsDialog(self)
+        self.merge_file_dialog = MergeFileDialog(self)
+        self.about_dialog = AboutDialog(self)
+        self.find_replace_dialog = FindReplaceDialog(self)
+        self.smart_insert_dialog = SmartInsertDialog(self)
+        self.delete_lines_dialog = DeleteLinesDialog(self)
+        self.renumber_dialog = RenumberDialog(self)
 
         # Menu bar
         self._create_menu()
@@ -698,21 +1152,7 @@ class NiceGUIBackend(UIBackend):
 
     async def _menu_open(self):
         """File > Open - Load program from file."""
-        try:
-            # Create upload dialog
-            with ui.dialog() as dialog, ui.card().classes('w-96'):
-                ui.label('Open BASIC Program').classes('text-h6 mb-4')
-                ui.label('Select a .BAS or .TXT file to open:').classes('mb-2')
-                upload = ui.upload(
-                    on_upload=lambda e: self._handle_file_upload(e, dialog),
-                    auto_upload=True
-                ).classes('w-full').props('accept=".bas,.txt"')
-                with ui.row().classes('w-full justify-end mt-4'):
-                    ui.button('Cancel', on_click=dialog.close).props('no-caps')
-            dialog.open()
-        except Exception as e:
-            log_web_error("_menu_open", e)
-            self._notify(f'Error: {e}', type='negative')
+        self.open_file_dialog.show()
 
     def _handle_file_upload(self, e, dialog):
         """Handle file upload from Open dialog."""
@@ -769,23 +1209,7 @@ class NiceGUIBackend(UIBackend):
 
     async def _menu_save_as(self):
         """File > Save As - Save with new filename."""
-        try:
-            # Create save dialog
-            with ui.dialog() as dialog, ui.card():
-                ui.label('Save As')
-                filename_input = ui.input(
-                    'Filename:',
-                    value=self.current_file or 'program.bas',
-                    placeholder='program.bas'
-                ).classes('w-full')
-
-                with ui.row():
-                    ui.button('Save', on_click=lambda: self._handle_save_as(filename_input.value, dialog)).props('no-caps')
-                    ui.button('Cancel', on_click=dialog.close).props('no-caps')
-            dialog.open()
-        except Exception as e:
-            log_web_error("_menu_save_as", e)
-            self._notify(f'Error: {e}', type='negative')
+        self.save_as_dialog.show()
 
     def _handle_save_as(self, filename, dialog):
         """Handle Save As dialog."""
@@ -812,83 +1236,56 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_handle_save_as", e)
             self._notify(f'Error: {e}', type='negative')
 
+    def _handle_merge_upload(self, e, dialog):
+        """Handle file upload from Merge dialog."""
+        try:
+            # Read uploaded file content
+            content = e.content.read().decode('utf-8')
+
+            # Parse the file to extract lines
+            merge_lines = content.strip().split('\n')
+
+            # Get current editor content
+            current_text = self.editor.value
+            current_lines = current_text.strip().split('\n') if current_text else []
+
+            # Combine lines
+            all_lines = current_lines + merge_lines
+
+            # Parse line numbers and sort
+            numbered_lines = []
+            for line in all_lines:
+                match = re.match(r'^(\d+)\s+(.*)', line.strip())
+                if match:
+                    line_num = int(match.group(1))
+                    statement = match.group(2)
+                    numbered_lines.append((line_num, statement))
+
+            # Sort by line number
+            numbered_lines.sort(key=lambda x: x[0])
+
+            # Rebuild editor text
+            merged_text = '\n'.join(f'{num} {stmt}' for num, stmt in numbered_lines)
+            self.editor.value = merged_text
+
+            # Reload into program
+            self._save_editor_to_program()
+
+            dialog.close()
+            self._notify(f'Merged {len(merge_lines)} lines from {e.name}', type='positive')
+            self._set_status(f'Merged {len(merge_lines)} lines')
+
+        except Exception as ex:
+            log_web_error("_handle_merge_upload", ex)
+            self._notify(f'Error merging file: {ex}', type='negative')
+
     async def _menu_exit(self):
         """File > Exit - Quit application."""
         app.shutdown()
 
     async def _menu_merge(self):
         """File > Merge - Merge another BASIC file into current program."""
-        try:
-            # Create merge dialog
-            with ui.dialog() as dialog, ui.card().classes('w-[600px]'):
-                ui.label('Merge File').classes('text-lg font-bold')
-                ui.label('Upload a BASIC file to merge with the current program').classes('text-sm text-gray-600')
-
-                # File upload area
-                file_content = {'data': None}
-
-                def handle_upload(e):
-                    """Handle file upload."""
-                    try:
-                        # Read uploaded file content
-                        content = e.content.read().decode('utf-8')
-                        file_content['data'] = content
-                        upload_label.text = f'Uploaded: {e.name}'
-                    except Exception as ex:
-                        self._notify(f'Error reading file: {ex}', type='negative')
-
-                ui.upload(on_upload=handle_upload, auto_upload=True).classes('w-full')
-                upload_label = ui.label('No file selected').classes('text-sm text-gray-500')
-
-                def do_merge():
-                    try:
-                        if not file_content['data']:
-                            self._notify('Please select a file to merge', type='warning')
-                            return
-
-                        # Parse the file to extract lines
-                        merge_lines = file_content['data'].strip().split('\n')
-
-                        # Get current editor content
-                        current_text = self.editor.value
-                        current_lines = current_text.strip().split('\n') if current_text else []
-
-                        # Combine lines
-                        all_lines = current_lines + merge_lines
-
-                        # Parse line numbers and sort
-                        numbered_lines = []
-                        for line in all_lines:
-                            match = re.match(r'^(\d+)\s+(.*)', line.strip())
-                            if match:
-                                line_num = int(match.group(1))
-                                statement = match.group(2)
-                                numbered_lines.append((line_num, statement))
-
-                        # Sort by line number
-                        numbered_lines.sort(key=lambda x: x[0])
-
-                        # Rebuild editor text
-                        merged_text = '\n'.join(f'{num} {stmt}' for num, stmt in numbered_lines)
-                        self.editor.value = merged_text
-
-                        # Reload into program
-                        self._save_editor_to_program()
-
-                        dialog.close()
-                        self._notify(f'Merged {len(merge_lines)} lines', type='positive')
-                        self._set_status(f'Merged {len(merge_lines)} lines')
-                    except Exception as ex:
-                        self._notify(f'Error merging: {ex}', type='negative')
-
-                with ui.row():
-                    ui.button('Merge', on_click=do_merge, icon='merge_type').props('color=primary no-caps')
-                    ui.button('Cancel', on_click=dialog.close).props('no-caps')
-
-            dialog.open()
-        except Exception as e:
-            log_web_error("_menu_merge", e)
-            self._notify(f'Error: {e}', type='negative')
+        self.merge_file_dialog.show()
 
     async def _menu_run(self):
         """Run > Run Program - Execute program."""
@@ -1227,351 +1624,19 @@ class NiceGUIBackend(UIBackend):
 
     async def _menu_find_replace(self):
         """Find and replace text in the program with proper cursor positioning."""
-        try:
-            # If dialog already exists and is open, just bring it to front
-            if self.find_dialog:
-                self.find_dialog.open()
-                return
-
-            # Create new dialog
-            with ui.dialog() as dialog, ui.card().classes('w-[500px]'):
-                ui.label('Find & Replace').classes('text-lg font-bold')
-
-                find_input = ui.input(label='Find', placeholder='Text to find...').classes('w-full')
-                find_input.value = self.last_find_text  # Restore last search
-                replace_input = ui.input(label='Replace with', placeholder='Replacement text...').classes('w-full')
-                case_sensitive = ui.checkbox('Case sensitive', value=self.last_case_sensitive)
-
-                result_label = ui.label('').classes('text-sm text-gray-600')
-
-                def do_find():
-                    """Find first occurrence from beginning."""
-                    try:
-                        find_text = find_input.value
-                        if not find_text:
-                            result_label.text = 'Enter text to find'
-                            return
-
-                        # Reset position for new search
-                        self.last_find_position = 0
-                        self.last_find_text = find_text
-                        self.last_case_sensitive = case_sensitive.value
-
-                        do_find_next()
-                    except Exception as ex:
-                        result_label.text = f'Error: {ex}'
-
-                def do_find_next():
-                    """Find next occurrence from current position."""
-                    try:
-                        find_text = find_input.value
-                        if not find_text:
-                            result_label.text = 'Enter text to find'
-                            return
-
-                        # Update state
-                        self.last_find_text = find_text
-                        self.last_case_sensitive = case_sensitive.value
-
-                        editor_text = self.editor.value
-
-                        # Search from current position
-                        if case_sensitive.value:
-                            index = editor_text.find(find_text, self.last_find_position)
-                        else:
-                            index = editor_text.lower().find(find_text.lower(), self.last_find_position)
-
-                        if index >= 0:
-                            # Move cursor to the match using JavaScript
-                            end_pos = index + len(find_text)
-                            ui.run_javascript(f'''
-                                const textarea = document.querySelector('[data-marker="editor"] textarea');
-                                if (textarea) {{
-                                    textarea.focus();
-                                    textarea.setSelectionRange({index}, {end_pos});
-                                    textarea.scrollTop = Math.max(0, (textarea.scrollHeight * {index}) / textarea.value.length - 100);
-                                }}
-                            ''')
-
-                            # Update position for next search
-                            self.last_find_position = index + 1
-                            result_label.text = f'Found at position {index}'
-                        else:
-                            # Wrap around or show not found
-                            if self.last_find_position > 0:
-                                result_label.text = 'No more matches (wrapping to start)'
-                                self.last_find_position = 0
-                            else:
-                                result_label.text = 'Not found'
-                    except Exception as ex:
-                        result_label.text = f'Error: {ex}'
-                        log_web_error("do_find_next", ex)
-
-                def do_replace():
-                    """Replace current selection and find next."""
-                    try:
-                        find_text = find_input.value
-                        replace_text = replace_input.value
-
-                        if not find_text:
-                            result_label.text = 'Enter text to find'
-                            return
-
-                        editor_text = self.editor.value
-                        # Find current occurrence (from last position - 1 to account for increment)
-                        search_pos = max(0, self.last_find_position - 1)
-
-                        if case_sensitive.value:
-                            index = editor_text.find(find_text, search_pos)
-                        else:
-                            index = editor_text.lower().find(find_text.lower(), search_pos)
-
-                        if index >= 0:
-                            # Replace this occurrence
-                            new_text = editor_text[:index] + replace_text + editor_text[index + len(find_text):]
-                            self.editor.value = new_text
-                            result_label.text = 'Replaced 1 occurrence'
-                            # Don't increment position - stay at same spot to see replacement
-                        else:
-                            result_label.text = 'Not found'
-                    except Exception as ex:
-                        result_label.text = f'Error: {ex}'
-                        log_web_error("do_replace", ex)
-
-                def do_replace_all():
-                    """Replace all occurrences."""
-                    try:
-                        find_text = find_input.value
-                        replace_text = replace_input.value
-
-                        if not find_text:
-                            result_label.text = 'Enter text to find'
-                            return
-
-                        editor_text = self.editor.value
-                        if case_sensitive.value:
-                            count = editor_text.count(find_text)
-                            new_text = editor_text.replace(find_text, replace_text)
-                        else:
-                            import re
-                            pattern = re.compile(re.escape(find_text), re.IGNORECASE)
-                            count = len(pattern.findall(editor_text))
-                            new_text = pattern.sub(replace_text, editor_text)
-
-                        self.editor.value = new_text
-                        result_label.text = f'Replaced {count} occurrence(s)'
-                        self._notify(f'Replaced {count} occurrence(s)', type='positive')
-
-                        # Reset search position
-                        self.last_find_position = 0
-                    except Exception as ex:
-                        result_label.text = f'Error: {ex}'
-                        log_web_error("do_replace_all", ex)
-
-                def on_close():
-                    """Clear dialog reference when closed."""
-                    self.find_dialog = None
-                    dialog.close()
-
-                with ui.row().classes('gap-2'):
-                    ui.button('Find', on_click=do_find).classes('bg-blue-500').tooltip('Find from beginning').props('no-caps')
-                    ui.button('Find Next', on_click=do_find_next).classes('bg-blue-500').tooltip('Find next occurrence').props('no-caps')
-                    ui.button('Replace', on_click=do_replace).classes('bg-green-500').props('no-caps')
-                    ui.button('Replace All', on_click=do_replace_all).classes('bg-orange-500').props('no-caps')
-                    ui.button('Close', on_click=on_close).props('no-caps')
-
-            # Store dialog reference
-            self.find_dialog = dialog
-            dialog.open()
-
-        except Exception as e:
-            log_web_error("_menu_find_replace", e)
-            self._notify(f'Error: {e}', type='negative')
+        self.find_replace_dialog.show()
 
     async def _menu_smart_insert(self):
         """Insert a line number between two existing lines."""
-        try:
-            # Get existing lines to calculate default
-            lines = self.program.get_lines()
-            if not lines:
-                self._notify('No program loaded', type='warning')
-                return
-
-            # Find first line number for default
-            line_numbers = [ln for ln, _ in lines]
-            first_line = min(line_numbers) if line_numbers else 10
-
-            # Show dialog
-            with ui.dialog() as dialog, ui.card():
-                ui.label('Smart Insert').classes('text-lg font-bold')
-                ui.label('Insert a line between two existing line numbers').classes('text-sm text-gray-600')
-
-                after_input = ui.number(label='After Line', value=first_line, min=1, max=65529).classes('w-32')
-
-                def do_insert():
-                    try:
-                        after_line = int(after_input.value)
-
-                        # Get existing lines
-                        lines = self.program.get_lines()
-                        if not lines:
-                            self._notify('No program loaded', type='warning')
-                            dialog.close()
-                            return
-
-                        # Find the line after the specified line
-                        line_numbers = [ln for ln, _ in lines]
-
-                        # Find next line number
-                        next_line = None
-                        for ln in sorted(line_numbers):
-                            if ln > after_line:
-                                next_line = ln
-                                break
-
-                        # Calculate midpoint
-                        if next_line:
-                            new_line_num = (after_line + next_line) // 2
-                            if new_line_num == after_line:
-                                new_line_num = after_line + 1
-                        else:
-                            # No line after, just add 10
-                            new_line_num = after_line + 10
-
-                        # Add to editor
-                        current_text = self.editor.value
-                        if current_text:
-                            self.editor.value = current_text + f'\n{new_line_num} '
-                        else:
-                            self.editor.value = f'{new_line_num} '
-
-                        dialog.close()
-                        self._notify(f'Inserted line {new_line_num}', type='positive')
-                        self._set_status(f'Inserted line {new_line_num}')
-                    except Exception as ex:
-                        self._notify(f'Error: {ex}', type='negative')
-
-                with ui.row():
-                    ui.button('Insert', on_click=do_insert).classes('bg-blue-500').props('no-caps')
-                    ui.button('Cancel', on_click=dialog.close).props('no-caps')
-
-            dialog.open()
-
-        except Exception as e:
-            log_web_error("_menu_smart_insert", e)
-            self._notify(f'Error: {e}', type='negative')
+        self.smart_insert_dialog.show()
 
     async def _menu_delete_lines(self):
         """Delete a range of line numbers from the program."""
-        try:
-            # Show dialog for line range
-            with ui.dialog() as dialog, ui.card():
-                ui.label('Delete Lines').classes('text-lg font-bold')
-
-                start_input = ui.number(label='From Line', value=10, min=1, max=65529).classes('w-32')
-                end_input = ui.number(label='To Line', value=100, min=1, max=65529).classes('w-32')
-
-                def do_delete():
-                    try:
-                        start = int(start_input.value)
-                        end = int(end_input.value)
-
-                        if start > end:
-                            self._notify('Start line must be <= end line', type='warning')
-                            return
-
-                        # Get existing lines
-                        lines = self.program.get_lines()
-                        if not lines:
-                            self._notify('No program to delete from', type='warning')
-                            dialog.close()
-                            return
-
-                        # Filter out lines in the range
-                        kept_lines = []
-                        deleted_count = 0
-                        for line_num, line_text in lines:
-                            if start <= line_num <= end:
-                                deleted_count += 1
-                            else:
-                                kept_lines.append(line_text)
-
-                        # Update editor
-                        self.editor.value = '\n'.join(kept_lines)
-
-                        # Reload into program
-                        self._save_editor_to_program()
-
-                        dialog.close()
-                        self._notify(f'Deleted {deleted_count} line(s)', type='positive')
-                        self._set_status(f'Deleted lines {start}-{end}')
-                    except Exception as ex:
-                        self._notify(f'Error: {ex}', type='negative')
-
-                with ui.row():
-                    ui.button('Delete', on_click=do_delete).classes('bg-red-500').props('no-caps')
-                    ui.button('Cancel', on_click=dialog.close).props('no-caps')
-
-            dialog.open()
-
-        except Exception as e:
-            log_web_error("_menu_delete_lines", e)
-            self._notify(f'Error: {e}', type='negative')
+        self.delete_lines_dialog.show()
 
     async def _menu_renumber(self):
         """Renumber program lines with new start and increment."""
-        try:
-            # Show dialog for renumber parameters
-            with ui.dialog() as dialog, ui.card():
-                ui.label('Renumber Program').classes('text-lg font-bold')
-
-                start_input = ui.number(label='Start Line', value=10, min=1, max=65529).classes('w-32')
-                increment_input = ui.number(label='Increment', value=10, min=1, max=100).classes('w-32')
-
-                def do_renumber():
-                    try:
-                        start = int(start_input.value)
-                        increment = int(increment_input.value)
-
-                        # Get existing lines
-                        lines = self.program.get_lines()
-                        if not lines:
-                            self._notify('No program to renumber', type='warning')
-                            dialog.close()
-                            return
-
-                        # Renumber lines
-                        renumbered = []
-                        new_line_num = start
-                        for old_line_num, old_line_text in lines:
-                            # Extract the statement part (after line number)
-                            match = re.match(r'^\d+\s*(.*)', old_line_text)
-                            if match:
-                                statement = match.group(1)
-                                renumbered.append(f'{new_line_num} {statement}')
-                                new_line_num += increment
-
-                        # Update editor
-                        self.editor.value = '\n'.join(renumbered)
-
-                        # Reload into program
-                        self._save_editor_to_program()
-
-                        dialog.close()
-                        self._notify(f'Renumbered {len(renumbered)} lines', type='positive')
-                        self._set_status('Program renumbered')
-                    except Exception as ex:
-                        self._notify(f'Error: {ex}', type='negative')
-
-                with ui.row():
-                    ui.button('Renumber', on_click=do_renumber).classes('bg-blue-500').props('no-caps')
-                    ui.button('Cancel', on_click=dialog.close).props('no-caps')
-
-            dialog.open()
-
-        except Exception as e:
-            log_web_error("_menu_renumber", e)
-            self._notify(f'Error: {e}', type='negative')
+        self.renumber_dialog.show()
 
     def _show_variables_window(self):
         """Show Variables window using reusable dialog."""
@@ -1632,27 +1697,7 @@ class NiceGUIBackend(UIBackend):
 
     def _menu_about(self):
         """Help > About."""
-        try:
-            import sys
-            sys.stderr.write("DEBUG: _menu_about called\n")
-            sys.stderr.flush()
-
-            with ui.dialog() as dialog, ui.card().classes('w-[400px]'):
-                ui.label('About MBASIC').classes('text-xl font-bold mb-4')
-                ui.label('MBASIC 5.21 Web IDE').classes('text-lg')
-                ui.label(f'{VERSION}').classes('text-md text-gray-600 mb-4')
-                ui.label('A modern implementation of Microsoft BASIC').classes('text-sm text-gray-600')
-                ui.label('Built with NiceGUI').classes('text-sm text-gray-600 mb-4')
-                ui.button('Close', on_click=dialog.close).classes('mt-4').props('no-caps')
-
-            sys.stderr.write("DEBUG: About dialog created, calling dialog.open()\n")
-            sys.stderr.flush()
-            dialog.open()
-            sys.stderr.write("DEBUG: dialog.open() completed\n")
-            sys.stderr.flush()
-        except Exception as e:
-            log_web_error("_menu_about", e)
-            self._notify(f'MBASIC 5.21 Web IDE - {VERSION}\nBuilt with NiceGUI', type='info')
+        self.about_dialog.show()
 
     def _start_auto_save(self):
         """Start auto-save timer."""
