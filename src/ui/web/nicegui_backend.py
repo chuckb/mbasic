@@ -761,7 +761,16 @@ class NiceGUIBackend(UIBackend):
             self.running = False
 
     def _execute_tick(self):
-        """Execute one tick of the interpreter."""
+        """Execute one tick of the interpreter.
+
+        Note on Ctrl+C handling:
+        This method is called every 10ms by ui.timer(). During long-running programs,
+        this can make Ctrl+C unresponsive because Python signal handlers only run
+        between bytecode instructions, and the event loop stays busy.
+
+        The KeyboardInterrupt handling is done at the top level in mbasic.py,
+        which wraps start_web_ui() in a try/except.
+        """
         # Don't check self.running - it seems to not persist correctly in NiceGUI callbacks
         # Just check if we have an interpreter
         if not self.interpreter:
@@ -2180,11 +2189,17 @@ def start_web_ui():
     - UI elements naturally isolated per client
     """
     # Setup signal handlers for clean shutdown
+    # Note: NiceGUI overrides signal handlers, so we need to hook into its shutdown
+    original_sigint = signal.signal(signal.SIGINT, signal.SIG_DFL)
+
     def signal_handler(signum, frame):
         """Handle SIGINT (Ctrl+C) and SIGTERM for clean shutdown."""
-        sys.stderr.write("\n\nShutting down web server...\n")
+        sys.stderr.write("\n\nReceived interrupt signal - shutting down web server...\n")
         sys.stderr.flush()
-        app.shutdown()
+        try:
+            app.shutdown()
+        except:
+            pass  # Ignore errors during shutdown
         sys.exit(0)
 
     signal.signal(signal.SIGINT, signal_handler)
