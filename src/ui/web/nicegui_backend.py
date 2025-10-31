@@ -137,21 +137,29 @@ class VariablesDialog(ui.dialog):
             self.backend._notify('No variables defined yet', type='info')
             return
 
+        # Sort by most recently accessed (reverse chronological order)
+        # This matches Tk UI default: accessed=True, reverse=True
+        variables_sorted = sorted(variables,
+                                 key=lambda v: v.get('last_accessed', 0),
+                                 reverse=True)
+
         # Build dialog content
         with self, ui.card().classes('w-[800px]'):
             ui.label('Program Variables').classes('text-xl font-bold')
+            ui.label('Double-click a variable to edit its value').classes('text-sm text-gray-500 mb-2')
+
             # Add search/filter box
             filter_input = ui.input(placeholder='Filter variables...').classes('w-full mb-2')
 
-            # Create table
+            # Create table with sortable columns
             columns = [
-                {'name': 'name', 'label': 'Name', 'field': 'name', 'align': 'left'},
-                {'name': 'type', 'label': 'Type', 'field': 'type', 'align': 'left'},
-                {'name': 'value', 'label': 'Value', 'field': 'value', 'align': 'left'},
+                {'name': 'name', 'label': 'Name', 'field': 'name', 'align': 'left', 'sortable': True},
+                {'name': 'type', 'label': 'Type', 'field': 'type', 'align': 'left', 'sortable': True},
+                {'name': 'value', 'label': 'Value', 'field': 'value', 'align': 'left', 'sortable': True},
             ]
 
             rows = []
-            for var_info in variables:
+            for var_info in variables_sorted:
                 var_name = var_info['name'] + var_info['type_suffix']
                 suffix = var_info['type_suffix']
                 if suffix == '$':
@@ -184,53 +192,84 @@ class VariablesDialog(ui.dialog):
                     '_var_info': var_info  # Store full info for editing
                 })
 
-            table = ui.table(columns=columns, rows=rows).classes('w-full')
+            table = ui.table(columns=columns, rows=rows, row_key='name').classes('w-full')
+
+            # Connect filter to table
+            filter_input.bind_value(table, 'filter')
 
             # Handle variable editing (only for non-arrays)
             def edit_variable(e):
-                row_index = e.args['rowIndex']
-                var_info = rows[row_index]['_var_info']
+                # e.args is the event arguments from NiceGUI table
+                # For rowClick, the clicked row data is in e.args (which is a dict-like object)
+                try:
+                    # Get the row data from the event
+                    if hasattr(e.args, 'get'):
+                        # e.args is a dict-like object
+                        var_name = e.args.get('name')
+                    elif isinstance(e.args, list) and len(e.args) > 0:
+                        # e.args might be a list with row data
+                        var_name = e.args[0].get('name') if isinstance(e.args[0], dict) else None
+                    else:
+                        self.backend._notify('Could not identify clicked variable', type='warning')
+                        return
 
-                if var_info['is_array']:
-                    self.backend._notify('Cannot edit array variables', type='warning')
-                    return
+                    if not var_name:
+                        return
 
-                current_value = var_info['value']
-                var_name = var_info['name'] + var_info['type_suffix']
-                suffix = var_info['type_suffix']
+                    # Find the variable info
+                    var_info = None
+                    for row in rows:
+                        if row['name'] == var_name:
+                            var_info = row['_var_info']
+                            break
 
-                # Prompt for new value
-                with ui.dialog() as edit_dialog, ui.card():
-                    ui.label(f'Edit {var_name}').classes('text-lg font-bold')
-                    value_input = ui.input('New value', value=str(current_value)).classes('w-full')
+                    if not var_info:
+                        return
 
-                    def save_edit():
-                        try:
-                            new_val = value_input.value
-                            if suffix == '$':
-                                self.backend.runtime.set_variable(var_name, new_val, line=-1, position=0)
-                            elif suffix == '%':
-                                self.backend.runtime.set_variable(var_name, int(new_val), line=-1, position=0)
-                            elif suffix == '#':
-                                self.backend.runtime.set_variable(var_name, float(new_val), line=-1, position=0)
-                            elif suffix == '!':
-                                self.backend.runtime.set_variable(var_name, float(new_val), line=-1, position=0)
-                            else:
-                                self.backend.runtime.set_variable(var_name, float(new_val), line=-1, position=0)
-                            edit_dialog.close()
-                            # Refresh the variables dialog
-                            self.close()
-                            self.show()
-                        except Exception as e:
-                            self.backend._notify(f'Error setting variable: {e}', type='negative')
+                    if var_info['is_array']:
+                        self.backend._notify('Cannot edit array variables', type='warning')
+                        return
 
-                    with ui.row():
-                        ui.button('Save', on_click=save_edit).classes('bg-blue-500').props('no-caps')
-                        ui.button('Cancel', on_click=edit_dialog.close).props('no-caps')
+                    current_value = var_info['value']
+                    suffix = var_info['type_suffix']
 
-                edit_dialog.open()
+                    # Prompt for new value
+                    with ui.dialog() as edit_dialog, ui.card():
+                        ui.label(f'Edit {var_name}').classes('text-lg font-bold')
+                        value_input = ui.input('New value', value=str(current_value)).classes('w-full')
 
-            table.on('rowClick', edit_variable)
+                        def save_edit():
+                            try:
+                                new_val = value_input.value
+                                if suffix == '$':
+                                    self.backend.runtime.set_variable(var_name, new_val, line=-1, position=0)
+                                elif suffix == '%':
+                                    self.backend.runtime.set_variable(var_name, int(new_val), line=-1, position=0)
+                                elif suffix in ('#', '!'):
+                                    self.backend.runtime.set_variable(var_name, float(new_val), line=-1, position=0)
+                                else:
+                                    self.backend.runtime.set_variable(var_name, float(new_val), line=-1, position=0)
+                                edit_dialog.close()
+                                # Refresh the variables dialog
+                                self.close()
+                                self.show()
+                            except Exception as e:
+                                self.backend._notify(f'Error setting variable: {e}', type='negative')
+
+                        with ui.row():
+                            ui.button('Save', on_click=save_edit).classes('bg-blue-500').props('no-caps')
+                            ui.button('Cancel', on_click=edit_dialog.close).props('no-caps')
+
+                    edit_dialog.open()
+
+                except Exception as ex:
+                    import sys
+                    sys.stderr.write(f"Error in edit_variable: {ex}\n")
+                    sys.stderr.write(f"e.args type: {type(e.args)}, value: {e.args}\n")
+                    sys.stderr.flush()
+                    self.backend._notify(f'Error: {ex}', type='negative')
+
+            table.on('rowDblclick', edit_variable)
 
             ui.button('Close', on_click=self.close).classes('mt-4').props('no-caps')
 
@@ -267,7 +306,7 @@ class StackDialog(ui.dialog):
             return
 
         # Build dialog content
-        with self, ui.card().classes('w-[600px]'):
+        with self, ui.card().classes('w-[700px]'):
             ui.label('Execution Stack').classes('text-xl font-bold')
             ui.label(f'{len(stack)} entries').classes('text-sm text-gray-600 mb-2')
 
@@ -275,14 +314,41 @@ class StackDialog(ui.dialog):
                 with ui.row().classes('w-full p-2 bg-gray-100 rounded mb-1'):
                     ui.label(f'#{i+1}:').classes('font-bold w-12')
                     entry_type = entry.get('type', 'UNKNOWN')
-                    if 'return_pc' in entry:
+
+                    # Format details based on entry type (matching Tk UI)
+                    if entry_type == 'GOSUB':
+                        from_line = entry.get('from_line', '?')
+                        details = f"GOSUB from line {from_line}"
+                    elif entry_type == 'FOR':
+                        # Show FOR loop details: var = current TO end STEP step
+                        var = entry.get('var', '?')
+                        current = entry.get('current', 0)
+                        end = entry.get('end', 0)
+                        step = entry.get('step', 1)
+
+                        # Format numbers naturally - show integers without decimals
+                        current_str = str(int(current)) if isinstance(current, (int, float)) and current == int(current) else str(current)
+                        end_str = str(int(end)) if isinstance(end, (int, float)) and end == int(end) else str(end)
+                        step_str = str(int(step)) if isinstance(step, (int, float)) and step == int(step) else str(step)
+
+                        # Only show STEP if it's not the default value of 1
+                        if step == 1:
+                            details = f"FOR {var} = {current_str} TO {end_str}"
+                        else:
+                            details = f"FOR {var} = {current_str} TO {end_str} STEP {step_str}"
+                    elif entry_type == 'WHILE':
+                        line = entry.get('line', '?')
+                        details = f"WHILE at line {line}"
+                    elif 'return_pc' in entry:
                         pc = entry['return_pc']
-                        ui.label(f'{entry_type} (return to line {pc.line_num})').classes('font-mono')
+                        details = f"{entry_type} (return to line {pc.line_num})"
                     elif 'pc' in entry:
                         pc = entry['pc']
-                        ui.label(f'{entry_type} (at line {pc.line_num})').classes('font-mono')
+                        details = f"{entry_type} (at line {pc.line_num})"
                     else:
-                        ui.label(f'{entry_type}').classes('font-mono')
+                        details = entry_type
+
+                    ui.label(details).classes('font-mono')
 
             ui.button('Close', on_click=self.close).classes('mt-4').props('no-caps')
 
