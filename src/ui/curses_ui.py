@@ -2304,8 +2304,8 @@ class CursesBackend(UIBackend):
         # Get help root directory
         help_root = Path(__file__).parent.parent.parent / "docs" / "help"
 
-        # Create help widget - open table of contents
-        help_widget = HelpWidget(str(help_root), "ui/curses/index.md")
+        # Create help widget - open main help index
+        help_widget = HelpWidget(str(help_root), "index.md")
 
         # Create overlay
         overlay = urwid.Overlay(

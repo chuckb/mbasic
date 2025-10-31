@@ -21,7 +21,7 @@ from .help_macros import HelpMacros
 class TkHelpBrowser(tk.Toplevel):
     """Tkinter window for browsing help documentation."""
 
-    def __init__(self, parent, help_root: str, initial_topic: str = "ui/tk/index.md"):
+    def __init__(self, parent, help_root: str, initial_topic: str = "index.md"):
         """
         Initialize help browser window.
 
@@ -363,10 +363,10 @@ class TkHelpBrowser(tk.Toplevel):
 
     def _go_home(self):
         """Go to help home page."""
-        if self.current_topic != "ui/tk/index.md":
+        if self.current_topic != "index.md":
             self.history.append(self.current_topic)
             self.back_button.config(state=tk.NORMAL)
-            self._load_topic("ui/tk/index.md")
+            self._load_topic("index.md")
 
     def _execute_search(self):
         """Execute search and display results."""

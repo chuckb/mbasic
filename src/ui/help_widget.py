@@ -20,7 +20,7 @@ from .help_macros import HelpMacros
 class HelpWidget(urwid.WidgetWrap):
     """Urwid widget for browsing help documentation."""
 
-    def __init__(self, help_root: str, initial_topic: str = "ui/curses/index.md"):
+    def __init__(self, help_root: str, initial_topic: str = "index.md"):
         """
         Initialize help browser widget.
 
