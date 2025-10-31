@@ -2216,22 +2216,35 @@ def start_web_ui():
     - No shared state between clients
     - UI elements naturally isolated per client
     """
-    # Setup signal handlers for clean shutdown
-    # Note: NiceGUI overrides signal handlers, so we need to hook into its shutdown
-    original_sigint = signal.signal(signal.SIGINT, signal.SIG_DFL)
+    # Setup signal handler that works with asyncio event loop
+    # NiceGUI runs uvicorn which uses asyncio, so we need to handle signals in the loop
+    def setup_signal_handlers():
+        """Setup signal handlers in the asyncio event loop."""
+        import asyncio
+        loop = asyncio.get_event_loop()
 
-    def signal_handler(signum, frame):
-        """Handle SIGINT (Ctrl+C) and SIGTERM for clean shutdown."""
-        sys.stderr.write("\n\nReceived interrupt signal - shutting down web server...\n")
-        sys.stderr.flush()
-        try:
-            app.shutdown()
-        except:
-            pass  # Ignore errors during shutdown
-        sys.exit(0)
+        def signal_handler(sig):
+            sys.stderr.write(f"\n\nReceived signal {sig} - shutting down web server...\n")
+            sys.stderr.flush()
+            # Schedule shutdown in the event loop
+            loop.call_soon_threadsafe(lambda: asyncio.create_task(shutdown_server()))
 
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
+        async def shutdown_server():
+            """Async shutdown of the server."""
+            try:
+                app.shutdown()
+            except:
+                pass
+            # Force exit after brief delay
+            await asyncio.sleep(0.1)
+            sys.exit(0)
+
+        # Add signal handlers to the event loop
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            loop.add_signal_handler(sig, lambda s=sig: signal_handler(s))
+
+    # Register the setup function to run after server starts
+    app.on_startup(setup_signal_handlers)
 
     # Log version to debug output
     sys.stderr.write(f"\n{'='*70}\n")
