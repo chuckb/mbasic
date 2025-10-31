@@ -106,6 +106,190 @@ class SimpleWebIOHandler(IOHandler):
         return (24, 80)
 
 
+class VariablesDialog(ui.dialog):
+    """Reusable dialog for showing program variables."""
+
+    def __init__(self, backend):
+        """Initialize the variables dialog.
+
+        Args:
+            backend: NiceGUIBackend instance for accessing runtime
+        """
+        super().__init__()
+        self.backend = backend
+
+    def show(self):
+        """Show the variables dialog with current variables."""
+        if not self.backend.runtime:
+            self.backend._notify('No program running', type='warning')
+            return
+
+        # Clear any previous content
+        self.clear()
+
+        # Update resource usage
+        self.backend._update_resource_usage()
+
+        # Get all variables from runtime
+        variables = self.backend.runtime.get_all_variables()
+
+        if not variables:
+            self.backend._notify('No variables defined yet', type='info')
+            return
+
+        # Build dialog content
+        with self, ui.card().classes('w-[800px]'):
+            ui.label('Program Variables').classes('text-xl font-bold')
+            # Add search/filter box
+            filter_input = ui.input(placeholder='Filter variables...').classes('w-full mb-2')
+
+            # Create table
+            columns = [
+                {'name': 'name', 'label': 'Name', 'field': 'name', 'align': 'left'},
+                {'name': 'type', 'label': 'Type', 'field': 'type', 'align': 'left'},
+                {'name': 'value', 'label': 'Value', 'field': 'value', 'align': 'left'},
+            ]
+
+            rows = []
+            for var_info in variables:
+                var_name = var_info['name'] + var_info['type_suffix']
+                suffix = var_info['type_suffix']
+                if suffix == '$':
+                    var_type = 'String'
+                elif suffix == '%':
+                    var_type = 'Integer'
+                elif suffix == '#':
+                    var_type = 'Double'
+                elif suffix == '!':
+                    var_type = 'Single'
+                else:
+                    var_type = 'Single'  # Default
+
+                if var_info['is_array']:
+                    var_type += ' Array'
+                    dims = var_info.get('dimensions', [])
+                    dims_str = ','.join(str(d) for d in dims)
+                    value_display = f'Array({dims_str})'
+                else:
+                    value = var_info['value']
+                    if suffix == '!':
+                        value_display = f'{value:.7g}'  # Show 23 not 23.0
+                    else:
+                        value_display = str(value)
+
+                rows.append({
+                    'name': var_name,
+                    'type': var_type,
+                    'value': value_display,
+                    '_var_info': var_info  # Store full info for editing
+                })
+
+            table = ui.table(columns=columns, rows=rows).classes('w-full')
+
+            # Handle variable editing (only for non-arrays)
+            def edit_variable(e):
+                row_index = e.args['rowIndex']
+                var_info = rows[row_index]['_var_info']
+
+                if var_info['is_array']:
+                    self.backend._notify('Cannot edit array variables', type='warning')
+                    return
+
+                current_value = var_info['value']
+                var_name = var_info['name'] + var_info['type_suffix']
+                suffix = var_info['type_suffix']
+
+                # Prompt for new value
+                with ui.dialog() as edit_dialog, ui.card():
+                    ui.label(f'Edit {var_name}').classes('text-lg font-bold')
+                    value_input = ui.input('New value', value=str(current_value)).classes('w-full')
+
+                    def save_edit():
+                        try:
+                            new_val = value_input.value
+                            if suffix == '$':
+                                self.backend.runtime.set_variable(var_name, new_val, line=-1, position=0)
+                            elif suffix == '%':
+                                self.backend.runtime.set_variable(var_name, int(new_val), line=-1, position=0)
+                            elif suffix == '#':
+                                self.backend.runtime.set_variable(var_name, float(new_val), line=-1, position=0)
+                            elif suffix == '!':
+                                self.backend.runtime.set_variable(var_name, float(new_val), line=-1, position=0)
+                            else:
+                                self.backend.runtime.set_variable(var_name, float(new_val), line=-1, position=0)
+                            edit_dialog.close()
+                            # Refresh the variables dialog
+                            self.close()
+                            self.show()
+                        except Exception as e:
+                            self.backend._notify(f'Error setting variable: {e}', type='negative')
+
+                    with ui.row():
+                        ui.button('Save', on_click=save_edit).classes('bg-blue-500').props('no-caps')
+                        ui.button('Cancel', on_click=edit_dialog.close).props('no-caps')
+
+                edit_dialog.open()
+
+            table.on('rowClick', edit_variable)
+
+            ui.button('Close', on_click=self.close).classes('mt-4').props('no-caps')
+
+        # Open the dialog
+        self.open()
+
+
+class StackDialog(ui.dialog):
+    """Reusable dialog for showing execution stack."""
+
+    def __init__(self, backend):
+        """Initialize the stack dialog.
+
+        Args:
+            backend: NiceGUIBackend instance for accessing runtime
+        """
+        super().__init__()
+        self.backend = backend
+
+    def show(self):
+        """Show the stack dialog with current execution stack."""
+        if not self.backend.runtime:
+            self.backend._notify('No program running', type='warning')
+            return
+
+        # Clear any previous content
+        self.clear()
+
+        # Get execution stack from runtime
+        stack = self.backend.runtime.get_execution_stack()
+
+        if not stack:
+            self.backend._notify('Stack is empty', type='info')
+            return
+
+        # Build dialog content
+        with self, ui.card().classes('w-[600px]'):
+            ui.label('Execution Stack').classes('text-xl font-bold')
+            ui.label(f'{len(stack)} entries').classes('text-sm text-gray-600 mb-2')
+
+            for i, entry in enumerate(reversed(stack)):
+                with ui.row().classes('w-full p-2 bg-gray-100 rounded mb-1'):
+                    ui.label(f'#{i+1}:').classes('font-bold w-12')
+                    entry_type = entry.get('type', 'UNKNOWN')
+                    if 'return_pc' in entry:
+                        pc = entry['return_pc']
+                        ui.label(f'{entry_type} (return to line {pc.line_num})').classes('font-mono')
+                    elif 'pc' in entry:
+                        pc = entry['pc']
+                        ui.label(f'{entry_type} (at line {pc.line_num})').classes('font-mono')
+                    else:
+                        ui.label(f'{entry_type}').classes('font-mono')
+
+            ui.button('Close', on_click=self.close).classes('mt-4').props('no-caps')
+
+        # Open the dialog
+        self.open()
+
+
 class NiceGUIBackend(UIBackend):
     """NiceGUI web UI backend.
 
@@ -194,6 +378,10 @@ class NiceGUIBackend(UIBackend):
         """
         # Set page title
         ui.page_title('MBASIC 5.21 - Web IDE')
+
+        # Create reusable dialog instances (NiceGUI best practice: create once, reuse)
+        self.variables_dialog = VariablesDialog(self)
+        self.stack_dialog = StackDialog(self)
 
         # Menu bar
         self._create_menu()
@@ -1386,185 +1574,12 @@ class NiceGUIBackend(UIBackend):
             self._notify(f'Error: {e}', type='negative')
 
     def _show_variables_window(self):
-        """Show Variables window."""
-        try:
-            if not self.runtime:
-                self._notify('No program running', type='warning')
-                return
-
-            # Update resource usage
-            self._update_resource_usage()
-
-            # Get all variables from runtime using the correct method
-            # Returns a list of dicts with structured variable info
-            variables = self.runtime.get_all_variables()
-
-            if not variables:
-                self._notify('No variables defined yet', type='info')
-                return
-
-            # Create dialog with variables table
-            with ui.dialog() as dialog, ui.card().classes('w-[800px]'):
-                ui.label('Program Variables').classes('text-xl font-bold')
-                # Add search/filter box
-                filter_input = ui.input(placeholder='Filter variables...').classes('w-full mb-2')
-
-                # Create table
-                columns = [
-                    {'name': 'name', 'label': 'Name', 'field': 'name', 'align': 'left'},
-                    {'name': 'type', 'label': 'Type', 'field': 'type', 'align': 'left'},
-                    {'name': 'value', 'label': 'Value', 'field': 'value', 'align': 'left'},
-                ]
-
-                rows = []
-                for var_info in variables:
-                    # var_info is a dict with: name, type_suffix, is_array, value, etc.
-                    var_name = var_info['name'] + var_info['type_suffix']
-
-                    # Determine type from suffix
-                    suffix = var_info['type_suffix']
-                    if suffix == '$':
-                        var_type = 'String'
-                    elif suffix == '%':
-                        var_type = 'Integer'
-                    elif suffix == '!':
-                        var_type = 'Single'
-                    elif suffix == '#':
-                        var_type = 'Double'
-                    else:
-                        var_type = 'Unknown'
-
-                    # Format value
-                    if var_info['is_array']:
-                        dims = 'x'.join(str(d) for d in var_info['dimensions'])
-                        value_str = f'Array({dims})'
-                        var_type = f'{var_type} Array'
-                    else:
-                        value = var_info['value']
-                        value_str = str(value)
-                        if len(value_str) > 50:
-                            value_str = value_str[:47] + '...'
-
-                    rows.append({
-                        'name': var_name,
-                        'type': var_type,
-                        'value': value_str
-                    })
-
-                # Create table with filter binding and edit capability
-                table = ui.table(columns=columns, rows=rows, row_key='name').classes('w-full')
-
-                # Connect filter to table
-                filter_input.bind_value(table, 'filter')
-
-                # Add double-click handler for editing values (scalars only)
-                def edit_variable(e):
-                    """Handle double-click to edit variable value."""
-                    if e.args and 'row' in e.args:
-                        var_name = e.args['row']['name']
-
-                        # Find this variable in the list
-                        var_info = None
-                        for v in variables:
-                            if v['name'] + v['type_suffix'] == var_name:
-                                var_info = v
-                                break
-
-                        if not var_info:
-                            return
-
-                        # Can't edit arrays
-                        if var_info['is_array']:
-                            self._notify('Cannot edit array variables', type='warning')
-                            return
-
-                        current_value = var_info['value']
-
-                        # Prompt for new value
-                        with ui.dialog() as edit_dialog, ui.card():
-                            ui.label(f'Edit Variable: {var_name}').classes('text-lg font-bold')
-                            new_value_input = ui.input(
-                                label='New Value',
-                                value=str(current_value)
-                            ).classes('w-64')
-
-                            def save_edit():
-                                try:
-                                    # Update variable in runtime using set_variable
-                                    new_val = new_value_input.value
-                                    # Convert based on type suffix
-                                    suffix = var_info['type_suffix']
-                                    if suffix == '$':
-                                        # String - use as is
-                                        self.runtime.set_variable(var_name, new_val, line=-1, position=0)
-                                    elif suffix == '%':
-                                        # Integer
-                                        self.runtime.set_variable(var_name, int(new_val), line=-1, position=0)
-                                    elif suffix in ('!', '#'):
-                                        # Float/Double
-                                        self.runtime.set_variable(var_name, float(new_val), line=-1, position=0)
-
-                                    edit_dialog.close()
-                                    dialog.close()
-                                    self._notify(f'Variable {var_name} updated', type='positive')
-                                except Exception as ex:
-                                    self._notify(f'Error: {ex}', type='negative')
-
-                            with ui.row():
-                                ui.button('Save', on_click=save_edit).classes('bg-blue-500').props('no-caps')
-                                ui.button('Cancel', on_click=edit_dialog.close).props('no-caps')
-
-                        edit_dialog.open()
-
-                table.on('rowClick', edit_variable)
-
-                ui.button('Close', on_click=dialog.close).classes('mt-4').props('no-caps')
-            dialog.open()
-
-        except Exception as e:
-            log_web_error("_show_variables_window", e)
-            self._notify(f'Error: {e}', type='negative')
+        """Show Variables window using reusable dialog."""
+        self.variables_dialog.show()
 
     def _show_stack_window(self):
-        """Show Execution Stack window."""
-        try:
-            if not self.runtime:
-                self._notify('No program running', type='warning')
-                return
-
-            # Get execution stack from runtime using the correct method
-            stack = self.runtime.get_execution_stack()
-
-            if not stack:
-                self._notify('Stack is empty', type='info')
-                return
-
-            # Create dialog with stack display
-            with ui.dialog() as dialog, ui.card().classes('w-[600px]'):
-                ui.label('Execution Stack').classes('text-xl font-bold')
-
-                # Show stack entries (each entry is a dict with 'type', 'return_pc', etc.)
-                ui.label(f'{len(stack)} entries').classes('text-sm text-gray-600 mb-2')
-                for i, entry in enumerate(reversed(stack)):
-                    with ui.row().classes('w-full p-2 bg-gray-100 rounded mb-1'):
-                        ui.label(f'#{i+1}:').classes('font-bold w-12')
-                        # Display entry type and location
-                        entry_type = entry.get('type', 'UNKNOWN')
-                        if 'return_pc' in entry:
-                            pc = entry['return_pc']
-                            ui.label(f'{entry_type} (return to line {pc.line_num})').classes('font-mono')
-                        elif 'pc' in entry:
-                            pc = entry['pc']
-                            ui.label(f'{entry_type} (at line {pc.line_num})').classes('font-mono')
-                        else:
-                            ui.label(f'{entry_type}').classes('font-mono')
-
-                ui.button('Close', on_click=dialog.close).classes('mt-4').props('no-caps')
-            dialog.open()
-
-        except Exception as e:
-            log_web_error("_show_stack_window", e)
-            self._notify(f'Error: {e}', type='negative')
+        """Show Execution Stack window using reusable dialog."""
+        self.stack_dialog.show()
 
     def _menu_help(self):
         """Help > Help Topics - Opens in web browser."""
@@ -2226,18 +2241,13 @@ def start_web_ui():
         def signal_handler(sig):
             sys.stderr.write(f"\n\nReceived signal {sig} - shutting down web server...\n")
             sys.stderr.flush()
-            # Schedule shutdown in the event loop
-            loop.call_soon_threadsafe(lambda: asyncio.create_task(shutdown_server()))
-
-        async def shutdown_server():
-            """Async shutdown of the server."""
-            try:
-                app.shutdown()
-            except:
-                pass
-            # Force exit after brief delay
-            await asyncio.sleep(0.1)
-            sys.exit(0)
+            # Stop all running timers and tasks
+            for client_id in list(client_states.keys()):
+                state = client_states[client_id]
+                if state.get('exec_timer'):
+                    state['exec_timer'].cancel()
+            # Stop the event loop
+            loop.stop()
 
         # Add signal handlers to the event loop
         for sig in (signal.SIGINT, signal.SIGTERM):
