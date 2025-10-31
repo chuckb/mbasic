@@ -1,13 +1,7 @@
 ---
 category: file-management
 description: To change the name of a disk file
-keywords:
-- command
-- error
-- file
-- for
-- name
-- statement
+keywords: ['command', 'error', 'file', 'for', 'name', 'statement']
 syntax: NAME <old filename> AS <new filename>
 title: NAME
 type: statement
@@ -42,5 +36,7 @@ Ok
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [KILL](kill.md) - To delete a file from disk
+- [LOAD](load.md) - To load a file from disk into memory
+- [MERGE](merge.md) - To merge a specified disk file into the      program currently in memory
+- [SAVE](save.md) - To save a program file on disk

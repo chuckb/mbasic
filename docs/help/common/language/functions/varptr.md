@@ -1,12 +1,7 @@
 ---
 category: system
 description: Returns the memory address of a variable
-keywords:
-- varptr
-- variable
-- pointer
-- address
-- memory
+keywords: ['varptr', 'variable', 'pointer', 'address', 'memory']
 syntax: VARPTR(variable)
 title: VARPTR
 type: function
@@ -61,8 +56,17 @@ The address returned is an integer in the range -32768 to 32767. If negative, ad
 ```
 
 ## See Also
-
-- [CALL](../statements/call.md) - Call machine language subroutine (not implemented)
-- [USR](usr.md) - Call user machine code routine (not implemented)
-- [PEEK](peek.md) - Read byte from memory (compatibility implementation)
-- [POKE](../statements/poke.md) - Write byte to memory (not implemented)
+- [FRE](fre.md) - Arguments to FRE are dummy arguments
+- [HELP SET](../statements/helpsetting.md) - Display help for a specific setting
+- [INKEY$](inkey_dollar.md) - Returns either a one-character string cont~ining a character read from the terminal or a null string if no character is pending at the terminal
+- [INP](inp.md) - Returns the byte read from port I
+- [LIMITS](../statements/limits.md) - Display resource usage and interpreter limits
+- [NULL](../statements/null.md) - To set the number of nulls to be printed at   the end of each line
+- [PEEK](peek.md) - Returns the byte (decimal integer in the range 0 to 255) read from memory location I
+- [RANDOMIZE](../statements/randomize.md) - To reseed the random number generator
+- [REM](../statements/rem.md) - To allow explanatory remarks to be inserted in a program
+- [SET (setting)](../statements/setsetting.md) - Configure interpreter settings at runtime
+- [SHOW SETTINGS](../statements/showsettings.md) - Display current interpreter settings
+- [TRON/TROFF](../statements/tron-troff.md) - To trace the execution of program statements
+- [USR](usr.md) - Calls the user's assembly language subroutine with the argument X
+- [WIDTH](../statements/width.md) - To set the printed line width in number        of characters for the terminal or line printer

@@ -1,17 +1,7 @@
 ---
 category: arrays
 description: To eliminate arrays from a program
-keywords:
-- array
-- command
-- dim
-- erase
-- error
-- for
-- if
-- program
-- statement
-- variable
+keywords: ['array', 'command', 'dim', 'erase', 'error', 'for', 'if', 'program', 'statement', 'variable']
 syntax: .       ERASE <list of array variables>
 title: ERASE
 type: statement
@@ -43,5 +33,5 @@ Arrays may be redimensioned after they are ERASEd, or the previously allocated a
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [DIM](dim.md) - Declare array dimensions and allocate memory for array variables
+- [OPTION BASE](option-base.md) - To declare      the     minimum   value   for   array subscripts

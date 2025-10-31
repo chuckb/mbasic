@@ -1,16 +1,9 @@
 ---
 category: string
 description: Return the leftmost N characters from a string
-keywords:
-- left
-- substring
-- extract
-- string
-- leftmost
-- prefix
-- first
-syntax: "LEFT$(string, length)"
-related: [right_dollar, mid_dollar, len]
+keywords: ['left', 'substring', 'extract', 'string', 'leftmost', 'prefix', 'first']
+syntax: LEFT$(string, length)
+related: ['right_dollar', 'mid_dollar', 'len']
 title: LEFT$
 type: function
 ---
@@ -39,5 +32,18 @@ Returns a string comprised of the leftmost I characters of X$. I must be in the 
 ```
 
 ## See Also
-
-*Related functions will be linked here*
+- [ASC](asc.md) - Returns a numerical value that is the ASCII code of the first character of the string X$
+- [CHR$](chr_dollar.md) - Returns a one-character string whose ASCII code is the specified value
+- [HEX$](hex_dollar.md) - Returns a string which represents the hexadecimal value of the decimal argument
+- [INSTR](instr.md) - Searches for the first occurrence of string Y$ in X$ and returns the position at which the match is found
+- [LEN](len.md) - Returns the number of characters in X$
+- [MID$](mid_dollar.md) - Extract a substring from the middle of a string
+- [MID$](../statements/mid_dollar.md) - To replace a portion of one string with    another string
+- [MID$ Assignment](../statements/mid-assignment.md) - Replace characters within a string variable
+- [OCT$](oct_dollar.md) - Returns a string which represents the octal value of the decimal argument
+- [RIGHT$](right_dollar.md) - Return the rightmost N characters from a string
+- [SPACE$](space_dollar.md) - Returns a string of I spaces
+- [SPC](spc.md) - Prints I blanks on the terminal
+- [STR$](str_dollar.md) - Convert a number to its string representation
+- [STRING$](string_dollar.md) - Returns a string of length I whose characters all have ASCII code J or the first character of X$
+- [VAL](val.md) - Returns the numerical value of string X$

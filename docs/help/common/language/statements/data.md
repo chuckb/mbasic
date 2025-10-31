@@ -1,18 +1,7 @@
 ---
 category: data
-description: To store the numeric and string constants that are accessed by the program~s
-  READ statement(s)
-keywords:
-- command
-- data
-- for
-- if
-- line
-- number
-- program
-- read
-- statement
-- string
+description: To store the numeric and string constants that are accessed by the program~s READ statement(s)
+keywords: ['command', 'data', 'for', 'if', 'line', 'number', 'program', 'read', 'statement', 'string']
 syntax: DATA <list of constants>
 title: DATA
 type: statement
@@ -41,5 +30,5 @@ See examples in Section 2.54, READ.
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [READ](read.md) - To read values from a DATA statement and assign them to variables
+- [RESTORE](restore.md) - Resets the DATA pointer to the beginning or a specified line

@@ -1,14 +1,7 @@
 ---
 category: hardware
 description: To send a byte to a machine output port
-keywords:
-- command
-- data
-- for
-- number
-- out
-- put
-- statement
+keywords: ['command', 'data', 'for', 'number', 'out', 'put', 'statement']
 syntax: OUT I,J
 title: OUT
 type: statement
@@ -51,5 +44,6 @@ The integer expression I is the port number, and the integer expression J is the
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [CALL](call.md) - To call an assembly language subroutine
+- [POKE](poke.md) - To write a byte into a memory location
+- [WAIT](wait.md) - To suspend program execution while      monitoring the status of a machine input port

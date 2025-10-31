@@ -1,17 +1,7 @@
 ---
 category: file-management
 description: To load a file from disk into memory
-keywords:
-- close
-- command
-- data
-- file
-- for
-- if
-- line
-- load
-- open
-- program
+keywords: ['close', 'command', 'data', 'file', 'for', 'if', 'line', 'load', 'open', 'program']
 syntax: LOAD <filename>[,R]
 title: LOAD
 type: statement
@@ -42,5 +32,7 @@ LOAD nSTRTRKn,R
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [KILL](kill.md) - To delete a file from disk
+- [MERGE](merge.md) - To merge a specified disk file into the      program currently in memory
+- [NAME](name.md) - To change the name of a disk file
+- [SAVE](save.md) - To save a program file on disk

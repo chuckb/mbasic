@@ -1,18 +1,11 @@
 ---
 category: error-handling
 description: Continue program execution after error recovery
-keywords:
-- error
-- error handling
-- on error
-- resume
-- resume next
-- erl
-- err
-syntax: |
-  RESUME
-  RESUME NEXT
-  RESUME <line number>
+keywords: ['error', 'error handling', 'on error', 'resume', 'resume next', 'erl', 'err']
+syntax: "RESUME
+RESUME NEXT
+RESUME <line number>
+"
 title: RESUME
 type: statement
 ---
@@ -251,7 +244,5 @@ Verified behavior against real MBASIC 5.21:
 - ✅ "RESUME without error" when used outside error handler
 
 ## See Also
-
-- [ON ERROR GOTO](on-error-goto.md) - Set up error handler
-- [ERR and ERL Variables](err-erl-variables.md) - Error information
-- [ERROR](error.md) - Simulate errors for testing
+- [ERROR](error.md) - 1) To simulate the occurrence of a BASIC-80 error1   or 2) to allow error codes to be defined by the user
+- [ON ERROR GOTO](on-error-goto.md) - To enable error trapping and specify the   first line of the error handling subroutine

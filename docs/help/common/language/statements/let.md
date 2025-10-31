@@ -1,12 +1,8 @@
 ---
 category: variables
 description: To assign     the   value   of   an   expression   to   a variable
-keywords:
-- command
-- let
-- statement
-- variable
-syntax: '[LET] <variable>=<expression>'
+keywords: ['command', 'let', 'statement', 'variable']
+syntax: [LET] <variable>=<expression>
 title: LET
 type: statement
 ---
@@ -42,5 +38,4 @@ Notice the word LET is optional, i.e., the equal sign is sufficient when assigni
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [SWAP](swap.md) - To exchange the values of two variables

@@ -1,14 +1,7 @@
 ---
 category: mathematical
 description: Returns the arctangent of X in radians
-keywords:
-- atn
-- for
-- function
-- input
-- print
-- put
-- return
+keywords: ['atn', 'for', 'function', 'input', 'print', 'put', 'return']
 syntax: ATN(X)
 title: ATN
 type: function
@@ -40,5 +33,14 @@ Returns the arctangent of X in radians. Result is in the range -pi/2 to pi/2. Th
 ```
 
 ## See Also
-
-*Related functions will be linked here*
+- [ABS](abs.md) - Return the absolute value of a number (removes negative sign)
+- [COS](cos.md) - Returns the cosine of X in radians
+- [EXP](exp.md) - Returns e to the power of X
+- [FIX](fix.md) - Returns the truncated integer part of X
+- [INT](int.md) - Return the largest integer less than or equal to a number (floor function)
+- [LOG](log.md) - Returns the natural logarithm of X
+- [RND](rnd.md) - Returns a random number between 0 and 1
+- [SGN](sgn.md) - NEEDS_DESCRIPTION
+- [SIN](sin.md) - Returns the sine of X in radians
+- [SQR](sqr.md) - Returns the square root of X
+- [TAN](tan.md) - Returns the tangent of X in radians

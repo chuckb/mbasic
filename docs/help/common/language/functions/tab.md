@@ -1,16 +1,7 @@
 ---
 category: NEEDS_CATEGORIZATION
 description: Spaces to position I on the terminal
-keywords:
-- data
-- function
-- if
-- line
-- next
-- print
-- read
-- statement
-- tab
+keywords: ['data', 'function', 'if', 'line', 'next', 'print', 'read', 'statement', 'tab']
 syntax: TAB (I)
 title: TAB
 type: function
@@ -42,5 +33,15 @@ Spaces to position I on the terminal. If the current print position is already b
 ```
 
 ## See Also
-
-*Related functions will be linked here*
+- [CLOAD THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](../statements/cload.md) - To load a program or an array from cassette tape into memory
+- [COBL](cobl.md) - Converts X to a double precision number
+- [CRR$](crr_dollar.md) - Returns a string whose one element has ASCII code I
+- [CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](../statements/csave.md) - To save the program or an       array   currently     in memory on cassette tape
+- [CVI, CVS, CVD](cvi-cvs-cvd.md) - Convert string values to numeric values
+- [DEFINT/SNG/DBL/STR](../statements/defint-sng-dbl-str.md) - To declare variable types as integer,        single precision, double precision, or string
+- [ERR AND ERL VARIABLES](../statements/err-erl-variables.md) - NEEDS_DESCRIPTION
+- [INPUT#](../statements/input_hash.md) - To read data items from a sequential disk    file and assign them to program variables
+- [LINE INPUT](../statements/line-input.md) - To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters
+- [LPRINT AND LPRINT USING](../statements/lprint-lprint-using.md) - To print data at the line printer
+- [MKI$, MKS$, MKD$](mki_dollar-mks_dollar-mkd_dollar.md) - Convert numeric values to string values
+- [SPACES](spaces.md) - Returns a string of spaces of length X

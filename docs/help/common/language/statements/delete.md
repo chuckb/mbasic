@@ -1,17 +1,7 @@
 ---
 category: editing
 description: To delete program lines
-keywords:
-- command
-- delete
-- error
-- execute
-- function
-- if
-- line
-- number
-- program
-- return
+keywords: ['command', 'delete', 'error', 'execute', 'function', 'if', 'line', 'number', 'program', 'return']
 syntax: DELETE[<line number>] [-<line number>]
 title: DELETE
 type: statement
@@ -44,5 +34,8 @@ DELETE 40         Deletes line 40
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [AUTO](auto.md) - To generate a line number   automatically     after every carriage return
+- [EDIT](edit.md) - To enter Edit Mode at the specified line
+- [LIST](list.md) - To list all or part of the program currently            in memory at the terminal
+- [LLIST](llist.md) - To list all or part of the program currently     in memory at the line printer
+- [RENUM](renum.md) - Renumber program lines and update line references

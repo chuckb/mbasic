@@ -77,6 +77,13 @@
 
 ### Documentation Tools
 
+- **`regenerate_see_also_sections.py`** - Auto-generate "See Also" sections in help docs
+  - Reads category metadata from all function/statement docs
+  - Generates cross-references based on categories
+  - Removes "not yet documented" placeholders
+  - Run after adding new functions/statements or changing categories
+  - Ensures 100% documentation cross-referencing
+
 - **`build_help_indexes.py`** - Build help system search indexes
   - Run after modifying docs/help/
 

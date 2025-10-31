@@ -1,16 +1,11 @@
 ---
 category: data
 description: Resets the DATA pointer to the beginning or a specified line
-keywords:
-- restore
-- data
-- read
-- reset
-- pointer
-syntax: "RESTORE [line number]"
+keywords: ['restore', 'data', 'read', 'reset', 'pointer']
+syntax: RESTORE [line number]
 title: RESTORE
 type: statement
-related: [read, data]
+related: ['read', 'data']
 ---
 
 # RESTORE
@@ -70,6 +65,5 @@ Ok
 - "Out of DATA" error occurs if READ is executed when no more DATA is available
 
 ## See Also
-
-- [READ](read.md) - Read values from DATA statements
-- [DATA](data.md) - Define data values
+- [DATA](data.md) - To store the numeric and string constants that are accessed by the program~s READ statement(s)
+- [READ](read.md) - To read values from a DATA statement and assign them to variables

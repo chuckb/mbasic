@@ -1,13 +1,7 @@
 ---
 category: display
 description: Clears the screen and moves the cursor to the home position
-keywords:
-- cls
-- clear
-- screen
-- display
-- terminal
-- home
+keywords: ['cls', 'clear', 'screen', 'display', 'terminal', 'home']
 syntax: CLS
 title: CLS
 type: statement
@@ -49,8 +43,3 @@ Ok
 110 PRINT "1. Start"
 120 PRINT "2. Exit"
 ```
-
-## See Also
-
-- PRINT - Display text on screen
-- LOCATE - Position cursor (not yet documented)

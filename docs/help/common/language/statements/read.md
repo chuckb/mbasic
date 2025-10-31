@@ -1,17 +1,7 @@
 ---
 category: data
 description: To read values from a DATA statement and assign them to variables
-keywords:
-- array
-- command
-- data
-- error
-- for
-- if
-- line
-- next
-- number
-- print
+keywords: ['array', 'command', 'data', 'error', 'for', 'if', 'line', 'next', 'number', 'print']
 syntax: READ <list of variables>
 title: READ
 type: statement
@@ -31,7 +21,6 @@ To read values from a DATA statement and assign them to variables.  (See DATA, S
 
 ## Remarks
 
-
 ## See Also
-
-*Related statements will be linked here*
+- [DATA](data.md) - To store the numeric and string constants that are accessed by the program~s READ statement(s)
+- [RESTORE](restore.md) - Resets the DATA pointer to the beginning or a specified line

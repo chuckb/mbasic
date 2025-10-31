@@ -1,18 +1,7 @@
 ---
 category: control-flow
-description: To branch to one of several specified line numbers, depending on the
-  value returned when an expression is evaluated
-keywords:
-- branch
-- command
-- error
-- for
-- function
-- gosub
-- goto
-- if
-- line
-- next
+description: To branch to one of several specified line numbers, depending on the value returned when an expression is evaluated
+keywords: ['branch', 'command', 'error', 'for', 'function', 'gosub', 'goto', 'if', 'line', 'next']
 syntax: ON <expression> GOTO <list of line numbers>
 title: ON ••• GOSUB AND ON ••• GOTO
 type: statement
@@ -44,5 +33,8 @@ The value of <expression> determines which line number in the list will be used 
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [FOR ••• NEXT](for-next.md) - Execute statements repeatedly with a loop counter
+- [GOSUB •.. RETURN](gosub-return.md) - Branch to and return from a subroutine
+- [GOTO](goto.md) - Branch unconditionally to a specified line number
+- [IF ••• THEN[ ••• ELSE] AND IF ••• GOTO](if-then-else-if-goto.md) - Make decisions and control program flow based on conditional expressions
+- [WHILE ••• WEND](while-wend.md) - Execute statements in a loop while a condition is true

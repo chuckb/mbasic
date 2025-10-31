@@ -1,16 +1,7 @@
 ---
 category: arrays
 description: To declare      the     minimum   value   for   array subscripts
-keywords:
-- array
-- base
-- command
-- execute
-- for
-- if
-- option
-- statement
-- the
+keywords: ['array', 'base', 'command', 'execute', 'for', 'if', 'option', 'statement', 'the']
 syntax: OPTION BASE n
 title: OPTION BASE
 type: statement
@@ -27,7 +18,6 @@ where n is 1 or 0
 
 ## Purpose
 
-
 ## See Also
-
-*Related statements will be linked here*
+- [DIM](dim.md) - Declare array dimensions and allocate memory for array variables
+- [ERASE](erase.md) - To eliminate arrays from a program

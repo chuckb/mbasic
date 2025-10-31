@@ -1,12 +1,7 @@
 ---
 category: functions
 description: Define and name a user-defined function
-keywords:
-- def
-- function
-- user function
-- def fn
-- define
+keywords: ['def', 'function', 'user function', 'def fn', 'define']
 syntax: DEF FN<name>[(<parameter list>)]=<function definition>
 title: DEF FN
 type: statement
@@ -265,9 +260,3 @@ With A=20: FNX(5) = 25
 **Error:** "Type mismatch"
 
 **Fix:** Match argument types or remove type suffix
-
-## See Also
-
-- [Functions Overview](../functions/index.md) - List of all built-in functions
-- [LET](let.md) - Assign values to variables
-- [GOSUB...RETURN](gosub-return.md) - Call subroutines

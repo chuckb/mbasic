@@ -1,15 +1,7 @@
 ---
 category: variables
 description: To exchange the values of two variables
-keywords:
-- command
-- error
-- for
-- print
-- statement
-- string
-- swap
-- variable
+keywords: ['command', 'error', 'for', 'print', 'statement', 'string', 'swap', 'variable']
 syntax: SWAP <variab1e>,<variab1e>
 title: SWAP
 type: statement
@@ -49,5 +41,4 @@ LIST
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [LET](let.md) - To assign     the   value   of   an   expression   to   a variable

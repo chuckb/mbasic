@@ -1,16 +1,7 @@
 ---
 category: file-management
 description: To save a program file on disk
-keywords:
-- command
-- file
-- for
-- if
-- program
-- read
-- save
-- statement
-- string
+keywords: ['command', 'file', 'for', 'if', 'program', 'read', 'save', 'statement', 'string']
 syntax: SAVE <filename> [,A   I ,P]
 title: SAVE
 type: statement
@@ -43,5 +34,7 @@ SAVE nCOM2 n ,A
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [KILL](kill.md) - To delete a file from disk
+- [LOAD](load.md) - To load a file from disk into memory
+- [MERGE](merge.md) - To merge a specified disk file into the      program currently in memory
+- [NAME](name.md) - To change the name of a disk file

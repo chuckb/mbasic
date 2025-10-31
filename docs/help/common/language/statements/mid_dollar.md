@@ -1,16 +1,7 @@
 ---
 category: strings
 description: To replace a portion of one string with    another string
-keywords:
-- command
-- function
-- if
-- mid
-- number
-- print
-- return
-- statement
-- string
+keywords: ['command', 'function', 'if', 'mid', 'number', 'print', 'return', 'statement', 'string']
 syntax: MID$«string expl>,n[,m])=<string exp2>
 title: MID$
 type: statement
@@ -46,7 +37,3 @@ The characters in <string expl>, beginning at position n, are replaced by the ch
               MID$ is also a function that returns a substring
               of a given string. See Section 3.24.
 ```
-
-## See Also
-
-*Related statements will be linked here*

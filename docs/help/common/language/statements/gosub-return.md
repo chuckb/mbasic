@@ -1,17 +1,10 @@
 ---
 category: control-flow
 description: Branch to and return from a subroutine
-keywords:
-- gosub
-- return
-- subroutine
-- call
-- branch
-- nested
-- stack
-aliases: [gosub-return]
-syntax: "GOSUB line_number ... RETURN"
-related: [goto, on-gosub, for-next]
+keywords: ['gosub', 'return', 'subroutine', 'call', 'branch', 'nested', 'stack']
+aliases: ['gosub-return']
+syntax: GOSUB line_number ... RETURN
+related: ['goto', 'on-gosub', 'for-next']
 title: GOSUB •.. RETURN
 type: statement
 ---
@@ -50,5 +43,8 @@ To branch to and return from a subroutine.
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [FOR ••• NEXT](for-next.md) - Execute statements repeatedly with a loop counter
+- [GOTO](goto.md) - Branch unconditionally to a specified line number
+- [IF ••• THEN[ ••• ELSE] AND IF ••• GOTO](if-then-else-if-goto.md) - Make decisions and control program flow based on conditional expressions
+- [ON ••• GOSUB AND ON ••• GOTO](on-gosub-on-goto.md) - To branch to one of several specified line numbers, depending on the value returned when an expression is evaluated
+- [WHILE ••• WEND](while-wend.md) - Execute statements in a loop while a condition is true

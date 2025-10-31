@@ -1,12 +1,7 @@
 ---
 category: mathematical
 description: Returns the cosine of X in radians
-keywords:
-- cos
-- cosine
-- trigonometry
-- function
-- radians
+keywords: ['cos', 'cosine', 'trigonometry', 'function', 'radians']
 syntax: COS (X)
 title: COS
 type: function
@@ -51,5 +46,14 @@ Ok
 ```
 
 ## See Also
-
-*Related functions will be linked here*
+- [ABS](abs.md) - Return the absolute value of a number (removes negative sign)
+- [ATN](atn.md) - Returns the arctangent of X in radians
+- [EXP](exp.md) - Returns e to the power of X
+- [FIX](fix.md) - Returns the truncated integer part of X
+- [INT](int.md) - Return the largest integer less than or equal to a number (floor function)
+- [LOG](log.md) - Returns the natural logarithm of X
+- [RND](rnd.md) - Returns a random number between 0 and 1
+- [SGN](sgn.md) - NEEDS_DESCRIPTION
+- [SIN](sin.md) - Returns the sine of X in radians
+- [SQR](sqr.md) - Returns the square root of X
+- [TAN](tan.md) - Returns the tangent of X in radians

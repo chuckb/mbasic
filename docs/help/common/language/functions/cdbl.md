@@ -1,16 +1,9 @@
 ---
 category: type-conversion
 description: Converts X to a double-precision floating-point number
-keywords:
-- cdbl
-- convert
-- double
-- precision
-- float
-- function
-- number
+keywords: ['cdbl', 'convert', 'double', 'precision', 'float', 'function', 'number']
 syntax: CDBL(X)
-related: [cint, csng, fix, int]
+related: ['cint', 'csng', 'fix', 'int']
 title: CDBL
 type: function
 ---
@@ -54,8 +47,7 @@ Ok
 - Converting from single to double precision preserves all available precision
 
 ## See Also
-
-- [CINT](cint.md) - Convert to integer
-- [CSNG](csng.md) - Convert to single precision
-- [FIX](fix.md) - Truncate to integer
-- [INT](int.md) - Round down to integer
+- [CINT](cint.md) - Converts X to an integer by rounding the fractional portion
+- [CSNG](csng.md) - Converts X to a single-precision floating-point number
+- [FIX](fix.md) - Returns the truncated integer part of X
+- [INT](int.md) - Return the largest integer less than or equal to a number (floor function)

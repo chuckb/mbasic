@@ -1,17 +1,7 @@
 ---
 category: hardware
 description: To call an assembly language subroutine
-keywords:
-- array
-- call
-- command
-- execute
-- for
-- function
-- program
-- statement
-- subroutine
-- variable
+keywords: ['array', 'call', 'command', 'execute', 'for', 'function', 'program', 'statement', 'subroutine', 'variable']
 syntax: CALL <variable name>[«argument list»]
 title: CALL
 type: statement
@@ -55,5 +45,6 @@ The CALL statement is one way to transfer program flow to an assembly language s
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [OUT](out.md) - To send a byte to a machine output port
+- [POKE](poke.md) - To write a byte into a memory location
+- [WAIT](wait.md) - To suspend program execution while      monitoring the status of a machine input port

@@ -1,17 +1,9 @@
 ---
 category: input-output
 description: Read user input from the terminal during program execution
-keywords:
-- input
-- read
-- prompt
-- keyboard
-- user
-- interactive
-- question mark
-- readline
-syntax: 'INPUT[;] ["prompt string";]variable[,variable...]'
-related: [print, line-input, read-data]
+keywords: ['input', 'read', 'prompt', 'keyboard', 'user', 'interactive', 'question mark', 'readline']
+syntax: INPUT[;] ["prompt string";]variable[,variable...]
+related: ['print', 'line-input', 'read-data']
 title: INPUT
 type: statement
 ---
@@ -58,5 +50,6 @@ To allow input from the terminal during      program execution.
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [LINE INPUT](line-input.md) - To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters
+- [PRINT](print.md) - Output text and values to the screen
+- [WRITE](write.md) - To output data at the terminal

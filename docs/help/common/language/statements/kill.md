@@ -1,17 +1,7 @@
 ---
 category: file-management
 description: To delete a file from disk
-keywords:
-- command
-- data
-- error
-- file
-- for
-- if
-- kill
-- open
-- program
-- read
+keywords: ['command', 'data', 'error', 'file', 'for', 'if', 'kill', 'open', 'program', 'read']
 syntax: KILL <filename>
 title: KILL
 type: statement
@@ -43,5 +33,7 @@ If a KILL statement is given for a file that is currently OPEN, a RFile already 
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [LOAD](load.md) - To load a file from disk into memory
+- [MERGE](merge.md) - To merge a specified disk file into the      program currently in memory
+- [NAME](name.md) - To change the name of a disk file
+- [SAVE](save.md) - To save a program file on disk

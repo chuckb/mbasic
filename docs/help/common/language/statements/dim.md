@@ -1,16 +1,9 @@
 ---
 category: arrays
 description: Declare array dimensions and allocate memory for array variables
-keywords:
-- dim
-- array
-- dimension
-- declare
-- allocate
-- subscript
-- multidimensional
-syntax: "DIM variable(size[,size...])[,variable(size...)...]"
-related: [option-base, erase, read-data]
+keywords: ['dim', 'array', 'dimension', 'declare', 'allocate', 'subscript', 'multidimensional']
+syntax: DIM variable(size[,size...])[,variable(size...)...]
+related: ['option-base', 'erase', 'read-data']
 title: DIM
 type: statement
 ---
@@ -42,5 +35,5 @@ If an array variable name is used without a DIM statement, the maximum value of 
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [ERASE](erase.md) - To eliminate arrays from a program
+- [OPTION BASE](option-base.md) - To declare      the     minimum   value   for   array subscripts

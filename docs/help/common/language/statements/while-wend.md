@@ -1,17 +1,10 @@
 ---
 category: control-flow
 description: Execute statements in a loop while a condition is true
-keywords:
-- while
-- wend
-- loop
-- condition
-- test
-- repeat
-- nested
-aliases: [while-wend]
-syntax: "WHILE expression ... WEND"
-related: [for-next, if-then-else-if-goto, goto]
+keywords: ['while', 'wend', 'loop', 'condition', 'test', 'repeat', 'nested']
+aliases: ['while-wend']
+syntax: WHILE expression ... WEND
+related: ['for-next', 'if-then-else-if-goto', 'goto']
 title: WHILE ••• WEND
 type: statement
 ---
@@ -49,5 +42,8 @@ If <expression> is not zero (Le., true), <loop statements>    are  executed   un
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [FOR ••• NEXT](for-next.md) - Execute statements repeatedly with a loop counter
+- [GOSUB •.. RETURN](gosub-return.md) - Branch to and return from a subroutine
+- [GOTO](goto.md) - Branch unconditionally to a specified line number
+- [IF ••• THEN[ ••• ELSE] AND IF ••• GOTO](if-then-else-if-goto.md) - Make decisions and control program flow based on conditional expressions
+- [ON ••• GOSUB AND ON ••• GOTO](on-gosub-on-goto.md) - To branch to one of several specified line numbers, depending on the value returned when an expression is evaluated

@@ -1,18 +1,7 @@
 ---
 category: error-handling
-description: To enable error trapping and specify the   first line of the error handling
-  subroutine
-keywords:
-- command
-- error
-- execute
-- for
-- goto
-- if
-- line
-- number
-- print
-- statement
+description: To enable error trapping and specify the   first line of the error handling subroutine
+keywords: ['command', 'error', 'execute', 'for', 'goto', 'if', 'line', 'number', 'print', 'statement']
 syntax: ON ERROR GOTO <line number>
 title: ON ERROR GOTO
 type: statement
@@ -41,5 +30,5 @@ Once error trapping has been enabled all errors detected, including direct mode 
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [ERROR](error.md) - 1) To simulate the occurrence of a BASIC-80 error1   or 2) to allow error codes to be defined by the user
+- [RESUME](resume.md) - Continue program execution after error recovery

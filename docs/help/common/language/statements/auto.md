@@ -1,17 +1,7 @@
 ---
 category: editing
 description: To generate a line number   automatically     after every carriage return
-keywords:
-- auto
-- command
-- for
-- if
-- input
-- line
-- next
-- number
-- print
-- put
+keywords: ['auto', 'command', 'for', 'if', 'input', 'line', 'next', 'number', 'print', 'put']
 syntax: AUTO [<line number>[,<increment>]]
 title: AUTO
 type: statement
@@ -43,5 +33,8 @@ AUTO 100,50      Generates line numbers 100,
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [DELETE](delete.md) - To delete program lines
+- [EDIT](edit.md) - To enter Edit Mode at the specified line
+- [LIST](list.md) - To list all or part of the program currently            in memory at the terminal
+- [LLIST](llist.md) - To list all or part of the program currently     in memory at the line printer
+- [RENUM](renum.md) - Renumber program lines and update line references

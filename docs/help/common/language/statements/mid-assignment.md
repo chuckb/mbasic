@@ -1,18 +1,11 @@
 ---
 category: string
 description: Replace characters within a string variable
-keywords:
-- mid
-- mid$
-- assignment
-- replace
-- string
-- substring
-- modify
-syntax: "MID$(string-var, start[, length]) = expression"
+keywords: ['mid', 'mid$', 'assignment', 'replace', 'string', 'substring', 'modify']
+syntax: MID$(string-var, start[, length]) = expression
 title: MID$ Assignment
 type: statement
-related: [mid_dollar, left_dollar, right_dollar]
+related: ['mid_dollar', 'left_dollar', 'right_dollar']
 ---
 
 # MID$ Assignment
@@ -79,7 +72,18 @@ Ok
 - This is more efficient than string concatenation for modifying strings
 
 ## See Also
-
-- [MID$](../functions/mid_dollar.md) - Extract substring from string (function)
-- [LEFT$](../functions/left_dollar.md) - Extract leftmost characters
-- [RIGHT$](../functions/right_dollar.md) - Extract rightmost characters
+- [ASC](../functions/asc.md) - Returns a numerical value that is the ASCII code of the first character of the string X$
+- [CHR$](../functions/chr_dollar.md) - Returns a one-character string whose ASCII code is the specified value
+- [HEX$](../functions/hex_dollar.md) - Returns a string which represents the hexadecimal value of the decimal argument
+- [INSTR](../functions/instr.md) - Searches for the first occurrence of string Y$ in X$ and returns the position at which the match is found
+- [LEFT$](../functions/left_dollar.md) - Return the leftmost N characters from a string
+- [LEN](../functions/len.md) - Returns the number of characters in X$
+- [MID$](../functions/mid_dollar.md) - Extract a substring from the middle of a string
+- [MID$](mid_dollar.md) - To replace a portion of one string with    another string
+- [OCT$](../functions/oct_dollar.md) - Returns a string which represents the octal value of the decimal argument
+- [RIGHT$](../functions/right_dollar.md) - Return the rightmost N characters from a string
+- [SPACE$](../functions/space_dollar.md) - Returns a string of I spaces
+- [SPC](../functions/spc.md) - Prints I blanks on the terminal
+- [STR$](../functions/str_dollar.md) - Convert a number to its string representation
+- [STRING$](../functions/string_dollar.md) - Returns a string of length I whose characters all have ASCII code J or the first character of X$
+- [VAL](../functions/val.md) - Returns the numerical value of string X$

@@ -2,11 +2,11 @@
 title: PRINT
 type: statement
 category: input-output
-keywords: [print, output, display, console, write, show, terminal, "question mark"]
-aliases: ["?"]
+keywords: ['print', 'output', 'display', 'console', 'write', 'show', 'terminal', 'question mark']
+aliases: ['?']
 description: Output text and values to the screen
-syntax: "PRINT [expression[;|,]...]"
-related: [input, print-using, write, lprint]
+syntax: PRINT [expression[;|,]...]
+related: ['input', 'print-using', 'write', 'lprint']
 ---
 
 # PRINT
@@ -176,5 +176,5 @@ be printed, separated by semicolons.     <string
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [INPUT](input.md) - Read user input from the terminal during program execution
+- [WRITE](write.md) - To output data at the terminal

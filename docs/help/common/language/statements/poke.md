@@ -1,17 +1,7 @@
 ---
 category: hardware
 description: To write a byte into a memory location
-keywords:
-- command
-- data
-- for
-- function
-- if
-- number
-- poke
-- put
-- read
-- statement
+keywords: ['command', 'data', 'for', 'function', 'if', 'number', 'poke', 'put', 'read', 'statement']
 syntax: POKE I,J
 title: POKE
 type: statement
@@ -55,5 +45,6 @@ The integer expression I is the address of the memory   location to be POKEd.   
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [CALL](call.md) - To call an assembly language subroutine
+- [OUT](out.md) - To send a byte to a machine output port
+- [WAIT](wait.md) - To suspend program execution while      monitoring the status of a machine input port

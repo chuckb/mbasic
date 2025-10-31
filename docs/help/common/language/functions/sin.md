@@ -1,11 +1,7 @@
 ---
 category: mathematical
 description: Returns the sine of X in radians
-keywords:
-- function
-- print
-- return
-- sin
+keywords: ['function', 'print', 'return', 'sin']
 syntax: SIN(X)
 title: SIN
 type: function
@@ -32,5 +28,14 @@ PRINT SIN(1.5)
 ```
 
 ## See Also
-
-*Related functions will be linked here*
+- [ABS](abs.md) - Return the absolute value of a number (removes negative sign)
+- [ATN](atn.md) - Returns the arctangent of X in radians
+- [COS](cos.md) - Returns the cosine of X in radians
+- [EXP](exp.md) - Returns e to the power of X
+- [FIX](fix.md) - Returns the truncated integer part of X
+- [INT](int.md) - Return the largest integer less than or equal to a number (floor function)
+- [LOG](log.md) - Returns the natural logarithm of X
+- [RND](rnd.md) - Returns a random number between 0 and 1
+- [SGN](sgn.md) - NEEDS_DESCRIPTION
+- [SQR](sqr.md) - Returns the square root of X
+- [TAN](tan.md) - Returns the tangent of X in radians

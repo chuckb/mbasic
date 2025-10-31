@@ -1,18 +1,7 @@
 ---
 category: hardware
-description: To suspend program execution while      monitoring the status of a machine
-  input port
-keywords:
-- command
-- data
-- for
-- if
-- input
-- loop
-- next
-- number
-- program
-- put
+description: To suspend program execution while      monitoring the status of a machine input port
+keywords: ['command', 'data', 'for', 'if', 'input', 'loop', 'next', 'number', 'program', 'put']
 syntax: WAIT <port number>, • I[,J]
 title: WAIT
 type: statement
@@ -54,5 +43,6 @@ The WAIT statement causes execution to       be suspended until a specified mach
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [CALL](call.md) - To call an assembly language subroutine
+- [OUT](out.md) - To send a byte to a machine output port
+- [POKE](poke.md) - To write a byte into a memory location

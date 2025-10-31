@@ -1,17 +1,7 @@
 ---
 category: file-management
 description: To merge a specified disk file into the      program currently in memory
-keywords:
-- command
-- error
-- file
-- for
-- if
-- line
-- merge
-- number
-- program
-- return
+keywords: ['command', 'error', 'file', 'for', 'if', 'line', 'merge', 'number', 'program', 'return']
 syntax: MERGE <filename>
 title: MERGE
 type: statement
@@ -42,5 +32,7 @@ MERGE "NUMBRS"
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [KILL](kill.md) - To delete a file from disk
+- [LOAD](load.md) - To load a file from disk into memory
+- [NAME](name.md) - To change the name of a disk file
+- [SAVE](save.md) - To save a program file on disk

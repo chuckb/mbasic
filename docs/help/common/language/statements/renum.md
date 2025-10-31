@@ -1,18 +1,11 @@
 ---
 category: editing
 description: Renumber program lines and update line references
-keywords:
-- renum
-- renumber
-- line numbers
-- goto
-- gosub
-- editing
-syntax: |-
-  RENUM
-  RENUM <new_start>
-  RENUM <new_start>,<old_start>
-  RENUM <new_start>,<old_start>,<increment>
+keywords: ['renum', 'renumber', 'line numbers', 'goto', 'gosub', 'editing']
+syntax: "RENUM
+RENUM <new_start>
+RENUM <new_start>,<old_start>
+RENUM <new_start>,<old_start>,<increment>"
 title: RENUM
 type: statement
 ---
@@ -233,7 +226,8 @@ RENUM 100,0,100    ' 100, 200, 300... lots of room
 - yyyyy = line containing it (may be renumbered)
 
 ## See Also
-
-- [DELETE](delete.md) - Delete program lines
-- [LIST](list.md) - Display program lines
-- [EDIT](edit.md) - Edit a program line (in CLI)
+- [AUTO](auto.md) - To generate a line number   automatically     after every carriage return
+- [DELETE](delete.md) - To delete program lines
+- [EDIT](edit.md) - To enter Edit Mode at the specified line
+- [LIST](list.md) - To list all or part of the program currently            in memory at the terminal
+- [LLIST](llist.md) - To list all or part of the program currently     in memory at the line printer

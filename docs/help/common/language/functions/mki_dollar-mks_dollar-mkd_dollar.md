@@ -1,19 +1,8 @@
 ---
 category: NEEDS_CATEGORIZATION
 description: Convert numeric values to string values
-keywords:
-- complementary
-- field
-- file
-- for
-- function
-- mkd
-- mki
-- mks
-- number
-- poke
-syntax: MKI$«integer expression» MKS$«single precision expression» MKD$«double precision
-  expression» OCT$ (X) PEEK (I)
+keywords: ['complementary', 'field', 'file', 'for', 'function', 'mkd', 'mki', 'mks', 'number', 'poke']
+syntax: MKI$«integer expression» MKS$«single precision expression» MKD$«double precision expression» OCT$ (X) PEEK (I)
 title: MKI$, MKS$, MKD$
 type: function
 ---
@@ -53,5 +42,15 @@ A=PEEK (&H5AOO)
 ```
 
 ## See Also
-
-*Related functions will be linked here*
+- [CLOAD THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](../statements/cload.md) - To load a program or an array from cassette tape into memory
+- [COBL](cobl.md) - Converts X to a double precision number
+- [CRR$](crr_dollar.md) - Returns a string whose one element has ASCII code I
+- [CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](../statements/csave.md) - To save the program or an       array   currently     in memory on cassette tape
+- [CVI, CVS, CVD](cvi-cvs-cvd.md) - Convert string values to numeric values
+- [DEFINT/SNG/DBL/STR](../statements/defint-sng-dbl-str.md) - To declare variable types as integer,        single precision, double precision, or string
+- [ERR AND ERL VARIABLES](../statements/err-erl-variables.md) - NEEDS_DESCRIPTION
+- [INPUT#](../statements/input_hash.md) - To read data items from a sequential disk    file and assign them to program variables
+- [LINE INPUT](../statements/line-input.md) - To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters
+- [LPRINT AND LPRINT USING](../statements/lprint-lprint-using.md) - To print data at the line printer
+- [SPACES](spaces.md) - Returns a string of spaces of length X
+- [TAB](tab.md) - Spaces to position I on the terminal

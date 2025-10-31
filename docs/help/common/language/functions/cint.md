@@ -1,16 +1,7 @@
 ---
 category: type-conversion
 description: Converts X to an integer by rounding the fractional portion
-keywords:
-- cint
-- data
-- error
-- for
-- function
-- if
-- number
-- print
-- return
+keywords: ['cint', 'data', 'error', 'for', 'function', 'if', 'number', 'print', 'return']
 syntax: CINT(X)
 title: CINT
 type: function
@@ -49,8 +40,5 @@ Ok
 CINT rounds to the nearest integer (.5 rounds up). If you need truncation instead of rounding, use FIX or INT.
 
 ## See Also
-
-- [FIX](fix.md) - Truncates to integer (rounds toward zero)
-- [INT](int.md) - Returns largest integer ≤ X (rounds down)
-- CSNG - Convert to single precision (not yet documented)
-- CDBL - Convert to double precision (not yet documented)
+- [CDBL](cdbl.md) - Converts X to a double-precision floating-point number
+- [CSNG](csng.md) - Converts X to a single-precision floating-point number

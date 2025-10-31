@@ -1,16 +1,9 @@
 ---
 category: type-conversion
 description: Converts X to a single-precision floating-point number
-keywords:
-- csng
-- convert
-- single
-- precision
-- float
-- function
-- number
+keywords: ['csng', 'convert', 'single', 'precision', 'float', 'function', 'number']
 syntax: CSNG(X)
-related: [cint, cdbl, fix, int]
+related: ['cint', 'cdbl', 'fix', 'int']
 title: CSNG
 type: function
 ---
@@ -49,8 +42,7 @@ Ok
 - Conversion may result in loss of precision if converting from double precision
 
 ## See Also
-
-- [CINT](cint.md) - Convert to integer
-- CDBL - Convert to double precision (not yet documented)
-- [FIX](fix.md) - Truncate to integer
-- [INT](int.md) - Round down to integer
+- [CDBL](cdbl.md) - Converts X to a double-precision floating-point number
+- [CINT](cint.md) - Converts X to an integer by rounding the fractional portion
+- [FIX](fix.md) - Returns the truncated integer part of X
+- [INT](int.md) - Return the largest integer less than or equal to a number (floor function)

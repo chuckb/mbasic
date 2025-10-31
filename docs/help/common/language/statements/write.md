@@ -1,17 +1,7 @@
 ---
 category: input-output
 description: To output data at the terminal
-keywords:
-- command
-- data
-- for
-- if
-- line
-- print
-- put
-- return
-- statement
-- string
+keywords: ['command', 'data', 'for', 'if', 'line', 'print', 'put', 'return', 'statement', 'string']
 syntax: WRITE[<list of expressions»
 title: WRITE
 type: statement
@@ -41,5 +31,5 @@ To output data at the terminal. Remark$.:      If <list of expressions> is omitt
 ```
 
 ## See Also
-
-*Related statements will be linked here*
+- [INPUT](input.md) - Read user input from the terminal during program execution
+- [PRINT](print.md) - Output text and values to the screen
