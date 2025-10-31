@@ -7,6 +7,7 @@ import re
 import sys
 import asyncio
 import traceback
+import signal
 from nicegui import ui, app
 from pathlib import Path
 from ..base import UIBackend
@@ -138,7 +139,7 @@ class NiceGUIBackend(UIBackend):
         self.max_recent_files = 10
         self.auto_save_enabled = True       # Enable auto-save
         self.auto_save_interval = 30        # Auto-save every 30 seconds
-        self.output_max_lines = 3000  # Maximum lines to keep in output buffer
+        self.output_max_lines = 1000  # Maximum lines to keep in output buffer (reduced for web performance)
 
         # UI elements (created in build_ui())
         self.editor = None
@@ -161,7 +162,7 @@ class NiceGUIBackend(UIBackend):
         self.running = False
         self.paused = False
         self.breakpoints = set()
-        self.output_text = 'MBASIC 5.21 Web IDE\nReady\n'
+        self.output_text = f'MBASIC 5.21 Web IDE - {VERSION}\nReady\n'
         self.current_file = None
         self.recent_files = []
         self.exec_io = None
@@ -169,6 +170,17 @@ class NiceGUIBackend(UIBackend):
         self.last_save_content = ''
         self.exec_timer = None
         self.auto_save_timer = None
+
+        # Output batching to reduce DOM updates
+        self.output_batch = []
+        self.output_batch_timer = None
+        self.output_update_count = 0
+
+        # Find/Replace state
+        self.find_dialog = None
+        self.last_find_text = ''
+        self.last_find_position = 0
+        self.last_case_sensitive = False
 
     def build_ui(self):
         """Build the NiceGUI interface.
@@ -203,7 +215,12 @@ class NiceGUIBackend(UIBackend):
                 value='',
                 placeholder='Program Editor'
             ).style('width: 100%;').props('outlined dense rows=10').mark('editor')
-            self.editor.on('keydown.enter', self._on_enter_key)
+
+            # Add auto-numbering handler
+            self.editor.on('keydown.enter', self._on_enter_key, throttle=0.0)
+
+            # Add handler to prevent blank lines
+            self.editor.on('blur', self._remove_blank_lines)
 
             # Current line indicator
             self.current_line_label = ui.label('').classes('text-sm font-mono bg-yellow-100 p-1')
@@ -215,7 +232,7 @@ class NiceGUIBackend(UIBackend):
 
             # Output
             self.output = ui.textarea(
-                value='MBASIC 5.21 Web IDE\nReady\n',
+                value=f'MBASIC 5.21 Web IDE - {VERSION}\nReady\n',
                 placeholder='Output'
             ).style('width: 100%;').props('readonly outlined dense rows=10').mark('output')
 
@@ -303,11 +320,21 @@ class NiceGUIBackend(UIBackend):
 
             # Help menu
             with ui.button('Help', icon='menu').props('flat color=white'):
-                with ui.menu():
-                    ui.menu_item('Help Topics', on_click=self._menu_help)
-                    ui.menu_item('Games Library', on_click=self._menu_games_library)
+                with ui.menu() as help_menu:
+                    def _help_clicked():
+                        self._menu_help()
+                        help_menu.close()
+                    def _library_clicked():
+                        self._menu_games_library()
+                        help_menu.close()
+                    def _about_clicked():
+                        self._menu_about()
+                        help_menu.close()
+
+                    ui.menu_item('Help Topics', on_click=_help_clicked)
+                    ui.menu_item('Games Library', on_click=_library_clicked)
                     ui.separator()
-                    ui.menu_item('About', on_click=self._menu_about)
+                    ui.menu_item('About', on_click=_about_clicked)
 
     # =========================================================================
     # Recent Files Management
@@ -422,8 +449,8 @@ class NiceGUIBackend(UIBackend):
                 ui.label('Toggle Breakpoint')
                 line_input = ui.input('Line number:', placeholder='10').classes('w-full')
                 with ui.row():
-                    ui.button('Toggle', on_click=lambda: self._do_toggle_breakpoint(line_input.value, dialog))
-                    ui.button('Cancel', on_click=dialog.close)
+                    ui.button('Toggle', on_click=lambda: self._do_toggle_breakpoint(line_input.value, dialog)).props('no-caps')
+                    ui.button('Cancel', on_click=dialog.close).props('no-caps')
             dialog.open()
 
         except Exception as e:
@@ -469,7 +496,7 @@ class NiceGUIBackend(UIBackend):
     # Menu Handlers
     # =========================================================================
 
-    def _menu_new(self):
+    async def _menu_new(self):
         """File > New - Clear program."""
         try:
             self.program.clear()
@@ -480,7 +507,7 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_menu_new", e)
             self._notify(f'Error: {e}', type='negative')
 
-    def _menu_open(self):
+    async def _menu_open(self):
         """File > Open - Load program from file."""
         try:
             # Create upload dialog
@@ -492,7 +519,7 @@ class NiceGUIBackend(UIBackend):
                     auto_upload=True
                 ).classes('w-full').props('accept=".bas,.txt"')
                 with ui.row().classes('w-full justify-end mt-4'):
-                    ui.button('Cancel', on_click=dialog.close)
+                    ui.button('Cancel', on_click=dialog.close).props('no-caps')
             dialog.open()
         except Exception as e:
             log_web_error("_menu_open", e)
@@ -503,6 +530,11 @@ class NiceGUIBackend(UIBackend):
         try:
             # Read uploaded file content
             content = e.content.read().decode('utf-8')
+
+            # Remove blank lines
+            lines = content.split('\n')
+            non_blank_lines = [line for line in lines if line.strip()]
+            content = '\n'.join(non_blank_lines)
 
             # Load into editor
             self.editor.value = content
@@ -524,12 +556,12 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_handle_file_upload", ex)
             self._notify(f'Error loading file: {ex}', type='negative')
 
-    def _menu_save(self):
+    async def _menu_save(self):
         """File > Save - Save current program."""
         try:
             # If no filename, trigger Save As instead
             if not self.current_file:
-                self._menu_save_as()
+                await self._menu_save_as()
                 return
 
             # Save editor to program first
@@ -546,7 +578,7 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_menu_save", e)
             self._notify(f'Error: {e}', type='negative')
 
-    def _menu_save_as(self):
+    async def _menu_save_as(self):
         """File > Save As - Save with new filename."""
         try:
             # Create save dialog
@@ -559,8 +591,8 @@ class NiceGUIBackend(UIBackend):
                 ).classes('w-full')
 
                 with ui.row():
-                    ui.button('Save', on_click=lambda: self._handle_save_as(filename_input.value, dialog))
-                    ui.button('Cancel', on_click=dialog.close)
+                    ui.button('Save', on_click=lambda: self._handle_save_as(filename_input.value, dialog)).props('no-caps')
+                    ui.button('Cancel', on_click=dialog.close).props('no-caps')
             dialog.open()
         except Exception as e:
             log_web_error("_menu_save_as", e)
@@ -591,11 +623,11 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_handle_save_as", e)
             self._notify(f'Error: {e}', type='negative')
 
-    def _menu_exit(self):
+    async def _menu_exit(self):
         """File > Exit - Quit application."""
         app.shutdown()
 
-    def _menu_merge(self):
+    async def _menu_merge(self):
         """File > Merge - Merge another BASIC file into current program."""
         try:
             # Create merge dialog
@@ -661,15 +693,15 @@ class NiceGUIBackend(UIBackend):
                         self._notify(f'Error merging: {ex}', type='negative')
 
                 with ui.row():
-                    ui.button('Merge', on_click=do_merge, icon='merge_type').props('color=primary')
-                    ui.button('Cancel', on_click=dialog.close)
+                    ui.button('Merge', on_click=do_merge, icon='merge_type').props('color=primary no-caps')
+                    ui.button('Cancel', on_click=dialog.close).props('no-caps')
 
             dialog.open()
         except Exception as e:
             log_web_error("_menu_merge", e)
             self._notify(f'Error: {e}', type='negative')
 
-    def _menu_run(self):
+    async def _menu_run(self):
         """Run > Run Program - Execute program."""
         if self.running:
             self._set_status('Program already running')
@@ -732,14 +764,15 @@ class NiceGUIBackend(UIBackend):
         # Don't check self.running - it seems to not persist correctly in NiceGUI callbacks
         # Just check if we have an interpreter
         if not self.interpreter:
-            from src.debug_logger import debug_log
-            debug_log("_execute_tick: No interpreter found in session")
             return
 
         try:
-            from src.debug_logger import debug_log
             status = self.interpreter.state.status if self.interpreter else 'no interpreter'
-            debug_log(f"_execute_tick: running={self.running}, status={status}")
+
+            # If waiting for input, don't tick - wait for input to be provided
+            if status == 'waiting_for_input':
+                return
+
             # Execute one tick (up to 1000 statements)
             state = self.interpreter.tick(mode='run', max_statements=1000)
 
@@ -753,6 +786,10 @@ class NiceGUIBackend(UIBackend):
                     self.current_line_label.visible = False
                 if self.exec_timer:
                     self.exec_timer.cancel()
+            elif state.status == 'waiting_for_input':
+                # Pause execution until input is provided
+                self._set_status("Waiting for input...")
+                # Don't cancel timer - keep ticking to check when input is provided
             elif state.status == 'error':
                 error_msg = state.error_info.error_message if state.error_info else "Unknown error"
                 self._append_output(f"\n--- Error: {error_msg} ---\n")
@@ -780,16 +817,33 @@ class NiceGUIBackend(UIBackend):
             self._set_status(f"Error: {e}")
             self.running = False
 
-    def _menu_stop(self):
+    async def _menu_stop(self):
         """Run > Stop - Stop execution."""
-        if self.running:
-            self.running = False
-            self._set_status('Stopped')
-            self._append_output("\n--- Program stopped ---\n")
-        else:
-            self._set_status('No program running')
+        # Cancel the execution timer first
+        if self.exec_timer:
+            self.exec_timer.cancel()
+            self.exec_timer = None
 
-    def _menu_step_line(self):
+        # Stop the interpreter
+        if self.interpreter:
+            self.interpreter.state.status = 'paused'
+
+        # Update UI state
+        self.running = False
+        self.paused = False
+
+        # Hide input row if visible
+        self._hide_input_row()
+
+        # Update UI
+        self._set_status('Stopped')
+        self._append_output("\n--- Program stopped ---\n")
+
+        # Hide current line highlight
+        if self.current_line_label:
+            self.current_line_label.visible = False
+
+    async def _menu_step_line(self):
         """Run > Step Line - Execute all statements on current line and pause."""
         try:
             if not self.running:
@@ -841,7 +895,7 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_menu_step_line", e)
             self._notify(f'Error: {e}', type='negative')
 
-    def _menu_step_stmt(self):
+    async def _menu_step_stmt(self):
         """Run > Step Statement - Execute one statement and pause."""
         try:
             if not self.running:
@@ -900,23 +954,37 @@ class NiceGUIBackend(UIBackend):
             self._set_status("Ready")
             self.running = False
             self.paused = False
+            # Hide current line highlight
+            if self.current_line_label:
+                self.current_line_label.visible = False
         elif state.status == 'error':
             error_msg = state.error_info.error_message if state.error_info else "Unknown error"
             self._append_output(f"\n--- Error: {error_msg} ---\n")
             self._set_status("Error")
             self.running = False
             self.paused = False
+            # Hide current line highlight
+            if self.current_line_label:
+                self.current_line_label.visible = False
         elif state.status in ('paused', 'at_breakpoint'):
             self._set_status(f"Paused at line {state.current_line}")
             self.running = True
             self.paused = True
+            # Show current line highlight
+            if self.current_line_label:
+                self.current_line_label.set_text(f'>>> Executing line {state.current_line}')
+                self.current_line_label.visible = True
         elif state.status == 'running':
             # Still running after step - mark as paused to prevent automatic continuation
             self._set_status(f"Paused at line {state.current_line}")
             self.running = True
             self.paused = True
+            # Show current line highlight
+            if self.current_line_label:
+                self.current_line_label.set_text(f'>>> Executing line {state.current_line}')
+                self.current_line_label.visible = True
 
-    def _menu_continue(self):
+    async def _menu_continue(self):
         """Run > Continue - Continue from breakpoint/pause."""
         try:
             if self.running and self.paused:
@@ -932,14 +1000,14 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_menu_continue", e)
             self._notify(f'Error: {e}', type='negative')
 
-    def _menu_list(self):
+    async def _menu_list(self):
         """Run > List Program - List to output."""
         lines = self.program.get_lines()
         for line_num, line_text in lines:
-            self._append_output(line_text)
+            self._append_output(line_text + '\n')
         self._set_status('Program listed')
 
-    def _menu_sort_lines(self):
+    async def _menu_sort_lines(self):
         """Sort program lines by line number."""
         try:
             # Get all lines
@@ -959,40 +1027,90 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_menu_sort_lines", e)
             self._notify(f'Error: {e}', type='negative')
 
-    def _menu_find_replace(self):
-        """Find and replace text in the program."""
+    async def _menu_find_replace(self):
+        """Find and replace text in the program with proper cursor positioning."""
         try:
-            # Show dialog for find/replace
+            # If dialog already exists and is open, just bring it to front
+            if self.find_dialog:
+                self.find_dialog.open()
+                return
+
+            # Create new dialog
             with ui.dialog() as dialog, ui.card().classes('w-[500px]'):
                 ui.label('Find & Replace').classes('text-lg font-bold')
 
                 find_input = ui.input(label='Find', placeholder='Text to find...').classes('w-full')
+                find_input.value = self.last_find_text  # Restore last search
                 replace_input = ui.input(label='Replace with', placeholder='Replacement text...').classes('w-full')
-                case_sensitive = ui.checkbox('Case sensitive', value=False)
+                case_sensitive = ui.checkbox('Case sensitive', value=self.last_case_sensitive)
 
                 result_label = ui.label('').classes('text-sm text-gray-600')
 
-                def do_find_next():
+                def do_find():
+                    """Find first occurrence from beginning."""
                     try:
                         find_text = find_input.value
                         if not find_text:
                             result_label.text = 'Enter text to find'
                             return
 
-                        editor_text = self.editor.value
-                        if case_sensitive.value:
-                            index = editor_text.find(find_text)
-                        else:
-                            index = editor_text.lower().find(find_text.lower())
+                        # Reset position for new search
+                        self.last_find_position = 0
+                        self.last_find_text = find_text
+                        self.last_case_sensitive = case_sensitive.value
 
-                        if index >= 0:
-                            result_label.text = f'Found at position {index}'
-                        else:
-                            result_label.text = 'Not found'
+                        do_find_next()
                     except Exception as ex:
                         result_label.text = f'Error: {ex}'
 
+                def do_find_next():
+                    """Find next occurrence from current position."""
+                    try:
+                        find_text = find_input.value
+                        if not find_text:
+                            result_label.text = 'Enter text to find'
+                            return
+
+                        # Update state
+                        self.last_find_text = find_text
+                        self.last_case_sensitive = case_sensitive.value
+
+                        editor_text = self.editor.value
+
+                        # Search from current position
+                        if case_sensitive.value:
+                            index = editor_text.find(find_text, self.last_find_position)
+                        else:
+                            index = editor_text.lower().find(find_text.lower(), self.last_find_position)
+
+                        if index >= 0:
+                            # Move cursor to the match using JavaScript
+                            end_pos = index + len(find_text)
+                            ui.run_javascript(f'''
+                                const textarea = document.querySelector('[data-marker="editor"] textarea');
+                                if (textarea) {{
+                                    textarea.focus();
+                                    textarea.setSelectionRange({index}, {end_pos});
+                                    textarea.scrollTop = Math.max(0, (textarea.scrollHeight * {index}) / textarea.value.length - 100);
+                                }}
+                            ''')
+
+                            # Update position for next search
+                            self.last_find_position = index + 1
+                            result_label.text = f'Found at position {index}'
+                        else:
+                            # Wrap around or show not found
+                            if self.last_find_position > 0:
+                                result_label.text = 'No more matches (wrapping to start)'
+                                self.last_find_position = 0
+                            else:
+                                result_label.text = 'Not found'
+                    except Exception as ex:
+                        result_label.text = f'Error: {ex}'
+                        log_web_error("do_find_next", ex)
+
                 def do_replace():
+                    """Replace current selection and find next."""
                     try:
                         find_text = find_input.value
                         replace_text = replace_input.value
@@ -1002,28 +1120,28 @@ class NiceGUIBackend(UIBackend):
                             return
 
                         editor_text = self.editor.value
+                        # Find current occurrence (from last position - 1 to account for increment)
+                        search_pos = max(0, self.last_find_position - 1)
+
                         if case_sensitive.value:
-                            if find_text in editor_text:
-                                new_text = editor_text.replace(find_text, replace_text, 1)
-                                self.editor.value = new_text
-                                result_label.text = 'Replaced 1 occurrence'
-                            else:
-                                result_label.text = 'Not found'
+                            index = editor_text.find(find_text, search_pos)
                         else:
-                            # Case-insensitive replace (replace first occurrence)
-                            import re
-                            pattern = re.compile(re.escape(find_text), re.IGNORECASE)
-                            match = pattern.search(editor_text)
-                            if match:
-                                new_text = editor_text[:match.start()] + replace_text + editor_text[match.end():]
-                                self.editor.value = new_text
-                                result_label.text = 'Replaced 1 occurrence'
-                            else:
-                                result_label.text = 'Not found'
+                            index = editor_text.lower().find(find_text.lower(), search_pos)
+
+                        if index >= 0:
+                            # Replace this occurrence
+                            new_text = editor_text[:index] + replace_text + editor_text[index + len(find_text):]
+                            self.editor.value = new_text
+                            result_label.text = 'Replaced 1 occurrence'
+                            # Don't increment position - stay at same spot to see replacement
+                        else:
+                            result_label.text = 'Not found'
                     except Exception as ex:
                         result_label.text = f'Error: {ex}'
+                        log_web_error("do_replace", ex)
 
                 def do_replace_all():
+                    """Replace all occurrences."""
                     try:
                         find_text = find_input.value
                         replace_text = replace_input.value
@@ -1045,30 +1163,52 @@ class NiceGUIBackend(UIBackend):
                         self.editor.value = new_text
                         result_label.text = f'Replaced {count} occurrence(s)'
                         self._notify(f'Replaced {count} occurrence(s)', type='positive')
+
+                        # Reset search position
+                        self.last_find_position = 0
                     except Exception as ex:
                         result_label.text = f'Error: {ex}'
+                        log_web_error("do_replace_all", ex)
+
+                def on_close():
+                    """Clear dialog reference when closed."""
+                    self.find_dialog = None
+                    dialog.close()
 
                 with ui.row().classes('gap-2'):
-                    ui.button('Find Next', on_click=do_find_next).classes('bg-blue-500')
-                    ui.button('Replace', on_click=do_replace).classes('bg-green-500')
-                    ui.button('Replace All', on_click=do_replace_all).classes('bg-orange-500')
-                    ui.button('Close', on_click=dialog.close)
+                    ui.button('Find', on_click=do_find).classes('bg-blue-500').tooltip('Find from beginning').props('no-caps')
+                    ui.button('Find Next', on_click=do_find_next).classes('bg-blue-500').tooltip('Find next occurrence').props('no-caps')
+                    ui.button('Replace', on_click=do_replace).classes('bg-green-500').props('no-caps')
+                    ui.button('Replace All', on_click=do_replace_all).classes('bg-orange-500').props('no-caps')
+                    ui.button('Close', on_click=on_close).props('no-caps')
 
+            # Store dialog reference
+            self.find_dialog = dialog
             dialog.open()
 
         except Exception as e:
             log_web_error("_menu_find_replace", e)
             self._notify(f'Error: {e}', type='negative')
 
-    def _menu_smart_insert(self):
+    async def _menu_smart_insert(self):
         """Insert a line number between two existing lines."""
         try:
+            # Get existing lines to calculate default
+            lines = self.program.get_lines()
+            if not lines:
+                self._notify('No program loaded', type='warning')
+                return
+
+            # Find first line number for default
+            line_numbers = [ln for ln, _ in lines]
+            first_line = min(line_numbers) if line_numbers else 10
+
             # Show dialog
             with ui.dialog() as dialog, ui.card():
                 ui.label('Smart Insert').classes('text-lg font-bold')
                 ui.label('Insert a line between two existing line numbers').classes('text-sm text-gray-600')
 
-                after_input = ui.number(label='After Line', value=10, min=1, max=65529).classes('w-32')
+                after_input = ui.number(label='After Line', value=first_line, min=1, max=65529).classes('w-32')
 
                 def do_insert():
                     try:
@@ -1114,8 +1254,8 @@ class NiceGUIBackend(UIBackend):
                         self._notify(f'Error: {ex}', type='negative')
 
                 with ui.row():
-                    ui.button('Insert', on_click=do_insert).classes('bg-blue-500')
-                    ui.button('Cancel', on_click=dialog.close)
+                    ui.button('Insert', on_click=do_insert).classes('bg-blue-500').props('no-caps')
+                    ui.button('Cancel', on_click=dialog.close).props('no-caps')
 
             dialog.open()
 
@@ -1123,7 +1263,7 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_menu_smart_insert", e)
             self._notify(f'Error: {e}', type='negative')
 
-    def _menu_delete_lines(self):
+    async def _menu_delete_lines(self):
         """Delete a range of line numbers from the program."""
         try:
             # Show dialog for line range
@@ -1171,8 +1311,8 @@ class NiceGUIBackend(UIBackend):
                         self._notify(f'Error: {ex}', type='negative')
 
                 with ui.row():
-                    ui.button('Delete', on_click=do_delete).classes('bg-red-500')
-                    ui.button('Cancel', on_click=dialog.close)
+                    ui.button('Delete', on_click=do_delete).classes('bg-red-500').props('no-caps')
+                    ui.button('Cancel', on_click=dialog.close).props('no-caps')
 
             dialog.open()
 
@@ -1180,7 +1320,7 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_menu_delete_lines", e)
             self._notify(f'Error: {e}', type='negative')
 
-    def _menu_renumber(self):
+    async def _menu_renumber(self):
         """Renumber program lines with new start and increment."""
         try:
             # Show dialog for renumber parameters
@@ -1226,8 +1366,8 @@ class NiceGUIBackend(UIBackend):
                         self._notify(f'Error: {ex}', type='negative')
 
                 with ui.row():
-                    ui.button('Renumber', on_click=do_renumber).classes('bg-blue-500')
-                    ui.button('Cancel', on_click=dialog.close)
+                    ui.button('Renumber', on_click=do_renumber).classes('bg-blue-500').props('no-caps')
+                    ui.button('Cancel', on_click=dialog.close).props('no-caps')
 
             dialog.open()
 
@@ -1245,104 +1385,104 @@ class NiceGUIBackend(UIBackend):
             # Update resource usage
             self._update_resource_usage()
 
+            # Get all variables from runtime
+            variables = {}
+            if hasattr(self.runtime, 'variables'):
+                variables = self.runtime.variables
+
+            if not variables:
+                self._notify('No variables defined yet', type='info')
+                return
+
             # Create dialog with variables table
             with ui.dialog() as dialog, ui.card().classes('w-[800px]'):
                 ui.label('Program Variables').classes('text-xl font-bold')
+                # Add search/filter box
+                filter_input = ui.input(placeholder='Filter variables...').classes('w-full mb-2')
 
-                # Get all variables from runtime
-                variables = {}
-                if hasattr(self.runtime, 'variables'):
-                    variables = self.runtime.variables
+                # Create table
+                columns = [
+                    {'name': 'name', 'label': 'Name', 'field': 'name', 'align': 'left'},
+                    {'name': 'type', 'label': 'Type', 'field': 'type', 'align': 'left'},
+                    {'name': 'value', 'label': 'Value', 'field': 'value', 'align': 'left'},
+                ]
 
-                if not variables:
-                    ui.label('No variables defined').classes('text-gray-500 p-4')
-                else:
-                    # Add search/filter box
-                    filter_input = ui.input(placeholder='Filter variables...').classes('w-full mb-2')
+                rows = []
+                for name, value in variables.items():
+                    # Determine type
+                    if isinstance(value, str):
+                        var_type = 'String'
+                    elif isinstance(value, float):
+                        var_type = 'Float'
+                    elif isinstance(value, int):
+                        var_type = 'Integer'
+                    elif isinstance(value, list):
+                        var_type = 'Array'
+                    else:
+                        var_type = str(type(value).__name__)
 
-                    # Create table
-                    columns = [
-                        {'name': 'name', 'label': 'Name', 'field': 'name', 'align': 'left'},
-                        {'name': 'type', 'label': 'Type', 'field': 'type', 'align': 'left'},
-                        {'name': 'value', 'label': 'Value', 'field': 'value', 'align': 'left'},
-                    ]
+                    # Format value
+                    if isinstance(value, list):
+                        value_str = f'[{len(value)} elements]'
+                    else:
+                        value_str = str(value)
+                        if len(value_str) > 50:
+                            value_str = value_str[:47] + '...'
 
-                    rows = []
-                    for name, value in variables.items():
-                        # Determine type
-                        if isinstance(value, str):
-                            var_type = 'String'
-                        elif isinstance(value, float):
-                            var_type = 'Float'
-                        elif isinstance(value, int):
-                            var_type = 'Integer'
-                        elif isinstance(value, list):
-                            var_type = 'Array'
-                        else:
-                            var_type = str(type(value).__name__)
+                    rows.append({
+                        'name': name,
+                        'type': var_type,
+                        'value': value_str
+                    })
 
-                        # Format value
-                        if isinstance(value, list):
-                            value_str = f'[{len(value)} elements]'
-                        else:
-                            value_str = str(value)
-                            if len(value_str) > 50:
-                                value_str = value_str[:47] + '...'
+                # Create table with filter binding and edit capability
+                table = ui.table(columns=columns, rows=rows, row_key='name').classes('w-full')
 
-                        rows.append({
-                            'name': name,
-                            'type': var_type,
-                            'value': value_str
-                        })
+                # Connect filter to table
+                filter_input.bind_value(table, 'filter')
 
-                    # Create table with filter binding and edit capability
-                    table = ui.table(columns=columns, rows=rows, row_key='name').classes('w-full')
+                # Add double-click handler for editing values
+                def edit_variable(e):
+                    """Handle double-click to edit variable value."""
+                    if e.args and 'row' in e.args:
+                        var_name = e.args['row']['name']
+                        current_value = variables.get(var_name)
 
-                    # Connect filter to table
-                    filter_input.bind_value(table, 'filter')
+                        # Prompt for new value
+                        with ui.dialog() as edit_dialog, ui.card():
+                            ui.label(f'Edit Variable: {var_name}').classes('text-lg font-bold')
+                            new_value_input = ui.input(
+                                label='New Value',
+                                value=str(current_value)
+                            ).classes('w-64')
 
-                    # Add double-click handler for editing values
-                    async def edit_variable(e):
-                        """Handle double-click to edit variable value."""
-                        if e.args and 'row' in e.args:
-                            var_name = e.args['row']['name']
-                            current_value = variables.get(var_name)
+                            def save_edit():
+                                try:
+                                    # Update variable in runtime
+                                    new_val = new_value_input.value
+                                    # Try to preserve type
+                                    if isinstance(current_value, int):
+                                        self.runtime.variables[var_name] = int(new_val)
+                                    elif isinstance(current_value, float):
+                                        self.runtime.variables[var_name] = float(new_val)
+                                    else:
+                                        self.runtime.variables[var_name] = new_val
 
-                            # Prompt for new value
-                            with ui.dialog() as edit_dialog, ui.card():
-                                ui.label(f'Edit Variable: {var_name}').classes('text-lg font-bold')
-                                new_value_input = ui.input(
-                                    label='New Value',
-                                    value=str(current_value)
-                                ).classes('w-64')
+                                    edit_dialog.close()
+                                    dialog.close()
+                                    self._notify(f'Variable {var_name} updated', type='positive')
+                                except Exception as ex:
+                                    self._notify(f'Error: {ex}', type='negative')
 
-                                def save_edit():
-                                    try:
-                                        # Update variable in runtime
-                                        new_val = new_value_input.value
-                                        # Try to preserve type
-                                        if isinstance(current_value, int):
-                                            self.runtime.variables[var_name] = int(new_val)
-                                        elif isinstance(current_value, float):
-                                            self.runtime.variables[var_name] = float(new_val)
-                                        else:
-                                            self.runtime.variables[var_name] = new_val
+                            with ui.row():
+                                ui.button('Save', on_click=save_edit).classes('bg-blue-500').props('no-caps')
+                                ui.button('Cancel', on_click=edit_dialog.close).props('no-caps')
 
-                                        edit_dialog.close()
-                                        dialog.close()
-                                        self._notify(f'Variable {var_name} updated', type='positive')
-                                    except Exception as ex:
-                                        self._notify(f'Error: {ex}', type='negative')
+                        edit_dialog.open()
 
-                                with ui.row():
-                                    ui.button('Save', on_click=save_edit).classes('bg-blue-500')
-                                    ui.button('Cancel', on_click=edit_dialog.close)
+                table.on('rowClick', edit_variable)
 
-                            edit_dialog.open()
-
-                    table.on('rowDblclick', edit_variable)
-
-                ui.button('Close', on_click=dialog.close).classes('mt-4')
+                ui.button('Close', on_click=dialog.close).classes('mt-4').props('no-caps')
             dialog.open()
 
         except Exception as e:
@@ -1356,26 +1496,27 @@ class NiceGUIBackend(UIBackend):
                 self._notify('No program running', type='warning')
                 return
 
+            # Get call stack from runtime
+            stack = []
+            if hasattr(self.runtime, 'gosub_stack'):
+                stack = self.runtime.gosub_stack
+
+            if not stack:
+                self._notify('Stack is empty', type='info')
+                return
+
             # Create dialog with stack display
             with ui.dialog() as dialog, ui.card().classes('w-[600px]'):
                 ui.label('Execution Stack').classes('text-xl font-bold')
 
-                # Get call stack from runtime
-                stack = []
-                if hasattr(self.runtime, 'gosub_stack'):
-                    stack = self.runtime.gosub_stack
+                # Show stack entries
+                ui.label(f'{len(stack)} entries').classes('text-sm text-gray-600 mb-2')
+                for i, entry in enumerate(reversed(stack)):
+                    with ui.row().classes('w-full p-2 bg-gray-100 rounded mb-1'):
+                        ui.label(f'#{i+1}:').classes('font-bold w-12')
+                        ui.label(f'Line {entry}').classes('font-mono')
 
-                if not stack:
-                    ui.label('Stack is empty').classes('text-gray-500 p-4')
-                else:
-                    # Show stack entries
-                    ui.label(f'{len(stack)} entries').classes('text-sm text-gray-600 mb-2')
-                    for i, entry in enumerate(reversed(stack)):
-                        with ui.row().classes('w-full p-2 bg-gray-100 rounded mb-1'):
-                            ui.label(f'#{i+1}:').classes('font-bold w-12')
-                            ui.label(f'Line {entry}').classes('font-mono')
-
-                ui.button('Close', on_click=dialog.close).classes('mt-4')
+                ui.button('Close', on_click=dialog.close).classes('mt-4').props('no-caps')
             dialog.open()
 
         except Exception as e:
@@ -1384,17 +1525,43 @@ class NiceGUIBackend(UIBackend):
 
     def _menu_help(self):
         """Help > Help Topics - Opens in web browser."""
-        from ..web_help_launcher import open_help_in_browser
-        open_help_in_browser(topic="help/ui/web/", ui_type="web")
-        self._notify('Opening help in browser...', type='info')
+        try:
+            from ..web_help_launcher import open_help_in_browser
+            url = "http://localhost/mbasic_docs/help/ui/web/"
+
+            success = open_help_in_browser(topic="help/ui/web/", ui_type="web")
+
+            if success:
+                self._notify('Opening help in browser...', type='positive', log_to_output=False)
+            else:
+                # Show URL in both notification and output
+                msg = f'Could not open browser automatically.\n\nPlease open this URL manually:\n{url}'
+                self._notify(msg, type='warning')
+                self._append_output(f'\n--- Help URL ---\n{url}\n')
+        except Exception as e:
+            log_web_error("_menu_help", e)
+            self._notify(f'Error opening help: {e}', type='negative')
 
     def _menu_games_library(self):
         """Help > Games Library - Opens program library in browser."""
-        from ..web_help_launcher import open_help_in_browser
-        open_help_in_browser(topic="library/", ui_type="web")
-        self._notify('Opening program library in browser...', type='info')
+        try:
+            from ..web_help_launcher import open_help_in_browser
+            url = "http://localhost/mbasic_docs/library/"
 
-    def _menu_settings(self):
+            success = open_help_in_browser(topic="library/", ui_type="web")
+
+            if success:
+                self._notify('Opening program library in browser...', type='positive', log_to_output=False)
+            else:
+                # Show URL in both notification and output
+                msg = f'Could not open browser automatically.\n\nPlease open this URL manually:\n{url}'
+                self._notify(msg, type='warning')
+                self._append_output(f'\n--- Library URL ---\n{url}\n')
+        except Exception as e:
+            log_web_error("_menu_games_library", e)
+            self._notify(f'Error opening library: {e}', type='negative')
+
+    async def _menu_settings(self):
         """Edit > Settings - Open settings dialog."""
         from .web_settings_dialog import WebSettingsDialog
 
@@ -1407,7 +1574,27 @@ class NiceGUIBackend(UIBackend):
 
     def _menu_about(self):
         """Help > About."""
-        self._notify('MBASIC 5.21 Web IDE\nBuilt with NiceGUI', type='info')
+        try:
+            import sys
+            sys.stderr.write("DEBUG: _menu_about called\n")
+            sys.stderr.flush()
+
+            with ui.dialog() as dialog, ui.card().classes('w-[400px]'):
+                ui.label('About MBASIC').classes('text-xl font-bold mb-4')
+                ui.label('MBASIC 5.21 Web IDE').classes('text-lg')
+                ui.label(f'{VERSION}').classes('text-md text-gray-600 mb-4')
+                ui.label('A modern implementation of Microsoft BASIC').classes('text-sm text-gray-600')
+                ui.label('Built with NiceGUI').classes('text-sm text-gray-600 mb-4')
+                ui.button('Close', on_click=dialog.close).classes('mt-4').props('no-caps')
+
+            sys.stderr.write("DEBUG: About dialog created, calling dialog.open()\n")
+            sys.stderr.flush()
+            dialog.open()
+            sys.stderr.write("DEBUG: dialog.open() completed\n")
+            sys.stderr.flush()
+        except Exception as e:
+            log_web_error("_menu_about", e)
+            self._notify(f'MBASIC 5.21 Web IDE - {VERSION}\nBuilt with NiceGUI', type='info')
 
     def _start_auto_save(self):
         """Start auto-save timer."""
@@ -1595,7 +1782,28 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_load_program_to_editor", e)
             self._notify(f'Error: {e}', type='negative')
 
-    async def _on_enter_key(self, e):
+    def _remove_blank_lines(self, e=None):
+        """Remove blank lines from editor when focus is lost."""
+        try:
+            if not self.editor:
+                return
+
+            current_text = self.editor.value or ''
+            if not current_text:
+                return
+
+            # Split into lines and filter out blank ones
+            lines = current_text.split('\n')
+            non_blank_lines = [line for line in lines if line.strip()]
+
+            # Only update if there were blank lines
+            if len(non_blank_lines) != len(lines):
+                self.editor.value = '\n'.join(non_blank_lines)
+
+        except Exception as ex:
+            log_web_error("_remove_blank_lines", ex)
+
+    def _on_enter_key(self, e):
         """Handle Enter key in editor for auto-numbering.
 
         If auto-numbering is enabled and current line has no line number,
@@ -1607,6 +1815,10 @@ class NiceGUIBackend(UIBackend):
             return  # Allow default behavior
 
         try:
+            import sys
+            sys.stderr.write("DEBUG: _on_enter_key called\n")
+            sys.stderr.flush()
+
             # Get current editor content
             current_text = self.editor.value or ''
 
@@ -1627,38 +1839,46 @@ class NiceGUIBackend(UIBackend):
             else:
                 next_line_num = 10  # Default start
 
-            # Insert line number after a short delay to let Enter complete
-            await ui.context.client.connected()
-            await asyncio.sleep(0.05)  # Wait for Enter to process
+            sys.stderr.write(f"DEBUG: Auto-numbering to line {next_line_num}\n")
+            sys.stderr.flush()
 
-            # Run JavaScript to insert line number at cursor
-            result = await ui.run_javascript(f'''
+            # Run JavaScript to insert newline and line number at cursor
+            ui.run_javascript(f'''
                 (function() {{
-                    const editor = getElement({self.editor.id});
-                    if (!editor) return false;
+                    try {{
+                        // Find editor textarea by marker
+                        const textarea = document.querySelector('[data-marker="editor"] textarea');
+                        if (!textarea) {{
+                            console.error('Editor textarea not found');
+                            return false;
+                        }}
 
-                    const textarea = editor.$el.querySelector('textarea');
-                    if (!textarea) return false;
+                        // Prevent default enter
+                        event.preventDefault();
 
-                    const cursorPos = textarea.selectionStart;
-                    const currentValue = textarea.value;
+                        const cursorPos = textarea.selectionStart;
+                        const currentValue = textarea.value;
 
-                    // Insert line number at cursor
-                    const newValue = currentValue.substring(0, cursorPos) +
-                                   "{next_line_num} " +
-                                   currentValue.substring(cursorPos);
+                        // Insert newline and line number at cursor
+                        const newValue = currentValue.substring(0, cursorPos) +
+                                       "\\n{next_line_num} " +
+                                       currentValue.substring(cursorPos);
 
-                    textarea.value = newValue;
-                    const newCursorPos = cursorPos + {len(str(next_line_num)) + 1};
-                    textarea.selectionStart = newCursorPos;
-                    textarea.selectionEnd = newCursorPos;
+                        textarea.value = newValue;
+                        const newCursorPos = cursorPos + {len(str(next_line_num)) + 2};  // +2 for newline and space
+                        textarea.setSelectionRange(newCursorPos, newCursorPos);
 
-                    // Trigger input event to sync with Vue
-                    textarea.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        // Trigger input event to sync with Vue/Quasar
+                        const inputEvent = new Event('input', {{ bubbles: true, cancelable: true }});
+                        textarea.dispatchEvent(inputEvent);
 
-                    return true;
+                        return true;
+                    }} catch (error) {{
+                        console.error('Auto-number error:', error);
+                        return false;
+                    }}
                 }})()
-            ''', timeout=1.0)
+            ''', timeout=3.0)
 
         except Exception as ex:
             log_web_error("_on_enter_key", ex)
@@ -1666,24 +1886,63 @@ class NiceGUIBackend(UIBackend):
 
     def _clear_output(self):
         """Clear output pane."""
+        # Clear batch first
+        self.output_batch.clear()
+        self.output_update_count = 0
+        if self.output_batch_timer:
+            self.output_batch_timer.cancel()
+            self.output_batch_timer = None
+
+        # Clear output
         self.output_text = ''
         if self.output:
             self.output.value = ''
-            self.output.update()  # Force NiceGUI to push update to browser
+            self.output.update()
         self._set_status('Output cleared')
 
     def _append_output(self, text):
-        """Append text to output pane and auto-scroll to bottom."""
-        from src.debug_logger import debug_log
+        """Append text to output pane with batching for performance.
 
-        # Debug: log which backend is appending output
-        debug_log(f"_append_output called on backend {id(self)}, output UI element: {id(self.output) if self.output else 'None'}, text: {text[:50]}")
+        Batches multiple rapid output calls to reduce DOM updates and improve performance.
+        Updates are flushed every 50ms or after 100 updates, whichever comes first.
+        """
+
+        # Add to batch
+        self.output_batch.append(text)
+        self.output_update_count += 1
+
+        # Flush immediately if batch is getting large (every 50 updates)
+        # This prevents lag spikes from huge batches
+        if self.output_update_count >= 50:
+            self._flush_output_batch()
+            return
+
+        # Otherwise, schedule a batched flush
+        if self.output_batch_timer:
+            self.output_batch_timer.cancel()
+
+        # Flush after 50ms of inactivity, or immediately if running slowly
+        self.output_batch_timer = ui.timer(0.05, self._flush_output_batch, once=True)
+
+    def _flush_output_batch(self):
+        """Flush batched output to the textarea."""
+        if not self.output_batch:
+            return
+
+        # Combine all batched text
+        batch_text = ''.join(self.output_batch)
+        self.output_batch.clear()
+        self.output_update_count = 0
+
+        # Cancel pending timer
+        if self.output_batch_timer:
+            self.output_batch_timer.cancel()
+            self.output_batch_timer = None
 
         # Update our internal buffer
-        self.output_text += text
+        self.output_text += batch_text
 
         # Limit output buffer by number of lines to prevent infinite growth
-        # This is more predictable than character-based limiting
         lines = self.output_text.split('\n')
         if len(lines) > self.output_max_lines:
             # Keep last N lines, add indicator at start
@@ -1693,36 +1952,23 @@ class NiceGUIBackend(UIBackend):
             if not self.output_text.startswith('[... output truncated'):
                 self.output_text = '[... output truncated ...]\n' + self.output_text
 
-        # Update the textarea directly (push-based, not polling)
+        # Update the textarea directly
         if self.output:
             self.output.value = self.output_text
-            self.output.update()  # Force NiceGUI to push update to browser
+            self.output.update()
 
             # Auto-scroll to bottom using JavaScript
-            # Try multiple methods to ensure scroll works
             ui.run_javascript('''
                 setTimeout(() => {
-                    // Method 1: Find by marker attribute
                     let textarea = document.querySelector('[data-marker="output"] textarea');
-
-                    // Method 2: Find any readonly textarea (likely the output)
                     if (!textarea) {
                         const textareas = document.querySelectorAll('textarea[readonly]');
-                        textarea = textareas[textareas.length - 1]; // Last readonly textarea
+                        textarea = textareas[textareas.length - 1];
                     }
-
-                    // Method 3: Find by Quasar class
-                    if (!textarea) {
-                        const qTextarea = document.querySelector('.q-textarea textarea');
-                        if (qTextarea && qTextarea.hasAttribute('readonly')) {
-                            textarea = qTextarea;
-                        }
-                    }
-
                     if (textarea) {
                         textarea.scrollTop = textarea.scrollHeight;
                     }
-                }, 50);
+                }, 10);
             ''')
 
     def _show_input_row(self, prompt=''):
@@ -1740,12 +1986,23 @@ class NiceGUIBackend(UIBackend):
 
     def _submit_input(self):
         """Submit INPUT value from inline input field."""
-        if self.input_field and self.input_future:
-            value = self.input_field.value
-            self.input_field.value = ''
-            # Resolve the future with the input value
-            if not self.input_future.done():
-                self.input_future.set_result(value)
+        if not self.input_field:
+            return
+
+        value = self.input_field.value
+        self.input_field.value = ''
+
+        # Hide the input row
+        self._hide_input_row()
+
+        # If interpreter is waiting for input, provide it
+        if self.interpreter and self.interpreter.state.status == 'waiting_for_input':
+            self.interpreter.provide_input(value)
+            # Execution will resume on next tick
+
+        # Also handle async input futures for compatibility
+        if self.input_future and not self.input_future.done():
+            self.input_future.set_result(value)
 
     async def _get_input_async(self, prompt):
         """Get input from user (async version).
@@ -1768,37 +2025,20 @@ class NiceGUIBackend(UIBackend):
         return result
 
     def _get_input(self, prompt):
-        """Get input from user (blocking version).
+        """Get input from user (non-blocking version for web UI).
 
-        Uses asyncio to wait for async input, making it compatible with
-        synchronous interpreter INPUT statements.
+        Instead of blocking, this shows the input UI and returns empty string.
+        The interpreter will transition to 'waiting_for_input' state, and
+        when the user submits input via _submit_input(), it will call
+        interpreter.provide_input() to continue execution.
         """
-        # Run the async input function and wait for result
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # If event loop is running, we need to create a task and wait
-            # This is tricky - we'll use a blocking approach with Future
-            import concurrent.futures
-            import threading
+        # Show the input row for user to enter data
+        self._show_input_row(prompt)
 
-            result_holder = []
-            done_event = threading.Event()
-
-            async def get_and_signal():
-                result = await self._get_input_async(prompt)
-                result_holder.append(result)
-                done_event.set()
-
-            # Schedule the coroutine on the event loop
-            asyncio.create_task(get_and_signal())
-
-            # Block until done
-            done_event.wait()
-
-            return result_holder[0] if result_holder else ""
-        else:
-            # Event loop not running, use run_until_complete
-            return loop.run_until_complete(self._get_input_async(prompt))
+        # Return empty string - the interpreter will handle this by transitioning
+        # to 'waiting_for_input' state, and execution will pause until
+        # the user provides input via _submit_input()
+        return ""
 
     def _on_immediate_enter(self, e):
         """Handle Enter key in immediate mode input."""
@@ -1938,6 +2178,17 @@ def start_web_ui():
     - No shared state between clients
     - UI elements naturally isolated per client
     """
+    # Setup signal handlers for clean shutdown
+    def signal_handler(signum, frame):
+        """Handle SIGINT (Ctrl+C) and SIGTERM for clean shutdown."""
+        sys.stderr.write("\n\nShutting down web server...\n")
+        sys.stderr.flush()
+        app.shutdown()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
     # Log version to debug output
     sys.stderr.write(f"\n{'='*70}\n")
     sys.stderr.write(f"MBASIC Web UI Starting - Version {VERSION}\n")
@@ -1962,21 +2213,12 @@ def start_web_ui():
         # Pass None for io_handler - it's not used in the web backend
         backend = NiceGUIBackend(None, program_manager)
 
-        # Debug: log backend creation
-        import sys
-        sys.stderr.write(f"DEBUG: Created new backend {id(backend)} for client\n")
-        sys.stderr.flush()
-
         # Store backend in app.storage.client to keep it alive for this client's session
         # This is the ONLY thing we store in app.storage - the backend instance itself
         app.storage.client['backend'] = backend
 
         # Build the UI for this client
         backend.build_ui()
-
-        # Debug: log output UI element after build
-        sys.stderr.write(f"DEBUG: Backend {id(backend)} has output UI element {id(backend.output)}\n")
-        sys.stderr.flush()
 
     # Start NiceGUI server
     ui.run(

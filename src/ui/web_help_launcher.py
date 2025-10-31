@@ -25,7 +25,7 @@ def open_help_in_browser(topic=None, ui_type="tk"):
         ui_type: UI type for UI-specific help ("tk", "curses", "web", "cli")
 
     Returns:
-        bool: True if browser opened successfully
+        bool: True if browser opened successfully, False otherwise
     """
     # Construct URL
     if topic:
@@ -39,12 +39,27 @@ def open_help_in_browser(topic=None, ui_type="tk"):
         # Default to UI-specific index
         url = f"{HELP_BASE_URL}/ui/{ui_type}/"
 
+    # Check if a browser is available
+    try:
+        browser = webbrowser.get()
+    except webbrowser.Error as e:
+        import sys
+        sys.stderr.write(f"BROWSER ERROR: No browser available - {e}\n")
+        sys.stderr.write(f"URL was: {url}\n")
+        sys.stderr.flush()
+        return False
+
     # Open in browser
     try:
-        webbrowser.open(url)
-        return True
+        result = webbrowser.open(url)
+        import sys
+        sys.stderr.write(f"webbrowser.open() returned: {result}\n")
+        sys.stderr.flush()
+        return result
     except Exception as e:
-        print(f"Error opening help: {e}")
+        import sys
+        sys.stderr.write(f"Error opening browser: {e}\n")
+        sys.stderr.flush()
         return False
 
 
