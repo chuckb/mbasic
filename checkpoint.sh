@@ -11,8 +11,8 @@ fi
 COMMIT_MSG="$1"
 VERSION_FILE="src/version.py"
 
-# Read current version
-CURRENT_VERSION=$(grep 'VERSION = ' $VERSION_FILE | cut -d'"' -f2)
+# Read current version (first match only, to avoid MBASIC_VERSION)
+CURRENT_VERSION=$(grep '^VERSION = ' $VERSION_FILE | head -1 | cut -d'"' -f2)
 echo "Current version: $CURRENT_VERSION"
 
 # Increment patch version (X.Y.Z -> X.Y.Z+1)
