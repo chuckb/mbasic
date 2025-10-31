@@ -139,9 +139,13 @@ class VariablesDialog(ui.dialog):
 
         # Sort by most recently accessed (reverse chronological order)
         # This matches Tk UI default: accessed=True, reverse=True
-        variables_sorted = sorted(variables,
-                                 key=lambda v: v.get('last_accessed', 0),
-                                 reverse=True)
+        # "accessed" means max(read_timestamp, write_timestamp)
+        def accessed_sort_key(v):
+            read_ts = v['last_read']['timestamp'] if v.get('last_read') else 0
+            write_ts = v['last_write']['timestamp'] if v.get('last_write') else 0
+            return max(read_ts, write_ts)
+
+        variables_sorted = sorted(variables, key=accessed_sort_key, reverse=True)
 
         # Build dialog content
         with self, ui.card().classes('w-[800px]'):
