@@ -117,6 +117,24 @@ class VariablesDialog(ui.dialog):
         """
         super().__init__()
         self.backend = backend
+        # Sort state (matches Tk UI defaults)
+        self.sort_mode = 'accessed'  # Current sort mode
+        self.sort_reverse = True  # Sort direction
+
+    def _toggle_direction(self):
+        """Toggle sort direction and refresh display."""
+        self.sort_reverse = not self.sort_reverse
+        self.close()
+        self.show()
+
+    def _cycle_mode(self):
+        """Cycle to next sort mode and refresh display."""
+        from src.ui.variable_sorting import cycle_sort_mode, get_default_reverse_for_mode
+        self.sort_mode = cycle_sort_mode(self.sort_mode)
+        # Use default direction for the new mode
+        self.sort_reverse = get_default_reverse_for_mode(self.sort_mode)
+        self.close()
+        self.show()
 
     def show(self):
         """Show the variables dialog with current variables."""
@@ -137,20 +155,26 @@ class VariablesDialog(ui.dialog):
             self.backend._notify('No variables defined yet', type='info')
             return
 
-        # Sort by most recently accessed (reverse chronological order)
-        # This matches Tk UI default: accessed=True, reverse=True
-        # "accessed" means max(read_timestamp, write_timestamp)
-        def accessed_sort_key(v):
-            read_ts = v['last_read']['timestamp'] if v.get('last_read') else 0
-            write_ts = v['last_write']['timestamp'] if v.get('last_write') else 0
-            return max(read_ts, write_ts)
-
-        variables_sorted = sorted(variables, key=accessed_sort_key, reverse=True)
+        # Sort using common helper
+        from src.ui.variable_sorting import sort_variables, get_sort_mode_label, cycle_sort_mode
+        variables_sorted = sort_variables(variables, self.sort_mode, self.sort_reverse)
 
         # Build dialog content
         with self, ui.card().classes('w-[800px]'):
             ui.label('Program Variables').classes('text-xl font-bold')
             ui.label('Double-click a variable to edit its value').classes('text-sm text-gray-500 mb-2')
+
+            # Tk-style sort controls
+            with ui.row().classes('w-full items-center gap-2 mb-2'):
+                ui.label('Sort:').classes('text-sm font-bold')
+
+                # Arrow button - toggle direction
+                arrow = '↓' if self.sort_reverse else '↑'
+                ui.button(arrow, on_click=lambda: self._toggle_direction()).props('dense flat').classes('text-lg')
+
+                # Mode label - click to cycle
+                mode_label = get_sort_mode_label(self.sort_mode)
+                ui.button(f'Variable ({mode_label})', on_click=lambda: self._cycle_mode()).props('dense flat no-caps')
 
             # Add search/filter box
             filter_input = ui.input(placeholder='Filter variables...').classes('w-full mb-2')

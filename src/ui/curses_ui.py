@@ -26,6 +26,7 @@ from src.parser import Parser
 from src.immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
 from src.input_sanitizer import is_valid_input_char, clear_parity
 from src.debug_logger import debug_log_error, is_debug_mode
+from src.ui.variable_sorting import sort_variables, get_sort_mode_label
 
 
 class TopLeftBox(urwid.WidgetWrap):
@@ -2493,38 +2494,8 @@ Run                           Debug Windows
             self.variables_walker.append(make_output_line("(no variables yet)"))
             return
 
-        # Sort variables based on current sort mode
-        if self.variables_sort_mode == 'name':
-            sort_key = lambda v: v['name'] + v['type_suffix']
-        elif self.variables_sort_mode == 'accessed':
-            # Sort by most recent access (read or write)
-            def accessed_key(v):
-                read_ts = v['last_read']['timestamp'] if v.get('last_read') else 0
-                write_ts = v['last_write']['timestamp'] if v.get('last_write') else 0
-                return max(read_ts, write_ts)
-            sort_key = accessed_key
-        elif self.variables_sort_mode == 'written':
-            sort_key = lambda v: v['last_write']['timestamp'] if v.get('last_write') else 0
-        elif self.variables_sort_mode == 'read':
-            sort_key = lambda v: v['last_read']['timestamp'] if v.get('last_read') else 0
-        elif self.variables_sort_mode == 'type':
-            sort_key = lambda v: v['type_suffix']
-        elif self.variables_sort_mode == 'value':
-            def value_key(v):
-                if v['is_array']:
-                    return (2, 0, '')  # Arrays sort last
-                elif v['type_suffix'] == '$':
-                    return (1, 0, str(v['value']).lower())  # Strings alphabetically
-                else:
-                    try:
-                        return (0, float(v['value']), '')  # Numbers numerically
-                    except (ValueError, TypeError):
-                        return (0, 0, '')
-            sort_key = value_key
-        else:
-            sort_key = lambda v: v['name'] + v['type_suffix']
-
-        variables.sort(key=sort_key, reverse=self.variables_sort_reverse)
+        # Sort variables using common helper
+        variables = sort_variables(variables, self.variables_sort_mode, self.variables_sort_reverse)
 
         # Store total count before filtering
         total_count = len(variables)
@@ -2562,20 +2533,13 @@ Run                           Debug Windows
             variables = filtered_variables
 
         # Update window title with counts
-        mode_names = {
-            'name': 'Name',
-            'accessed': 'Last Accessed',
-            'written': 'Last Written',
-            'read': 'Last Read',
-            'type': 'Type',
-            'value': 'Value'
-        }
+        mode_label = get_sort_mode_label(self.variables_sort_mode)
         arrow = '↓' if self.variables_sort_reverse else '↑'
 
         if self.variables_filter_text:
-            title = f"Variables ({len(variables)}/{total_count} filtered: '{self.variables_filter_text}') Sort: {mode_names[self.variables_sort_mode]} {arrow} - s=mode d=dir f=filter e=edit Ctrl+W=toggle"
+            title = f"Variables ({len(variables)}/{total_count} filtered: '{self.variables_filter_text}') Sort: {mode_label} {arrow} - s=mode d=dir f=filter e=edit Ctrl+W=toggle"
         else:
-            title = f"Variables (Sort: {mode_names[self.variables_sort_mode]} {arrow}) - s=mode d=dir f=filter e=edit Ctrl+W=toggle"
+            title = f"Variables (Sort: {mode_label} {arrow}) - s=mode d=dir f=filter e=edit Ctrl+W=toggle"
 
         self.variables_frame.set_title(title)
 
@@ -2620,6 +2584,7 @@ Run                           Debug Windows
 
     def _cycle_variables_sort_mode(self):
         """Cycle through variable sort modes (triggered by 's' key)."""
+        # Curses UI includes all sort modes in the cycle (no separate column headers)
         modes = ['name', 'accessed', 'written', 'read', 'type', 'value']
         try:
             current_idx = modes.index(self.variables_sort_mode)
@@ -2632,17 +2597,10 @@ Run                           Debug Windows
         # Update variables display (this will also update the title)
         self._update_variables_window()
 
-        # Show status
-        mode_names = {
-            'name': 'Name',
-            'accessed': 'Last Accessed',
-            'written': 'Last Written',
-            'read': 'Last Read',
-            'type': 'Type',
-            'value': 'Value'
-        }
+        # Show status using common helper for label
+        mode_label = get_sort_mode_label(self.variables_sort_mode)
         arrow = '↓' if self.variables_sort_reverse else '↑'
-        self.status_bar.set_text(f"Sorting variables by: {mode_names[self.variables_sort_mode]} {arrow}")
+        self.status_bar.set_text(f"Sorting variables by: {mode_label} {arrow}")
 
         # Redraw screen
         if hasattr(self, 'loop') and self.loop and self.loop_running:
