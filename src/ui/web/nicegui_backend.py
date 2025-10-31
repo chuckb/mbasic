@@ -1396,6 +1396,7 @@ class NiceGUIBackend(UIBackend):
             self._update_resource_usage()
 
             # Get all variables from runtime using the correct method
+            # Returns a list of dicts with structured variable info
             variables = self.runtime.get_all_variables()
 
             if not variables:
@@ -1416,29 +1417,36 @@ class NiceGUIBackend(UIBackend):
                 ]
 
                 rows = []
-                for name, value in variables.items():
-                    # Determine type
-                    if isinstance(value, str):
+                for var_info in variables:
+                    # var_info is a dict with: name, type_suffix, is_array, value, etc.
+                    var_name = var_info['name'] + var_info['type_suffix']
+
+                    # Determine type from suffix
+                    suffix = var_info['type_suffix']
+                    if suffix == '$':
                         var_type = 'String'
-                    elif isinstance(value, float):
-                        var_type = 'Float'
-                    elif isinstance(value, int):
+                    elif suffix == '%':
                         var_type = 'Integer'
-                    elif isinstance(value, list):
-                        var_type = 'Array'
+                    elif suffix == '!':
+                        var_type = 'Single'
+                    elif suffix == '#':
+                        var_type = 'Double'
                     else:
-                        var_type = str(type(value).__name__)
+                        var_type = 'Unknown'
 
                     # Format value
-                    if isinstance(value, list):
-                        value_str = f'[{len(value)} elements]'
+                    if var_info['is_array']:
+                        dims = 'x'.join(str(d) for d in var_info['dimensions'])
+                        value_str = f'Array({dims})'
+                        var_type = f'{var_type} Array'
                     else:
+                        value = var_info['value']
                         value_str = str(value)
                         if len(value_str) > 50:
                             value_str = value_str[:47] + '...'
 
                     rows.append({
-                        'name': name,
+                        'name': var_name,
                         'type': var_type,
                         'value': value_str
                     })
@@ -1449,12 +1457,28 @@ class NiceGUIBackend(UIBackend):
                 # Connect filter to table
                 filter_input.bind_value(table, 'filter')
 
-                # Add double-click handler for editing values
+                # Add double-click handler for editing values (scalars only)
                 def edit_variable(e):
                     """Handle double-click to edit variable value."""
                     if e.args and 'row' in e.args:
                         var_name = e.args['row']['name']
-                        current_value = variables.get(var_name)
+
+                        # Find this variable in the list
+                        var_info = None
+                        for v in variables:
+                            if v['name'] + v['type_suffix'] == var_name:
+                                var_info = v
+                                break
+
+                        if not var_info:
+                            return
+
+                        # Can't edit arrays
+                        if var_info['is_array']:
+                            self._notify('Cannot edit array variables', type='warning')
+                            return
+
+                        current_value = var_info['value']
 
                         # Prompt for new value
                         with ui.dialog() as edit_dialog, ui.card():
@@ -1466,15 +1490,19 @@ class NiceGUIBackend(UIBackend):
 
                             def save_edit():
                                 try:
-                                    # Update variable in runtime
+                                    # Update variable in runtime using set_variable
                                     new_val = new_value_input.value
-                                    # Try to preserve type
-                                    if isinstance(current_value, int):
-                                        self.runtime.variables[var_name] = int(new_val)
-                                    elif isinstance(current_value, float):
-                                        self.runtime.variables[var_name] = float(new_val)
-                                    else:
-                                        self.runtime.variables[var_name] = new_val
+                                    # Convert based on type suffix
+                                    suffix = var_info['type_suffix']
+                                    if suffix == '$':
+                                        # String - use as is
+                                        self.runtime.set_variable(var_name, new_val, line=-1, position=0)
+                                    elif suffix == '%':
+                                        # Integer
+                                        self.runtime.set_variable(var_name, int(new_val), line=-1, position=0)
+                                    elif suffix in ('!', '#'):
+                                        # Float/Double
+                                        self.runtime.set_variable(var_name, float(new_val), line=-1, position=0)
 
                                     edit_dialog.close()
                                     dialog.close()
