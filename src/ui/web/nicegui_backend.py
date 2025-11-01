@@ -401,9 +401,6 @@ class OpenFileDialog(ui.dialog):
         self.path = Path.cwd()  # Reset to CWD each time
         self.clear()
 
-        # Build initial file list data
-        row_data = self._build_row_data()
-
         with self, ui.card().classes('w-full max-w-4xl'):
             ui.label('Open BASIC Program').classes('text-h6 mb-4')
 
@@ -412,13 +409,13 @@ class OpenFileDialog(ui.dialog):
                 ui.label('Path:').classes('font-bold')
                 self.path_label = ui.label(str(self.path)).classes('flex-grow font-mono text-sm')
 
-            # AG Grid file browser with initial data
+            # AG Grid file browser - start with empty data
             self.grid = ui.aggrid({
                 'columnDefs': [
                     {'field': 'name', 'headerName': 'File', 'flex': 1},
                     {'field': 'size', 'headerName': 'Size', 'width': 100}
                 ],
-                'rowData': row_data,
+                'rowData': [],
                 'rowSelection': 'single',
             }, html_columns=[0]).classes('w-full h-96').on('cellDoubleClicked', self._handle_double_click)
 
@@ -433,6 +430,9 @@ class OpenFileDialog(ui.dialog):
                     ui.button('Open', on_click=self._handle_ok, icon='folder_open').props('no-caps')
 
         self.open()
+
+        # Wait for dialog to render, then populate grid
+        ui.timer(0.1, self._update_grid, once=True)
 
     def _build_row_data(self):
         """Build row data for the current directory."""
