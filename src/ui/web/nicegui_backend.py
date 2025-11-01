@@ -401,6 +401,9 @@ class OpenFileDialog(ui.dialog):
         self.path = Path.cwd()  # Reset to CWD each time
         self.clear()
 
+        # Build initial file list data
+        row_data = self._build_row_data()
+
         with self, ui.card().classes('w-full max-w-4xl'):
             ui.label('Open BASIC Program').classes('text-h6 mb-4')
 
@@ -409,13 +412,13 @@ class OpenFileDialog(ui.dialog):
                 ui.label('Path:').classes('font-bold')
                 self.path_label = ui.label(str(self.path)).classes('flex-grow font-mono text-sm')
 
-            # AG Grid file browser
+            # AG Grid file browser with initial data
             self.grid = ui.aggrid({
                 'columnDefs': [
                     {'field': 'name', 'headerName': 'File', 'flex': 1},
                     {'field': 'size', 'headerName': 'Size', 'width': 100}
                 ],
-                'rowData': [],  # Start with empty data, will populate in _update_grid
+                'rowData': row_data,
                 'rowSelection': 'single',
             }, html_columns=[0]).classes('w-full h-96').on('cellDoubleClicked', self._handle_double_click)
 
@@ -430,13 +433,10 @@ class OpenFileDialog(ui.dialog):
                     ui.button('Open', on_click=self._handle_ok, icon='folder_open').props('no-caps')
 
         self.open()
-        self._update_grid()
 
-    def _update_grid(self) -> None:
-        """Update the grid with files from current directory."""
+    def _build_row_data(self):
+        """Build row data for the current directory."""
         import sys
-        self.path_label.set_text(str(self.path))
-
         try:
             # Get all items in directory
             paths = list(self.path.glob('*'))
@@ -470,18 +470,28 @@ class OpenFileDialog(ui.dialog):
                     'is_dir': True
                 })
 
-            print(f"DEBUG: Setting {len(row_data)} rows in grid", file=sys.stderr)
-            self.grid.options['rowData'] = row_data
-            self.grid.update()
-            print(f"DEBUG: Grid updated", file=sys.stderr)
+            print(f"DEBUG: Built {len(row_data)} rows", file=sys.stderr)
+            return row_data
 
         except PermissionError:
             self.backend._notify('Permission denied', type='negative')
+            return []
         except Exception as e:
             print(f"DEBUG ERROR: {e}", file=sys.stderr)
             import traceback
             traceback.print_exc(file=sys.stderr)
             self.backend._notify(f'Error: {e}', type='negative')
+            return []
+
+    def _update_grid(self) -> None:
+        """Update the grid with files from current directory."""
+        import sys
+        self.path_label.set_text(str(self.path))
+        row_data = self._build_row_data()
+        print(f"DEBUG: Setting {len(row_data)} rows in grid", file=sys.stderr)
+        self.grid.options['rowData'] = row_data
+        self.grid.update()
+        print(f"DEBUG: Grid updated", file=sys.stderr)
 
     def _handle_double_click(self, e) -> None:
         """Handle double-click: navigate directories or open files."""
