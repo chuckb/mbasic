@@ -2727,6 +2727,22 @@ class NiceGUIBackend(UIBackend):
             runtime = self.runtime
             interpreter = self.interpreter
 
+            # Parse editor text into program (in case user typed lines directly in editor)
+            editor_text = self.editor.value.strip()
+            if editor_text:
+                # Clear program and parse all lines from editor
+                self.program.clear()
+                for line in editor_text.split('\n'):
+                    line = line.strip()
+                    if line:
+                        # Extract line number
+                        import re
+                        match = re.match(r'^(\d+)\s', line)
+                        if match:
+                            line_num = int(match.group(1))
+                            # add_line will parse and store the AST
+                            self.program.add_line(line_num, line)
+
             # Make sure runtime has current program loaded
             # (In case user entered lines but hasn't clicked RUN yet)
             runtime.reset_for_run(self.program.line_asts, self.program.lines)
