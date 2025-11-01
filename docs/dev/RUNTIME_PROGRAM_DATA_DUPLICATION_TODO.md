@@ -53,6 +53,23 @@ to keep the statement table in sync. This works but is a band-aid.
 - `src/ui/curses_ui.py` - Curses UI Runtime usage
 - Other UI backends
 
+## Additional Benefit of Current Design
+
+**Preserves lines with syntax errors for editing.**
+
+If we stored only ASTs, lines with syntax errors would:
+- Fail to parse
+- Not have an AST
+- Disappear from the editor!
+
+Current ProgramManager stores raw line text separately from ASTs, so:
+- Lines with syntax errors stay visible in editor
+- User can edit and fix them
+- Only valid lines have ASTs in line_asts dict
+
+Any refactor must preserve this behavior - raw text must remain accessible
+even when AST parsing fails.
+
 ## Priority
 
 Medium - current workaround is functional but architectural debt
