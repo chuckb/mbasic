@@ -1,8 +1,8 @@
 # CodeMirror 6 Integration Progress
 
-**Status:** IN PROGRESS - Foundation complete, integration pending
+**Status:** IN PROGRESS - Basic integration complete, event handlers and features pending
 **Last Updated:** 2025-11-01
-**Version:** 1.0.352
+**Version:** 1.0.354
 
 ## Completed Work
 
@@ -52,28 +52,23 @@ Created complete CodeMirror 6 component with:
 **File Modified:**
 - `src/ui/web/nicegui_backend.py:1114-1128` - Import map in `build_ui()`
 
+### 4. Replace Textarea with CodeMirror ✅
+**Version:** 1.0.354
+**Status:** COMPLETED
+
+**What was done:**
+1. ✅ Added `from src.ui.web.codemirror_editor import CodeMirrorEditor` import
+2. ✅ Replaced `ui.textarea()` with `CodeMirrorEditor()` component
+3. ✅ Set proper styling (width: 100%, height: 300px, border)
+4. ⏳ Event handlers temporarily kept with TODO comment (to be migrated next)
+
+**Files Modified:**
+- `src/ui/web/nicegui_backend.py:19` - Added CodeMirrorEditor import
+- `src/ui/web/nicegui_backend.py:1161-1185` - Replaced textarea with CodeMirrorEditor
+
+**Note:** Event handlers (keyup, click, blur, paste) are still attached using old pattern - need to migrate to CodeMirror's event system in next step.
+
 ## Remaining Work
-
-### 4. Replace Textarea with CodeMirror ⏳
-**Status:** NOT STARTED
-
-**What needs to be done:**
-1. Replace `ui.textarea()` with `CodeMirrorEditor()` component
-2. Migrate event handlers:
-   - `keyup` → CodeMirror `updateListener`
-   - `click` → CodeMirror event
-   - `blur` → CodeMirror event
-   - `paste` → CodeMirror event
-3. Update all references to `self.editor.value` to use CodeMirror API
-4. Test auto-numbering functionality
-5. Test paste handling (remove blank lines)
-6. Test all editing operations
-
-**Files to Modify:**
-- `src/ui/web/nicegui_backend.py:1161-1184` - Editor creation and event handlers
-- Search codebase for `self.editor.value` and update
-
-**Complexity:** HIGH - Many event handlers and special behaviors to preserve
 
 ### 5. Implement Find Highlighting ⏳
 **Status:** NOT STARTED

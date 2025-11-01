@@ -16,6 +16,7 @@ from src.interpreter import Interpreter
 from src.iohandler.base import IOHandler
 from src.version import VERSION
 from src.pc import PC
+from src.ui.web.codemirror_editor import CodeMirrorEditor
 import re
 
 
@@ -1157,11 +1158,10 @@ class NiceGUIBackend(UIBackend):
 
         # Main content area
         with ui.element('div').style('width: 100%; display: flex; flex-direction: column;'):
-            # Editor
-            self.editor = ui.textarea(
+            # Editor - using CodeMirror 6
+            self.editor = CodeMirrorEditor(
                 value='',
-                placeholder='Program Editor'
-            ).style('width: 100%;').props('outlined dense rows=10 spellcheck=false').mark('editor')
+            ).style('width: 100%; height: 300px; border: 1px solid #ccc;').mark('editor')
 
             # Add auto-numbering handlers
             # Track last edited line for auto-numbering
@@ -1170,6 +1170,7 @@ class NiceGUIBackend(UIBackend):
             self.auto_numbering_in_progress = False  # Prevent recursive calls
             self.editor_has_been_used = False  # Track if user has typed anything
 
+            # TODO: Migrate these event handlers to CodeMirror
             # Use keyup to detect when user has finished typing/moving
             # This captures Enter, arrow keys, etc.
             self.editor.on('keyup', self._on_key_released, throttle=0.0)
