@@ -1,0 +1,22 @@
+Test 1: RANDOMIZE with specific seed
+First random number:  0.6394267984578837
+Second random number:  0.025010755222666936
+Third random number:  0.27502931836911926
+
+Test 2: RANDOMIZE with same seed (should give same sequence)
+First random number:  0.6394267984578837  (should match above)
+Second random number:  0.025010755222666936  (should match above)
+Third random number:  0.27502931836911926  (should match above)
+
+Test 3: RANDOMIZE with different seed
+First random number:  0.052363598850944326  (should be different)
+Second random number:  0.08718667752263232  (should be different)
+Third random number:  0.4072417636703983  (should be different)
+
+Test 4: RANDOMIZE with expression as seed
+First random number:  0.1456692551041303
+Second random number:  0.45492700451402135
+
+Test 5: RANDOMIZE without seed (uses timer)
+Random number with timer seed:  <varies - depends on system time>
+Random number with timer seed:  <varies - depends on system time>

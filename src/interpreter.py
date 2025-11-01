@@ -1414,6 +1414,31 @@ class Interpreter:
         # Note: We preserve runtime.common_vars for CHAIN compatibility
         # Note: We ignore string_space and stack_space parameters as requested
 
+    def execute_randomize(self, stmt):
+        """Execute RANDOMIZE statement
+
+        Reseeds the random number generator.
+
+        Syntax:
+            RANDOMIZE           - Use timer/system value as seed
+            RANDOMIZE seed      - Use specific seed value
+
+        Example:
+            10 RANDOMIZE
+            20 RANDOMIZE 42
+            30 RANDOMIZE TIMER
+        """
+        import random
+        import time
+
+        if stmt.seed:
+            # Use specified seed value
+            seed = self.evaluate_expression(stmt.seed)
+            random.seed(int(seed))
+        else:
+            # Use timer/system value (current time)
+            random.seed(time.time())
+
     def execute_optionbase(self, stmt):
         """Execute OPTION BASE statement
 
@@ -2617,6 +2642,16 @@ class Interpreter:
             return int(left) | int(right)
         elif op == TokenType.XOR:
             return int(left) ^ int(right)
+        elif op == TokenType.EQV:
+            # Logical equivalence: A EQV B = NOT (A XOR B)
+            # In BASIC: -1 = TRUE, 0 = FALSE
+            # Bitwise: invert XOR result
+            return ~(int(left) ^ int(right))
+        elif op == TokenType.IMP:
+            # Logical implication: A IMP B = (NOT A) OR B
+            # In BASIC: -1 = TRUE, 0 = FALSE
+            # Bitwise: (~A) | B
+            return (~int(left)) | int(right)
 
         else:
             raise NotImplementedError(f"Binary operator not implemented: {op}")
