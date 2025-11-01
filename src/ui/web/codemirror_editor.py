@@ -57,8 +57,16 @@ class CodeMirrorEditor(ui.element, component='codemirror_editor.js'):
         self._props['value'] = value
         self._props['readonly'] = readonly
 
+        # Internal handler to keep _value in sync with user edits
+        def _internal_change_handler(e):
+            self._value = e.args  # CodeMirror sends new value as args
+            if on_change:
+                on_change(e)
+
         if on_change:
-            self.on('change', on_change)
+            self.on('change', _internal_change_handler)
+        else:
+            self.on('change', lambda e: setattr(self, '_value', e.args))
 
     @property
     def value(self) -> str:
