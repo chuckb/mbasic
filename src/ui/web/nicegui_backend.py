@@ -886,7 +886,7 @@ class NiceGUIBackend(UIBackend):
         self.running = False
         self.paused = False
         self.breakpoints = set()
-        self.output_text = f'MBASIC 5.21 Web IDE - {VERSION}\nReady\n'
+        self.output_text = f'MBASIC 5.21 Web IDE - {VERSION}\n'
         self.current_file = None
         self.recent_files = []
         self.exec_io = None
@@ -951,12 +951,21 @@ class NiceGUIBackend(UIBackend):
                 placeholder='Program Editor'
             ).style('width: 100%;').props('outlined dense rows=10').mark('editor')
 
-            # Add auto-numbering handler with JS args
-            # Pass the event so we can prevent default behavior
-            self.editor.on('keydown.enter', self._on_enter_key, [':event'], throttle=0.0)
+            # Add auto-numbering handlers
+            # Track last edited line for auto-numbering
+            self.last_edited_line_index = None
+            self.last_edited_line_text = None
+            self.auto_numbering_in_progress = False  # Prevent recursive calls
 
-            # Add handler to prevent blank lines
-            self.editor.on('blur', self._remove_blank_lines)
+            # Use keyup to detect when user has finished typing/moving
+            # This captures Enter, arrow keys, etc.
+            self.editor.on('keyup', self._on_key_released, throttle=0.05)
+
+            # Also check on mouse clicks
+            self.editor.on('click', self._on_editor_click, throttle=0.05)
+
+            # Add handler to prevent blank lines and check auto-number on blur
+            self.editor.on('blur', self._on_editor_blur)
 
             # Add handler to remove blank lines after paste
             self.editor.on('paste', self._on_paste)
@@ -971,7 +980,7 @@ class NiceGUIBackend(UIBackend):
 
             # Output
             self.output = ui.textarea(
-                value=f'MBASIC 5.21 Web IDE - {VERSION}\nReady\n',
+                value=f'MBASIC 5.21 Web IDE - {VERSION}\n',
                 placeholder='Output'
             ).style('width: 100%;').props('readonly outlined dense rows=10').mark('output')
 
@@ -2017,81 +2026,110 @@ class NiceGUIBackend(UIBackend):
         except Exception as ex:
             log_web_error("_on_paste", ex)
 
-    def _on_enter_key(self, e):
-        """Handle Enter key in editor for auto-numbering.
+    def _on_key_released(self, e):
+        """Handle key release - schedule auto-number check."""
+        # Schedule check with small delay to let cursor settle
+        ui.timer(0.05, self._check_auto_number, once=True)
 
-        If auto-numbering is enabled and current line has no line number,
-        automatically add one.
+    def _on_editor_click(self, e):
+        """Handle editor click - schedule auto-number check."""
+        # Schedule check with small delay to let cursor settle
+        ui.timer(0.05, self._check_auto_number, once=True)
 
-        Args:
-            e: Event args from NiceGUI, should contain 'event' with preventDefault method
+    def _on_editor_blur(self):
+        """Handle editor blur - check auto-number and remove blank lines."""
+        ui.timer(0.05, self._check_and_autonumber_on_blur, once=True)
+
+    async def _check_and_autonumber_on_blur(self):
+        """Check auto-number then remove blank lines on blur."""
+        try:
+            await self._check_auto_number()
+            self._remove_blank_lines()
+        except Exception as ex:
+            log_web_error("_check_and_autonumber_on_blur", ex)
+
+    async def _check_auto_number(self):
+        """Check if we should auto-number lines without line numbers.
+
+        Only auto-numbers a line once - tracks the last snapshot to avoid
+        re-numbering lines while user is still typing on them.
         """
-        # Get auto-number settings
+        # Prevent recursive calls when we update the editor
+        if self.auto_numbering_in_progress:
+            return
+
         auto_number_enabled = self.settings_manager.get('editor.auto_number')
         if not auto_number_enabled:
-            return  # Allow default behavior
+            return
 
         try:
+            self.auto_numbering_in_progress = True
+
             # Get current editor content
             current_text = self.editor.value or ''
 
-            # Find highest line number
-            lines = current_text.split('\n')
-            highest_line_num = 0
+            # Don't auto-number if content hasn't changed
+            if current_text == self.last_edited_line_text:
+                return
 
-            for line in lines:
+            lines = current_text.split('\n')
+
+            # Find lines that already have numbers
+            numbered_lines = set()
+            highest_line_num = 0
+            for i, line in enumerate(lines):
                 match = re.match(r'^\s*(\d+)', line.strip())
                 if match:
-                    line_num = int(match.group(1))
-                    highest_line_num = max(highest_line_num, line_num)
+                    numbered_lines.add(i)
+                    highest_line_num = max(highest_line_num, int(match.group(1)))
 
-            # Calculate next line number using settings
+            # Calculate what next line number should be
             auto_number_step = self.settings_manager.get('editor.auto_number_step')
             if highest_line_num > 0:
                 next_line_num = highest_line_num + auto_number_step
             else:
                 next_line_num = 10  # Default start
 
-            # Now that we know what line number to insert, do it via JavaScript
-            # We need to prevent the default Enter and manually insert newline + line number
-            ui.run_javascript(f'''
-                (async function() {{
-                    try {{
-                        // Get the textarea element
-                        const textarea = document.querySelector('[data-marker="editor"] textarea');
-                        if (!textarea) {{
-                            console.error('Editor textarea not found');
-                            return;
-                        }}
+            # Only auto-number lines that:
+            # 1. Have content
+            # 2. Don't already have a line number
+            # 3. Existed in last snapshot (so we only number "complete" lines)
+            old_lines = (self.last_edited_line_text or '').split('\n') if self.last_edited_line_text else []
 
-                        // Get cursor position BEFORE any changes
-                        const cursorPos = textarea.selectionStart;
-                        const currentValue = textarea.value;
+            modified = False
+            for i, line in enumerate(lines):
+                # Skip if already numbered
+                if i in numbered_lines:
+                    continue
 
-                        // Insert newline and line number at cursor position
-                        const newValue = currentValue.substring(0, cursorPos) +
-                                       "\\n{next_line_num} " +
-                                       currentValue.substring(cursorPos);
+                stripped = line.strip()
+                # Only auto-number if:
+                # - Line has content
+                # - This line existed in previous snapshot (not being actively typed)
+                # OR we have more lines now (user moved to new line)
+                if stripped and (i < len(old_lines) or len(lines) > len(old_lines)):
+                    # Check if this line was already numbered in old snapshot
+                    old_line = old_lines[i] if i < len(old_lines) else ''
+                    if not re.match(r'^\s*\d+', old_line):
+                        # Line wasn't numbered before, number it now
+                        lines[i] = f"{next_line_num} {stripped}"
+                        numbered_lines.add(i)
+                        next_line_num += auto_number_step
+                        modified = True
 
-                        // Update textarea value
-                        textarea.value = newValue;
-
-                        // Position cursor after the line number and space
-                        const newCursorPos = cursorPos + {len(str(next_line_num)) + 2};  // +2 for \\n and space
-                        textarea.setSelectionRange(newCursorPos, newCursorPos);
-
-                        // Trigger input event so NiceGUI knows the value changed
-                        textarea.dispatchEvent(new Event('input', {{ bubbles: true }}));
-
-                        console.log('Auto-numbered to line {next_line_num}');
-                    }} catch (error) {{
-                        console.error('Auto-number error:', error);
-                    }}
-                }})();
-            ''', timeout=1.0)
+            # Update editor and tracking if we made changes
+            if modified:
+                new_content = '\n'.join(lines)
+                self.editor.value = new_content
+                self.last_edited_line_text = new_content
+            else:
+                # No changes, just update tracking
+                self.last_edited_line_text = current_text
 
         except Exception as ex:
-            log_web_error("_on_enter_key", ex)
+            log_web_error("_check_auto_number", ex)
+        finally:
+            self.auto_numbering_in_progress = False
 
     def _clear_output(self):
         """Clear output pane."""
