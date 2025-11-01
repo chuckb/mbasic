@@ -2725,6 +2725,10 @@ class NiceGUIBackend(UIBackend):
             runtime = self.runtime
             interpreter = self.interpreter
 
+            # Make sure runtime has current program loaded
+            # (In case user entered lines but hasn't clicked RUN yet)
+            runtime.reset_for_run(self.program.line_asts, self.program.lines)
+
             # Create immediate executor (runtime, interpreter, io_handler)
             immediate_executor = ImmediateExecutor(
                 runtime,
