@@ -1680,21 +1680,24 @@ class NiceGUIBackend(UIBackend):
         self.merge_file_dialog.show()
 
     async def _menu_run(self):
-        """Run > Run Program - Execute program."""
-        if self.running:
-            self._set_status('Program already running')
-            return
+        """Run > Run Program - Execute program.
 
+        RUN is always valid - it's just CLEAR + GOTO first line.
+        RUN on empty program is fine (just clears variables).
+        RUN at a breakpoint restarts from the beginning.
+        """
         try:
+            # Stop any existing execution timer first
+            if self.exec_timer:
+                self.exec_timer.cancel()
+                self.exec_timer = None
+
             # Save editor content to program first
             if not self._save_editor_to_program():
                 return  # Parse errors, don't run
 
-            # Check if program has lines
-            if not self.program.lines:
-                self._set_status('No program loaded')
-                self._notify('No program in editor. Add some lines first.', type='warning')
-                return
+            # RUN on empty program is allowed (just clears variables, nothing to execute)
+            # Don't show error - this matches real MBASIC behavior
 
             # Don't clear output - continuous scrolling like ASR33 teletype
             self._set_status('Running...')
@@ -1702,14 +1705,15 @@ class NiceGUIBackend(UIBackend):
             # Get program AST
             program_ast = self.program.get_program_ast()
 
-            # Create or reset runtime - RUN preserves breakpoints
+            # Create or reset runtime - RUN = CLEAR + GOTO first line
+            # This preserves breakpoints but clears variables
             from src.resource_limits import create_local_limits
             if self.runtime is None:
                 # First run - create new Runtime
                 self.runtime = Runtime(self.program.line_asts, self.program.lines)
                 self.runtime.setup()
             else:
-                # Subsequent run - reset Runtime (preserves breakpoints)
+                # Subsequent run - reset Runtime (RUN = CLEAR + restart)
                 self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
             # Create IO handler that outputs to our output pane
@@ -1725,9 +1729,17 @@ class NiceGUIBackend(UIBackend):
                 error_msg = state.error_info.error_message if state.error_info else 'Unknown'
                 self._append_output(f"\n--- Setup error: {error_msg} ---\n")
                 self._set_status('Error')
+                self.running = False  # For display only (spinner)
                 return
 
-            # Mark as running
+            # If empty program, just show Ready (variables cleared, nothing to execute)
+            if not self.program.lines:
+                self._set_status('Ready')
+                self.running = False  # For display only (spinner)
+                return
+
+            # Mark as running (for display only - spinner, status indicator)
+            # This should NOT control program logic - RUN is always valid
             self.running = True
 
             # Start async execution - store timer handle so we can cancel it
