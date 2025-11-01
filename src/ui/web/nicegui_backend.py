@@ -2000,7 +2000,10 @@ class NiceGUIBackend(UIBackend):
             self._notify(f'Error: {e}', type='negative')
 
     def _remove_blank_lines(self, e=None):
-        """Remove blank lines from editor when focus is lost."""
+        """Remove blank lines from editor except the current line where cursor is.
+
+        This prevents removing the blank line user just created with Enter.
+        """
         try:
             if not self.editor:
                 return
@@ -2009,11 +2012,16 @@ class NiceGUIBackend(UIBackend):
             if not current_text:
                 return
 
-            # Split into lines and filter out blank ones
             lines = current_text.split('\n')
-            non_blank_lines = [line for line in lines if line.strip()]
 
-            # Only update if there were blank lines
+            # Keep all non-blank lines, but also keep the last line even if blank
+            # (it's likely where the cursor is after pressing Enter)
+            non_blank_lines = []
+            for i, line in enumerate(lines):
+                if line.strip() or i == len(lines) - 1:
+                    non_blank_lines.append(line)
+
+            # Only update if there were blank lines removed
             if len(non_blank_lines) != len(lines):
                 self.editor.value = '\n'.join(non_blank_lines)
 
@@ -2135,9 +2143,9 @@ class NiceGUIBackend(UIBackend):
 
             # Update editor and tracking if we made changes
             if modified:
-                # Remove blank lines when updating
-                non_blank_lines = [line for line in lines if line.strip()]
-                new_content = '\n'.join(non_blank_lines)
+                # Don't remove blank lines here - let _remove_blank_lines() handle it
+                # This preserves the blank line the user just created with Enter
+                new_content = '\n'.join(lines)
                 self.editor.value = new_content
                 self.last_edited_line_text = new_content
             else:

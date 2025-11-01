@@ -201,3 +201,67 @@ The auto-numbering logic was correct, but the user's settings file had `editor.a
 ## Commit
 
 Version: 1.0.318 (completed 2025-10-31)
+
+## Enter Key Fix (2025-11-01)
+
+### Issue
+User reported that pressing Enter after typing code wouldn't allow moving to the next line:
+- Type `k=2<Enter>`
+- Expected: Cursor on new blank line, ready to type next statement
+- Actual: "it cant go to the next line to enter it" - "it probable is then it gets eaten"
+
+### Root Cause
+The auto-numbering code in `_check_auto_number()` was removing ALL blank lines when updating the editor:
+
+```python
+# BROKEN CODE:
+if modified:
+    # Remove blank lines when updating
+    non_blank_lines = [line for line in lines if line.strip()]
+    new_content = '\n'.join(non_blank_lines)
+    self.editor.value = new_content
+```
+
+This caused:
+1. User types `k=2<Enter>` → editor has `k=2\n` (with newline)
+2. Auto-numbering runs and numbers the line to `10 k=2`
+3. But then removes the blank line: `10 k=2` (no newline!)
+4. Cursor stays where it was but there's no next line to type on
+
+### Solution
+Stop removing blank lines in the auto-numbering code. Let `_remove_blank_lines()` handle it intelligently - it already preserves the last line (where cursor is after Enter):
+
+```python
+# FIXED CODE:
+if modified:
+    # Don't remove blank lines here - let _remove_blank_lines() handle it
+    # This preserves the blank line the user just created with Enter
+    new_content = '\n'.join(lines)
+    self.editor.value = new_content
+```
+
+### Additional Fix
+Also updated `_remove_blank_lines()` to preserve the last line even if blank:
+
+```python
+# Keep all non-blank lines, but also keep the last line even if blank
+# (it's likely where the cursor is after pressing Enter)
+for i, line in enumerate(lines):
+    if line.strip() or i == len(lines) - 1:
+        non_blank_lines.append(line)
+```
+
+### Testing
+✅ Type `k=2<Enter>` → cursor on new line, ready to type
+✅ Type `j=3<Enter>` → cursor on new line
+✅ Blank lines in middle of code still get removed
+✅ Blank line at end (where cursor is) preserved
+
+### Files Changed
+- `src/ui/web/nicegui_backend.py`:
+  - Modified `_check_auto_number()` to stop removing blank lines (line 2146-2148)
+  - Modified `_remove_blank_lines()` to preserve last line (line 2017-2022)
+
+## Commit
+
+Version: 1.0.323 (completed 2025-11-01)

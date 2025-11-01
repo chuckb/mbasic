@@ -225,16 +225,16 @@ These are hardware-specific features that cannot work in a modern environment:
 
 These limitations are inherent to running vintage BASIC in a modern environment and do not affect most programs.
 
-**For complete implementation status and compatibility notes, see [STATUS.md](STATUS.md)**
+**For complete implementation status and compatibility notes, see [PROJECT_STATUS.md](../PROJECT_STATUS.md)**
 
 ## Next Steps
 
 Once installed, check out:
 
-- [README.md](README.md) - Project overview and quick start guide
-- [STATUS.md](STATUS.md) - Complete implementation status
-- [doc/](doc/) - Detailed documentation
-- [basic/bas_tests1/](basic/bas_tests1/) - Example BASIC programs to try
+- Project overview and quick start guide in the main README
+- [PROJECT_STATUS.md](../PROJECT_STATUS.md) - Complete implementation status
+- Additional documentation in the docs/ directory
+- Example BASIC programs in the basic/ directory
 
 ## Getting Help
 

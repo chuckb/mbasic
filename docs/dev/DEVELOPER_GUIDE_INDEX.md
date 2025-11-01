@@ -42,7 +42,6 @@ Welcome to the MBASIC developer documentation! This index organizes all develope
   - How to run tests
   - How to write tests
   - Test coverage
-- **[Language Testing TODO](LANGUAGE_TESTING_TODO.md)** - Need more tests to prevent regressions
 
 ## Tools & Utilities
 
@@ -53,7 +52,6 @@ Welcome to the MBASIC developer documentation! This index organizes all develope
 
 - **[Work in Progress](WORK_IN_PROGRESS.md)** - Current multi-step tasks (if exists)
 - **TODO Files** - Future work items
-  - [Language Testing TODO](LANGUAGE_TESTING_TODO.md)
   - [Web UI Critical Bugs TODO](WEB_UI_CRITICAL_BUGS_TODO.md)
 
 ## Package Installation & Distribution
