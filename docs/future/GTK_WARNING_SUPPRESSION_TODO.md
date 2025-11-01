@@ -49,7 +49,7 @@ The GTK message comes from:
 Create `mbasic-web` wrapper script:
 ```bash
 #!/bin/bash
-NO_AT_BRIDGE=1 exec python3 /path/to/mbasic --backend web "$@" 2>&1 | \
+NO_AT_BRIDGE=1 exec python3 /path/to/mbasic --ui web "$@" 2>&1 | \
   grep -v "Gtk-Message" | grep -v "atk-bridge"
 ```
 

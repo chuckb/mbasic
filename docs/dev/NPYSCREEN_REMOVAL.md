@@ -132,12 +132,12 @@ The urwid backend now provides all essential features:
 
 **Old command:**
 ```bash
-python3 mbasic --backend curses-npyscreen
+python3 mbasic --ui curses-npyscreen
 ```
 
 **New command:**
 ```bash
-python3 mbasic --backend curses
+python3 mbasic --ui curses
 ```
 
 The urwid-based curses backend provides all the same basic functionality (program editing, execution, INPUT, file operations).
@@ -165,7 +165,7 @@ All functionality verified:
 
 ### Curses Backend (urwid)
 ```bash
-python3 mbasic --backend curses
+python3 mbasic --ui curses
 ```
 - Full-screen terminal UI
 - Program editor
@@ -176,7 +176,7 @@ python3 mbasic --backend curses
 
 ### CLI Backend
 ```bash
-python3 mbasic --backend cli  # or just: python3 mbasic
+python3 mbasic --ui cli  # or just: python3 mbasic
 ```
 - Command-line interface
 - Interactive BASIC prompt
@@ -185,7 +185,7 @@ python3 mbasic --backend cli  # or just: python3 mbasic
 
 ### Tkinter Backend
 ```bash
-python3 mbasic --backend tk
+python3 mbasic --ui tk
 ```
 - Graphical user interface
 - Cross-platform GUI
@@ -233,4 +233,4 @@ The npyscreen backend has been successfully removed. The project is now simpler 
 - ✅ Better foundation for future features
 - ✅ All essential functionality preserved
 
-Users should use `--backend curses` for full-screen terminal UI.
+Users should use `--ui curses` for full-screen terminal UI.

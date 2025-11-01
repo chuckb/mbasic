@@ -134,7 +134,7 @@ pip install dist/mbasic-1.0.147-py3-none-any.whl
 
 # Test basic functionality
 mbasic --version
-mbasic --backend=cli --help
+mbasic --ui=cli --help
 
 # Test with a simple program
 cat > /tmp/test.bas << 'EOF'
@@ -145,7 +145,7 @@ cat > /tmp/test.bas << 'EOF'
 50 END
 EOF
 
-mbasic --backend=cli /tmp/test.bas
+mbasic --ui=cli /tmp/test.bas
 
 # Clean up
 deactivate
@@ -198,7 +198,7 @@ pip install --index-url https://test.pypi.org/simple/ mbasic
 
 # Test functionality
 mbasic --version
-mbasic --backend=cli /tmp/test.bas
+mbasic --ui=cli /tmp/test.bas
 
 deactivate
 rm -rf venv-testpypi
@@ -249,7 +249,7 @@ pip install mbasic
 # Verify installation
 mbasic --version
 mbasic --list-backends
-mbasic --backend=cli /tmp/test.bas
+mbasic --ui=cli /tmp/test.bas
 
 deactivate
 rm -rf venv-pypi-test

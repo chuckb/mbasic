@@ -156,7 +156,7 @@ def input(self, prompt: str = '') -> str:
 Manual test required (TK backend doesn't support CLI loading yet):
 
 ```bash
-python3 mbasic --backend tk
+python3 mbasic --ui tk
 # Load tests/test_curses_input.bas
 # Run program
 # Verify inline input appears below output

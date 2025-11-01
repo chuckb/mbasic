@@ -54,10 +54,10 @@ Full-screen terminal-based UI using Python's curses library. Provides a classic 
 
 ```bash
 # Start curses UI
-python3 mbasic --backend curses
+python3 mbasic --ui curses
 
 # Load and run a program in curses UI
-python3 mbasic --backend curses program.bas
+python3 mbasic --ui curses program.bas
 ```
 
 ### File Location
@@ -149,10 +149,10 @@ Graphical desktop UI using Python's tkinter library. Provides a modern IDE-style
 
 ```bash
 # Start Tkinter GUI
-python3 mbasic --backend tk
+python3 mbasic --ui tk
 
 # Load and run a program in Tk GUI
-python3 mbasic --backend tk program.bas
+python3 mbasic --ui tk program.bas
 ```
 
 ### File Location
@@ -212,19 +212,19 @@ class TkBackend(UIBackend):
 python3 mbasic
 
 # Curses full-screen terminal UI
-python3 mbasic --backend curses
+python3 mbasic --ui curses
 
 # Tkinter graphical UI
-python3 mbasic --backend tk
+python3 mbasic --ui tk
 
 # Generic visual template
-python3 mbasic --backend visual
+python3 mbasic --ui visual
 
 # Load program with specific backend
-python3 mbasic --backend tk program.bas
+python3 mbasic --ui tk program.bas
 
 # Enable debug output with backend
-python3 mbasic --backend curses --debug
+python3 mbasic --ui curses --debug
 ```
 
 ### Help
@@ -235,7 +235,7 @@ python3 mbasic --help
 
 Output:
 ```
-usage: mbasic [-h] [--backend {cli,visual,curses,tk}] [--debug] [program]
+usage: mbasic [-h] [--ui {cli,visual,curses,tk}] [--debug] [program]
 
 MBASIC 5.21 Interpreter
 
@@ -244,7 +244,7 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  --backend {cli,visual,curses,tk}
+  --ui {cli,visual,curses,tk}
                         UI backend to use (default: cli)
   --debug               Enable debug output
 ```
@@ -321,7 +321,7 @@ backend_map = {
 **4. Update `mbasic` choices**:
 ```python
 parser.add_argument(
-    '--backend',
+    '--ui',
     choices=['cli', 'visual', 'curses', 'tk', 'web'],
     ...
 )
@@ -409,7 +409,7 @@ OK
 
 CLI backend still works (backward compatibility):
 ```bash
-$ python3 mbasic --backend cli tests/test_deffn.bas
+$ python3 mbasic --ui cli tests/test_deffn.bas
 FND(10) = 17
 FNA(5) = 10
 FNB = 42
@@ -420,7 +420,7 @@ Help shows all backends:
 ```bash
 $ python3 mbasic --help
 ...
---backend {cli,visual,curses,tk}
+--ui {cli,visual,curses,tk}
 ...
 ```
 
@@ -489,7 +489,7 @@ The MBASIC interpreter now supports **4 UI backends**:
 
 **Key achievements:**
 - Clean extensible architecture
-- Easy backend selection via --backend flag
+- Easy backend selection via --ui flag
 - Both backends provide complete UI scaffolding
 - Ready for final implementation and refinement
 

@@ -25,7 +25,7 @@ This verifies that session properties are correctly defined.
 
 1. Start web UI:
    ```bash
-   python3 mbasic --backend web
+   python3 mbasic --ui web
    ```
 
 2. Open http://localhost:8080 in **two separate browser tabs** (Tab 1 and Tab 2)

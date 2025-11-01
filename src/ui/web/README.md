@@ -39,14 +39,14 @@ pip install nicegui>=3.2.0
 
 ### Launch Web UI
 ```bash
-python3 mbasic.py --backend web
+python3 mbasic.py --ui web
 ```
 
 This starts a local web server on `http://localhost:8080`. Open this URL in your browser.
 
 ### Load and Run a Program
 ```bash
-python3 mbasic.py --backend web program.bas
+python3 mbasic.py --ui web program.bas
 ```
 
 The program will be loaded and can be run from the web interface.
@@ -185,7 +185,7 @@ tests/nicegui/
 2. Wire up to UI element (button, menu item, etc.)
 3. Add test to `test_mbasic_web_ui.py`
 4. Run tests: `pytest tests/nicegui/test_mbasic_web_ui.py -v`
-5. Manual test: `python3 mbasic.py --backend web`
+5. Manual test: `python3 mbasic.py --ui web`
 
 ### Code Style
 - Follow existing NiceGUI patterns

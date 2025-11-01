@@ -25,7 +25,7 @@ echo
 echo "Press ENTER to start..."
 read
 
-python3 mbasic --backend curses test_continue.bas 2> /tmp/mbasic_debug.log
+python3 mbasic --ui curses test_continue.bas 2> /tmp/mbasic_debug.log
 
 echo
 echo "Test complete!"

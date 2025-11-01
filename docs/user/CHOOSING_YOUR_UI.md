@@ -88,11 +88,11 @@ python3 mbasic --debug program.bas
 ```bash
 # SSH sessions
 ssh server
-python3 mbasic --backend curses
+python3 mbasic --ui curses
 
 # Terminal multiplexers
 tmux new
-python3 mbasic --backend curses
+python3 mbasic --ui curses
 
 # Console-only systems
 # (no GUI installed)
@@ -134,7 +134,7 @@ python3 mbasic --backend curses
 **Tk is perfect for:**
 ```bash
 # Desktop development
-python3 mbasic --backend tk
+python3 mbasic --ui tk
 
 # Teaching/presentations
 # (full visual interface)
@@ -180,7 +180,7 @@ python3 mbasic --backend tk
 **Web is perfect for:**
 ```bash
 # Start server
-python3 mbasic --backend web
+python3 mbasic --ui web
 
 # Open browser
 http://localhost:8080
@@ -229,7 +229,7 @@ Why:
 Setup:
 ```bash
 # Teacher's machine
-python3 mbasic --backend web --host 0.0.0.0
+python3 mbasic --ui web --host 0.0.0.0
 
 # Students browse to teacher's IP
 http://teacher-ip:8080
@@ -249,7 +249,7 @@ Setup:
 ```bash
 ssh myserver
 cd mbasic
-python3 mbasic --backend curses
+python3 mbasic --ui curses
 ```
 
 ### Scenario 3: Automated Testing
@@ -283,7 +283,7 @@ Why:
 
 Setup:
 ```bash
-python3 mbasic --backend tk
+python3 mbasic --ui tk
 # Or create desktop shortcut
 ```
 
@@ -298,7 +298,7 @@ python3 mbasic test.bas
 
 Web for convenience:
 ```bash
-python3 mbasic --backend web --open
+python3 mbasic --ui web --open
 ```
 
 ## Performance Comparison
@@ -339,7 +339,7 @@ python3 mbasic
 ```bash
 # Requires urwid
 pip install urwid
-python3 mbasic --backend curses
+python3 mbasic --ui curses
 ```
 
 ### Tk
@@ -347,14 +347,14 @@ python3 mbasic --backend curses
 # Requires tkinter (usually pre-installed)
 # Ubuntu/Debian:
 sudo apt-get install python3-tk
-python3 mbasic --backend tk
+python3 mbasic --ui tk
 ```
 
 ### Web
 ```bash
 # Optional: for auto-open browser
 pip install webbrowser
-python3 mbasic --backend web
+python3 mbasic --ui web
 ```
 
 ## Migration Guide
@@ -407,13 +407,13 @@ Many users combine UIs:
 Yes! Run different UIs in separate terminals:
 ```bash
 # Terminal 1
-python3 mbasic --backend tk
+python3 mbasic --ui tk
 
 # Terminal 2
-python3 mbasic --backend curses
+python3 mbasic --ui curses
 
 # Terminal 3
-python3 mbasic --backend web
+python3 mbasic --ui web
 ```
 
 ### Which UI is most compatible with original MBASIC?
@@ -435,7 +435,7 @@ SAVE "myprogram.bas"
 SYSTEM
 
 # Switch to Tk
-python3 mbasic --backend tk
+python3 mbasic --ui tk
 # Then: File → Open → myprogram.bas
 ```
 
@@ -476,10 +476,10 @@ Try them all and see what fits your workflow!
 
 ```bash
 # Try each UI for 5 minutes:
-python3 mbasic --backend cli
-python3 mbasic --backend curses
-python3 mbasic --backend tk
-python3 mbasic --backend web
+python3 mbasic --ui cli
+python3 mbasic --ui curses
+python3 mbasic --ui tk
+python3 mbasic --ui web
 
 # Your favorite will become clear quickly!
 ```

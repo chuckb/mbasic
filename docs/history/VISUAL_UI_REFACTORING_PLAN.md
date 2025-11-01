@@ -615,7 +615,7 @@ print(f"Breakpoints: {state.breakpoints}")
 **Goal**: Use importlib to load backends dynamically
 
 1. **Refactor mbasic**
-   - Add --backend argument (cli/visual)
+   - Add --ui argument (cli/visual)
    - Use importlib.import_module() to load backend
    - Pass IOHandler and ProgramManager to backend
 
@@ -671,11 +671,11 @@ After Phase 4, we'll create a separate document (MOBILE_UI_EVALUATION.md) analyz
 **Backward Compatibility:**
 - Keep `mbasic` working exactly as before (default CLI)
 - `python3 mbasic` → CLI mode (no changes for users)
-- `python3 mbasic --backend visual` → Visual mode
+- `python3 mbasic --ui visual` → Visual mode
 
 **Gradual Migration:**
 1. Phase 1-3: Refactor internal structure (no API changes)
-2. Phase 4: Add dynamic loading (optional --backend flag)
+2. Phase 4: Add dynamic loading (optional --ui flag)
 3. **STOP**: Evaluate mobile UI frameworks before Phase 5
 4. Phase 5: Implement chosen mobile/visual backend (deferred)
 
@@ -908,7 +908,7 @@ This example shows how a visual UI can:
 
 ### Phase 4: Dynamic Loading ✅ COMPLETE
 - [x] Add importlib loading to mbasic
-- [x] Add --backend command line argument (cli/visual)
+- [x] Add --ui command line argument (cli/visual)
 - [x] Add --debug command line argument
 - [x] Create load_backend() function using importlib
 - [x] Refactor main() to use UIBackend architecture

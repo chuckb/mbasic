@@ -161,7 +161,7 @@ This implementation follows these principles:
 
 If you want the authentic MBASIC 5.21 experience:
 ```bash
-python3 mbasic.py --backend cli
+python3 mbasic.py --ui cli
 ```
 Then avoid using:
 - BREAK, STEP, WATCH, STACK
@@ -175,7 +175,7 @@ This gives you pure MBASIC 5.21 compatibility.
 
 If you want all the modern conveniences:
 ```bash
-python3 mbasic.py --backend tk  # or web
+python3 mbasic.py --ui tk  # or web
 ```
 Use all features freely:
 - Visual debugging

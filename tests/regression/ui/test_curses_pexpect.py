@@ -18,7 +18,7 @@ def test_curses_basic():
 
     # Spawn the curses UI
     print("Spawning curses UI...")
-    child = pexpect.spawn('python3 mbasic.py --backend curses',
+    child = pexpect.spawn('python3 mbasic.py --ui curses',
                           encoding='utf-8',
                           timeout=5,
                           dimensions=(24, 80))
@@ -72,7 +72,7 @@ def test_curses_run_program():
     """Test running a program in curses UI."""
     print("\n\n=== Testing program execution in curses UI ===")
 
-    child = pexpect.spawn('python3 mbasic.py --backend curses',
+    child = pexpect.spawn('python3 mbasic.py --ui curses',
                           encoding='utf-8',
                           timeout=10,
                           dimensions=(24, 80))

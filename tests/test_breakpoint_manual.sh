@@ -42,4 +42,4 @@ echo ""
 echo "Press Enter to start..."
 read
 
-python3 mbasic --backend curses /tmp/test_bp_manual.bas
+python3 mbasic --ui curses /tmp/test_bp_manual.bas

@@ -5,7 +5,7 @@
 50 Y$=E$+"Y":X5$=E$+"x5":Y5$=E$+"y5":C$=STRING$(80,"^")
 60 PRINT E1$X5$;
 70 FOR I=1  TO F:READ FL$(I):NEXT I:I1=I
-80 PRINT F$C$Y$"! ";:FOR I=1  TO 20:PRINT "^^"B$D$D$;:NEXTI
+80 PRINT F$C$Y$"! ";:FOR I=1  TO 20:PRINT "^^"B$D$D$;:NEXT I
 90 PRINT C$D$;:FOR I=1  TO 22:PRINT A$"^^"D$;:NEXT I
 100 PRINT Y$"!'s s s s fac    sac sac scfs fac    sac sac fac f"
  "ac sac fac scfs fac"
@@ -15,7 +15,7 @@
  "ad uu  u u uedu ead"G$
 130 I2=INT((I1-1)/3)+1:IF I1>26  THEN I2=INT((I1-1)/6)+1:I8=I2:I9=1
 140 FOR I=1  TO I1:PRINT Y$CHR$(I+37)"9" CHR$(I+64)". "FL$(I):NEXT I
-150 PRINTY$"35Your choice? (Enter a letter) <END>"Y5$;:A$=INPUT$(1):PRINT X5$;
+150 PRINT Y$"35Your choice? (Enter a letter) <END>"Y5$;:A$=INPUT$(1):PRINT X5$;
 160 IF A$=CHR$(13)  THEN  PRINT E1$Y1$"You are in HDOS"Y5$;:SYSTEM
 170 IF A$>"`"  AND A$<"{"  THEN A$=CHR$(ASC(A$)-32)
 180 IF A$>CHR$(64)  AND A$<CHR$(65+I1)  THEN 200

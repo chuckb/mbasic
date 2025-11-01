@@ -56,7 +56,7 @@ The MBASIC 5.21 interpreter has been successfully refactored to support multiple
 **Completed Work:**
 - Added argparse for command-line argument parsing
 - Implemented load_backend() using importlib for dynamic loading
-- Added `--backend {cli,visual}` option
+- Added `--ui {cli,visual}` option
 - Added `--debug` option for debug output
 - Refactored mbasic to use UIBackend architecture
 
@@ -105,7 +105,7 @@ mbasic/
 ```
 ┌──────────────────────────────────────────────┐
 │          mbasic (main entry)              │
-│  - Parse arguments (--backend, --debug)      │
+│  - Parse arguments (--ui, --debug)      │
 │  - Create IOHandler (ConsoleIOHandler)       │
 │  - Create ProgramManager                     │
 │  - Load backend dynamically (importlib)      │
@@ -169,16 +169,16 @@ python3 mbasic
 python3 mbasic program.bas
 
 # Explicitly use CLI backend
-python3 mbasic --backend cli
+python3 mbasic --ui cli
 
 # Use visual backend (stub)
-python3 mbasic --backend visual
+python3 mbasic --ui visual
 
 # Enable debug output
 python3 mbasic --debug
 
 # Combined options
-python3 mbasic --backend cli --debug program.bas
+python3 mbasic --ui cli --debug program.bas
 
 # Show help
 python3 mbasic --help
@@ -259,8 +259,8 @@ ui.start()
 - ✅ No changes required to existing BASIC programs
 
 **New features:**
-- ✅ `--backend cli` - Explicit CLI backend selection
-- ✅ `--backend visual` - Visual backend (stub) loads correctly
+- ✅ `--ui cli` - Explicit CLI backend selection
+- ✅ `--ui visual` - Visual backend (stub) loads correctly
 - ✅ `--debug` - Debug output enabled
 - ✅ `--help` - Shows usage information
 - ✅ Dynamic loading works (importlib)
@@ -275,7 +275,7 @@ FNA(5) = 10
 FNB = 42
 Ready
 
-$ python3 mbasic --backend visual
+$ python3 mbasic --ui visual
 Note: Visual backend is a stub, using console I/O
 VisualBackend.start() - Override this method
 Create your UI here and start event loop
@@ -328,7 +328,7 @@ Create your UI here and start event loop
 ### For CLI Users
 - ✅ **No Changes**: Everything works exactly as before
 - ✅ **Performance**: No overhead from abstraction
-- ✅ **New Options**: Optional `--backend` and `--debug` flags
+- ✅ **New Options**: Optional `--ui` and `--debug` flags
 - ✅ **Backward Compatible**: All existing scripts work
 
 ### For Visual UI Developers

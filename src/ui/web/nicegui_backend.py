@@ -384,24 +384,183 @@ class StackDialog(ui.dialog):
 
 
 class OpenFileDialog(ui.dialog):
-    """Reusable dialog for opening files."""
+    """Reusable dialog for opening files from the server filesystem."""
 
     def __init__(self, backend):
         super().__init__()
         self.backend = backend
+        self.current_path = Path.cwd()  # Start in current working directory
+        self.file_list = None
+        self.path_label = None
+        self.selected_file = None
 
     def show(self):
+        self.current_path = Path.cwd()  # Reset to CWD each time
+        self.selected_file = None
         self.clear()
-        with self, ui.card().classes('w-96'):
+        with self, ui.card().classes('w-full max-w-4xl'):
             ui.label('Open BASIC Program').classes('text-h6 mb-4')
-            ui.label('Select a .BAS or .TXT file to open:').classes('mb-2')
+
+            # Current path display
+            with ui.row().classes('w-full items-center mb-2'):
+                ui.label('Path:').classes('font-bold')
+                self.path_label = ui.label(str(self.current_path)).classes('flex-grow font-mono text-sm')
+
+            # File browser area with scrolling
+            with ui.column().classes('w-full border rounded p-2 bg-gray-50').style('height: 400px; overflow-y: auto'):
+                self.file_list = ui.column().classes('w-full gap-0')
+
+            # Action buttons
+            with ui.row().classes('w-full justify-between mt-4'):
+                with ui.row().classes('gap-2'):
+                    ui.button('Upload File',
+                             on_click=lambda: self._show_upload_option(),
+                             icon='upload').props('outline no-caps')
+                with ui.row().classes('gap-2'):
+                    ui.button('Cancel', on_click=self.close).props('outline no-caps')
+                    ui.button('Open',
+                             on_click=lambda: self._open_selected(),
+                             icon='folder_open').props('no-caps').bind_enabled_from(self, 'selected_file', backward=lambda x: x is not None)
+
+        self._refresh_file_list()
+        self.open()
+
+    def _refresh_file_list(self):
+        """Refresh the file list display."""
+        self.file_list.clear()
+        self.path_label.set_text(str(self.current_path))
+
+        try:
+            # Add parent directory option if not at root
+            if self.current_path.parent != self.current_path:
+                with self.file_list:
+                    with ui.row().classes('w-full p-2 cursor-pointer hover:bg-gray-200 rounded items-center gap-2').on('click', lambda: self._navigate_up()):
+                        ui.icon('folder', size='sm').classes('text-blue-600')
+                        ui.label('..').classes('flex-grow')
+
+            # List directories first
+            dirs = sorted([d for d in self.current_path.iterdir() if d.is_dir()], key=lambda x: x.name.lower())
+            for dir_path in dirs:
+                with self.file_list:
+                    with ui.row().classes('w-full p-2 cursor-pointer hover:bg-gray-200 rounded items-center gap-2').on('click', lambda p=dir_path: self._navigate_to(p)):
+                        ui.icon('folder', size='sm').classes('text-blue-600')
+                        ui.label(dir_path.name).classes('flex-grow')
+
+            # Then list .bas and .txt files
+            files = sorted([f for f in self.current_path.iterdir()
+                          if f.is_file() and f.suffix.lower() in ['.bas', '.txt']],
+                         key=lambda x: x.name.lower())
+
+            if not files and not dirs:
+                with self.file_list:
+                    ui.label('No BASIC files found in this directory').classes('text-gray-500 italic p-4')
+
+            for file_path in files:
+                with self.file_list:
+                    file_row = ui.row().classes('w-full p-2 cursor-pointer hover:bg-blue-100 rounded items-center gap-2')
+                    with file_row:
+                        ui.icon('description', size='sm').classes('text-green-600')
+                        ui.label(file_path.name).classes('flex-grow')
+                        # File size
+                        size_kb = file_path.stat().st_size / 1024
+                        ui.label(f'{size_kb:.1f} KB').classes('text-gray-500 text-xs')
+
+                    # Click handler for file selection
+                    file_row.on('click', lambda p=file_path: self._select_file(p))
+                    # Double-click handler to open file directly
+                    async def open_on_dblclick(p=file_path):
+                        self._select_file(p)
+                        await self._open_selected()
+                    file_row.on('dblclick', open_on_dblclick)
+
+        except PermissionError:
+            with self.file_list:
+                ui.label('Permission denied').classes('text-red-500 p-4')
+        except Exception as e:
+            with self.file_list:
+                ui.label(f'Error: {e}').classes('text-red-500 p-4')
+
+    def _navigate_up(self):
+        """Navigate to parent directory."""
+        self.current_path = self.current_path.parent
+        self.selected_file = None
+        self._refresh_file_list()
+
+    def _navigate_to(self, path: Path):
+        """Navigate to a directory."""
+        self.current_path = path
+        self.selected_file = None
+        self._refresh_file_list()
+
+    def _select_file(self, path: Path):
+        """Select a file."""
+        self.selected_file = path
+        # Highlight the selected file
+        self._refresh_file_list()
+        # Re-apply selection highlight
+        for row in self.file_list:
+            if hasattr(row, '_props') or True:  # All rows
+                try:
+                    # Find the row that matches our file
+                    if any(path.name in str(child.text) if hasattr(child, 'text') else False
+                          for child in row if hasattr(child, 'text')):
+                        row.classes('bg-blue-200')
+                    else:
+                        row.classes(remove='bg-blue-200')
+                except:
+                    pass
+
+    async def _open_selected(self):
+        """Open the selected file."""
+        if not self.selected_file:
+            return
+
+        try:
+            content = self.selected_file.read_text()
+
+            # Remove blank lines
+            lines = content.split('\n')
+            non_blank_lines = [line for line in lines if line.strip()]
+            content = '\n'.join(non_blank_lines)
+
+            # Load into editor
+            self.backend.editor.value = content
+
+            # Clear placeholder once content is loaded
+            if content:
+                self.backend.editor_has_been_used = True
+                self.backend.editor.props('placeholder=""')
+
+            # Parse into program
+            self.backend._save_editor_to_program()
+
+            # Store filename
+            self.backend.current_file = self.selected_file.name
+
+            # Add to recent files
+            self.backend._add_recent_file(self.selected_file.name)
+
+            self.backend._set_status(f'Opened: {self.selected_file.name}')
+            self.backend._notify(f'Loaded {self.selected_file.name}', type='positive')
+            self.close()
+
+        except Exception as ex:
+            log_web_error("_open_selected", ex)
+            self.backend._notify(f'Error loading file: {ex}', type='negative')
+
+    def _show_upload_option(self):
+        """Show upload dialog for uploading files from client computer."""
+        upload_dialog = ui.dialog()
+        with upload_dialog, ui.card():
+            ui.label('Upload from your computer').classes('text-h6 mb-4')
+            ui.label('Select a .BAS or .TXT file to upload:').classes('mb-2')
             ui.upload(
-                on_upload=lambda e: self.backend._handle_file_upload(e, self),
+                on_upload=lambda e: self.backend._handle_file_upload(e, upload_dialog),
                 auto_upload=True
             ).classes('w-full').props('accept=".bas,.txt"')
             with ui.row().classes('w-full justify-end mt-4'):
-                ui.button('Cancel', on_click=self.close).props('no-caps')
-        self.open()
+                ui.button('Cancel', on_click=upload_dialog.close).props('no-caps')
+        upload_dialog.open()
 
 
 class SaveAsDialog(ui.dialog):
@@ -1263,11 +1422,12 @@ class NiceGUIBackend(UIBackend):
         """File > Open - Load program from file."""
         self.open_file_dialog.show()
 
-    def _handle_file_upload(self, e, dialog):
+    async def _handle_file_upload(self, e, dialog):
         """Handle file upload from Open dialog."""
         try:
             # Read uploaded file content
-            content = e.content.read().decode('utf-8')
+            content_bytes = await e.file.read()
+            content = content_bytes.decode('utf-8')
 
             # Remove blank lines
             lines = content.split('\n')
@@ -1286,13 +1446,13 @@ class NiceGUIBackend(UIBackend):
             self._save_editor_to_program()
 
             # Store filename
-            self.current_file = e.name
+            self.current_file = e.file.filename
 
             # Add to recent files
-            self._add_recent_file(e.name)
+            self._add_recent_file(e.file.filename)
 
-            self._set_status(f'Opened: {e.name}')
-            self._notify(f'Loaded {e.name}', type='positive')
+            self._set_status(f'Opened: {e.file.filename}')
+            self._notify(f'Loaded {e.file.filename}', type='positive')
             dialog.close()
 
         except Exception as ex:

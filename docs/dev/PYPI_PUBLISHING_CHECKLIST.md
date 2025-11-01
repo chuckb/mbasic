@@ -103,7 +103,7 @@ pip install dist/mbasic-*.whl
 
 # Test it works
 mbasic --list-backends
-mbasic --backend cli
+mbasic --ui cli
 # Type: PRINT "Hello, World!"
 # Type: RUN
 
@@ -135,7 +135,7 @@ source /tmp/test_from_testpypi/bin/activate
 pip install --index-url https://test.pypi.org/simple/ mbasic
 
 # Test CLI backend
-python3 -c "import mbasic; mbasic.main()" --backend cli --help
+python3 -c "import mbasic; mbasic.main()" --ui cli --help
 
 # Clean up
 deactivate
@@ -178,11 +178,11 @@ pip install mbasic
 
 # Test it
 mbasic --list-backends
-mbasic --backend cli
+mbasic --ui cli
 
 # Test with optional dependencies
 pip install mbasic[curses]
-mbasic --backend curses
+mbasic --ui curses
 
 deactivate
 rm -rf /tmp/test_prod

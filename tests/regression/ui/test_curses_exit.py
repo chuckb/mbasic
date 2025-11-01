@@ -12,7 +12,7 @@ def test_ctrl_c_exit():
     print("=== Testing Ctrl+C Exit ===\n")
 
     child = pexpect.spawn(
-        'python3 mbasic.py --backend curses',
+        'python3 mbasic.py --ui curses',
         encoding='utf-8',
         timeout=10,
         dimensions=(24, 80)
@@ -60,7 +60,7 @@ def test_ctrl_q_exit():
     print("\n=== Testing Ctrl+Q Exit ===\n")
 
     child = pexpect.spawn(
-        'python3 mbasic.py --backend curses',
+        'python3 mbasic.py --ui curses',
         encoding='utf-8',
         timeout=10,
         dimensions=(24, 80)

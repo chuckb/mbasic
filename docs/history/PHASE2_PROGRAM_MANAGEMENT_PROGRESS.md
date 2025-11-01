@@ -175,7 +175,7 @@ These work correctly but should eventually be migrated to use ProgramManager met
 
 ### Phase 4: Dynamic Loading
 - Use importlib to load backends
-- Add --backend command line argument
+- Add --ui command line argument
 - Enable custom UI plugins
 
 ## Conclusion

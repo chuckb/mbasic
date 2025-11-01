@@ -158,7 +158,7 @@ if [ "$ACTION" = "test" ]; then
 50 END
 EOF
 
-    if mbasic --backend=cli /tmp/mbasic_test.bas; then
+    if mbasic --ui=cli /tmp/mbasic_test.bas; then
         echo -e "${GREEN}✓ Test program executed successfully${NC}"
     else
         echo -e "${RED}✗ Test program failed${NC}"

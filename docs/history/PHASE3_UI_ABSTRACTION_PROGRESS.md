@@ -257,7 +257,7 @@ self.call_stack_widget.update(gosub_stack)
 
 ### Phase 4: Dynamic Loading (Optional)
 - Use importlib to load backends dynamically
-- Add --backend command line argument
+- Add --ui command line argument
 - Enable custom UI plugins
 - Estimated: 2-3 hours
 

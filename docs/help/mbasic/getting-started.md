@@ -89,7 +89,7 @@ python3 mbasic.py hello.bas
 Start MBASIC in CLI mode:
 
 ```bash
-python3 mbasic.py --backend cli
+python3 mbasic.py --ui cli
 ```
 
 Type your program at the `Ok` prompt:
@@ -110,7 +110,7 @@ Full-screen terminal interface with split editor/output:
 
 ```bash
 python3 mbasic.py               # or
-python3 mbasic.py --backend curses
+python3 mbasic.py --ui curses
 ```
 
 **Best for:** Interactive program development, debugging
@@ -120,7 +120,7 @@ python3 mbasic.py --backend curses
 Classic MBASIC command-line interface:
 
 ```bash
-python3 mbasic.py --backend cli
+python3 mbasic.py --ui cli
 ```
 
 **Best for:** Scripting, automation, authentic MBASIC experience
@@ -130,7 +130,7 @@ python3 mbasic.py --backend cli
 Graphical interface with menu bar and toolbar:
 
 ```bash
-python3 mbasic.py --backend tk
+python3 mbasic.py --ui tk
 ```
 
 **Best for:** Users who prefer graphical interfaces

@@ -13,17 +13,17 @@ The curses UI backend has been migrated from npyscreen to urwid. The old npyscre
 
 ### Backend Selection
 
-- **`--backend curses`** - New urwid-based UI (recommended)
-- **`--backend curses-npyscreen`** - Legacy npyscreen UI (for compatibility)
+- **`--ui curses`** - New urwid-based UI (recommended)
+- **`--ui curses-npyscreen`** - Legacy npyscreen UI (for compatibility)
 
 ### Command Line Usage
 
 ```bash
 # New urwid UI (requires: pip install urwid)
-python3 mbasic --backend curses
+python3 mbasic --ui curses
 
 # Legacy npyscreen UI (requires: pip install npyscreen)
-python3 mbasic --backend curses-npyscreen
+python3 mbasic --ui curses-npyscreen
 ```
 
 ### Graceful Fallback
@@ -158,18 +158,18 @@ All tests pass with the npyscreen backend.
 1. **Test urwid UI** (requires urwid):
    ```bash
    pip install urwid
-   python3 mbasic --backend curses
+   python3 mbasic --ui curses
    ```
 
 2. **Test npyscreen UI**:
    ```bash
-   python3 mbasic --backend curses-npyscreen
+   python3 mbasic --ui curses-npyscreen
    ```
 
 3. **Test fallback** (without urwid):
    ```bash
    pip uninstall urwid
-   python3 mbasic --backend curses
+   python3 mbasic --ui curses
    # Should fall back to npyscreen
    ```
 
@@ -179,9 +179,9 @@ All tests pass with the npyscreen backend.
 
 No action required - the system automatically uses the best available backend:
 
-1. If urwid is installed: Uses new urwid UI when `--backend curses` is specified
+1. If urwid is installed: Uses new urwid UI when `--ui curses` is specified
 2. If urwid is not installed: Falls back to npyscreen UI
-3. Can explicitly use `--backend curses-npyscreen` for legacy UI
+3. Can explicitly use `--ui curses-npyscreen` for legacy UI
 
 ### For Developers
 

@@ -27,7 +27,7 @@ def start(self):
 - ✅ Importing mbasic does NOT import tkinter
 - ✅ Using CLI backend does NOT import tkinter
 - ✅ Using curses backend does NOT import tkinter
-- ✅ Only using `--backend tk` imports tkinter
+- ✅ Only using `--ui tk` imports tkinter
 - ✅ If tkinter isn't available, other backends still work
 
 ### Backend Loading is Dynamic
@@ -226,12 +226,12 @@ except ImportError:
 **Problem:** X11 not available
 
 **Solutions:**
-1. Use CLI backend: `python3 mbasic --backend cli`
-2. Use curses backend: `python3 mbasic --backend curses`
+1. Use CLI backend: `python3 mbasic --ui cli`
+2. Use curses backend: `python3 mbasic --ui curses`
 3. Virtual X server (Xvfb) if TK needed:
    ```bash
    sudo apt-get install xvfb
-   xvfb-run python3 mbasic --backend tk
+   xvfb-run python3 mbasic --ui tk
    ```
 
 ---
@@ -262,14 +262,14 @@ def load_backend(backend_name, io_handler, program_manager):
                 "  - RHEL/Fedora: sudo dnf install python3-tkinter\n"
                 "  - macOS/Windows: Reinstall Python from python.org\n"
                 "\n"
-                "Alternative: Use --backend cli or --backend curses"
+                "Alternative: Use --ui cli or --ui curses"
             ),
             'curses': (
                 "Curses backend requires urwid library.\n"
                 "Install with: pip install mbasic[curses]\n"
                 "             or pip install urwid>=2.0.0\n"
                 "\n"
-                "Alternative: Use --backend cli or --backend tk"
+                "Alternative: Use --ui cli or --ui tk"
             ),
         }
 
@@ -330,7 +330,7 @@ See `PUBLISHING_TO_PYPI_GUIDE.md` for full `pyproject.toml` example with optiona
 ### Minimal (CLI only, no dependencies)
 ```bash
 pip install mbasic
-python3 -m mbasic --backend cli
+python3 -m mbasic --ui cli
 ```
 
 ### With Curses UI (full-screen terminal)
@@ -342,7 +342,7 @@ python3 -m mbasic  # curses is default
 ### With Tkinter GUI (if tkinter available)
 ```bash
 pip install mbasic
-python3 -m mbasic --backend tk
+python3 -m mbasic --ui tk
 ```
 
 **Note:** Tkinter is included with most Python installations. If missing:
@@ -358,9 +358,9 @@ python3 -m mbasic --list-backends
 For servers without X11, use CLI or curses backends:
 ```bash
 pip install mbasic[curses]
-python3 -m mbasic --backend curses
+python3 -m mbasic --ui curses
 # or
-python3 -m mbasic --backend cli
+python3 -m mbasic --ui cli
 ```
 ```
 
@@ -396,7 +396,7 @@ pip install mbasic           # CLI only
 pip install mbasic[curses]   # Add full-screen terminal UI
 ```
 
-No X11 gets pulled in unless the user explicitly runs `--backend tk` (which will fail gracefully with helpful error).
+No X11 gets pulled in unless the user explicitly runs `--ui tk` (which will fail gracefully with helpful error).
 
 ---
 
@@ -409,9 +409,9 @@ Before publishing to PyPI, test these scenarios:
 python3 -m venv /tmp/test_minimal
 source /tmp/test_minimal/bin/activate
 pip install dist/mbasic-*.whl
-python3 -m mbasic --backend cli  # Should work
-python3 -m mbasic --backend tk   # Should work if tkinter available
-python3 -m mbasic --backend curses  # Should fail with helpful message
+python3 -m mbasic --ui cli  # Should work
+python3 -m mbasic --ui tk   # Should work if tkinter available
+python3 -m mbasic --ui curses  # Should fail with helpful message
 deactivate
 ```
 
@@ -420,14 +420,14 @@ deactivate
 python3 -m venv /tmp/test_curses
 source /tmp/test_curses/bin/activate
 pip install dist/mbasic-*.whl[curses]
-python3 -m mbasic --backend curses  # Should work
+python3 -m mbasic --ui curses  # Should work
 deactivate
 ```
 
 ### 3. Headless Simulation
 ```bash
 # Simulate headless by blocking tkinter
-python3 -c "import sys; sys.modules['tkinter'] = None; exec(open('mbasic').read())" --backend cli
+python3 -c "import sys; sys.modules['tkinter'] = None; exec(open('mbasic').read())" --ui cli
 ```
 
 ### 4. Backend Detection
@@ -450,7 +450,7 @@ python3 -m mbasic --list-backends
 
 **Short answer to user's question:**
 
-> No, tkinter does NOT get imported on headless machines unless you explicitly use `--backend tk`. The code already uses lazy loading and dynamic imports. We just need to document this properly and create the right PyPI package with optional dependencies.
+> No, tkinter does NOT get imported on headless machines unless you explicitly use `--ui tk`. The code already uses lazy loading and dynamic imports. We just need to document this properly and create the right PyPI package with optional dependencies.
 
 **What to do next:**
 

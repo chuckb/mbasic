@@ -30,7 +30,7 @@ Let's write a simple program:
 
 1. Start MBASIC with curses:
    ```bash
-   python3 mbasic.py --backend curses
+   python3 mbasic.py --ui curses
    ```
 
 2. You'll see the editor window at the top

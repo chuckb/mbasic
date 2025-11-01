@@ -48,7 +48,7 @@ If you prefer to test manually:
 
 ```bash
 # Launch web UI
-python3 mbasic --backend web
+python3 mbasic --ui web
 
 # Navigate to http://localhost:8080
 

@@ -173,7 +173,7 @@ def input(self, prompt=""):
 **Manual Testing Works:**
 
 ```bash
-python3 mbasic --backend web
+python3 mbasic --ui web
 # Navigate to http://localhost:8080
 # Load tests/test_curses_input.bas or type manually
 # Run program

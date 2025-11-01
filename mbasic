@@ -5,11 +5,11 @@ MBASIC 5.21 Interpreter
 Usage:
     python3 mbasic.py                         # Interactive mode (curses screen editor)
     python3 mbasic.py program.bas             # Execute program
-    python3 mbasic.py --backend curses        # Curses text UI (urwid, full-screen terminal) (default)
-    python3 mbasic.py --backend cli           # CLI backend (line-based)
-    python3 mbasic.py --backend tk            # Tkinter GUI (graphical)
-    python3 mbasic.py --backend web           # Web UI (browser-based)
-    python3 mbasic.py --backend web --port 3000  # Web UI on custom port
+    python3 mbasic.py --ui curses             # Curses text UI (urwid, full-screen terminal) (default)
+    python3 mbasic.py --ui cli                # CLI backend (line-based)
+    python3 mbasic.py --ui tk                 # Tkinter GUI (graphical)
+    python3 mbasic.py --ui web                # Web UI (browser-based)
+    python3 mbasic.py --ui web --port 3000    # Web UI on custom port
     python3 mbasic.py --debug                 # Enable debug output
 """
 
@@ -76,7 +76,7 @@ def list_backends():
 
         print(f"  {name:10} {info['name']:12} {info['description']:30} {status}{install_help}")
 
-    print("\nUsage: python3 mbasic.py --backend <name>")
+    print("\nUsage: python3 mbasic.py --ui <name>")
 
 
 def create_default_def_type_map():
@@ -136,24 +136,24 @@ def load_backend(backend_name, io_handler, program_manager):
                 "  • RHEL/Fedora:   sudo dnf install python3-tkinter\n"
                 "  • macOS/Windows: Reinstall Python from python.org\n"
                 "\n"
-                "Alternative: Use --backend cli or --backend curses\n"
-                "Run 'python3 mbasic.py --list-backends' to see all available backends."
+                "Alternative: Use --ui cli or --ui curses\n"
+                "Run 'python3 mbasic.py --list-backends' to see all available UIs."
             ),
             'curses': (
                 "\nCurses backend requires urwid library.\n"
                 "Install with: pip install mbasic[curses]\n"
                 "         or: pip install urwid>=2.0.0\n"
                 "\n"
-                "Alternative: Use --backend cli or --backend tk\n"
-                "Run 'python3 mbasic.py --list-backends' to see all available backends."
+                "Alternative: Use --ui cli or --ui tk\n"
+                "Run 'python3 mbasic.py --list-backends' to see all available UIs."
             ),
             'web': (
                 "\nWeb backend requires nicegui library.\n"
                 "Install with: pip install mbasic[web]\n"
                 "         or: pip install nicegui>=3.2.0\n"
                 "\n"
-                "Alternative: Use --backend cli, --backend curses, or --backend tk\n"
-                "Run 'python3 mbasic.py --list-backends' to see all available backends."
+                "Alternative: Use --ui cli, --ui curses, or --ui tk\n"
+                "Run 'python3 mbasic.py --list-backends' to see all available UIs."
             ),
         }
 
@@ -215,10 +215,11 @@ def main():
 Examples:
   python3 mbasic.py                         # Interactive mode (curses screen editor)
   python3 mbasic.py program.bas             # Run program and enter interactive mode
-  python3 mbasic.py --backend curses        # Curses text UI (urwid, full-screen terminal) (default)
-  python3 mbasic.py --backend cli           # CLI backend (line-based)
-  python3 mbasic.py --backend tk            # Tkinter GUI (graphical)
-  python3 mbasic.py --backend visual        # Generic visual stub
+  python3 mbasic.py --ui curses             # Curses text UI (urwid, full-screen terminal) (default)
+  python3 mbasic.py --ui cli                # CLI backend (line-based)
+  python3 mbasic.py --ui tk                 # Tkinter GUI (graphical)
+  python3 mbasic.py --ui web                # Web UI (browser-based)
+  python3 mbasic.py --ui web --port 3000    # Web UI on custom port
   python3 mbasic.py --debug                 # Enable debug output
         """
     )
@@ -230,10 +231,12 @@ Examples:
     )
 
     parser.add_argument(
-        '--backend',
+        '--ui',
+        '--backend',  # Keep --backend as alias for backwards compatibility
+        dest='backend',
         choices=['cli', 'visual', 'curses', 'tk', 'web'],
         default='curses',
-        help='UI backend to use (default: curses)'
+        help='UI to use (default: curses)'
     )
 
     parser.add_argument(

@@ -75,7 +75,7 @@ If you need Find/Replace now, use:
 
 ### Command to switch:
 ```bash
-python3 mbasic.py --backend tk
+python3 mbasic.py --ui tk
 ```
 
 ## Status Updates

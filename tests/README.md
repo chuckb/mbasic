@@ -336,7 +336,7 @@ BASIC program test files live in `basic/bas_tests/`:
 python3 mbasic basic/bas_tests/test_program.bas
 
 # With specific backend
-python3 mbasic --backend=cli basic/bas_tests/test_program.bas
+python3 mbasic --ui=cli basic/bas_tests/test_program.bas
 ```
 
 ## CI/CD Integration

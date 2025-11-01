@@ -161,7 +161,7 @@ cat > "$TEST_DIR/test.bas" << 'EOF'
 40 END
 EOF
 
-if echo -e "LOAD \"$TEST_DIR/test.bas\"\nRUN\nEXIT" | python3 -m mbasic --backend cli 2>&1 | grep -q "Hello from MBASIC"; then
+if echo -e "LOAD \"$TEST_DIR/test.bas\"\nRUN\nEXIT" | python3 -m mbasic --ui cli 2>&1 | grep -q "Hello from MBASIC"; then
     test_passed "CLI backend executes programs correctly"
 else
     test_failed "CLI backend execution failed"

@@ -72,7 +72,7 @@ Press Enter
 You can also load a program when starting:
 
 ```bash
-python3 mbasic.py --backend curses myprogram.bas
+python3 mbasic.py --ui curses myprogram.bas
 ```
 
 The program will:

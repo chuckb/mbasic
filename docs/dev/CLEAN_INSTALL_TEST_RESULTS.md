@@ -48,15 +48,15 @@ mbasic --list-backends
 #   tk      ✗ Not available (apt install python3-tk)
 
 # Use CLI backend (works with zero deps!)
-mbasic --backend cli
+mbasic --ui cli
 # Can run BASIC programs, no graphics
 
 # Try TK backend (fails gracefully)
-mbasic --backend tk
+mbasic --ui tk
 # Error with helpful message:
 # "Tkinter backend requires tkinter.
 #  Debian/Ubuntu: sudo apt-get install python3-tk
-#  Alternative: Use --backend cli or --backend curses"
+#  Alternative: Use --ui cli or --ui curses"
 ```
 
 ---
@@ -84,7 +84,7 @@ mbasic --list-backends
 #   tk      ✗ Not available (apt install python3-tk)
 
 # Use curses backend (full-screen terminal UI)
-mbasic --backend curses
+mbasic --ui curses
 # or just:
 mbasic  # curses is default
 ```
@@ -119,7 +119,7 @@ mbasic --list-backends
 #   tk      ✓ Available  ← Now works!
 
 # Use TK backend (graphical UI)
-mbasic --backend tk
+mbasic --ui tk
 ```
 
 ---
@@ -150,8 +150,8 @@ mbasic --list-backends
 # Output shows TK as not available
 
 # Using curses or CLI works perfectly:
-mbasic --backend curses  # Full-screen terminal UI
-mbasic --backend cli     # Line-based interface
+mbasic --ui curses  # Full-screen terminal UI
+mbasic --ui cli     # Line-based interface
 ```
 
 ---
@@ -162,7 +162,7 @@ mbasic --backend cli     # Line-based interface
 The minimal `pip install mbasic` has **zero PyPI dependencies** and works immediately with the CLI backend.
 
 ### ✅ Lazy Loading Confirmed
-Tkinter is **only imported when you run `--backend tk`**. Testing in Python:
+Tkinter is **only imported when you run `--ui tk`**. Testing in Python:
 
 ```python
 import sys
@@ -185,9 +185,9 @@ On a headless server with no X11:
 - `pip install mbasic` → ✅ Works
 - `pip install mbasic[curses]` → ✅ Works
 - `pip install mbasic[tk]` → ✅ Works (does nothing, tk is optional extra)
-- `mbasic --backend cli` → ✅ Works
-- `mbasic --backend curses` → ✅ Works
-- `mbasic --backend tk` → ❌ Fails gracefully with helpful error
+- `mbasic --ui cli` → ✅ Works
+- `mbasic --ui curses` → ✅ Works
+- `mbasic --ui tk` → ❌ Fails gracefully with helpful error
 
 ### ✅ Helpful Error Messages
 When a backend is unavailable:
@@ -201,7 +201,7 @@ If missing:
   • RHEL/Fedora:   sudo dnf install python3-tkinter
   • macOS/Windows: Reinstall Python from python.org
 
-Alternative: Use --backend cli or --backend curses
+Alternative: Use --ui cli or --ui curses
 Run 'python3 mbasic --list-backends' to see all available backends.
 ```
 
@@ -269,13 +269,13 @@ mbasic --help
 ```bash
 git clone https://github.com/avwohl/mbasic.git
 cd mbasic
-python3 mbasic --backend cli
+python3 mbasic --ui cli
 ```
 
 ### After (from PyPI):
 ```bash
 pip install mbasic
-mbasic --backend cli
+mbasic --ui cli
 ```
 
 **Much simpler for end users!**
@@ -299,14 +299,14 @@ mbasic --backend cli
 ### ✅ Minimal Install (CLI only)
 ```bash
 pip install mbasic
-mbasic --backend cli
+mbasic --ui cli
 # Result: Works with zero dependencies
 ```
 
 ### ✅ With Curses
 ```bash
 pip install mbasic[curses]
-mbasic --backend curses
+mbasic --ui curses
 # Result: Full-screen terminal UI works
 ```
 
@@ -314,7 +314,7 @@ mbasic --backend curses
 ```bash
 # On server with no X11:
 pip install mbasic[curses]
-mbasic --backend curses
+mbasic --ui curses
 # Result: Works perfectly, no X11 needed
 ```
 
@@ -322,7 +322,7 @@ mbasic --backend curses
 ```bash
 pip install mbasic
 sudo apt-get install python3-tk
-mbasic --backend tk
+mbasic --ui tk
 # Result: Graphical UI works
 ```
 
@@ -331,7 +331,7 @@ mbasic --backend tk
 import sys
 import mbasic
 print('tkinter' in sys.modules)  # False
-# Result: tkinter NOT imported unless --backend tk
+# Result: tkinter NOT imported unless --ui tk
 ```
 
 ---
@@ -344,7 +344,7 @@ print('tkinter' in sys.modules)  # False
 **NO!**
 
 1. **pip install mbasic** has zero dependencies
-2. Tkinter is **lazy-loaded** - only imported when explicitly using `--backend tk`
+2. Tkinter is **lazy-loaded** - only imported when explicitly using `--ui tk`
 3. On headless servers, **no X11 libraries are pulled in**
 4. CLI and curses backends work perfectly without any GUI dependencies
 

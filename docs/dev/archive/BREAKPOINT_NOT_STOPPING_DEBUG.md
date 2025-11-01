@@ -121,7 +121,7 @@ print(f"DEBUG: Callback is: {self.interpreter.breakpoint_callback}", file=sys.st
 
 Then run:
 ```bash
-python3 mbasic.py --backend curses test_continue.bas 2>&1 | grep DEBUG
+python3 mbasic.py --ui curses test_continue.bas 2>&1 | grep DEBUG
 ```
 
 ## Next Steps

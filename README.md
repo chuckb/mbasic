@@ -154,7 +154,7 @@ See **[Curses Editor Documentation](docs/user/URWID_UI.md)** for complete guide.
 ### CLI Mode (Line-by-line REPL)
 
 ```bash
-python3 mbasic --backend cli
+python3 mbasic --ui cli
 ```
 
 Then enter your program:

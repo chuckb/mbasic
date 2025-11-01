@@ -202,7 +202,7 @@ These features are parsed but not yet implemented in the interpreter (will throw
    - Tests should run to completion automatically
 
 6. **Expected output:**
-   - Generate with: `python3 mbasic --backend cli test.bas > test.txt`
+   - Generate with: `python3 mbasic --ui cli test.bas > test.txt`
    - Strip out prompt lines (MBASIC-, Ready, etc.) - run_tests.py does this
    - Verify output is correct before committing
 

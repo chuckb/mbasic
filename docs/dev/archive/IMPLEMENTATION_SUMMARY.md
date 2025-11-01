@@ -15,8 +15,8 @@ Successfully migrated the MBASIC curses UI from npyscreen to urwid, creating a m
 
 ### 2. Backend Configuration
 
-- ✅ `--backend curses` - New urwid-based UI
-- ✅ `--backend curses-npyscreen` - Legacy npyscreen UI
+- ✅ `--ui curses` - New urwid-based UI
+- ✅ `--ui curses-npyscreen` - Legacy npyscreen UI
 - ✅ Graceful fallback if urwid not installed
 - ✅ Updated help text and documentation
 
@@ -99,7 +99,7 @@ tests/test_breakpoints_fixed.py
 tests/test_simple_continue.py
 ```
 
-All updated to use `--backend curses-npyscreen` explicitly.
+All updated to use `--ui curses-npyscreen` explicitly.
 
 ## Architecture
 
@@ -120,7 +120,7 @@ class UIBackend(ABC):
 ### Backend Selection
 
 ```
-User specifies: --backend curses
+User specifies: --ui curses
          ↓
    Check if urwid installed
          ↓
@@ -166,10 +166,10 @@ Ready
 PRINT 2+2
  4
 
-$ python3 mbasic.py --backend curses-npyscreen
+$ python3 mbasic.py --ui curses-npyscreen
 # Opens npyscreen full-screen UI ✓
 
-$ python3 mbasic.py --backend curses
+$ python3 mbasic.py --ui curses
 # Opens urwid full-screen UI ✓
 ```
 
@@ -191,7 +191,7 @@ $ python3 mbasic.py --backend curses
 For advanced features, use the npyscreen backend:
 
 ```bash
-python3 mbasic.py --backend curses-npyscreen
+python3 mbasic.py --ui curses-npyscreen
 ```
 
 The npyscreen backend has all features fully implemented.
@@ -257,7 +257,7 @@ Urwid provides:
 Full backward compatibility maintained:
 
 1. **Existing tests still pass** - All npyscreen tests work
-2. **Legacy backend available** - `--backend curses-npyscreen`
+2. **Legacy backend available** - `--ui curses-npyscreen`
 3. **Graceful fallback** - Works without urwid installed
 4. **No breaking changes** - All existing functionality preserved
 
@@ -270,13 +270,13 @@ Full backward compatibility maintained:
 python3 mbasic.py
 
 # New urwid UI (requires: pip install urwid)
-python3 mbasic.py --backend curses
+python3 mbasic.py --ui curses
 
 # Legacy npyscreen UI (for full features)
-python3 mbasic.py --backend curses-npyscreen
+python3 mbasic.py --ui curses-npyscreen
 
 # Load a program
-python3 mbasic.py --backend curses program.bas
+python3 mbasic.py --ui curses program.bas
 ```
 
 ### Testing
