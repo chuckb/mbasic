@@ -1328,11 +1328,11 @@ class NiceGUIBackend(UIBackend):
     # Breakpoint Management
     # =========================================================================
 
-    def _toggle_breakpoint(self):
+    async def _toggle_breakpoint(self):
         """Toggle breakpoint on current line."""
         try:
-            # Use JavaScript to get current cursor line
-            ui.run_javascript('''
+            # Get line number from cursor position using JavaScript
+            result = await ui.run_javascript('''
                 const textarea = document.querySelector('[data-ref="editor"] textarea');
                 if (textarea) {
                     const text = textarea.value;
@@ -1346,27 +1346,65 @@ class NiceGUIBackend(UIBackend):
                     // Extract BASIC line number if present
                     const match = lineText.match(/^\\s*(\\d+)/);
                     if (match) {
-                        const lineNum = parseInt(match[1]);
-                        // Send to Python via custom event
-                        window.dispatchEvent(new CustomEvent('toggle-breakpoint', {detail: lineNum}));
+                        return parseInt(match[1]);
                     }
                 }
-            ''')
+                return null;
+            ''', timeout=5.0)
 
-            # For now, prompt for line number since we can't easily get cursor position
-            # In a real implementation, we'd use JavaScript events to communicate back
-            # Simple approach: ask user for line number
-            with ui.dialog() as dialog, ui.card():
-                ui.label('Toggle Breakpoint')
-                line_input = ui.input('Line number:', placeholder='10').classes('w-full')
-                with ui.row():
-                    ui.button('Toggle', on_click=lambda: self._do_toggle_breakpoint(line_input.value, dialog)).props('no-caps')
-                    ui.button('Cancel', on_click=dialog.close).props('no-caps')
-            dialog.open()
+            if result:
+                # Toggle the breakpoint directly
+                line_num = int(result)
+                if line_num in self.breakpoints:
+                    self.breakpoints.remove(line_num)
+                    self._notify(f'❌ Breakpoint removed: line {line_num}', type='info')
+                    self._set_status(f'Removed breakpoint at {line_num}')
+                else:
+                    self.breakpoints.add(line_num)
+                    self._notify(f'🔴 Breakpoint set: line {line_num}', type='positive')
+                    self._set_status(f'Breakpoint at {line_num}')
+
+                # Update editor to show breakpoint markers
+                self._update_breakpoint_display()
+            else:
+                # Cursor not on a BASIC line number, show dialog
+                with ui.dialog() as dialog, ui.card():
+                    ui.label('Toggle Breakpoint').classes('text-h6')
+                    ui.label('Cursor is not on a line with a line number.').classes('text-caption mb-2')
+                    line_input = ui.input('Line number:', placeholder='10').classes('w-full')
+                    with ui.row():
+                        ui.button('Toggle', on_click=lambda: self._do_toggle_breakpoint(line_input.value, dialog)).props('no-caps')
+                        ui.button('Cancel', on_click=dialog.close).props('no-caps')
+                dialog.open()
 
         except Exception as e:
             log_web_error("_toggle_breakpoint", e)
             self._notify(f'Error: {e}', type='negative')
+
+    def _update_breakpoint_display(self):
+        """Update the editor to show breakpoint markers."""
+        try:
+            if not self.breakpoints:
+                return
+
+            # Add visual markers using JavaScript
+            ui.run_javascript(f'''
+                const breakpoints = new Set({list(self.breakpoints)});
+                const textarea = document.querySelector('[data-ref="editor"] textarea');
+                if (textarea) {{
+                    const lines = textarea.value.split('\\n');
+                    const marked = lines.map((line, idx) => {{
+                        const match = line.match(/^\\s*(\\d+)/);
+                        if (match && breakpoints.has(parseInt(match[1]))) {{
+                            return '🔴 ' + line;
+                        }}
+                        return line.replace(/^🔴 /, '');  // Remove old markers
+                    }});
+                    textarea.value = marked.join('\\n');
+                }}
+            ''')
+        except Exception as e:
+            log_web_error("_update_breakpoint_display", e)
 
     def _do_toggle_breakpoint(self, line_num_str, dialog):
         """Actually toggle the breakpoint."""
@@ -1375,13 +1413,14 @@ class NiceGUIBackend(UIBackend):
 
             if line_num in self.breakpoints:
                 self.breakpoints.remove(line_num)
-                self._notify(f'Breakpoint removed: line {line_num}', type='info')
+                self._notify(f'❌ Breakpoint removed: line {line_num}', type='info')
                 self._set_status(f'Removed breakpoint at {line_num}')
             else:
                 self.breakpoints.add(line_num)
-                self._notify(f'Breakpoint set: line {line_num}', type='positive')
+                self._notify(f'🔴 Breakpoint set: line {line_num}', type='positive')
                 self._set_status(f'Breakpoint at {line_num}')
 
+            self._update_breakpoint_display()
             dialog.close()
 
         except ValueError:
