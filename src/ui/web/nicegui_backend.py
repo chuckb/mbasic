@@ -426,59 +426,74 @@ class OpenFileDialog(ui.dialog):
         self.open()
 
     def _refresh_file_list(self):
-        """Refresh the file list display."""
+        """Refresh the file list display using AG Grid."""
         self.file_list.clear()
         self.path_label.set_text(str(self.current_path))
 
         try:
+            # Build row data for AG Grid
+            rows = []
+
             # Add parent directory option if not at root
             if self.current_path.parent != self.current_path:
-                with self.file_list:
-                    with ui.row().classes('w-full p-2 cursor-pointer hover:bg-gray-200 rounded items-center gap-2').on('click', lambda: self._navigate_up()):
-                        ui.icon('folder', size='sm').classes('text-blue-600')
-                        ui.label('..').classes('flex-grow')
+                rows.append({
+                    'type': 'parent',
+                    'icon': '📁',
+                    'name': '..',
+                    'size': '',
+                    'path': str(self.current_path.parent)
+                })
 
             # List directories first
             dirs = sorted([d for d in self.current_path.iterdir() if d.is_dir()], key=lambda x: x.name.lower())
             for dir_path in dirs:
-                with self.file_list:
-                    with ui.row().classes('w-full p-2 cursor-pointer hover:bg-gray-200 rounded items-center gap-2').on('click', lambda p=dir_path: self._navigate_to(p)):
-                        ui.icon('folder', size='sm').classes('text-blue-600')
-                        ui.label(dir_path.name).classes('flex-grow')
+                rows.append({
+                    'type': 'directory',
+                    'icon': '📁',
+                    'name': dir_path.name,
+                    'size': '',
+                    'path': str(dir_path)
+                })
 
             # Then list .bas and .txt files
             files = sorted([f for f in self.current_path.iterdir()
                           if f.is_file() and f.suffix.lower() in ['.bas', '.txt']],
                          key=lambda x: x.name.lower())
 
-            if not files and not dirs:
+            for file_path in files:
+                size_kb = file_path.stat().st_size / 1024
+                rows.append({
+                    'type': 'file',
+                    'icon': '📄',
+                    'name': file_path.name,
+                    'size': f'{size_kb:.1f} KB',
+                    'path': str(file_path)
+                })
+
+            if not rows:
                 with self.file_list:
                     ui.label('No BASIC files found in this directory').classes('text-gray-500 italic p-4')
+                return
 
-            for file_path in files:
-                with self.file_list:
-                    file_row = ui.row().classes('w-full p-2 cursor-pointer hover:bg-blue-100 rounded items-center gap-2')
-                    with file_row:
-                        ui.icon('description', size='sm').classes('text-green-600')
-                        ui.label(file_path.name).classes('flex-grow')
-                        # File size
-                        size_kb = file_path.stat().st_size / 1024
-                        ui.label(f'{size_kb:.1f} KB').classes('text-gray-500 text-xs')
+            # Create AG Grid with the data
+            with self.file_list:
+                grid = ui.aggrid({
+                    'columnDefs': [
+                        {'field': 'icon', 'headerName': '', 'width': 50, 'sortable': False},
+                        {'field': 'name', 'headerName': 'Name', 'flex': 1},
+                        {'field': 'size', 'headerName': 'Size', 'width': 100}
+                    ],
+                    'rowData': rows,
+                    'rowSelection': 'single',
+                    'suppressCellFocus': True,
+                    'domLayout': 'autoHeight'
+                }).classes('w-full')
 
-                    # Click handler for file selection
-                    file_row.on('click', lambda p=file_path: self._select_file(p))
+                # Single-click to select
+                grid.on('cellClicked', lambda e: self._handle_grid_click(e))
 
-                    # Double-click handler - must select file first before opening
-                    # Create a closure that captures the file path
-                    def create_dblclick_handler(p):
-                        async def handler():
-                            import sys
-                            print(f"Double-click on: {p.name}", file=sys.stderr)
-                            self._select_file(p)
-                            await self._open_selected()
-                        return handler
-
-                    file_row.on('dblclick', create_dblclick_handler(file_path))
+                # Double-click to open
+                grid.on('rowDoubleClicked', lambda e: self._handle_grid_doubleclick(e))
 
         except PermissionError:
             with self.file_list:
@@ -502,25 +517,32 @@ class OpenFileDialog(ui.dialog):
     def _select_file(self, path: Path):
         """Select a file."""
         self.selected_file = path
-        # Highlight the selected file
-        self._refresh_file_list()
-        # Re-apply selection highlight
-        for row in self.file_list:
-            if hasattr(row, '_props') or True:  # All rows
-                try:
-                    # Find the row that matches our file
-                    if any(path.name in str(child.text) if hasattr(child, 'text') else False
-                          for child in row if hasattr(child, 'text')):
-                        row.classes('bg-blue-200')
-                    else:
-                        row.classes(remove='bg-blue-200')
-                except:
-                    pass
 
-    async def _handle_file_doubleclick(self, path: Path):
-        """Handle double-click on a file - select and open it."""
-        self._select_file(path)
-        await self._open_selected()
+    def _handle_grid_click(self, e):
+        """Handle single-click on grid row - select file or navigate directory."""
+        row_data = e.args['data']
+        path = Path(row_data['path'])
+
+        if row_data['type'] == 'file':
+            # Select the file
+            self._select_file(path)
+        # For directories and parent, do nothing on single-click
+
+    async def _handle_grid_doubleclick(self, e):
+        """Handle double-click on grid row - open file or navigate directory."""
+        row_data = e.args['data']
+        path = Path(row_data['path'])
+
+        if row_data['type'] == 'file':
+            # Open the file
+            self._select_file(path)
+            await self._open_selected()
+        elif row_data['type'] == 'directory':
+            # Navigate into directory
+            self._navigate_to(path)
+        elif row_data['type'] == 'parent':
+            # Navigate to parent directory
+            self._navigate_up()
 
     async def _open_selected(self):
         """Open the selected file."""
