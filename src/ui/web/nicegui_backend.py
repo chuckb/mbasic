@@ -415,6 +415,7 @@ class OpenFileDialog(ui.dialog):
                     {'field': 'name', 'headerName': 'File', 'flex': 1},
                     {'field': 'size', 'headerName': 'Size', 'width': 100}
                 ],
+                'rowData': [],  # Start with empty data, will populate in _update_grid
                 'rowSelection': 'single',
             }, html_columns=[0]).classes('w-full h-96').on('cellDoubleClicked', self._handle_double_click)
 
