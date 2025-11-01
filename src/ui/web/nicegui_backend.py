@@ -1772,12 +1772,16 @@ class NiceGUIBackend(UIBackend):
                     self.exec_timer.cancel()
             elif state.status == 'paused' or state.status == 'at_breakpoint':
                 self._set_status(f"Paused at line {state.current_line}")
-                self.running = False
+                self.running = True  # Keep running=True so Continue works
                 self.paused = True
                 # Show current line highlight
                 if self.current_line_label:
                     self.current_line_label.set_text(f'>>> Executing line {state.current_line}')
                     self.current_line_label.visible = True
+                # Highlight current statement in CodeMirror
+                char_start = state.current_statement_char_start if state.current_statement_char_start > 0 else None
+                char_end = state.current_statement_char_end if state.current_statement_char_end > 0 else None
+                self.editor.set_current_statement(state.current_line, char_start, char_end)
                 if self.exec_timer:
                     self.exec_timer.cancel()
 
@@ -1948,8 +1952,10 @@ class NiceGUIBackend(UIBackend):
             if self.current_line_label:
                 self.current_line_label.set_text(f'>>> Executing line {state.current_line}')
                 self.current_line_label.visible = True
-            # Highlight current statement in CodeMirror
-            self.editor.set_current_statement(state.current_line)
+            # Highlight current statement in CodeMirror (with character positions for statement-level highlighting)
+            char_start = state.current_statement_char_start if state.current_statement_char_start > 0 else None
+            char_end = state.current_statement_char_end if state.current_statement_char_end > 0 else None
+            self.editor.set_current_statement(state.current_line, char_start, char_end)
         elif state.status == 'running':
             # Still running after step - mark as paused to prevent automatic continuation
             self._set_status(f"Paused at line {state.current_line}")
@@ -1959,8 +1965,10 @@ class NiceGUIBackend(UIBackend):
             if self.current_line_label:
                 self.current_line_label.set_text(f'>>> Executing line {state.current_line}')
                 self.current_line_label.visible = True
-            # Highlight current statement in CodeMirror
-            self.editor.set_current_statement(state.current_line)
+            # Highlight current statement in CodeMirror (with character positions for statement-level highlighting)
+            char_start = state.current_statement_char_start if state.current_statement_char_start > 0 else None
+            char_end = state.current_statement_char_end if state.current_statement_char_end > 0 else None
+            self.editor.set_current_statement(state.current_line, char_start, char_end)
 
     async def _menu_continue(self):
         """Run > Continue - Continue from breakpoint/pause."""

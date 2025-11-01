@@ -80,13 +80,36 @@ class InterpreterState:
 
     @property
     def current_statement_char_end(self) -> int:
-        """Get current statement char_end from statement table (computed property)"""
+        """Get current statement char_end from statement table (computed property)
+
+        Uses max(char_end, next_char_start - 1) to handle string tokens correctly.
+        This works because:
+        - If there's a next statement, the colon is at next_char_start - 1
+        - If char_end is correct (most tokens), it will be >= next_char_start - 1
+        - If char_end is too short (string tokens), next_char_start - 1 is larger
+        """
         if self._interpreter and hasattr(self._interpreter, 'runtime'):
             pc = self._interpreter.runtime.pc
             if pc and not pc.halted():
                 stmt = self._interpreter.runtime.statement_table.get(pc)
                 if stmt:
-                    return getattr(stmt, 'char_end', 0)
+                    stmt_char_end = getattr(stmt, 'char_end', 0)
+
+                    # Check if there's a next statement on same line
+                    next_pc = PC(pc.line_num, pc.stmt_offset + 1)
+                    next_stmt = self._interpreter.runtime.statement_table.get(next_pc)
+                    if next_stmt and hasattr(next_stmt, 'char_start') and next_stmt.char_start > 0:
+                        # Use max of char_end and (next_start - 1)
+                        # This handles both correct char_end and incorrect string token char_end
+                        return max(stmt_char_end, next_stmt.char_start - 1)
+                    else:
+                        # No next statement - use line length if we have line text, otherwise char_end
+                        if pc.line_num in self._interpreter.runtime.line_text_map:
+                            line_text = self._interpreter.runtime.line_text_map[pc.line_num]
+                            # Return length of line (end of line)
+                            return len(line_text)
+                        else:
+                            return stmt_char_end
         return 0
 
 class Interpreter:

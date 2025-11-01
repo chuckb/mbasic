@@ -103,13 +103,18 @@ class CodeMirror5Editor(ui.element, component='codemirror5_editor.js'):
         """Clear all breakpoint markers."""
         self.run_method('clearBreakpoints')
 
-    def set_current_statement(self, line_num: Optional[int]) -> None:
+    def set_current_statement(self, line_num: Optional[int], char_start: Optional[int] = None, char_end: Optional[int] = None) -> None:
         """Highlight current executing statement (green background).
 
         Args:
             line_num: BASIC line number, or None to clear highlighting
+            char_start: Optional character start position for statement-level highlighting
+            char_end: Optional character end position for statement-level highlighting
         """
-        self.run_method('setCurrentStatement', line_num)
+        if char_start is not None and char_end is not None:
+            self.run_method('setCurrentStatement', line_num, char_start, char_end)
+        else:
+            self.run_method('setCurrentStatement', line_num)
 
     def scroll_to_line(self, line: int) -> None:
         """Scroll editor to show specific line.

@@ -35,9 +35,10 @@ export default {
                     background-color: #ffcccc !important;
                 }
 
-                /* Current statement during step debugging - light green/blue background */
+                /* Current statement during step debugging - light green background */
                 .cm-current-statement {
-                    background-color: #ccffcc !important;
+                    background-color: #ccffcc;
+                    border-bottom: 2px solid #00aa00;
                 }
 
                 /* Ensure CodeMirror fills its container */
@@ -150,12 +151,12 @@ export default {
             this.breakpointMarkers = [];
         },
 
-        setCurrentStatement(lineNum) {
+        setCurrentStatement(lineNum, charStart = null, charEnd = null) {
             if (!this.editor) return;
 
-            // Clear previous current statement
+            // Clear previous current statement marker
             if (this.currentStatementMarker !== null) {
-                this.editor.removeLineClass(this.currentStatementMarker, 'background', 'cm-current-statement');
+                this.currentStatementMarker.clear();
                 this.currentStatementMarker = null;
             }
 
@@ -169,10 +170,25 @@ export default {
                 const lineText = doc.getLine(i);
                 const match = lineText.match(/^\s*(\d+)\s/);
                 if (match && parseInt(match[1]) === lineNum) {
-                    this.editor.addLineClass(i, 'background', 'cm-current-statement');
-                    this.currentStatementMarker = i;
+                    // If char positions provided, highlight specific statement
+                    // Otherwise highlight entire line
+                    if (charStart !== null && charEnd !== null && charStart >= 0 && charEnd > charStart) {
+                        // Highlight specific statement range
+                        this.currentStatementMarker = this.editor.markText(
+                            {line: i, ch: charStart},
+                            {line: i, ch: charEnd},
+                            {className: 'cm-current-statement'}
+                        );
+                    } else {
+                        // Highlight entire line (for line stepping or no char info)
+                        this.currentStatementMarker = this.editor.markText(
+                            {line: i, ch: 0},
+                            {line: i, ch: lineText.length},
+                            {className: 'cm-current-statement'}
+                        );
+                    }
                     // Scroll into view
-                    this.editor.scrollIntoView({line: i, ch: 0}, 100);
+                    this.editor.scrollIntoView({line: i, ch: charStart || 0}, 100);
                     break;
                 }
             }
