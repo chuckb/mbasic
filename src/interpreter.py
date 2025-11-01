@@ -230,6 +230,14 @@ class Interpreter:
             )
             return self.state
 
+    def has_work(self):
+        """Check if interpreter has work to do (should execution continue?).
+
+        Returns:
+            bool: True if there is work to do, False if halted
+        """
+        return not self.runtime.halted()
+
     def tick(self, mode='run', max_statements=100):
         """Execute a quantum of work and return updated state.
 
@@ -1949,67 +1957,86 @@ class Interpreter:
             raise RuntimeError("MERGE not available in this context")
 
     def execute_new(self, stmt):
-        """Execute NEW statement"""
-        # Delegate to interactive mode if available
-        if hasattr(self, 'interactive_mode') and self.interactive_mode:
-            self.interactive_mode.cmd_new()
-        else:
-            # In non-interactive context, just clear variables
-            self.runtime.clear_variables()
-            self.runtime.clear_arrays()
+        """Execute NEW statement - clear program and variables.
+
+        Clears the AST (line_asts, statement_table) and all variables.
+        UI should serialize the empty AST back to text after this executes.
+        """
+        # Clear the AST
+        self.runtime.line_asts.clear()
+        self.runtime.statement_table.clear()
+        self.runtime.lines.clear()
+
+        # Clear variables and arrays
+        self.runtime.clear_variables()
+        self.runtime.clear_arrays()
+
+        # Halt execution
+        self.runtime.pc = PC.halted_pc()
+        self.runtime.npc = PC.halted_pc()
 
     def execute_delete(self, stmt):
-        """Execute DELETE statement"""
+        """Execute DELETE statement - remove lines from program AST.
+
+        DELETE 100       - Delete line 100
+        DELETE 10-50     - Delete lines 10 through 50
+        DELETE 10-       - Delete lines 10 to end
+        DELETE -50       - Delete lines from beginning to 50
+        DELETE           - Delete all lines (same as NEW but keeps variables)
+        """
         # Evaluate start and end expressions
+        start_line = None
+        end_line = None
+
         if stmt.start:
-            start = int(self.evaluate_expression(stmt.start))
-        else:
-            start = None
+            start_line = int(self.evaluate_expression(stmt.start))
 
         if stmt.end:
-            end = int(self.evaluate_expression(stmt.end))
-        else:
-            end = None
+            end_line = int(self.evaluate_expression(stmt.end))
 
-        # Delegate to interactive mode if available
-        if hasattr(self, 'interactive_mode') and self.interactive_mode:
-            # Build args string for cmd_delete
-            if start and end:
-                args = f"{start}-{end}"
-            elif start:
-                args = f"{start}-"
-            elif end:
-                args = f"-{end}"
-            else:
-                args = "-"
-            self.interactive_mode.cmd_delete(args)
-        else:
-            raise RuntimeError("DELETE not available in this context")
+        # Get all line numbers from AST
+        all_line_nums = list(self.runtime.line_asts.keys())
+
+        # Determine which lines to delete
+        lines_to_delete = []
+        for line_num in all_line_nums:
+            # Check start boundary
+            if start_line is not None and line_num < start_line:
+                continue
+            # Check end boundary
+            if end_line is not None and line_num > end_line:
+                continue
+
+            lines_to_delete.append(line_num)
+
+        # Delete the lines from AST
+        for line_num in lines_to_delete:
+            # Remove from line_asts
+            if line_num in self.runtime.line_asts:
+                del self.runtime.line_asts[line_num]
+            # Remove from lines
+            if line_num in self.runtime.lines:
+                del self.runtime.lines[line_num]
+            # Remove statements from statement_table
+            # (statements have PCs that reference this line)
+            pcs_to_remove = [pc for pc in self.runtime.statement_table.keys()
+                           if pc.line_num == line_num]
+            for pc in pcs_to_remove:
+                del self.runtime.statement_table[pc]
 
     def execute_renum(self, stmt):
-        """Execute RENUM statement"""
-        # Evaluate new_start, old_start, and increment expressions
-        new_start = 10
-        old_start = 0
-        increment = 10
+        """Execute RENUM statement - renumber program lines.
 
-        if stmt.new_start:
-            new_start = int(self.evaluate_expression(stmt.new_start))
+        TODO: Implement RENUM to modify AST directly.
+        This is complex because it needs to:
+        1. Renumber lines in line_asts
+        2. Update statement_table PC keys
+        3. Update GOTO/GOSUB/ON GOTO target line numbers in AST nodes
+        4. Update RESTORE line number references
 
-        if stmt.old_start:
-            old_start = int(self.evaluate_expression(stmt.old_start))
-
-        if stmt.increment:
-            increment = int(self.evaluate_expression(stmt.increment))
-
-        # Delegate to interactive mode if available
-        if hasattr(self, 'interactive_mode') and self.interactive_mode:
-            # Build args string for cmd_renum in format: "new_start,old_start,increment"
-            # Always include all three parameters to match ui_helpers.parse_renum_args()
-            args = f"{new_start},{old_start},{increment}"
-            self.interactive_mode.cmd_renum(args)
-        else:
-            raise RuntimeError("RENUM not available in this context")
+        For now, raise an error.
+        """
+        raise RuntimeError("RENUM not yet implemented - TODO")
 
     def execute_files(self, stmt):
         """Execute FILES statement - list files using FileIO module."""
@@ -2453,39 +2480,48 @@ class Interpreter:
             raise RuntimeError("MID$ assignment requires a variable, not an expression")
 
     def execute_list(self, stmt):
-        """Execute LIST statement"""
+        """Execute LIST statement - output program lines.
+
+        LIST           - List all lines
+        LIST 100       - List line 100
+        LIST 10-50     - List lines 10 through 50
+        LIST 10-       - List lines 10 to end
+        LIST -50       - List lines from beginning to 50
+        """
         # Evaluate start and end expressions
-        start = None
-        end = None
+        start_line = None
+        end_line = None
 
         if stmt.start:
-            start = int(self.evaluate_expression(stmt.start))
+            start_line = int(self.evaluate_expression(stmt.start))
 
         if stmt.end:
-            end = int(self.evaluate_expression(stmt.end))
+            end_line = int(self.evaluate_expression(stmt.end))
 
-        # Build args string for cmd_list
-        args = ""
-        if start is not None and end is not None:
-            if stmt.single_line:
-                # Single line: LIST 100
-                args = str(start)
-            else:
-                # Range: LIST 10-50
-                args = f"{start}-{end}"
-        elif start is not None:
-            # From start to end: LIST 10-
-            args = f"{start}-"
-        elif end is not None:
-            # From beginning to end: LIST -50
-            args = f"-{end}"
-        # else: LIST with no args lists all
+        # Get all line numbers from AST, sorted
+        all_line_nums = sorted(self.runtime.line_asts.keys())
 
-        # Delegate to interactive mode if available
-        if hasattr(self, 'interactive_mode') and self.interactive_mode:
-            self.interactive_mode.cmd_list(args)
-        else:
-            raise RuntimeError("LIST not available in this context")
+        # Filter by range
+        lines_to_list = []
+        for line_num in all_line_nums:
+            # Check start boundary
+            if start_line is not None and line_num < start_line:
+                continue
+            # Check end boundary
+            if end_line is not None and line_num > end_line:
+                continue
+            # Single line mode
+            if stmt.single_line and start_line is not None and line_num != start_line:
+                continue
+
+            lines_to_list.append(line_num)
+
+        # Output the lines
+        for line_num in lines_to_list:
+            # Get the line text from runtime.lines
+            if line_num in self.runtime.lines:
+                line_text = self.runtime.lines[line_num]
+                self.io.output(line_text)
 
     def execute_stop(self, stmt):
         """Execute STOP statement

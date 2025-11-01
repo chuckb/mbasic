@@ -2757,20 +2757,23 @@ class NiceGUIBackend(UIBackend):
             if success:
                 self._set_status('Immediate command executed')
 
-                # Check if command was NEW or other program-modifying commands
-                # Sync editor with program state
-                if command.upper().strip() in ('NEW', 'CLEAR'):
-                    # Program was cleared - update editor
-                    self.editor.value = ''
-                    self.current_file = None
+                # Serialize AST back to text (in case NEW/DELETE modified it)
+                # AST is source of truth, text is just a view
+                lines = self.program.get_lines()
+                if lines:
+                    editor_text = '\n'.join(line_text for line_num, line_text in lines)
+                    self.editor.value = editor_text
                 else:
-                    # For other commands that might modify the program (numbered lines),
-                    # sync editor with current program state
-                    lines = self.program.get_lines()
-                    if lines:
-                        editor_text = '\n'.join(line_text for line_num, line_text in lines)
-                        if editor_text != self.editor.value:
-                            self.editor.value = editor_text
+                    # Empty program (after NEW)
+                    self.editor.value = ''
+
+                # Check if interpreter has work to do (after RUN statement)
+                # No state checking - just ask the interpreter
+                if self.interpreter and self.interpreter.has_work():
+                    # Start execution timer if not already running
+                    if not self.exec_timer:
+                        self._set_status('Running...')
+                        self.exec_timer = ui.timer(0.01, self._execute_tick, once=False)
             else:
                 self._set_status('Immediate command error')
 
