@@ -1718,7 +1718,13 @@ class NiceGUIBackend(UIBackend):
 
             # Create IO handler that outputs to our output pane
             self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
-            self.interpreter = Interpreter(self.runtime, self.exec_io, limits=create_local_limits())
+
+            # Create sandboxed file I/O for web UI (uses browser localStorage)
+            from src.file_io import SandboxedFileIO
+            sandboxed_file_io = SandboxedFileIO(self)
+
+            # Create interpreter with sandboxed file I/O
+            self.interpreter = Interpreter(self.runtime, self.exec_io, limits=create_local_limits(), file_io=sandboxed_file_io)
 
             # Wire up interpreter to use this UI's methods
             self.interpreter.interactive_mode = self
@@ -2120,48 +2126,6 @@ class NiceGUIBackend(UIBackend):
     def _menu_about(self):
         """Help > About."""
         self.about_dialog.show()
-
-    # ========================================================================
-    # BASIC Statement Command Methods (called by interpreter)
-    # These are temporary - eventually these statements should be 100% in
-    # the interpreter, not delegated to UI. See MOVE_STATEMENTS_TO_INTERPRETER_TODO.md
-    # ========================================================================
-
-    def cmd_files(self, filespec: str = "") -> None:
-        """Execute FILES command - display directory listing.
-
-        FILES - List all files in current directory
-        FILES "*.BAS" - List files matching pattern
-        """
-        from src.ui.ui_helpers import list_files
-
-        try:
-            files = list_files(filespec)
-            pattern = filespec if filespec else "*"
-
-            if not files:
-                self._append_output(f"No files matching: {pattern}\n")
-                return
-
-            # Display files (one per line with size)
-            self._append_output(f"\nDirectory listing for: {pattern}\n")
-            self._append_output("-" * 50 + "\n")
-            for filename, size, is_dir in files:
-                if is_dir:
-                    self._append_output(f"{filename:<30}        <DIR>\n")
-                elif size is not None:
-                    self._append_output(f"{filename:<30} {size:>12} bytes\n")
-                else:
-                    self._append_output(f"{filename:<30}            ?\n")
-
-            self._append_output(f"\n{len(files)} file(s)\n")
-
-        except Exception as e:
-            self._append_output(f"?Error listing files: {e}\n")
-
-    # ========================================================================
-    # End BASIC Statement Command Methods
-    # ========================================================================
 
     def _start_auto_save(self):
         """Start auto-save timer."""
@@ -2734,9 +2698,11 @@ class NiceGUIBackend(UIBackend):
                 runtime = Runtime({}, {})
 
             if interpreter is None:
-                # Create a temporary interpreter for immediate mode
+                # Create a temporary interpreter for immediate mode with sandboxed file I/O
                 from src.resource_limits import create_local_limits
-                interpreter = Interpreter(runtime, output_io, limits=create_local_limits())
+                from src.file_io import SandboxedFileIO
+                sandboxed_file_io = SandboxedFileIO(self)
+                interpreter = Interpreter(runtime, output_io, limits=create_local_limits(), file_io=sandboxed_file_io)
 
             # Create immediate executor (runtime, interpreter, io_handler)
             immediate_executor = ImmediateExecutor(

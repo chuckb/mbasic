@@ -115,7 +115,7 @@ class InterpreterState:
 class Interpreter:
     """Execute MBASIC AST with tick-based execution for UI integration"""
 
-    def __init__(self, runtime, io_handler=None, breakpoint_callback=None, filesystem_provider=None, limits=None, settings_manager=None):
+    def __init__(self, runtime, io_handler=None, breakpoint_callback=None, filesystem_provider=None, limits=None, settings_manager=None, file_io=None):
         self.runtime = runtime
         self.builtins = BuiltinFunctions(runtime)
 
@@ -130,6 +130,14 @@ class Interpreter:
             from src.filesystem import RealFileSystemProvider
             filesystem_provider = RealFileSystemProvider()
         self.fs = filesystem_provider
+
+        # File I/O module (defaults to real filesystem if not provided)
+        # Web UI passes SandboxedFileIO for browser localStorage
+        # Local UIs pass None to use RealFileIO
+        if file_io is None:
+            from src.file_io import RealFileIO
+            file_io = RealFileIO()
+        self.file_io = file_io
 
         # Resource limits (defaults to local limits if not provided)
         if limits is None:
@@ -1993,7 +2001,7 @@ class Interpreter:
             raise RuntimeError("RENUM not available in this context")
 
     def execute_files(self, stmt):
-        """Execute FILES statement"""
+        """Execute FILES statement - list files using FileIO module."""
         # Evaluate filespec expression
         filespec = ""
         if stmt.filespec:
@@ -2001,22 +2009,24 @@ class Interpreter:
             if not isinstance(filespec, str):
                 raise RuntimeError("FILES requires string filespec")
 
-        # Delegate to interactive mode if available
-        if hasattr(self, 'interactive_mode') and self.interactive_mode:
-            self.interactive_mode.cmd_files(filespec)
-        else:
-            # In non-interactive context, just list files
-            import glob
-            import os
-            pattern = filespec if filespec else "*"
-            files = sorted(glob.glob(pattern))
-            if files:
-                for filename in files:
-                    size = os.path.getsize(filename)
-                    self.io.output(f"{filename:<20} {size:>8} bytes")
-                self.io.output(f"\n{len(files)} File(s)")
+        # Use file_io module (sandboxed for web UI, real filesystem for local UIs)
+        files = self.file_io.list_files(filespec)
+        pattern = filespec if filespec else "*"
+
+        if not files:
+            self.io.output(f"No files matching: {pattern}")
+            return
+
+        # Display files
+        for filename, size, is_dir in files:
+            if is_dir:
+                self.io.output(f"{filename:<30}        <DIR>")
+            elif size is not None:
+                self.io.output(f"{filename:<30} {size:>12} bytes")
             else:
-                self.io.output(f"No files matching: {pattern}")
+                self.io.output(f"{filename:<30}            ?")
+
+        self.io.output(f"\n{len(files)} File(s)")
 
     def execute_kill(self, stmt):
         """Execute KILL statement - delete file
