@@ -19,6 +19,37 @@ export default {
     },
 
     mounted() {
+        // Inject CSS for breakpoint markers and find highlighting
+        if (!document.getElementById('codemirror5-custom-styles')) {
+            const style = document.createElement('style');
+            style.id = 'codemirror5-custom-styles';
+            style.textContent = `
+                /* Find highlight - yellow background */
+                .cm-find-highlight {
+                    background-color: yellow;
+                    color: black;
+                }
+
+                /* Breakpoint line - light red background */
+                .cm-breakpoint-line {
+                    background-color: #ffcccc !important;
+                }
+
+                /* Current statement during step debugging - light green/blue background */
+                .cm-current-statement {
+                    background-color: #ccffcc !important;
+                }
+
+                /* Ensure CodeMirror fills its container */
+                .CodeMirror {
+                    height: 100%;
+                    font-family: monospace;
+                    font-size: 14px;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
         // Wait for CodeMirror global to be available
         if (typeof CodeMirror === 'undefined') {
             console.error('CodeMirror not loaded!');
@@ -28,7 +59,7 @@ export default {
         // Create CodeMirror 5 instance
         this.editor = CodeMirror(this.$el, {
             value: this.value || '',
-            lineNumbers: true,
+            lineNumbers: false,  // No line number gutter - BASIC programs have their own line numbers
             readOnly: this.readonly || false,
             mode: 'text/plain'  // No syntax highlighting for now
         });

@@ -1052,7 +1052,6 @@ class NiceGUIBackend(UIBackend):
         self.interpreter = None
         self.running = False
         self.paused = False
-        self.breakpoints = set()
         self.output_text = f'MBASIC 5.21 Web IDE - {VERSION}\n'
         self.current_file = None
         self.recent_files = []
@@ -1227,13 +1226,20 @@ class NiceGUIBackend(UIBackend):
 
             # Debug menu
             with ui.button('Debug', icon='menu').props('flat color=white'):
-                with ui.menu():
+                with ui.menu() as debug_menu:
+                    async def _toggle_bp_clicked():
+                        await self._toggle_breakpoint()
+                        debug_menu.close()
+                    def _clear_all_bp_clicked():
+                        self._clear_all_breakpoints()
+                        debug_menu.close()
+
                     ui.menu_item('Step Line', on_click=self._menu_step_line)
                     ui.menu_item('Step Statement', on_click=self._menu_step_stmt)
                     ui.menu_item('Continue', on_click=self._menu_continue)
                     ui.separator()
-                    ui.menu_item('Toggle Breakpoint', on_click=self._toggle_breakpoint)
-                    ui.menu_item('Clear All Breakpoints', on_click=self._clear_all_breakpoints)
+                    ui.menu_item('Toggle Breakpoint', on_click=_toggle_bp_clicked)
+                    ui.menu_item('Clear All Breakpoints', on_click=_clear_all_bp_clicked)
                     ui.separator()
                     ui.menu_item('Show Variables', on_click=self._show_variables_window)
                     ui.menu_item('Show Stack', on_click=self._show_stack_window)
@@ -1340,93 +1346,10 @@ class NiceGUIBackend(UIBackend):
     async def _toggle_breakpoint(self):
         """Toggle statement-level breakpoint at current cursor position."""
         try:
-            # Get line text and cursor position using JavaScript
-            result = await ui.run_javascript('''
-                // Find the editor textarea (first non-readonly textarea)
-                let textarea = null;
-                const allTextareas = document.querySelectorAll('textarea');
-                for (let ta of allTextareas) {
-                    if (!ta.readOnly) {
-                        textarea = ta;
-                        break;
-                    }
-                }
-
-                if (textarea) {
-                    const text = textarea.value;
-                    const cursorPos = textarea.selectionStart;
-                    // Count newlines before cursor to get line index
-                    const textBeforeCursor = text.substring(0, cursorPos);
-                    const lineIndex = textBeforeCursor.split('\\n').length - 1;
-                    // Get the line text
-                    const lines = text.split('\\n');
-                    const lineText = lines[lineIndex];
-
-                    // Calculate cursor position within the line
-                    const lineStart = text.lastIndexOf('\\n', cursorPos - 1) + 1;
-                    const cursorInLine = cursorPos - lineStart;
-
-                    return {lineText: lineText, cursorInLine: cursorInLine};
-                }
-                return null;
-            ''', timeout=5.0)
-
-            if result and result.get('lineText'):
-                line_text = result['lineText']
-                cursor_in_line = result['cursorInLine']
-
-                # Extract BASIC line number from text
-                match = re.match(r'^\s*(\d+)', line_text)
-                if not match:
-                    # Cursor not on a BASIC line number, show dialog
-                    with ui.dialog() as dialog, ui.card():
-                        ui.label('Toggle Breakpoint').classes('text-h6')
-                        ui.label('Cursor is not on a line with a line number.').classes('text-caption mb-2')
-                        line_input = ui.input('Line number:', placeholder='10').classes('w-full')
-                        with ui.row():
-                            ui.button('Toggle', on_click=lambda: self._do_toggle_breakpoint(line_input.value, dialog)).props('no-caps')
-                            ui.button('Cancel', on_click=dialog.close).props('no-caps')
-                    dialog.open()
-                    return
-
-                line_num = int(match.group(1))
-
-                # Query the statement table to find which statement the cursor is in
-                stmt_offset = 0
-                if self.runtime and self.runtime.statement_table:
-                    # Get all statements for this line from the statement table
-                    for pc, stmt_node in self.runtime.statement_table.statements.items():
-                        if pc.line_num == line_num:
-                            # Check if cursor is within this statement's character range
-                            if stmt_node.char_start <= cursor_in_line <= stmt_node.char_end:
-                                stmt_offset = pc.stmt_offset
-                                break
-
-                # Create PC object for this statement
-                pc = PC(line_num, stmt_offset)
-
-                # Toggle the breakpoint
-                if pc in self.breakpoints:
-                    self.breakpoints.discard(pc)
-                    if stmt_offset > 0:
-                        self._notify(f'❌ Breakpoint removed: line {line_num} statement {stmt_offset + 1}', type='info')
-                        self._set_status(f'Removed breakpoint at {line_num}.{stmt_offset}')
-                    else:
-                        self._notify(f'❌ Breakpoint removed: line {line_num}', type='info')
-                        self._set_status(f'Removed breakpoint at {line_num}')
-                else:
-                    self.breakpoints.add(pc)
-                    if stmt_offset > 0:
-                        self._notify(f'🔴 Breakpoint set: line {line_num} statement {stmt_offset + 1}', type='positive')
-                        self._set_status(f'Breakpoint at {line_num}.{stmt_offset}')
-                    else:
-                        self._notify(f'🔴 Breakpoint set: line {line_num}', type='positive')
-                        self._set_status(f'Breakpoint at {line_num}')
-
-                # Update editor to show breakpoint markers
-                await self._update_breakpoint_display()
-            else:
-                # Could not get line info
+            # Get cursor position from CodeMirror editor via run_method
+            cursor_info = await self.editor.run_method('getCursorPosition')
+            if not cursor_info:
+                # Could not get cursor position, show dialog
                 with ui.dialog() as dialog, ui.card():
                     ui.label('Toggle Breakpoint').classes('text-h6')
                     ui.label('Could not determine cursor position.').classes('text-caption mb-2')
@@ -1435,6 +1358,90 @@ class NiceGUIBackend(UIBackend):
                         ui.button('Toggle', on_click=lambda: self._do_toggle_breakpoint(line_input.value, dialog)).props('no-caps')
                         ui.button('Cancel', on_click=dialog.close).props('no-caps')
                 dialog.open()
+                return
+
+            # Get full editor text and extract the line at cursor
+            editor_text = await self.editor.run_method('getValue')
+            if not editor_text:
+                # Empty editor, show dialog
+                with ui.dialog() as dialog, ui.card():
+                    ui.label('Toggle Breakpoint').classes('text-h6')
+                    ui.label('Editor is empty.').classes('text-caption mb-2')
+                    line_input = ui.input('Line number:', placeholder='10').classes('w-full')
+                    with ui.row():
+                        ui.button('Toggle', on_click=lambda: self._do_toggle_breakpoint(line_input.value, dialog)).props('no-caps')
+                        ui.button('Cancel', on_click=dialog.close).props('no-caps')
+                dialog.open()
+                return
+
+            lines = editor_text.split('\n')
+            cursor_line_idx = cursor_info['line']
+            cursor_in_line = cursor_info['column']
+
+            if cursor_line_idx >= len(lines):
+                # Cursor beyond end of document
+                with ui.dialog() as dialog, ui.card():
+                    ui.label('Toggle Breakpoint').classes('text-h6')
+                    ui.label('Cursor is beyond end of document.').classes('text-caption mb-2')
+                    line_input = ui.input('Line number:', placeholder='10').classes('w-full')
+                    with ui.row():
+                        ui.button('Toggle', on_click=lambda: self._do_toggle_breakpoint(line_input.value, dialog)).props('no-caps')
+                        ui.button('Cancel', on_click=dialog.close).props('no-caps')
+                dialog.open()
+                return
+
+            line_text = lines[cursor_line_idx]
+
+            # Extract BASIC line number from text
+            match = re.match(r'^\s*(\d+)', line_text)
+            if not match:
+                # Cursor not on a BASIC line number, show dialog
+                with ui.dialog() as dialog, ui.card():
+                    ui.label('Toggle Breakpoint').classes('text-h6')
+                    ui.label('Cursor is not on a line with a line number.').classes('text-caption mb-2')
+                    line_input = ui.input('Line number:', placeholder='10').classes('w-full')
+                    with ui.row():
+                        ui.button('Toggle', on_click=lambda: self._do_toggle_breakpoint(line_input.value, dialog)).props('no-caps')
+                        ui.button('Cancel', on_click=dialog.close).props('no-caps')
+                dialog.open()
+                return
+
+            line_num = int(match.group(1))
+
+            # Query the statement table to find which statement the cursor is in
+            stmt_offset = 0
+            if self.runtime and self.runtime.statement_table:
+                # Get all statements for this line from the statement table
+                for pc, stmt_node in self.runtime.statement_table.statements.items():
+                    if pc.line_num == line_num:
+                        # Check if cursor is within this statement's character range
+                        if stmt_node.char_start <= cursor_in_line <= stmt_node.char_end:
+                            stmt_offset = pc.stmt_offset
+                            break
+
+            # Create PC object for this statement
+            pc = PC(line_num, stmt_offset)
+
+            # Toggle the breakpoint
+            if pc in self.runtime.breakpoints:
+                self.runtime.breakpoints.discard(pc)
+                if stmt_offset > 0:
+                    self._notify(f'❌ Breakpoint removed: line {line_num} statement {stmt_offset + 1}', type='info')
+                    self._set_status(f'Removed breakpoint at {line_num}.{stmt_offset}')
+                else:
+                    self._notify(f'❌ Breakpoint removed: line {line_num}', type='info')
+                    self._set_status(f'Removed breakpoint at {line_num}')
+            else:
+                self.runtime.breakpoints.add(pc)
+                if stmt_offset > 0:
+                    self._notify(f'🔴 Breakpoint set: line {line_num} statement {stmt_offset + 1}', type='positive')
+                    self._set_status(f'Breakpoint at {line_num}.{stmt_offset}')
+                else:
+                    self._notify(f'🔴 Breakpoint set: line {line_num}', type='positive')
+                    self._set_status(f'Breakpoint at {line_num}')
+
+            # Update editor to show breakpoint markers
+            await self._update_breakpoint_display()
 
         except Exception as e:
             log_web_error("_toggle_breakpoint", e)
@@ -1447,27 +1454,31 @@ class NiceGUIBackend(UIBackend):
             self.editor.clear_breakpoints()
 
             # Add markers for all current breakpoints
-            for pc in self.breakpoints:
-                self.editor.add_breakpoint(pc.line_num)
+            for item in self.runtime.breakpoints:
+                # Handle both PC objects and plain integers
+                if isinstance(item, PC):
+                    self.editor.add_breakpoint(item.line_num)
+                else:
+                    self.editor.add_breakpoint(item)
 
         except Exception as e:
             log_web_error("_update_breakpoint_display", e)
 
-    def _do_toggle_breakpoint(self, line_num_str, dialog):
+    async def _do_toggle_breakpoint(self, line_num_str, dialog):
         """Actually toggle the breakpoint."""
         try:
             line_num = int(line_num_str)
 
-            if line_num in self.breakpoints:
-                self.breakpoints.remove(line_num)
+            if line_num in self.runtime.breakpoints:
+                self.runtime.breakpoints.remove(line_num)
                 self._notify(f'❌ Breakpoint removed: line {line_num}', type='info')
                 self._set_status(f'Removed breakpoint at {line_num}')
             else:
-                self.breakpoints.add(line_num)
+                self.runtime.breakpoints.add(line_num)
                 self._notify(f'🔴 Breakpoint set: line {line_num}', type='positive')
                 self._set_status(f'Breakpoint at {line_num}')
 
-            self._update_breakpoint_display()
+            await self._update_breakpoint_display()
             dialog.close()
 
         except ValueError:
@@ -1479,10 +1490,8 @@ class NiceGUIBackend(UIBackend):
     def _clear_all_breakpoints(self):
         """Clear all breakpoints."""
         try:
-            count = len(self.breakpoints)
-            self.breakpoints.clear()
-            if self.interpreter:
-                self.interpreter.clear_breakpoints()
+            count = len(self.runtime.breakpoints)
+            self.runtime.breakpoints.clear()
 
             # Clear CodeMirror breakpoint markers
             self.editor.clear_breakpoints()
@@ -1674,9 +1683,15 @@ class NiceGUIBackend(UIBackend):
             # Get program AST
             program_ast = self.program.get_program_ast()
 
-            # Create runtime and interpreter
+            # Create or reset runtime - RUN preserves breakpoints
             from src.resource_limits import create_local_limits
-            self.runtime = Runtime(self.program.line_asts, self.program.lines)
+            if self.runtime is None:
+                # First run - create new Runtime
+                self.runtime = Runtime(self.program.line_asts, self.program.lines)
+                self.runtime.setup()
+            else:
+                # Subsequent run - reset Runtime (preserves breakpoints)
+                self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
             # Create IO handler that outputs to our output pane
             self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
@@ -1684,10 +1699,6 @@ class NiceGUIBackend(UIBackend):
 
             # Wire up interpreter to use this UI's methods
             self.interpreter.interactive_mode = self
-
-            # Set breakpoints
-            for line_num in self.breakpoints:
-                self.interpreter.set_breakpoint(line_num)
 
             # Start interpreter
             state = self.interpreter.start()
@@ -1805,7 +1816,7 @@ class NiceGUIBackend(UIBackend):
     async def _menu_step_line(self):
         """Run > Step Line - Execute all statements on current line and pause."""
         try:
-            if not self.running:
+            if not self.running and not self.paused:
                 # Not running - start program and step one line
                 if not self._save_editor_to_program():
                     return  # Parse errors
@@ -1817,9 +1828,13 @@ class NiceGUIBackend(UIBackend):
                 # Start execution
                 self._clear_output()
 
-                # Create runtime and interpreter
+                # Create or reset runtime - preserves breakpoints
                 from src.resource_limits import create_local_limits
-                self.runtime = Runtime(self.program.line_asts, self.program.lines)
+                if self.runtime is None:
+                    self.runtime = Runtime(self.program.line_asts, self.program.lines)
+                    self.runtime.setup()
+                else:
+                    self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
                 # Create IO handler
                 self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
@@ -1827,10 +1842,6 @@ class NiceGUIBackend(UIBackend):
 
                 # Wire up interpreter
                 self.interpreter.interactive_mode = self
-
-                # Set breakpoints
-                for line_num in self.breakpoints:
-                    self.interpreter.set_breakpoint(line_num)
 
                 # Start interpreter
                 state = self.interpreter.start()
@@ -1857,7 +1868,7 @@ class NiceGUIBackend(UIBackend):
     async def _menu_step_stmt(self):
         """Run > Step Statement - Execute one statement and pause."""
         try:
-            if not self.running:
+            if not self.running and not self.paused:
                 # Not running - start program and step one statement
                 if not self._save_editor_to_program():
                     return  # Parse errors
@@ -1869,9 +1880,13 @@ class NiceGUIBackend(UIBackend):
                 # Start execution
                 self._clear_output()
 
-                # Create runtime and interpreter
+                # Create or reset runtime - preserves breakpoints
                 from src.resource_limits import create_local_limits
-                self.runtime = Runtime(self.program.line_asts, self.program.lines)
+                if self.runtime is None:
+                    self.runtime = Runtime(self.program.line_asts, self.program.lines)
+                    self.runtime.setup()
+                else:
+                    self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
                 # Create IO handler
                 self.exec_io = SimpleWebIOHandler(self._append_output, self._get_input)
@@ -1879,10 +1894,6 @@ class NiceGUIBackend(UIBackend):
 
                 # Wire up interpreter
                 self.interpreter.interactive_mode = self
-
-                # Set breakpoints
-                for line_num in self.breakpoints:
-                    self.interpreter.set_breakpoint(line_num)
 
                 # Start interpreter
                 state = self.interpreter.start()

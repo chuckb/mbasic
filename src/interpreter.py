@@ -42,8 +42,7 @@ class InterpreterState:
     input_buffer: list = field(default_factory=list)  # Buffered input values
     input_file_number: Optional[int] = None  # If reading from file
 
-    # Debugging
-    breakpoints: set = field(default_factory=set)
+    # Debugging (breakpoints are stored in Runtime, not here)
     skip_next_breakpoint_check: bool = False  # Set to True after hitting breakpoint to allow execution
     pause_requested: bool = False  # Set by pause() method
 
@@ -268,10 +267,10 @@ class Interpreter:
                 # Check exact PC first (statement-level), then line-level
                 at_breakpoint = False
                 if mode == 'run':
-                    if pc in self.state.breakpoints:
+                    if pc in self.runtime.breakpoints:
                         # Exact PC match (statement-level breakpoint)
                         at_breakpoint = True
-                    elif pc.line_num in self.state.breakpoints:
+                    elif pc.line_num in self.runtime.breakpoints:
                         # Line-level breakpoint (backwards compatible)
                         at_breakpoint = True
 
@@ -456,15 +455,8 @@ class Interpreter:
             set_breakpoint(100, 2)        # Statement-level (line 100, 3rd statement)
             set_breakpoint(PC(100, 2))    # PC object (preferred)
         """
-        if isinstance(line_or_pc, PC):
-            # PC object passed directly
-            self.state.breakpoints.add(line_or_pc)
-        elif stmt_offset is not None:
-            # Statement-level: (line, offset)
-            self.state.breakpoints.add(PC(line_or_pc, stmt_offset))
-        else:
-            # Line-level: just line number
-            self.state.breakpoints.add(line_or_pc)
+        # Delegate to runtime
+        self.runtime.set_breakpoint(line_or_pc, stmt_offset)
 
     def clear_breakpoint(self, line_or_pc: Union[int, PC], stmt_offset: int = None):
         """Remove a breakpoint at the specified line or statement.
@@ -479,15 +471,8 @@ class Interpreter:
             clear_breakpoint(100, 2)        # Statement-level
             clear_breakpoint(PC(100, 2))    # PC object (preferred)
         """
-        if isinstance(line_or_pc, PC):
-            # PC object passed directly
-            self.state.breakpoints.discard(line_or_pc)
-        elif stmt_offset is not None:
-            # Statement-level: (line, offset)
-            self.state.breakpoints.discard(PC(line_or_pc, stmt_offset))
-        else:
-            # Line-level: just line number
-            self.state.breakpoints.discard(line_or_pc)
+        # Delegate to runtime
+        self.runtime.clear_breakpoint(line_or_pc, stmt_offset)
 
     # ========================================================================
     # Legacy Execution Methods (kept for backward compatibility)

@@ -117,6 +117,9 @@ class Runtime:
 
         # STOP/CONT state preservation
         self.stopped = False              # True if program stopped via STOP or Break
+
+        # Breakpoints - persist across runs (not cleared by RUN/CLEAR)
+        self.breakpoints = set()          # Set of PC objects for breakpoints
         self.stop_pc = None               # PC where STOP occurred (for CONT)
 
         # Break handling (Ctrl+C)
@@ -1327,3 +1330,166 @@ class Runtime:
     def get_loop_stack(self):
         """Deprecated: Use get_execution_stack() instead."""
         return self.get_execution_stack()
+
+    # ========================================================================
+    # Breakpoint Management
+    # ========================================================================
+
+    def set_breakpoint(self, line_or_pc, stmt_offset=None):
+        """Add a breakpoint at the specified line or statement.
+
+        Args:
+            line_or_pc: Line number (int) or PC object for breakpoint
+            stmt_offset: Optional statement offset (0-based). If None, breaks on entire line.
+                        Ignored if line_or_pc is a PC object.
+
+        Examples:
+            set_breakpoint(100)           # Line-level
+            set_breakpoint(100, 2)        # Statement-level (line 100, 3rd statement)
+            set_breakpoint(PC(100, 2))    # PC object (preferred)
+        """
+        if isinstance(line_or_pc, PC):
+            # PC object passed directly
+            self.breakpoints.add(line_or_pc)
+        elif stmt_offset is not None:
+            # Statement-level: (line, offset)
+            self.breakpoints.add(PC(line_or_pc, stmt_offset))
+        else:
+            # Line-level: just line number
+            self.breakpoints.add(line_or_pc)
+
+    def clear_breakpoint(self, line_or_pc, stmt_offset=None):
+        """Remove a breakpoint at the specified line or statement.
+
+        Args:
+            line_or_pc: Line number (int) or PC object for breakpoint
+            stmt_offset: Optional statement offset. If None, removes line-level breakpoint.
+                        Ignored if line_or_pc is a PC object.
+
+        Examples:
+            clear_breakpoint(100)           # Line-level
+            clear_breakpoint(100, 2)        # Statement-level
+            clear_breakpoint(PC(100, 2))    # PC object (preferred)
+        """
+        if isinstance(line_or_pc, PC):
+            # PC object passed directly
+            self.breakpoints.discard(line_or_pc)
+        elif stmt_offset is not None:
+            # Statement-level: (line, offset)
+            self.breakpoints.discard(PC(line_or_pc, stmt_offset))
+        else:
+            # Line-level: just line number
+            self.breakpoints.discard(line_or_pc)
+
+    def clear_breakpoints(self):
+        """Clear all breakpoints."""
+        self.breakpoints.clear()
+
+    def reset_for_run(self, ast_or_line_table, line_text_map=None):
+        """Reset runtime for RUN command - like CLEAR + reload program.
+
+        This preserves breakpoints but resets everything else, equivalent to:
+        - CLEAR (clear variables, arrays, files, DATA pointer, etc.)
+        - Reload program and rebuild statement table
+        - Reset PC to start
+
+        Args:
+            ast_or_line_table: New program AST or line table
+            line_text_map: Optional line text map for error messages
+        """
+        # Store new program
+        self._ast_or_line_table = ast_or_line_table
+        self.line_text_map = line_text_map or {}
+
+        # Clear variables and arrays
+        self._variables.clear()
+        self._arrays.clear()
+        self._variable_case_variants.clear()
+
+        # Reset array base (can be set again by OPTION BASE)
+        self.array_base = 0
+        self.option_base_executed = False
+
+        # Clear execution state
+        self.halted = False
+        self.execution_stack.clear()
+        self.for_loop_vars.clear()
+
+        # Clear DATA
+        self.data_items.clear()
+        self.data_pointer = 0
+        self.data_line_map.clear()
+
+        # Clear user functions
+        self.user_functions.clear()
+
+        # Close all files
+        for file_num in list(self.files.keys()):
+            try:
+                file_obj = self.files[file_num]
+                if hasattr(file_obj, 'close'):
+                    file_obj.close()
+            except:
+                pass
+        self.files.clear()
+        self.field_buffers.clear()
+
+        # Clear error handling
+        self.error_handler = None
+        self.error_handler_is_gosub = False
+
+        # Reset RND
+        self.rnd_last = 0.5
+
+        # Clear STOP/CONT state
+        self.stopped = False
+        self.stop_pc = None
+
+        # Reset break handling
+        self.break_requested = False
+
+        # Reset trace
+        self.trace_on = False
+        self.trace_detail = 'line'
+
+        # Reinitialize system variables
+        self.set_variable_raw('err%', 0)
+        self.set_variable_raw('erl%', 0)
+
+        # Rebuild statement table and PC (like setup())
+        self.statement_table = StatementTable()
+        self.pc = PC.halted_pc()
+        self.npc = None
+
+        # Process program lines to rebuild statement table
+        if isinstance(self._ast_or_line_table, dict):
+            lines_to_process = self._ast_or_line_table.values()
+        else:
+            lines_to_process = self._ast_or_line_table.lines
+
+        for line in lines_to_process:
+            for stmt_offset, stmt in enumerate(line.statements):
+                pc = PC(line.line_number, stmt_offset)
+                self.statement_table.add(pc, stmt)
+
+                # Extract DATA and DEF FN
+                if isinstance(stmt, DataStatementNode):
+                    for value in stmt.values:
+                        data_index = len(self.data_items)
+                        if isinstance(value, list):
+                            for v in value:
+                                self.data_line_map[len(self.data_items)] = line.line_number
+                                self.data_items.append(v)
+                        else:
+                            self.data_line_map[data_index] = line.line_number
+                            self.data_items.append(value)
+                elif isinstance(stmt, DefFnStatementNode):
+                    self.user_functions[stmt.name] = stmt
+
+        # Initialize PC to first statement
+        self.pc = self.statement_table.first_pc()
+
+        # NOTE: self.breakpoints is NOT cleared - breakpoints persist across RUN
+        # NOTE: self.common_vars is NOT cleared - preserved for CHAIN compatibility
+
+        return self
