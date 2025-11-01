@@ -214,20 +214,12 @@ class ImmediateExecutor:
             if ast.lines and len(ast.lines) > 0:
                 line_node = ast.lines[0]
 
-                # Save current execution position and halted state
-                old_pc = runtime.pc
-                old_halted = runtime.halted
-
                 # Execute each statement on line 0
                 for stmt in line_node.statements:
                     interpreter.execute_statement(stmt)
 
-                # Restore previous position ONLY if statement didn't change execution state
-                # (RUN sets halted=False and npc to start execution, don't interfere)
-                if runtime.halted == old_halted:
-                    # Execution state unchanged, restore PC
-                    runtime.pc = old_pc
-                # else: Statement like RUN changed execution state, leave PC/npc alone
+                # Don't restore PC - let statements like RUN change execution position
+                # Normal statements (PRINT, LET, etc.) don't modify PC anyway
 
             # Get captured output
             output = self.io.get_output() if self.io else ""
