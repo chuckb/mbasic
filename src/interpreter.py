@@ -236,7 +236,7 @@ class Interpreter:
         Returns:
             bool: True if there is work to do, False if halted
         """
-        return not self.runtime.halted()
+        return not self.runtime.halted
 
     def tick(self, mode='run', max_statements=100):
         """Execute a quantum of work and return updated state.
