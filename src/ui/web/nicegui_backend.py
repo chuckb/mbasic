@@ -956,6 +956,7 @@ class NiceGUIBackend(UIBackend):
             self.last_edited_line_index = None
             self.last_edited_line_text = None
             self.auto_numbering_in_progress = False  # Prevent recursive calls
+            self.editor_has_been_used = False  # Track if user has typed anything
 
             # Use keyup to detect when user has finished typing/moving
             # This captures Enter, arrow keys, etc.
@@ -1275,6 +1276,11 @@ class NiceGUIBackend(UIBackend):
 
             # Load into editor
             self.editor.value = content
+
+            # Clear placeholder once content is loaded
+            if content:
+                self.editor_has_been_used = True
+                self.editor.props('placeholder=""')
 
             # Parse into program
             self._save_editor_to_program()
@@ -2017,6 +2023,11 @@ class NiceGUIBackend(UIBackend):
     def _on_paste(self, e=None):
         """Handle paste event - remove blank lines after paste completes."""
         try:
+            # Clear placeholder when pasting
+            if not self.editor_has_been_used:
+                self.editor_has_been_used = True
+                self.editor.props('placeholder=""')
+
             # Use a timer to let the paste complete before cleaning
             # This ensures it runs in the UI context
             ui.timer(0.1, self._remove_blank_lines, once=True)
@@ -2026,6 +2037,11 @@ class NiceGUIBackend(UIBackend):
 
     def _on_key_released(self, e):
         """Handle key release - remove blank lines and schedule auto-number check."""
+        # Clear placeholder once user starts typing
+        if not self.editor_has_been_used and self.editor.value:
+            self.editor_has_been_used = True
+            self.editor.props('placeholder=""')
+
         # Immediately remove blank lines (no throttle, no delay)
         self._remove_blank_lines()
         # Then schedule auto-number check with small delay
