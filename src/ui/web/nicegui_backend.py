@@ -634,7 +634,7 @@ class FindReplaceDialog(ui.dialog):
         with self, ui.card().classes('w-[500px]'):
             ui.label('Find & Replace').classes('text-lg font-bold')
 
-            find_input = ui.input(label='Find', placeholder='Text to find...').classes('w-full')
+            find_input = ui.input(label='Find', placeholder='Text to find...').classes('w-full').props('autofocus')
             find_input.value = self.backend.last_find_text  # Restore last search
             replace_input = ui.input(label='Replace with', placeholder='Replacement text...').classes('w-full')
             case_sensitive = ui.checkbox('Case sensitive', value=self.backend.last_case_sensitive)
@@ -679,20 +679,50 @@ class FindReplaceDialog(ui.dialog):
                         index = editor_text.lower().find(find_text.lower(), self.backend.last_find_position)
 
                     if index >= 0:
+                        # Calculate line number for display
+                        line_num = editor_text[:index].count('\n') + 1
+
                         # Move cursor to the match using JavaScript
                         end_pos = index + len(find_text)
+
                         ui.run_javascript(f'''
-                            const textarea = document.querySelector('[data-marker="editor"] textarea');
-                            if (textarea) {{
-                                textarea.focus();
-                                textarea.setSelectionRange({index}, {end_pos});
-                                textarea.scrollTop = Math.max(0, (textarea.scrollHeight * {index}) / textarea.value.length - 100);
-                            }}
+                            setTimeout(() => {{
+                                // Find the editor textarea (first non-readonly textarea)
+                                let textarea = null;
+                                const allTextareas = document.querySelectorAll('textarea');
+                                for (let ta of allTextareas) {{
+                                    if (!ta.readOnly) {{
+                                        textarea = ta;
+                                        break;
+                                    }}
+                                }}
+                                if (textarea) {{
+                                    // Scroll to show the found text
+                                    const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight) || 20;
+                                    const lineNumber = {line_num};
+                                    const scrollPos = (lineNumber - 3) * lineHeight;  // Show 2 lines above
+                                    textarea.scrollTop = Math.max(0, scrollPos);
+
+                                    // Store scroll position so we can restore it on close
+                                    window.mbasicLastFindScroll = textarea.scrollTop;
+                                }}
+                            }}, 100);
                         ''')
 
                         # Update position for next search
                         self.backend.last_find_position = index + 1
-                        result_label.text = f'Found at position {index}'
+
+                        # Extract BASIC line number if on a numbered line
+                        line_start = editor_text.rfind('\n', 0, index) + 1
+                        line_end = editor_text.find('\n', index)
+                        if line_end == -1:
+                            line_end = len(editor_text)
+                        line_text = editor_text[line_start:line_end]
+                        basic_line_match = re.match(r'^\s*(\d+)', line_text)
+                        if basic_line_match:
+                            result_label.text = f'Found on line {line_num} (BASIC line {basic_line_match.group(1)})'
+                        else:
+                            result_label.text = f'Found on line {line_num}'
                     else:
                         # Wrap around or show not found
                         if self.backend.last_find_position > 0:
@@ -768,6 +798,23 @@ class FindReplaceDialog(ui.dialog):
                 """Clear dialog reference when closed."""
                 self._is_open = False
                 self.close()
+
+                # Restore scroll position after dialog closes
+                ui.run_javascript('''
+                    setTimeout(() => {
+                        let textarea = null;
+                        const allTextareas = document.querySelectorAll('textarea');
+                        for (let ta of allTextareas) {
+                            if (!ta.readOnly) {
+                                textarea = ta;
+                                break;
+                            }
+                        }
+                        if (textarea && window.mbasicLastFindScroll !== undefined) {
+                            textarea.scrollTop = window.mbasicLastFindScroll;
+                        }
+                    }, 150);
+                ''')
 
             with ui.row().classes('gap-2'):
                 ui.button('Find', on_click=do_find).classes('bg-blue-500').tooltip('Find from beginning').props('no-caps')
@@ -1319,12 +1366,18 @@ class NiceGUIBackend(UIBackend):
     async def _toggle_breakpoint(self):
         """Toggle breakpoint on current line."""
         try:
-            from src.debug_logger import debug_log
-            debug_log("Toggle breakpoint called", level=1)
-
             # Get line number from cursor position using JavaScript
             result = await ui.run_javascript('''
-                const textarea = document.querySelector('[data-ref="editor"] textarea');
+                // Find the editor textarea (first non-readonly textarea)
+                let textarea = null;
+                const allTextareas = document.querySelectorAll('textarea');
+                for (let ta of allTextareas) {
+                    if (!ta.readOnly) {
+                        textarea = ta;
+                        break;
+                    }
+                }
+
                 if (textarea) {
                     const text = textarea.value;
                     const cursorPos = textarea.selectionStart;
@@ -1343,12 +1396,9 @@ class NiceGUIBackend(UIBackend):
                 return null;
             ''', timeout=5.0)
 
-            debug_log(f"JavaScript result: {result}", level=1)
-
             if result:
                 # Toggle the breakpoint directly
                 line_num = int(result)
-                debug_log(f"Line number extracted: {line_num}", level=1)
                 if line_num in self.breakpoints:
                     self.breakpoints.remove(line_num)
                     self._notify(f'❌ Breakpoint removed: line {line_num}', type='info')
@@ -1378,16 +1428,21 @@ class NiceGUIBackend(UIBackend):
     async def _update_breakpoint_display(self):
         """Update the editor to show breakpoint markers."""
         try:
-            from src.debug_logger import debug_log
-            debug_log(f"Updating breakpoint display: {self.breakpoints}", level=1)
-
             if not self.breakpoints:
                 return
 
             # Add visual markers using JavaScript
             await ui.run_javascript(f'''
                 const breakpoints = new Set({list(self.breakpoints)});
-                const textarea = document.querySelector('[data-ref="editor"] textarea');
+                // Find the editor textarea (first non-readonly textarea)
+                let textarea = null;
+                const allTextareas = document.querySelectorAll('textarea');
+                for (let ta of allTextareas) {{
+                    if (!ta.readOnly) {{
+                        textarea = ta;
+                        break;
+                    }}
+                }}
                 if (textarea) {{
                     const lines = textarea.value.split('\\n');
                     const marked = lines.map((line, idx) => {{
