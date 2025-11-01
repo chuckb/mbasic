@@ -657,6 +657,9 @@ class FindReplaceDialog(ui.dialog):
                     self.backend.last_find_text = find_text
                     self.backend.last_case_sensitive = case_sensitive.value
 
+                    # Clear previous find highlights
+                    self.backend.editor.clear_find_highlights()
+
                     do_find_next()
                 except Exception as ex:
                     result_label.text = f'Error: {ex}'
@@ -682,50 +685,33 @@ class FindReplaceDialog(ui.dialog):
                         index = editor_text.lower().find(find_text.lower(), self.backend.last_find_position)
 
                     if index >= 0:
-                        # Calculate line number for display
-                        line_num = editor_text[:index].count('\n') + 1
+                        # Calculate line number for display (0-based)
+                        line_num = editor_text[:index].count('\n')
 
-                        # Move cursor to the match using JavaScript
-                        end_pos = index + len(find_text)
+                        # Calculate column position within the line
+                        line_start = editor_text.rfind('\n', 0, index) + 1
+                        start_col = index - line_start
+                        end_col = start_col + len(find_text)
 
-                        ui.run_javascript(f'''
-                            setTimeout(() => {{
-                                // Find the editor textarea (first non-readonly textarea)
-                                let textarea = null;
-                                const allTextareas = document.querySelectorAll('textarea');
-                                for (let ta of allTextareas) {{
-                                    if (!ta.readOnly) {{
-                                        textarea = ta;
-                                        break;
-                                    }}
-                                }}
-                                if (textarea) {{
-                                    // Scroll to show the found text
-                                    const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight) || 20;
-                                    const lineNumber = {line_num};
-                                    const scrollPos = (lineNumber - 3) * lineHeight;  // Show 2 lines above
-                                    textarea.scrollTop = Math.max(0, scrollPos);
+                        # Add yellow highlight to the found text
+                        self.backend.editor.add_find_highlight(line_num, start_col, end_col)
 
-                                    // Store scroll position so we can restore it on close
-                                    window.mbasicLastFindScroll = textarea.scrollTop;
-                                }}
-                            }}, 100);
-                        ''')
+                        # Scroll to show the found text
+                        self.backend.editor.scroll_to_line(line_num)
 
                         # Update position for next search
                         self.backend.last_find_position = index + 1
 
                         # Extract BASIC line number if on a numbered line
-                        line_start = editor_text.rfind('\n', 0, index) + 1
                         line_end = editor_text.find('\n', index)
                         if line_end == -1:
                             line_end = len(editor_text)
                         line_text = editor_text[line_start:line_end]
                         basic_line_match = re.match(r'^\s*(\d+)', line_text)
                         if basic_line_match:
-                            result_label.text = f'Found on line {line_num} (BASIC line {basic_line_match.group(1)})'
+                            result_label.text = f'Found on line {line_num + 1} (BASIC line {basic_line_match.group(1)})'
                         else:
-                            result_label.text = f'Found on line {line_num}'
+                            result_label.text = f'Found on line {line_num + 1}'
                     else:
                         # Wrap around or show not found
                         if self.backend.last_find_position > 0:
@@ -801,23 +787,7 @@ class FindReplaceDialog(ui.dialog):
                 """Clear dialog reference when closed."""
                 self._is_open = False
                 self.close()
-
-                # Restore scroll position after dialog closes
-                ui.run_javascript('''
-                    setTimeout(() => {
-                        let textarea = null;
-                        const allTextareas = document.querySelectorAll('textarea');
-                        for (let ta of allTextareas) {
-                            if (!ta.readOnly) {
-                                textarea = ta;
-                                break;
-                            }
-                        }
-                        if (textarea && window.mbasicLastFindScroll !== undefined) {
-                            textarea.scrollTop = window.mbasicLastFindScroll;
-                        }
-                    }, 150);
-                ''')
+                # Note: CodeMirror maintains its own scroll position, no need to restore
 
             with ui.row().classes('gap-2'):
                 ui.button('Find', on_click=do_find).classes('bg-blue-500').tooltip('Find from beginning').props('no-caps')
