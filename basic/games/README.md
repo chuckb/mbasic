@@ -1,6 +1,6 @@
 # Classic BASIC Games
 
-This directory contains 106 classic BASIC games recently downloaded from various archives.
+This directory contains 113 classic BASIC games from various archives.
 
 ## Status
 
@@ -26,7 +26,7 @@ If you find issues with any game, you can:
 
 1. Use the `utils/fix_keyword_spacing.py` utility to fix missing spaces after keywords:
    ```bash
-   python3 utils/fix_keyword_spacing.py games/gamename.bas --execute
+   python3 utils/fix_keyword_spacing.py basic/games/gamename.bas --execute
    ```
 
 2. Report problems or contribute fixes
@@ -36,7 +36,7 @@ If you find issues with any game, you can:
 To play a game:
 
 ```bash
-python3 mbasic games/gamename.bas
+python3 mbasic basic/games/gamename.bas
 ```
 
 ## Feedback
