@@ -1781,25 +1781,36 @@ class Interpreter:
             raise RuntimeError("SAVE not available in this context")
 
     def execute_run(self, stmt):
-        """Execute RUN statement"""
-        # RUN can optionally specify a line number or filename
-        if hasattr(stmt, 'line_number') and stmt.line_number:
-            # RUN line_number - start at specific line
-            self.runtime.npc = PC.from_line(stmt.line_number)
-        elif hasattr(stmt, 'filename') and stmt.filename:
-            # RUN "filename" - load and run file
-            filename = self.evaluate_expression(stmt.filename)
-            if hasattr(self, 'interactive_mode') and self.interactive_mode:
-                self.interactive_mode.cmd_load(filename)
-                self.interactive_mode.cmd_run()
+        """Execute RUN statement - CLEAR variables and restart/goto
+
+        RUN                - CLEAR + GOTO first line
+        RUN line_number    - CLEAR + GOTO line_number
+        RUN "filename"     - LOAD file + CLEAR + GOTO first line
+        """
+        # Evaluate target if present
+        if stmt.target:
+            target_value = self.evaluate_expression(stmt.target)
+
+            if isinstance(target_value, str):
+                # RUN "filename" - load and run file
+                if hasattr(self, 'interactive_mode') and self.interactive_mode:
+                    self.interactive_mode.cmd_load(target_value)
+                    self.interactive_mode.cmd_run()
+                else:
+                    raise RuntimeError("RUN filename not available in this context")
             else:
-                raise RuntimeError("RUN filename not available in this context")
+                # RUN line_number - CLEAR variables then GOTO line
+                self.runtime.clear_variables()
+                line_num = int(target_value)
+                self.runtime.npc = PC.from_line(line_num)
+                self.runtime.halted = False
         else:
-            # RUN without arguments - restart from beginning
+            # RUN without arguments - CLEAR + restart from beginning
             if hasattr(self, 'interactive_mode') and self.interactive_mode:
                 self.interactive_mode.cmd_run()
             else:
                 # In non-interactive context, just restart
+                self.runtime.clear_variables()
                 self.runtime.halted = True
 
     def execute_common(self, stmt):

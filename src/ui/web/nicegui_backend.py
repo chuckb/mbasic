@@ -1536,6 +1536,33 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_menu_new", e)
             self._notify(f'Error: {e}', type='negative')
 
+    def cmd_new(self) -> None:
+        """Execute NEW command - clear program and variables (called by interpreter)."""
+        # Clear the program
+        self.program.clear()
+
+        # Clear the editor
+        self.editor.value = ''
+
+        # Clear runtime if it exists
+        if self.runtime:
+            self.runtime.clear_variables()
+            self.runtime.clear_arrays()
+
+        # Reset current file
+        self.current_file = None
+
+        # Stop any running execution
+        if self.exec_timer:
+            self.exec_timer.cancel()
+            self.exec_timer = None
+
+        self.running = False
+        self.paused = False
+
+        self._set_status('Ready')
+        self.io.output("New")
+
     async def _menu_open(self):
         """File > Open - Load program from file."""
         self.open_file_dialog.show()
