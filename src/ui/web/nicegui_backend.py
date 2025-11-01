@@ -1806,6 +1806,7 @@ class NiceGUIBackend(UIBackend):
 
         try:
             status = self.interpreter.state.status if self.interpreter else 'no interpreter'
+            self._append_output(f"DEBUG: tick status={status}, pc={self.runtime.pc}, npc={self.runtime.npc}\n")
 
             # If waiting for input, don't tick - wait for input to be provided
             if status == 'waiting_for_input':
@@ -1813,6 +1814,7 @@ class NiceGUIBackend(UIBackend):
 
             # Execute one tick (up to 1000 statements)
             state = self.interpreter.tick(mode='run', max_statements=1000)
+            self._append_output(f"DEBUG: after tick status={state.status}\n")
 
             # Handle state
             if state.status == 'done':
