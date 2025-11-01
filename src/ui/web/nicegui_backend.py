@@ -1108,7 +1108,7 @@ class NiceGUIBackend(UIBackend):
             self.editor = ui.textarea(
                 value='',
                 placeholder='Program Editor'
-            ).style('width: 100%;').props('outlined dense rows=10').mark('editor')
+            ).style('width: 100%;').props('outlined dense rows=10 spellcheck=false').mark('editor')
 
             # Add auto-numbering handlers
             # Track last edited line for auto-numbering
@@ -1142,7 +1142,7 @@ class NiceGUIBackend(UIBackend):
             self.output = ui.textarea(
                 value=f'MBASIC 5.21 Web IDE - {VERSION}\n',
                 placeholder='Output'
-            ).style('width: 100%;').props('readonly outlined dense rows=10').mark('output')
+            ).style('width: 100%;').props('readonly outlined dense rows=10 spellcheck=false').mark('output')
 
             # INPUT row (hidden by default)
             self.input_row = ui.row().classes('w-full bg-blue-50 q-pa-sm')
@@ -1158,7 +1158,7 @@ class NiceGUIBackend(UIBackend):
                 self.immediate_entry = ui.textarea(
                     value='',
                     placeholder='Command'
-                ).style('width: 100%;').props('outlined dense rows=3').mark('immediate_entry')
+                ).style('width: 100%;').props('outlined dense rows=3 spellcheck=false').mark('immediate_entry')
                 self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
                 ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
 
