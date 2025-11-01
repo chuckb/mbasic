@@ -1928,6 +1928,8 @@ class NiceGUIBackend(UIBackend):
             # Hide current line highlight
             if self.current_line_label:
                 self.current_line_label.visible = False
+            # Clear CodeMirror current statement highlight
+            self.editor.set_current_statement(None)
         elif state.status == 'error':
             error_msg = state.error_info.error_message if state.error_info else "Unknown error"
             self._append_output(f"\n--- Error: {error_msg} ---\n")
@@ -1937,6 +1939,8 @@ class NiceGUIBackend(UIBackend):
             # Hide current line highlight
             if self.current_line_label:
                 self.current_line_label.visible = False
+            # Clear CodeMirror current statement highlight
+            self.editor.set_current_statement(None)
         elif state.status in ('paused', 'at_breakpoint'):
             self._set_status(f"Paused at line {state.current_line}")
             self.running = True
@@ -1945,6 +1949,8 @@ class NiceGUIBackend(UIBackend):
             if self.current_line_label:
                 self.current_line_label.set_text(f'>>> Executing line {state.current_line}')
                 self.current_line_label.visible = True
+            # Highlight current statement in CodeMirror
+            self.editor.set_current_statement(state.current_line)
         elif state.status == 'running':
             # Still running after step - mark as paused to prevent automatic continuation
             self._set_status(f"Paused at line {state.current_line}")
@@ -1954,6 +1960,8 @@ class NiceGUIBackend(UIBackend):
             if self.current_line_label:
                 self.current_line_label.set_text(f'>>> Executing line {state.current_line}')
                 self.current_line_label.visible = True
+            # Highlight current statement in CodeMirror
+            self.editor.set_current_statement(state.current_line)
 
     async def _menu_continue(self):
         """Run > Continue - Continue from breakpoint/pause."""
