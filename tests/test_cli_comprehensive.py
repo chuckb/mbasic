@@ -393,6 +393,56 @@ class TestCLI:
         self.proc.expect('BACK')
         self.proc.expect('Ready')
 
+    def test_clear_command(self):
+        """Test CLEAR command resets variables"""
+        self.proc.sendline('NEW')
+        self.proc.expect('Ready')
+
+        # Set variables in immediate mode
+        self.proc.sendline('A = 42')
+        self.proc.expect('Ready')
+        self.proc.sendline('B$ = "TEST"')
+        self.proc.expect('Ready')
+
+        # Verify variables exist
+        self.proc.sendline('PRINT A')
+        self.proc.expect('42')
+        self.proc.expect('Ready')
+
+        self.proc.sendline('PRINT B$')
+        self.proc.expect('TEST')
+        self.proc.expect('Ready')
+
+        # Clear session state
+        self.proc.sendline('CLEAR')
+        self.proc.expect('Ready')
+
+        # Verify variables cleared (reset to defaults)
+        self.proc.sendline('PRINT A')
+        self.proc.expect('0')  # Numeric variables reset to 0
+        self.proc.expect('Ready')
+
+        self.proc.sendline('PRINT B$')
+        # String variables reset to empty, which prints nothing
+        self.proc.expect('Ready')
+
+    def test_files_command(self):
+        """Test FILES command lists directory"""
+        # Create some test files
+        test_file1 = os.path.join(self.test_dir, 'test1.bas')
+        test_file2 = os.path.join(self.test_dir, 'test2.bas')
+
+        with open(test_file1, 'w') as f:
+            f.write('10 PRINT "TEST1"\n')
+        with open(test_file2, 'w') as f:
+            f.write('10 PRINT "TEST2"\n')
+
+        # List files in test directory
+        self.proc.sendline(f'FILES "{self.test_dir}"')
+        self.proc.expect('test1.bas')
+        self.proc.expect('test2.bas')
+        self.proc.expect('Ready')
+
     def run_all_tests(self):
         """Run all tests and report results"""
         print("\n" + "="*60)
@@ -413,6 +463,8 @@ class TestCLI:
         self.run_test("RENUM command", self.test_renum_command)
         self.run_test("SAVE/LOAD", self.test_save_load)
         self.run_test("AUTO command", self.test_auto_command)
+        self.run_test("CLEAR command", self.test_clear_command)
+        self.run_test("FILES command", self.test_files_command)
         self.run_test("Error handling", self.test_error_handling)
         self.run_test("HELP system", self.test_help_system)
         self.run_test("Variables", self.test_variables)

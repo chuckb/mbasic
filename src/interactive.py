@@ -532,7 +532,8 @@ class InteractiveMode:
             # Show parse errors if any
             if errors:
                 for line_num, error in errors:
-                    print(f"?Parse error at line {line_num}: {error}")
+                    # Error already contains line number (e.g., "Syntax error in 2020: ..."), don't duplicate
+                    print(f"?{error}")
 
             if success:
                 # Update runtime if it exists (for CONT support)
