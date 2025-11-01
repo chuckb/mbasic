@@ -1012,6 +1012,9 @@ class NiceGUIBackend(UIBackend):
         # Start auto-save timer
         self._start_auto_save()
 
+        # Set initial focus to program editor
+        self.editor.run_method('focus')
+
     def _create_menu(self):
         """Create menu bar."""
         with ui.row().classes('w-full bg-gray-800 text-white p-2 gap-4'):
