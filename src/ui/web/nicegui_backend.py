@@ -405,11 +405,12 @@ class OpenFileDialog(ui.dialog):
             # AG Grid file browser
             self.grid = ui.aggrid({
                 'columnDefs': [
-                    {'field': 'name', 'headerName': 'File', 'flex': 1},
+                    {'field': 'name', 'headerName': 'File'},
                     {'field': 'size', 'headerName': 'Size', 'width': 100}
                 ],
-                'rowSelection': 'single',
-            }, html_columns=[0]).classes('w-full h-96').on('cellDoubleClicked', self._handle_double_click)
+                'rowSelection': {'mode': 'singleRow'},
+                'domLayout': 'autoHeight',
+            }, html_columns=[0]).classes('w-full').on('cellDoubleClicked', self._handle_double_click)
 
             # Action buttons
             with ui.row().classes('w-full justify-between mt-4'):
