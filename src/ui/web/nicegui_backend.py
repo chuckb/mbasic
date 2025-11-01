@@ -1453,35 +1453,15 @@ class NiceGUIBackend(UIBackend):
             self._notify(f'Error: {e}', type='negative')
 
     async def _update_breakpoint_display(self):
-        """Update the editor to show breakpoint markers."""
+        """Update the editor to show breakpoint markers using CodeMirror."""
         try:
-            if not self.breakpoints:
-                return
+            # Clear all existing breakpoint markers
+            self.editor.clear_breakpoints()
 
-            # Add visual markers using JavaScript
-            await ui.run_javascript(f'''
-                const breakpoints = new Set({list(self.breakpoints)});
-                // Find the editor textarea (first non-readonly textarea)
-                let textarea = null;
-                const allTextareas = document.querySelectorAll('textarea');
-                for (let ta of allTextareas) {{
-                    if (!ta.readOnly) {{
-                        textarea = ta;
-                        break;
-                    }}
-                }}
-                if (textarea) {{
-                    const lines = textarea.value.split('\\n');
-                    const marked = lines.map((line, idx) => {{
-                        const match = line.match(/^\\s*(\\d+)/);
-                        if (match && breakpoints.has(parseInt(match[1]))) {{
-                            return '🔴 ' + line;
-                        }}
-                        return line.replace(/^🔴 /, '');  // Remove old markers
-                    }});
-                    textarea.value = marked.join('\\n');
-                }}
-            ''')
+            # Add markers for all current breakpoints
+            for pc in self.breakpoints:
+                self.editor.add_breakpoint(pc.line_num)
+
         except Exception as e:
             log_web_error("_update_breakpoint_display", e)
 
@@ -1515,6 +1495,10 @@ class NiceGUIBackend(UIBackend):
             self.breakpoints.clear()
             if self.interpreter:
                 self.interpreter.clear_breakpoints()
+
+            # Clear CodeMirror breakpoint markers
+            self.editor.clear_breakpoints()
+
             self._notify(f'Cleared {count} breakpoint(s)', type='info')
             self._set_status('All breakpoints cleared')
         except Exception as e:
