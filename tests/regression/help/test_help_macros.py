@@ -6,12 +6,16 @@ Tests that {{kbd:...}} and other macros work correctly.
 """
 
 import sys
+import os
+
+# Add project root to path (3 levels up from tests/regression/*/)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
 from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
-from ui.help_macros import HelpMacros
+from src.ui.help_macros import HelpMacros
 
 def test_curses_macros():
     """Test Curses UI macro expansion."""
@@ -61,7 +65,7 @@ def test_tk_macros():
         ("{{kbd:help_topics}}", "Ctrl+?"),
         ("{{kbd:file_new}}", "Ctrl+N"),
         ("{{kbd:file_save}}", "Ctrl+S"),
-        ("{{kbd:run_program}}", "F5"),
+        ("{{kbd:run_program}}", "Ctrl+R"),  # Updated from F5 to Ctrl+R
         ("{{version}}", "5.21"),
         ("{{ui}}", "Tk"),
     ]

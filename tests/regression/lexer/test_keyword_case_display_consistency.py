@@ -39,18 +39,6 @@ class TestKeywordCaseDisplayConsistency(unittest.TestCase):
                 for t in tokens
                 if hasattr(t, 'original_case_keyword') and t.original_case_keyword]
 
-    def test_first_wins_policy(self):
-        """Test that first_wins uses first occurrence's case for all."""
-        settings_set('keywords.case_style', 'first_wins')
-
-        code = '''10 Print "First"
-20 PRINT "Second"
-30 print "Third"'''
-
-        cases = self.get_keyword_cases(code)
-        # All should be 'Print' (first occurrence)
-        self.assertEqual(cases, ['Print', 'Print', 'Print'])
-
     def test_force_lower_policy(self):
         """Test that force_lower converts all to lowercase."""
         settings_set('keywords.case_style', 'force_lower')
@@ -107,25 +95,9 @@ class TestKeywordCaseDisplayConsistency(unittest.TestCase):
         expected = ['For', 'To', 'Print', 'Next']
         self.assertEqual(cases, expected)
 
-    def test_first_wins_different_first_occurrence(self):
-        """Test first_wins with different first cases."""
-        settings_set('keywords.case_style', 'first_wins')
-
-        # Test 1: First is UPPERCASE
-        code1 = '''10 PRINT "a"
-20 print "b"'''
-        cases1 = self.get_keyword_cases(code1)
-        self.assertEqual(cases1, ['PRINT', 'PRINT'])
-
-        # Test 2: First is lowercase
-        code2 = '''10 print "a"
-20 PRINT "b"'''
-        cases2 = self.get_keyword_cases(code2)
-        self.assertEqual(cases2, ['print', 'print'])
-
     def test_consistency_across_program(self):
         """Test that all occurrences of same keyword are consistent."""
-        settings_set('keywords.case_style', 'first_wins')
+        settings_set('keywords.case_style', 'force_capitalize')
 
         code = '''10 Print "1"
 20 FOR I=1 TO 5
@@ -136,9 +108,9 @@ class TestKeywordCaseDisplayConsistency(unittest.TestCase):
         cases = self.get_keyword_cases(code)
         print_cases = [c for c in cases if c.upper() == 'PRINT']
 
-        # All PRINT occurrences should be same case
+        # All PRINT occurrences should be same case (capitalized)
         self.assertEqual(len(set(print_cases)), 1, "All PRINT occurrences should have same case")
-        self.assertEqual(print_cases[0], 'Print', "Should use first occurrence case")
+        self.assertEqual(print_cases[0], 'Print', "Should be capitalized")
 
 
 def run_tests():

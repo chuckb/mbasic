@@ -6,12 +6,16 @@ Verifies that keybindings are correctly loaded from JSON and converted to Tkinte
 """
 
 import sys
+import os
+
+# Add project root to path (3 levels up from tests/regression/*/)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
 from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
-from ui.keybinding_loader import KeybindingLoader
+from src.ui.keybinding_loader import KeybindingLoader
 
 def test_tk_loader():
     """Test Tk keybinding loader."""
@@ -27,7 +31,7 @@ def test_tk_loader():
         ('menu', 'file_open', 'Ctrl+O', '<Control-o>'),
         ('menu', 'file_save', 'Ctrl+S', '<Control-s>'),
         ('menu', 'file_quit', 'Ctrl+Q', '<Control-q>'),
-        ('menu', 'run_program', 'F5', '<F5>'),
+        ('menu', 'run_program', 'Ctrl+R', '<Control-r>'),  # Changed from F5 to Ctrl+R
         ('menu', 'help_topics', 'Ctrl+?', '<Control-question>'),
     ]
 

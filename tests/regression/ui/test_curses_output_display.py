@@ -4,11 +4,15 @@ Test that curses UI actually displays program output.
 """
 
 import sys
+import os
+
+# Add project root to path (3 levels up from tests/regression/*/)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
 sys.path.insert(0, 'src')
 
-from ui.curses_ui import CursesBackend
-from iohandler.console import ConsoleIOHandler
-from editing import ProgramManager
+from src.ui.curses_ui import CursesBackend
+from src.iohandler.console import ConsoleIOHandler
+from src.editing import ProgramManager
 from src.parser import TypeInfo
 
 def test_output_display():

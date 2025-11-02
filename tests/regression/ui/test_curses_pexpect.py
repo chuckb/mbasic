@@ -8,8 +8,11 @@ Spawns the curses UI in a subprocess and interacts with it.
 import pexpect
 import sys
 import os
-sys.path.insert(0, 'src')
 import time
+
+# Add project root to path (3 levels up from tests/regression/ui/)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+
 from src.ui.keybindings import HELP_CHAR, QUIT_CHAR
 
 def test_curses_basic():

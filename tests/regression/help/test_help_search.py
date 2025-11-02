@@ -6,16 +6,22 @@ Tests the search index loading and searching capabilities.
 """
 
 import sys
+import os
+
+# Add project root to path (3 levels up from tests/regression/*/)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
 from pathlib import Path
 
 # Add parent directory to path to import help_widget
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
-from ui.help_widget import HelpWidget
+from src.ui.help_widget import HelpWidget
 
 def test_search_indexes():
     """Test that search indexes load correctly."""
-    help_root = Path(__file__).parent.parent / "docs" / "help"
+    # Get project root (3 levels up from tests/regression/help/)
+    project_root = Path(__file__).parent.parent.parent.parent
+    help_root = project_root / "docs" / "help"
 
     # Create a minimal HelpWidget to test search
     class TestHelpWidget:

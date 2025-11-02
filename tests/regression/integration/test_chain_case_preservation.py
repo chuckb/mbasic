@@ -2,7 +2,10 @@
 """Test that update_variables() preserves original_case during CHAIN ALL"""
 
 import sys
-sys.path.insert(0, 'src')
+import os
+
+# Add project root to path (3 levels up from tests/regression/integration/)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
 
 from src.runtime import Runtime
 from src.settings import SettingsManager

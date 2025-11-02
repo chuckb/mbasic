@@ -4,6 +4,8 @@ Test GOSUB stack depth in MBASIC 5.21
 Generates a BASIC program with nested GOSUBs to find the stack limit.
 """
 
+import os
+
 def generate_gosub_test(max_depth=100):
     """Generate a BASIC program that tests GOSUB stack depth"""
     lines = []
@@ -38,8 +40,12 @@ if __name__ == '__main__':
         (70, 'gosub70'),
     ]
 
+    # Files should go to basic/dev/bas_tests relative to project root
+    project_root = os.path.join(os.path.dirname(__file__), '../../..')
+    bas_tests_dir = os.path.join(project_root, 'basic/dev/bas_tests')
+
     for depth, name in tests:
-        filename = f'basic/bas_tests/{name}.bas'
+        filename = os.path.join(bas_tests_dir, f'{name}.bas')
         with open(filename, 'w') as f:
             f.write(generate_gosub_test(depth))
         print(f"Generated {filename} (depth {depth})")

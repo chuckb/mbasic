@@ -4,13 +4,17 @@ Test the line editing commands (delete and renumber) for the curses UI.
 """
 
 import sys
+import os
+
+# Add project root to path (3 levels up from tests/regression/*/)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
 sys.path.insert(0, 'src')
 
 def test_line_editing():
     print("=== Line Editing Commands Test ===\n")
 
     # Import after adding src to path
-    from ui.curses_ui import ProgramEditorWidget
+    from src.ui.curses_ui import ProgramEditorWidget
 
     # Create editor
     editor = ProgramEditorWidget()

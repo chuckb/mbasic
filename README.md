@@ -9,7 +9,7 @@ A modern implementation of Microsoft BASIC-80 5.21 (CP/M era) with optional deve
 - ✅ **Modern Extensions**: Optional debugging commands (BREAK, STEP, WATCH, STACK)
 - ✅ **Multiple UIs**: CLI (classic), Curses, Tk (GUI), Web (browser)
 
-See [STATUS.md](STATUS.md) for implementation details, [Extensions](docs/help/mbasic/extensions.md) for modern features, and [PROJECT_STATUS.md](docs/PROJECT_STATUS.md) for current project health and metrics.
+See [Implementation Status](#implementation-status) section below for details, [Extensions](docs/help/mbasic/extensions.md) for modern features, and [PROJECT_STATUS.md](docs/PROJECT_STATUS.md) for current project health and metrics.
 
 ## Installation
 
@@ -189,8 +189,13 @@ mbasic/
 │   ├── interactive.py     # Interactive REPL
 │   └── ui/                # UI backends (cli, curses, tk, web)
 ├── basic/
-│   ├── bas_tests/         # BASIC test programs
-│   └── tests_with_results/# Self-checking BASIC tests
+│   ├── dev/               # Development and test programs
+│   │   ├── bas_tests/         # BASIC test programs
+│   │   ├── tests_with_results/# Self-checking BASIC tests
+│   │   └── bad_syntax/        # Programs with parse errors
+│   ├── games/             # Game programs
+│   ├── utilities/         # Utility programs
+│   └── ...                # Other categorized programs
 ├── tests/
 │   ├── regression/        # Automated regression tests
 │   ├── manual/            # Manual verification tests
@@ -258,16 +263,16 @@ tests/
 
 ### BASIC Test Programs
 
-Test BASIC programs live in `basic/bas_tests/`:
+Test BASIC programs live in `basic/dev/bas_tests/`:
 
 ```bash
 # Run any BASIC test program
-python3 mbasic basic/bas_tests/test_operator_precedence.bas
+python3 mbasic basic/dev/bas_tests/test_operator_precedence.bas
 ```
 
 Self-checking tests verify correctness and report results:
 ```bash
-python3 mbasic basic/tests_with_results/test_operator_precedence.bas
+python3 mbasic basic/dev/tests_with_results/test_operator_precedence.bas
 # Result: All 20 tests PASS
 ```
 
@@ -364,14 +369,12 @@ if __name__ == "__main__":
 
 All core MBASIC 5.21 features are implemented and tested.
 
-**See [STATUS.md](STATUS.md) for complete implementation status.**
-
 **What doesn't work:**
 - Hardware-specific features (PEEK/POKE for hardware access, INP/OUT ports)
 - Line printer output (LPRINT, LLIST)
 - Graphics/sound (not part of MBASIC 5.21 core spec)
 
-These limitations are inherent to running vintage BASIC in a modern environment and do not affect most programs. See STATUS.md for details on compatibility features.
+These limitations are inherent to running vintage BASIC in a modern environment and do not affect most programs. See [PROJECT_STATUS.md](docs/PROJECT_STATUS.md) for complete project metrics and health information.
 
 ## Example Programs
 

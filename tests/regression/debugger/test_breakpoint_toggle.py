@@ -4,13 +4,17 @@ Test the breakpoint toggle functionality for the curses UI.
 """
 
 import sys
+import os
+
+# Add project root to path (3 levels up from tests/regression/*/)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
 sys.path.insert(0, 'src')
 
 def test_breakpoint_toggle():
     print("=== Breakpoint Toggle Test ===\n")
 
     # Import after adding src to path
-    from ui.curses_ui import ProgramEditorWidget
+    from src.ui.curses_ui import ProgramEditorWidget
 
     # Create editor
     editor = ProgramEditorWidget()

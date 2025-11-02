@@ -3,6 +3,8 @@
 Test if GOSUB stack is a circular buffer that drops oldest entries
 """
 
+import os
+
 def create_test(num_gosubs, filename):
     """
     Create a test that does num_gosubs nested GOSUBs.
@@ -34,7 +36,9 @@ def create_test(num_gosubs, filename):
 
 if __name__ == '__main__':
     # Test various depths around 8
+    # Create files in the tests root directory (3 levels up from tests/regression/interpreter/)
+    test_dir = os.path.join(os.path.dirname(__file__), '../..')
     for depth in [5, 8, 9, 10, 12, 15]:
-        filename = f'tests/circ{depth}.bas'
+        filename = os.path.join(test_dir, f'circ{depth}.bas')
         create_test(depth, filename)
         print(f"Created {filename} with {depth} nested GOSUBs")

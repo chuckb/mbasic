@@ -3,7 +3,7 @@
 Test that keyword case settings are properly integrated with lexer.
 
 Verifies that the keywords.case_style setting is respected when creating
-lexers, and that the 'error' policy properly raises ValueError on conflicts.
+lexers, and tests all three available policies: force_lower, force_upper, force_capitalize.
 """
 
 import sys
@@ -31,41 +31,13 @@ class TestKeywordCaseSettingsIntegration(unittest.TestCase):
 
     def test_create_keyword_case_manager_respects_settings(self):
         """Test that create_keyword_case_manager() reads from settings."""
-        settings_set('keywords.case_style', 'error')
+        settings_set('keywords.case_style', 'force_capitalize')
         manager = create_keyword_case_manager()
-        self.assertEqual(manager.policy, 'error')
+        self.assertEqual(manager.policy, 'force_capitalize')
 
         settings_set('keywords.case_style', 'force_upper')
         manager = create_keyword_case_manager()
         self.assertEqual(manager.policy, 'force_upper')
-
-    def test_error_policy_raises_on_conflict(self):
-        """Test that error policy raises ValueError on case conflict."""
-        settings_set('keywords.case_style', 'error')
-
-        code = '''10 PRINT "First"
-20 print "Second"
-30 PRINT "Third"'''
-
-        with self.assertRaises(ValueError) as cm:
-            tokenize(code)
-
-        error_msg = str(cm.exception)
-        self.assertIn('Case conflict', error_msg)
-        self.assertIn('print', error_msg.lower())
-        self.assertIn('line', error_msg.lower())
-
-    def test_error_policy_no_conflict(self):
-        """Test that error policy succeeds when no conflicts."""
-        settings_set('keywords.case_style', 'error')
-
-        code = '''10 PRINT "First"
-20 PRINT "Second"
-30 PRINT "Third"'''
-
-        # Should not raise
-        tokens = tokenize(code)
-        self.assertGreater(len(tokens), 0)
 
     def test_force_lower_policy(self):
         """Test that force_lower policy works."""
@@ -91,25 +63,13 @@ class TestKeywordCaseSettingsIntegration(unittest.TestCase):
         tokens = tokenize(code)
         self.assertGreater(len(tokens), 0)
 
-    def test_first_wins_policy(self):
-        """Test that first_wins policy works."""
-        settings_set('keywords.case_style', 'first_wins')
+    def test_force_capitalize_policy(self):
+        """Test that force_capitalize policy works."""
+        settings_set('keywords.case_style', 'force_capitalize')
 
         code = '''10 Print "test"
 20 PRINT "test"
 30 print "test"'''
-
-        # Should not raise
-        tokens = tokenize(code)
-        self.assertGreater(len(tokens), 0)
-
-    def test_preserve_policy(self):
-        """Test that preserve policy works."""
-        settings_set('keywords.case_style', 'preserve')
-
-        code = '''10 PRINT "test"
-20 print "test"
-30 Print "test"'''
 
         # Should not raise
         tokens = tokenize(code)
