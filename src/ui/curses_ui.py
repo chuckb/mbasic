@@ -2387,13 +2387,12 @@ class CursesBackend(UIBackend):
             result = self.menu_bar.handle_key(key)
             if result == 'close':
                 # Close menu and return to main UI
-                self.loop.widget = main_widget
+                # Wrap in AttrMap to force black background when redrawing
+                self.loop.widget = urwid.AttrMap(main_widget, 'body')
                 self.loop.unhandled_input = self._handle_input
             elif result == 'refresh':
                 # Refresh dropdown - rebuild overlay from scratch using main widget
-                # First restore main widget to clear old overlay, then show new one
-                self.loop.widget = main_widget
-                self.loop.draw_screen()  # Force redraw to clear old overlay
+                # Don't call draw_screen() - it uses default colors (39;49) which may be white
                 new_overlay = self.menu_bar._show_dropdown(base_widget=main_widget)
                 self.loop.widget = new_overlay
             # Otherwise continue with menu navigation
