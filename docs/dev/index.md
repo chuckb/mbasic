@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2025-11-02
-**Total Documents:** 155
+**Total Documents:** 154
 
 ## What's Here
 
@@ -120,7 +120,6 @@ If you're contributing to MBASIC:
 - [Compiler Memory Optimization](COMPILER_MEMORY_OPTIMIZATION.md)
 - [Def Fn Implementation](DEF_FN_IMPLEMENTATION.md)
 - [File Io Implementation](FILE_IO_IMPLEMENTATION.md)
-- [Fileio Module Architecture Todo](FILEIO_MODULE_ARCHITECTURE_TODO.md)
 - [Filesystem Security](FILESYSTEM_SECURITY.md)
 - [Function Key Removal](FUNCTION_KEY_REMOVAL.md)
 - [Hash File Io Fix](HASH_FILE_IO_FIX.md)
