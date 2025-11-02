@@ -101,8 +101,12 @@ class InteractiveMenuBar(urwid.WidgetWrap):
         """Update the menu bar display."""
         self.menu_text.set_text(self._get_menu_bar_text())
 
-    def _show_dropdown(self):
-        """Show dropdown menu for current menu."""
+    def _show_dropdown(self, base_widget=None):
+        """Show dropdown menu for current menu.
+
+        Args:
+            base_widget: The widget to overlay on. If None, uses parent_ui.loop.widget
+        """
         menu_name = self.menu_names[self.current_menu_index]
         items = self.menus[menu_name]
 
@@ -127,17 +131,19 @@ class InteractiveMenuBar(urwid.WidgetWrap):
         # Calculate x position based on which menu
         x_offset = sum(len(self.menu_names[i]) + 3 for i in range(self.current_menu_index)) + 2
 
+        # Use provided base widget or current widget
+        if base_widget is None:
+            base_widget = self.parent_ui.loop.widget
+
         overlay = urwid.Overlay(
             urwid.AttrMap(box, 'body'),
-            self.parent_ui.loop.widget,
+            base_widget,
             align='left',
             width=20,  # Narrow fixed width
             valign='top',
             height='pack',
             left=x_offset,
-            top=1,  # Below menu bar
-            bottom=None,
-            right=None
+            top=1  # Below menu bar
         )
 
         return overlay

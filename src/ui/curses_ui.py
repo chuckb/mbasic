@@ -73,6 +73,28 @@ class TopLeftBox(urwid.WidgetWrap):
         """Pass through selectability of wrapped widget."""
         return self._w.selectable()
 
+    def set_title(self, title):
+        """Update the title in the top border.
+
+        Args:
+            title: New title text
+        """
+        self.title = title
+        # Recreate the top border with new title
+        if title:
+            title_text = urwid.Text(f'── {title} ', wrap='clip')
+            fill_text = urwid.Text('─' * 200, wrap='clip')
+            top_border = urwid.Columns([
+                ('pack', title_text),
+                fill_text
+            ], dividechars=0)
+        else:
+            top_border = urwid.Text('─' * 200, wrap='clip')
+
+        # Get the pile and update the top border
+        pile = self._w
+        pile.contents[0] = (top_border, ('pack', None))
+
 
 class SelectableText(urwid.Text):
     """Text widget that is selectable for ListBox scrolling."""
@@ -1620,6 +1642,8 @@ class CursesBackend(UIBackend):
             ('immediate_disabled', 'light red,bold', 'black'),
             # Help system link highlighting
             ('link', 'light cyan,bold', 'black'),
+            # Dimmed text for hints
+            ('dim', 'dark gray', 'black'),
         ]
 
     def _handle_input(self, key):
@@ -2367,16 +2391,8 @@ class CursesBackend(UIBackend):
                 self.loop.unhandled_input = self._handle_input
             elif result == 'refresh':
                 # Refresh dropdown - rebuild overlay from scratch using main widget
-                new_overlay = urwid.Overlay(
-                    self.menu_bar._show_dropdown().top_w,  # Get the dropdown widget
-                    main_widget,  # Use original main widget, not current overlay
-                    align='left',
-                    width=22,  # Fixed width - enough for menu items
-                    valign='top',
-                    height='pack',
-                    left=sum(len(self.menu_bar.menu_names[i]) + 3 for i in range(self.menu_bar.current_menu_index)) + 2,
-                    top=1
-                )
+                # Pass main_widget so it doesn't overlay on the old overlay
+                new_overlay = self.menu_bar._show_dropdown(base_widget=main_widget)
                 self.loop.widget = new_overlay
             # Otherwise continue with menu navigation
 
@@ -2472,8 +2488,8 @@ class CursesBackend(UIBackend):
             stack_line = f"Stacks: GOSUB={limits.current_gosub_depth}/{limits.max_gosub_depth} FOR={limits.current_for_depth}/{limits.max_for_depth} WHILE={limits.current_while_depth}/{limits.max_while_depth}"
 
             # Add resource lines with divider
-            self.variables_walker.append(make_output_line(mem_line, attr='highlight'))
-            self.variables_walker.append(make_output_line(stack_line, attr='highlight'))
+            self.variables_walker.append(make_output_line(mem_line))
+            self.variables_walker.append(make_output_line(stack_line))
             self.variables_walker.append(make_output_line("─" * 40))
 
         # Get all variables from runtime

@@ -244,10 +244,10 @@ KEYBINDINGS_BY_CATEGORY = {
     ],
 }
 
-# Quick reference for status bar
-STATUS_BAR_SHORTCUTS = f"MBASIC - ? help, {MENU_DISPLAY} menu, {VARIABLES_DISPLAY} vars, {STACK_DISPLAY} stack, {QUIT_DISPLAY} quit"
-EDITOR_STATUS = f"Editor - ? help, {MENU_DISPLAY} menu"
-OUTPUT_STATUS = f"Output - Up/Down scroll, {TAB_DISPLAY} editor"
+# Quick reference for status bar - use compact ^ notation instead of Ctrl+
+STATUS_BAR_SHORTCUTS = "MBASIC - ? help  ^U menu  ^W vars  ^K stack  ^Q quit"
+EDITOR_STATUS = "Editor - ? help  ^U menu"
+OUTPUT_STATUS = "Output - Up/Down scroll  Tab editor"
 
 # =============================================================================
 # Character Code Reference (for testing and documentation)
