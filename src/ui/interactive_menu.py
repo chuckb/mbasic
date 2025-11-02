@@ -132,11 +132,11 @@ class InteractiveMenuBar(urwid.WidgetWrap):
             urwid.AttrMap(box, 'body'),
             self.parent_ui.loop.widget,
             align='left',
-            width=('relative', 30),
+            width=22,  # Fixed width - enough for menu items
             valign='top',
             height='pack',
             left=x_offset,
-            top=2  # Below menu bar and toolbar
+            top=1  # Below menu bar (no toolbar anymore)
         )
 
         return overlay

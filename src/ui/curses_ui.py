@@ -2371,11 +2371,11 @@ class CursesBackend(UIBackend):
                     self.menu_bar._show_dropdown().top_w,  # Get the dropdown widget
                     main_widget,  # Use original main widget, not current overlay
                     align='left',
-                    width=('relative', 30),
+                    width=22,  # Fixed width - enough for menu items
                     valign='top',
                     height='pack',
                     left=sum(len(self.menu_bar.menu_names[i]) + 3 for i in range(self.menu_bar.current_menu_index)) + 2,
-                    top=2
+                    top=1
                 )
                 self.loop.widget = new_overlay
             # Otherwise continue with menu navigation
