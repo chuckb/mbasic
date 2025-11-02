@@ -1050,8 +1050,14 @@ class NiceGUIBackend(UIBackend):
         from src.runtime import Runtime
         from src.resource_limits import create_local_limits
         from src.file_io import SandboxedFileIO
+        from src.filesystem import SandboxedFileSystemProvider
 
         self.runtime = Runtime({}, {})
+
+        # Create sandboxed filesystem for this session
+        # Use session ID as user_id for isolation
+        session_id = str(id(self))  # Unique ID for this backend instance
+        self.sandboxed_fs = SandboxedFileSystemProvider(user_id=session_id)
 
         # Create one interpreter for the session - don't create multiple!
         # Create IO handler for immediate mode
@@ -1059,7 +1065,8 @@ class NiceGUIBackend(UIBackend):
         sandboxed_file_io = SandboxedFileIO(self)
         self.interpreter = Interpreter(self.runtime, immediate_io,
                                       limits=create_local_limits(),
-                                      file_io=sandboxed_file_io)
+                                      file_io=sandboxed_file_io,
+                                      filesystem_provider=self.sandboxed_fs)
 
         self.running = False
         self.paused = False
@@ -1824,6 +1831,7 @@ class NiceGUIBackend(UIBackend):
                     self.current_line_label.visible = False
                 if self.exec_timer:
                     self.exec_timer.cancel()
+                    self.exec_timer = None
             elif state.status == 'waiting_for_input':
                 # Pause execution until input is provided
                 self._set_status("Waiting for input...")
@@ -1838,6 +1846,7 @@ class NiceGUIBackend(UIBackend):
                     self.current_line_label.visible = False
                 if self.exec_timer:
                     self.exec_timer.cancel()
+                    self.exec_timer = None
             elif state.status == 'paused' or state.status == 'at_breakpoint':
                 self._set_status(f"Paused at line {state.current_line}")
                 self.running = True  # Keep running=True so Continue works
@@ -1852,6 +1861,7 @@ class NiceGUIBackend(UIBackend):
                 self.editor.set_current_statement(state.current_line, char_start, char_end)
                 if self.exec_timer:
                     self.exec_timer.cancel()
+                    self.exec_timer = None
 
         except Exception as e:
             log_web_error("_execute_tick", e)

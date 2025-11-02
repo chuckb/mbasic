@@ -164,18 +164,23 @@ class SandboxedFileIO(FileIO):
         self.backend = backend
 
     def list_files(self, filespec: str = "") -> List[Tuple[str, int, bool]]:
-        """List files in browser localStorage.
+        """List files in sandboxed filesystem.
 
-        STUB: Returns empty list because ui.run_javascript() requires async/await.
-        TODO: Needs refactoring to work with async context.
+        Uses the backend's sandboxed filesystem provider.
         """
-        # TODO: This needs to be refactored to use async/await
-        # ui.run_javascript() returns AwaitableResponse which must be awaited
-        # Can't await from synchronous interpreter code
-        # Need to either:
-        # 1. Make interpreter async (big refactor)
-        # 2. Use a different approach (sync JavaScript bridge)
-        # 3. Pre-fetch files in backend and cache them
+        # Use the sandboxed filesystem from the backend
+        if hasattr(self.backend, 'sandboxed_fs'):
+            pattern = filespec.strip().strip('"').strip("'") if filespec else None
+            files = self.backend.sandboxed_fs.list_files(pattern)
+            # Convert to expected format: (filename, size, is_dir)
+            result = []
+            for filename in files:
+                try:
+                    size = self.backend.sandboxed_fs.get_size(filename)
+                    result.append((filename, size, False))
+                except:
+                    result.append((filename, None, False))
+            return result
         return []
 
     def load_file(self, filename: str) -> str:

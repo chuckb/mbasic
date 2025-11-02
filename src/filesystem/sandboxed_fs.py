@@ -33,6 +33,12 @@ class InMemoryFileHandle(FileHandle):
         """Write to file."""
         return self.file_obj.write(data)
 
+    def flush(self):
+        """Flush write buffers."""
+        # StringIO/BytesIO don't need explicit flushing, but provide for compatibility
+        if hasattr(self.file_obj, 'flush'):
+            self.file_obj.flush()
+
     def close(self):
         """Close the file and save to virtual filesystem."""
         if not self.closed:
