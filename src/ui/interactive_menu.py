@@ -107,15 +107,14 @@ class InteractiveMenuBar(urwid.WidgetWrap):
         items = self.menus[menu_name]
 
         # Build menu text
-        menu_lines = [f" {menu_name} "]
-        menu_lines.append(" " + "─" * (len(menu_name) + 2))
+        menu_lines = []
 
         for i, (label, callback) in enumerate(items):
             if label == '---':
-                menu_lines.append(" " + "─" * 20)
+                menu_lines.append("─" * 18)
             else:
                 prefix = '>' if i == self.current_item_index else ' '
-                menu_lines.append(f" {prefix} {label}")
+                menu_lines.append(f"{prefix} {label}")
 
         menu_text = '\n'.join(menu_lines)
 
@@ -132,11 +131,13 @@ class InteractiveMenuBar(urwid.WidgetWrap):
             urwid.AttrMap(box, 'body'),
             self.parent_ui.loop.widget,
             align='left',
-            width=22,  # Fixed width - enough for menu items
+            width=20,  # Narrow fixed width
             valign='top',
             height='pack',
             left=x_offset,
-            top=1  # Below menu bar (no toolbar anymore)
+            top=1,  # Below menu bar
+            bottom=None,
+            right=None
         )
 
         return overlay
