@@ -1,3 +1,19 @@
+---
+description: Comprehensive analysis of string memory management in CP/M era Microsoft BASIC-80 (MBASIC), including allocation, garbage collection algorithm, and performance characteristics
+keywords:
+- string
+- memory
+- garbage collection
+- allocation
+- heap
+- MBASIC
+- CP/M
+- Intel 8080
+- performance
+title: 'String Allocation and Garbage Collection'
+type: guide
+---
+
 # CP/M Era MBASIC String Allocation and Garbage Collection
 
 ## Overview
