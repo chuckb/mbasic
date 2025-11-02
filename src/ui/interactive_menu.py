@@ -227,8 +227,11 @@ class InteractiveMenuBar(urwid.WidgetWrap):
             items = self.menus[menu_name]
             label, callback_name = items[self.current_item_index]
 
+            # Deactivate menu first (before calling callback)
+            self.deactivate()
+
             if callback_name:
-                # Execute callback
+                # Execute callback after menu is closed
                 if callback_name == 'quit':
                     raise urwid.ExitMainLoop()
                 else:
@@ -236,7 +239,6 @@ class InteractiveMenuBar(urwid.WidgetWrap):
                     if callback:
                         callback()
 
-            self.deactivate()
             return 'close'
 
         return None

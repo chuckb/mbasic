@@ -2402,42 +2402,60 @@ class CursesBackend(UIBackend):
         self.loop.unhandled_input = menu_input
 
     def _show_settings(self):
-        """Show settings editor."""
+        """Toggle settings editor."""
         from .curses_settings_widget import SettingsWidget
+
+        # Check if settings is already open
+        if hasattr(self, '_settings_overlay') and self._settings_overlay:
+            # Close settings
+            self.loop.widget = self._settings_main_widget
+            self.loop.unhandled_input = self._handle_input
+            self._settings_overlay = None
+            self._settings_main_widget = None
+            return
 
         # Create settings widget
         settings_widget = SettingsWidget()
 
+        # Store original widget BEFORE replacing it
+        main_widget = self.loop.widget
+        self._settings_main_widget = main_widget
+
         # Create overlay
         overlay = urwid.Overlay(
             urwid.AttrMap(settings_widget, 'body'),
-            self.loop.widget,
+            main_widget,
             align='center',
             width=('relative', 80),
             valign='middle',
             height=('relative', 80)
         )
+        self._settings_overlay = overlay
 
-        # Store original widget BEFORE replacing it
-        main_widget = self.loop.widget
-
-        # Set up keypress handler to close settings when ESC pressed
+        # Set up keypress handler to close settings when ESC pressed or buttons clicked
         def settings_input(key):
+            # Handle ^P to toggle close
+            if key == SETTINGS_KEY:
+                self.loop.widget = main_widget
+                self.loop.unhandled_input = self._handle_input
+                self._settings_overlay = None
+                self._settings_main_widget = None
+                return
+
             # Let the settings widget handle the key first
             result = settings_widget.keypress((80, 24), key)
 
-            # Check if widget wants to close
-            if hasattr(settings_widget, 'signal'):
+            # Check if widget wants to close (signal set by ESC or buttons)
+            if hasattr(settings_widget, 'signal') and settings_widget.signal:
                 if settings_widget.signal == 'close':
                     # Close settings
                     self.loop.widget = main_widget
                     self.loop.unhandled_input = self._handle_input
+                    self._settings_overlay = None
+                    self._settings_main_widget = None
                 elif settings_widget.signal == 'applied':
-                    # Settings applied - could show message
-                    # For now just clear the signal
+                    # Settings applied - clear the signal
                     settings_widget.signal = None
-
-            # Don't return anything - we handled it
 
         # Show overlay and set handler
         self.loop.widget = overlay

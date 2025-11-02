@@ -138,25 +138,17 @@ With prefer_upper: Would use 'TARGETANGLE' if used later
         description="How to handle keyword case in source code",
         help_text="""Controls how keywords are displayed.
 
-- force_lower: Convert all keywords to lowercase (default, MBASIC 5.21 style)
-- force_upper: Convert all keywords to UPPERCASE (classic BASIC style)
-- force_capitalize: Capitalize keywords (Print, For, If - modern readable style)
+- force_lower: lowercase (default, MBASIC 5.21 style)
+- force_upper: UPPERCASE (classic BASIC style)
+- force_capitalize: Capitalize (Print, For, If - modern style)
 
-Example with force_upper:
+Example with UPPERCASE:
   10 print "hello"  -> 10 PRINT "hello"
   20 Print "world"  -> 20 PRINT "world"
 
-Example with force_capitalize:
+Example with Capitalize:
   10 PRINT "hello"  -> 10 Print "hello"
   20 print "world"  -> 20 Print "world"
-
-Example with first_wins:
-  10 Print "hello"  -> 10 Print "hello"
-  20 PRINT "world"  -> 20 Print "world"  (uses first case)
-
-Example with error:
-  10 Print "hello"
-  20 PRINT "world"  -> ERROR: Keyword case conflict!
 """,
         scope=SettingScope.PROJECT,
     ),
@@ -182,25 +174,11 @@ Example with error:
         scope=SettingScope.PROJECT,
     ),
 
-    "editor.tab_size": SettingDefinition(
-        key="editor.tab_size",
-        type=SettingType.INTEGER,
-        default=4,
-        min_value=1,
-        max_value=16,
-        description="Tab width in spaces",
-        help_text="Number of spaces to use for tab indentation",
-        scope=SettingScope.GLOBAL,
-    ),
+    # Note: Tab key is used for window switching in curses UI, not indentation
+    # Removed editor.tab_size setting as it's not relevant for BASIC
 
-    "editor.show_line_numbers": SettingDefinition(
-        key="editor.show_line_numbers",
-        type=SettingType.BOOLEAN,
-        default=True,
-        description="Show line numbers in editor",
-        help_text="Display line numbers in the editor gutter",
-        scope=SettingScope.GLOBAL,
-    ),
+    # Note: Line numbers are always shown - they're fundamental to BASIC!
+    # Removed editor.show_line_numbers setting as it makes no sense for BASIC
 
     # Interpreter settings
     "interpreter.strict_mode": SettingDefinition(
