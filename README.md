@@ -444,7 +444,8 @@ These limitations are inherent to running vintage BASIC in a modern environment 
 **Original Language:** MBASIC 5.21 was created by Microsoft Corporation (1970s-1980s). See [MBASIC History](docs/MBASIC_HISTORY.md) for the historical context and Microsoft's role in creating BASIC interpreters.
 
 **This Implementation:**
-- Written by Andrew Wohl (2025)
+- Every line of code written by CLAUDE.ai
+  Supervised by pet human  Aaron Wohl (2025)
 - Independent, open-source project
 - Not created, endorsed, or supported by Microsoft
 - Based on published MBASIC 5.21 specifications and documentation
