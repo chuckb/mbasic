@@ -138,12 +138,13 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # Errors: {line_num: error_message}
         self.errors = {}
 
-        # Auto-numbering settings (defaults)
-        self.auto_number_start = 10
-        self.auto_number_increment = 10
-        self.auto_number_enabled = True
+        # Auto-numbering settings (load from settings system)
+        from src.settings import get
+        self.auto_number_start = get('editor.auto_number_start')
+        self.auto_number_increment = get('editor.auto_number_step')
+        self.auto_number_enabled = get('editor.auto_number')
 
-        # Load config file if it exists
+        # Load config file if it exists (for backwards compatibility)
         self._load_config()
 
         self.next_auto_line_num = self.auto_number_start
@@ -1610,6 +1611,7 @@ class CursesBackend(UIBackend):
 
         # Create main widget with keybindings
         main_widget = urwid.AttrMap(self.pile, 'body')
+        self.main_widget = main_widget  # Store for overlays
 
         # Set up the main loop with cursor visible
         self.loop = urwid.MainLoop(
@@ -2387,9 +2389,14 @@ class CursesBackend(UIBackend):
             result = self.menu_bar.handle_key(key)
             if result == 'close':
                 # Close menu and return to main UI
-                # Wrap in AttrMap to force black background when redrawing
-                self.loop.widget = urwid.AttrMap(main_widget, 'body')
-                self.loop.unhandled_input = self._handle_input
+                # BUT: if settings overlay was just opened, don't overwrite it
+                if hasattr(self, '_settings_overlay') and self._settings_overlay:
+                    # Settings was opened from menu, it's already handling the widget
+                    pass
+                else:
+                    # Wrap in AttrMap to force black background when redrawing
+                    self.loop.widget = urwid.AttrMap(main_widget, 'body')
+                    self.loop.unhandled_input = self._handle_input
             elif result == 'refresh':
                 # Refresh dropdown - rebuild overlay from scratch using main widget
                 # Don't call draw_screen() - it uses default colors (39;49) which may be white
@@ -2400,6 +2407,17 @@ class CursesBackend(UIBackend):
         # Show overlay and set handler
         self.loop.widget = overlay
         self.loop.unhandled_input = menu_input
+
+    def _reload_editor_settings(self):
+        """Reload editor settings from settings system."""
+        from src.settings import get
+        self.editor.auto_number_start = get('editor.auto_number_start')
+        self.editor.auto_number_increment = get('editor.auto_number_step')
+        self.editor.auto_number_enabled = get('editor.auto_number')
+
+        # If no lines have been entered yet, reset the next line number
+        if not self.editor.lines:
+            self.editor.next_auto_line_num = self.editor.auto_number_start
 
     def _show_settings(self):
         """Toggle settings editor."""
@@ -2417,8 +2435,8 @@ class CursesBackend(UIBackend):
         # Create settings widget
         settings_widget = SettingsWidget()
 
-        # Store original widget BEFORE replacing it
-        main_widget = self.loop.widget
+        # Use the stored main widget (not current loop.widget which might be a menu)
+        main_widget = self.main_widget
         self._settings_main_widget = main_widget
 
         # Create overlay
@@ -2432,7 +2450,30 @@ class CursesBackend(UIBackend):
         )
         self._settings_overlay = overlay
 
-        # Set up keypress handler to close settings when ESC pressed or buttons clicked
+        # Set up alarm to check for close signals periodically
+        def check_signals(loop, user_data):
+            # Check if widget wants to close (signal set by ESC or keyboard shortcuts)
+            if hasattr(settings_widget, 'signal') and settings_widget.signal:
+                if settings_widget.signal == 'close':
+                    # Reload settings in case they changed
+                    self._reload_editor_settings()
+                    # Close settings
+                    self.loop.widget = main_widget
+                    self.loop.unhandled_input = self._handle_input
+                    self._settings_overlay = None
+                    self._settings_main_widget = None
+                    # Don't reschedule alarm
+                    return
+                elif settings_widget.signal == 'applied':
+                    # Settings applied - reload them
+                    self._reload_editor_settings()
+                    # Clear the signal
+                    settings_widget.signal = None
+
+            # Reschedule to check again
+            self.loop.set_alarm_in(0.1, check_signals)
+
+        # Set up unhandled input handler for ^P
         def settings_input(key):
             # Handle ^P to toggle close
             if key == SETTINGS_KEY:
@@ -2440,26 +2481,14 @@ class CursesBackend(UIBackend):
                 self.loop.unhandled_input = self._handle_input
                 self._settings_overlay = None
                 self._settings_main_widget = None
-                return
+                return True
 
-            # Let the settings widget handle the key first
-            result = settings_widget.keypress((80, 24), key)
-
-            # Check if widget wants to close (signal set by ESC or buttons)
-            if hasattr(settings_widget, 'signal') and settings_widget.signal:
-                if settings_widget.signal == 'close':
-                    # Close settings
-                    self.loop.widget = main_widget
-                    self.loop.unhandled_input = self._handle_input
-                    self._settings_overlay = None
-                    self._settings_main_widget = None
-                elif settings_widget.signal == 'applied':
-                    # Settings applied - clear the signal
-                    settings_widget.signal = None
-
-        # Show overlay and set handler
+        # Show overlay and set handlers
         self.loop.widget = overlay
         self.loop.unhandled_input = settings_input
+
+        # Start checking for signals
+        self.loop.set_alarm_in(0.1, check_signals)
 
     def _toggle_variables_window(self):
         """Toggle visibility of the variables watch window."""

@@ -42,10 +42,8 @@ class SettingsWidget(urwid.WidgetWrap):
         # Group settings by category
         categories = {
             'editor': [],
-            'interpreter': [],
             'keywords': [],
             'variables': [],
-            'ui': []
         }
 
         for key, defn in SETTING_DEFINITIONS.items():
@@ -53,20 +51,19 @@ class SettingsWidget(urwid.WidgetWrap):
             if category in categories:
                 categories[category].append((key, defn))
 
-        # Create widgets for all settings
+        # Create widgets for all settings (in order defined above)
         content = []
 
-        for category, settings in sorted(categories.items()):
+        for category in categories.keys():
+            settings = categories[category]
             if not settings:
                 continue
 
             # Category header
-            content.append(urwid.Divider())
             content.append(urwid.AttrMap(
                 urwid.Text(f'  {category.upper()}', align='left'),
                 'reversed'
             ))
-            content.append(urwid.Divider())
 
             # Settings in category
             for key, defn in sorted(settings):
@@ -74,23 +71,21 @@ class SettingsWidget(urwid.WidgetWrap):
                 if widget_group:
                     content.extend(widget_group)
 
-        # Add buttons at bottom
-        content.append(urwid.Divider())
-        content.append(urwid.Divider())
-
-        buttons = urwid.Columns([
-            ('weight', 1, urwid.Button('OK', on_press=lambda _btn: self._on_ok())),
-            ('weight', 1, urwid.Button('Cancel', on_press=lambda _btn: self._on_cancel())),
-            ('weight', 1, urwid.Button('Apply', on_press=lambda _btn: self._on_apply())),
-            ('weight', 1, urwid.Button('Reset', on_press=lambda _btn: self._on_reset())),
-        ], dividechars=2)
-        content.append(urwid.AttrMap(buttons, 'body'))
-
-        # Create scrollable list
+        # Create scrollable list (without buttons)
         listbox = urwid.ListBox(urwid.SimpleFocusListWalker(content))
 
+        # Create footer with keyboard shortcuts hint
+        footer_text = urwid.Text("Enter=OK  ESC/^P=Cancel  ^A=Apply  ^R=Reset", align='center')
+        footer = urwid.AttrMap(footer_text, 'header')
+
+        # Use Frame to keep footer pinned at bottom
+        frame = urwid.Frame(
+            body=listbox,
+            footer=footer
+        )
+
         # Wrap in line box with title
-        box = urwid.LineBox(listbox, title="Settings")
+        box = urwid.LineBox(frame, title="Settings")
 
         return box
 
@@ -128,7 +123,11 @@ class SettingsWidget(urwid.WidgetWrap):
             # Create radio button group for enum
             group = []
             for choice in defn.choices:
-                rb = urwid.RadioButton(group, choice, state=(choice == current_value))
+                # Create display label (strip force_ prefix for cleaner display)
+                display_label = choice.replace('force_', '')
+                rb = urwid.RadioButton(group, display_label, state=(choice == current_value))
+                # Store the actual value as user_data for later retrieval
+                rb._actual_value = choice
                 widgets.append(urwid.Padding(urwid.AttrMap(rb, 'body'), left=6))
             # Store the group so we can get the selected value
             self.widgets[key] = group
@@ -142,8 +141,6 @@ class SettingsWidget(urwid.WidgetWrap):
         if defn.help_text:
             help_text = urwid.Text(('dim', f'    {defn.help_text}'))
             widgets.append(help_text)
-
-        widgets.append(urwid.Divider())
 
         return widgets
 
@@ -169,10 +166,11 @@ class SettingsWidget(urwid.WidgetWrap):
                     values[key] = self.original_values[key]
 
             elif defn.type == SettingType.ENUM:
-                # Find selected radio button
+                # Find selected radio button and get actual value
                 for rb in widget:
                     if rb.get_state():
-                        values[key] = rb.get_label()
+                        # Use stored actual value (with force_ prefix) not display label
+                        values[key] = rb._actual_value
                         break
 
             elif defn.type == SettingType.STRING:
@@ -252,11 +250,24 @@ class SettingsWidget(urwid.WidgetWrap):
         Returns:
             None if key was handled, otherwise the key
         """
+        # Handle global shortcuts first (before widgets consume them)
         if key == 'esc':
             self._on_cancel()
             return None
 
-        # Let parent handle other keys
+        elif key == 'enter':
+            self._on_ok()
+            return None
+
+        elif key == 'ctrl a':
+            self._on_apply()
+            return None
+
+        elif key == 'ctrl r':
+            self._on_reset()
+            return None
+
+        # Let widgets handle other keys
         return super().keypress(size, key)
 
     def _emit(self, signal: str):

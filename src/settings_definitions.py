@@ -99,24 +99,9 @@ SETTING_DEFINITIONS: Dict[str, SettingDefinition] = {
         key="variables.case_conflict",
         type=SettingType.ENUM,
         default="first_wins",
-        choices=["first_wins", "error", "prefer_upper", "prefer_lower", "prefer_mixed"],
+        choices=["first_wins", "error", "upper", "lower"],
         description="How to handle variable name case conflicts",
-        help_text="""Controls what happens when the same variable appears with different cases.
-
-- first_wins: First occurrence sets case (default, silent)
-- error: Flag conflicts as errors requiring user intervention
-- prefer_upper: Choose version with most uppercase letters
-- prefer_lower: Choose version with most lowercase letters
-- prefer_mixed: Prefer mixed case (camelCase/PascalCase)
-
-Example:
-  10 TargetAngle = 45
-  20 targetangle = 50  <- Conflict!
-
-With first_wins: Uses 'TargetAngle' throughout
-With error: Shows error, user must fix or change setting
-With prefer_upper: Would use 'TARGETANGLE' if used later
-""",
+        help_text="When same var has different cases: first_wins (order), error (flag), upper/lower (style)",
         scope=SettingScope.GLOBAL,
     ),
 
@@ -136,20 +121,7 @@ With prefer_upper: Would use 'TARGETANGLE' if used later
         default="force_lower",
         choices=["force_lower", "force_upper", "force_capitalize"],
         description="How to handle keyword case in source code",
-        help_text="""Controls how keywords are displayed.
-
-- force_lower: lowercase (default, MBASIC 5.21 style)
-- force_upper: UPPERCASE (classic BASIC style)
-- force_capitalize: Capitalize (Print, For, If - modern style)
-
-Example with UPPERCASE:
-  10 print "hello"  -> 10 PRINT "hello"
-  20 Print "world"  -> 20 PRINT "world"
-
-Example with Capitalize:
-  10 PRINT "hello"  -> 10 Print "hello"
-  20 print "world"  -> 20 Print "world"
-""",
+        help_text="lowercase (MBASIC 5.21), UPPERCASE (classic), or Capitalize (modern)",
         scope=SettingScope.PROJECT,
     ),
 
@@ -160,6 +132,17 @@ Example with Capitalize:
         default=True,
         description="Automatically number typed lines",
         help_text="When enabled, lines typed without numbers get auto-numbered",
+        scope=SettingScope.PROJECT,
+    ),
+
+    "editor.auto_number_start": SettingDefinition(
+        key="editor.auto_number_start",
+        type=SettingType.INTEGER,
+        default=10,
+        min_value=1,
+        max_value=65529,
+        description="Starting line number for auto-numbering",
+        help_text="First line number when auto-numbering (10, 100, 1000, etc.)",
         scope=SettingScope.PROJECT,
     ),
 
@@ -180,57 +163,9 @@ Example with Capitalize:
     # Note: Line numbers are always shown - they're fundamental to BASIC!
     # Removed editor.show_line_numbers setting as it makes no sense for BASIC
 
-    # Interpreter settings
-    "interpreter.strict_mode": SettingDefinition(
-        key="interpreter.strict_mode",
-        type=SettingType.BOOLEAN,
-        default=False,
-        description="Enable strict error checking",
-        help_text="When enabled, additional errors are flagged (undefined variables, etc.)",
-        scope=SettingScope.GLOBAL,
-    ),
-
-    "interpreter.max_execution_time": SettingDefinition(
-        key="interpreter.max_execution_time",
-        type=SettingType.INTEGER,
-        default=30,
-        min_value=1,
-        max_value=3600,
-        description="Maximum program execution time in seconds",
-        help_text="Program will be stopped if it runs longer than this (0 = unlimited)",
-        scope=SettingScope.GLOBAL,
-    ),
-
-    "interpreter.debug_mode": SettingDefinition(
-        key="interpreter.debug_mode",
-        type=SettingType.BOOLEAN,
-        default=False,
-        description="Enable debug output",
-        help_text="Show detailed debug information during execution",
-        scope=SettingScope.GLOBAL,
-    ),
-
-    # UI settings
-    "ui.theme": SettingDefinition(
-        key="ui.theme",
-        type=SettingType.ENUM,
-        default="default",
-        choices=["default", "dark", "light", "classic"],
-        description="Color theme for UI",
-        help_text="Choose visual appearance (default, dark, light, classic)",
-        scope=SettingScope.GLOBAL,
-    ),
-
-    "ui.font_size": SettingDefinition(
-        key="ui.font_size",
-        type=SettingType.INTEGER,
-        default=12,
-        min_value=8,
-        max_value=32,
-        description="UI font size in points",
-        help_text="Font size for editor and UI elements",
-        scope=SettingScope.GLOBAL,
-    ),
+    # Note: interpreter.max_execution_time and interpreter.debug_mode are available
+    # but not shown in UI - edit settings file directly if needed
+    # Note: ui.theme not implemented yet
 }
 
 
