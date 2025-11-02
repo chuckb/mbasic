@@ -134,7 +134,7 @@ class InteractiveMenuBar(urwid.WidgetWrap):
             align='left',
             width=('relative', 30),
             valign='top',
-            height=('pack', None),
+            height='pack',
             left=x_offset,
             top=2  # Below menu bar and toolbar
         )
