@@ -24,7 +24,6 @@ Documentation for the MBASIC 5.21 interpreter implementation.
 ## Implementation Details
 
 - **[Architecture](architecture.md)** - Interpreter design, compiler backend, and optimizations
-- **[String Allocation and Garbage Collection](implementation/string-allocation-and-garbage-collection.md)** - How MBASIC manages string memory
 
 ## For Developers
 

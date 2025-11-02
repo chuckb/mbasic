@@ -98,6 +98,14 @@ This directory contains design documents for a **future BASIC compiler** with ad
 - Session notes on semantic analysis implementation
 - Design decisions and rationale
 
+### Runtime System Design
+
+**STRING_ALLOCATION_AND_GARBAGE_COLLECTION.md**
+- CP/M era MBASIC string memory management
+- Original 8080 garbage collection algorithm (O(n²))
+- Requirements for 8080-compatible compiler backend
+- Historical analysis of string heap and descriptor format
+
 ## Why These Aren't Implemented
 
 The current mbasic project is a **faithful interpreter** for MBASIC 5.21, providing:
