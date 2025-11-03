@@ -369,8 +369,8 @@ class TkBackend(UIBackend):
         edit_menu.add_separator()
         edit_menu.add_command(label="Insert Line", command=self._smart_insert_line, accelerator="Ctrl+I")
         edit_menu.add_separator()
-        edit_menu.add_command(label="Toggle Breakpoint", command=self._toggle_breakpoint, accelerator="Ctrl+B")
-        edit_menu.add_command(label="Clear All Breakpoints", command=self._clear_all_breakpoints)
+        edit_menu.add_command(label="Toggle Breakpoint", command=lambda: self.root.after(1, self._toggle_breakpoint), accelerator="Ctrl+B")
+        edit_menu.add_command(label="Clear All Breakpoints", command=lambda: self.root.after(1, self._clear_all_breakpoints))
         edit_menu.add_separator()
         edit_menu.add_command(label="Settings...", command=self._menu_settings)
 
