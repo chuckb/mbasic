@@ -524,10 +524,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # Update the edit widget
         self.edit_widget.set_edit_text(display_text)
 
-        # If empty program, position cursor at line number start (column 1, after status)
+        # If empty program, position cursor after line number and space (ready to type code)
         if not self.lines:
-            # Position at column 1 (start of line number, after status character)
-            self.edit_widget.set_edit_pos(1)
+            # Display text is " NN " (status + line number + space)
+            # Position cursor at end (after the trailing space, ready to type code)
+            self.edit_widget.set_edit_pos(len(display_text))
 
     def get_program_text(self):
         """Get the program as line-numbered text.
