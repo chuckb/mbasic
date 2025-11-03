@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Documentation Consistency Checker
+Documentation Consistency Checker (Limited Scope)
 
-This script uses the Claude API to analyze all documentation files in the docs/
-directory and identify inconsistencies between them.
+This script uses the Claude API to analyze documentation files in specific
+subdirectories (help, library, stylesheets, user) and identify inconsistencies.
 
 Usage:
-    python3 utils/check_docs_consistency.py
+    python3 utils/check_docs_consistency1.py
 
 Requires:
     - ANTHROPIC_API_KEY environment variable
@@ -39,24 +39,35 @@ class DocumentationAnalyzer:
         self.docs_dir = Path(__file__).parent.parent / "docs"
         self.cache_file = Path(__file__).parent / ".docs_analysis_cache.json"
 
+        # Only scan these subdirectories
+        self.scan_subdirs = ['help', 'library', 'stylesheets', 'user']
+
     def collect_documents(self) -> Dict[str, str]:
-        """Collect all markdown files from docs directory."""
+        """Collect markdown files from specified subdirectories only."""
         documents = {}
 
-        for md_file in self.docs_dir.rglob("*.md"):
-            # Skip very large files or binary files
-            if md_file.stat().st_size > 100000:  # Skip files > 100KB
-                print(f"Skipping large file: {md_file}")
+        # Only scan the specified subdirectories
+        for subdir in self.scan_subdirs:
+            subdir_path = self.docs_dir / subdir
+            if not subdir_path.exists():
+                print(f"Skipping non-existent directory: {subdir}")
                 continue
 
-            try:
-                rel_path = md_file.relative_to(self.docs_dir)
-                with open(md_file, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    documents[str(rel_path)] = content
-                    print(f"Collected: {rel_path}")
-            except Exception as e:
-                print(f"Error reading {md_file}: {e}")
+            print(f"Scanning directory: {subdir}")
+            for md_file in subdir_path.rglob("*.md"):
+                # Skip very large files or binary files
+                if md_file.stat().st_size > 100000:  # Skip files > 100KB
+                    print(f"Skipping large file: {md_file}")
+                    continue
+
+                try:
+                    rel_path = md_file.relative_to(self.docs_dir)
+                    with open(md_file, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        documents[str(rel_path)] = content
+                        print(f"Collected: {rel_path}")
+                except Exception as e:
+                    print(f"Error reading {md_file}: {e}")
 
         return documents
 
@@ -276,13 +287,14 @@ Return ONLY the JSON array."""
             print(f"Error in cross-analysis: {e}")
             return inconsistencies
 
-    def save_report(self, inconsistencies: List[Dict[str, Any]], filename: str = "docs_inconsistencies_report.md"):
+    def save_report(self, inconsistencies: List[Dict[str, Any]], filename: str = "docs_inconsistencies_report1.md"):
         """Save the analysis report to a markdown file."""
         report_path = Path(__file__).parent / filename
 
         with open(report_path, 'w') as f:
             f.write("# Documentation Inconsistencies Report\n\n")
-            f.write(f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+            f.write(f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"Scanned directories: {', '.join(self.scan_subdirs)}\n\n")
 
             if not inconsistencies:
                 f.write("✅ No inconsistencies found!\n")
@@ -336,8 +348,9 @@ Return ONLY the JSON array."""
 
 def main():
     """Main entry point."""
-    print("Documentation Consistency Checker")
-    print("==================================\n")
+    print("Documentation Consistency Checker (Limited Scope)")
+    print("==================================================\n")
+    print("Scanning only: help, library, stylesheets, user\n")
 
     # Check for API key
     if not os.getenv("ANTHROPIC_API_KEY"):
