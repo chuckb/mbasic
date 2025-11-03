@@ -306,6 +306,26 @@ STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu  ^W vars  ^K stack  Tab cycle 
 EDITOR_STATUS = "Editor - ^F help  ^U menu  Tab cycle"
 OUTPUT_STATUS = "Output - Up/Down scroll  Tab cycle  ^U menu"
 
+
+def dump_keymap():
+    """Print the keymap in a formatted table for documentation.
+
+    This is used by `mbasic --dump-keymap` to generate documentation.
+    """
+    print("# MBASIC Curses UI Keyboard Shortcuts\n")
+
+    for category, bindings in KEYBINDINGS_BY_CATEGORY.items():
+        print(f"## {category}\n")
+        print("| Key | Action |")
+        print("|-----|--------|")
+
+        for key, description in bindings:
+            # Escape pipe characters in descriptions
+            description = description.replace('|', '\\|')
+            print(f"| `{key}` | {description} |")
+
+        print()  # Blank line between categories
+
 # =============================================================================
 # Character Code Reference (for testing and documentation)
 # =============================================================================

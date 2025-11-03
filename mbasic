@@ -252,6 +252,12 @@ Examples:
     )
 
     parser.add_argument(
+        '--dump-keymap',
+        action='store_true',
+        help='Print curses UI keyboard shortcuts in markdown format and exit'
+    )
+
+    parser.add_argument(
         '--port',
         type=int,
         default=8080,
@@ -263,6 +269,12 @@ Examples:
     # Handle --list-backends first (exit after showing)
     if args.list_backends:
         list_backends()
+        sys.exit(0)
+
+    # Handle --dump-keymap (exit after showing)
+    if args.dump_keymap:
+        from src.ui.keybindings import dump_keymap
+        dump_keymap()
         sys.exit(0)
 
     # Create I/O handler based on backend choice

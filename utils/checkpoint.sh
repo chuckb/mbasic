@@ -60,6 +60,15 @@ fi
 DOCS_CHANGED=$(git diff --name-only docs/ mkdocs.yml 2>/dev/null || echo "")
 
 if [ -n "$DOCS_CHANGED" ]; then
+    echo "Documentation changed - regenerating keyboard shortcuts..."
+    python3 mbasic --dump-keymap > docs/user/keyboard-shortcuts.md
+    if [ $? -eq 0 ]; then
+        echo "✓ Keyboard shortcuts regenerated"
+    else
+        echo "❌ ERROR: Keyboard shortcut generation failed"
+        exit 1
+    fi
+
     echo "Documentation changed - validating mkdocs build..."
     if command -v mkdocs &> /dev/null; then
         # Run mkdocs build in strict mode and capture both output and exit code
