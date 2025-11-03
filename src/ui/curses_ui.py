@@ -2234,9 +2234,12 @@ class CursesBackend(UIBackend):
             result = self.menu_bar.handle_key(key)
             if result == 'close':
                 # Close menu and return to main UI
-                # BUT: if settings overlay was just opened, don't overwrite it
+                # BUT: if settings/keymap overlay was just opened, don't overwrite it
                 if hasattr(self, '_settings_overlay') and self._settings_overlay:
                     # Settings was opened from menu, it's already handling the widget
+                    pass
+                elif hasattr(self, '_keymap_overlay') and self._keymap_overlay:
+                    # Keymap was opened from menu, it's already handling the widget
                     pass
                 else:
                     # Wrap in AttrMap to force black background when redrawing
