@@ -63,7 +63,7 @@ Use this form when:
 - After RESUME executes, the error handler is still active for future errors
 - Use ON ERROR GOTO 0 to disable error trapping
 
-## Examples
+## Example
 
 ### Example 1: RESUME - Retry After Fixing Error
 

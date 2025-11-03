@@ -28,7 +28,12 @@ To read data items from a sequential disk    file and assign them to program var
 ## Example
 
 ```basic
-See Appendix B.
+10 OPEN "I", 1, "DATA.TXT"
+20 IF EOF(1) THEN 60
+30 INPUT #1, NAME$, AGE, SALARY
+40 PRINT NAME$; " is "; AGE; " years old, earning $"; SALARY
+50 GOTO 20
+60 CLOSE #1
 ```
 
 ## See Also

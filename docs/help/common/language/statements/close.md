@@ -2,7 +2,7 @@
 category: file-io
 description: To conclude I/O to a disk file
 keywords: ['close', 'command', 'file', 'for', 'if', 'number', 'open', 'put', 'statement', 'then']
-syntax: CLOSE[[#]<file number>[,[#]<file number ••• >]]
+syntax: CLOSE[[#]<file number>[,[#]<file number>...]]
 title: CLOSE
 type: statement
 ---
@@ -12,7 +12,7 @@ type: statement
 ## Syntax
 
 ```basic
-CLOSE[[#]<file number>[,[#]<file number ••• >]]
+CLOSE[[#]<file number>[,[#]<file number>...]]
 ```
 
 ## Purpose

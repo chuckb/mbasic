@@ -1,6 +1,6 @@
 ---
 category: error-handling
-description: 1) To simulate the occurrence of a BASIC-80 error1   or 2) to allow error codes to be defined by the user
+description: To simulate error conditions or define custom error codes
 keywords: ['command', 'error', 'for', 'goto', 'if', 'input', 'line', 'print', 'put', 'read']
 syntax: ERROR <integer expression>
 title: ERROR

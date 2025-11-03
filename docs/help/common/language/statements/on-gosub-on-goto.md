@@ -1,13 +1,13 @@
 ---
 category: control-flow
-description: To branch to one of several specified line numbers, depending on the value returned when an expression is evaluated
+description: To branch to multiple line numbers based on expression value
 keywords: ['branch', 'command', 'error', 'for', 'function', 'gosub', 'goto', 'if', 'line', 'next']
 syntax: ON <expression> GOTO <list of line numbers>
-title: ON ••• GOSUB AND ON ••• GOTO
+title: ON...GOSUB AND ON...GOTO
 type: statement
 ---
 
-# ON ••• GOSUB AND ON ••• GOTO
+# ON...GOSUB AND ON...GOTO
 
 ## Syntax
 

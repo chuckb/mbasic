@@ -1,8 +1,8 @@
 ---
 category: program-control
-description: To set all numeric variables to zero and all string variables to null; and, optionally, 'to set the end of memory and the amount of stack space
+description: To set all numeric variables to zero and all string variables to null; and, optionally, to set the end of memory and the amount of stack space
 keywords: ['clear', 'command', 'error', 'for', 'if', 'statement', 'string', 'variable']
-syntax: CLEAR [,[<expressionl>] [,<expression2>]]
+syntax: CLEAR [,[<expression1>] [,<expression2>]]
 title: CLEAR
 type: statement
 ---
@@ -12,7 +12,7 @@ type: statement
 ## Syntax
 
 ```basic
-CLEAR [,[<expressionl>] [,<expression2>]]
+CLEAR [,[<expression1>] [,<expression2>]]
 ```
 
 **Versions:** 8K, -Extended, Disk
@@ -23,7 +23,18 @@ To set all numeric variables to zero and all string variables to null; and, opti
 
 ## Remarks
 
-<expr'essionl> is a memory location which, if specified, sets the highest location available for use by BASIC-SO. <expression2> sets aside stack space for BASIC. The default is 256 bytes or one-eighth of the available memory, whichever is smaller. NOTE:           In previous versions of BASIC-SO, <expressionl> set    the    amount  of   string    space,' and <expression2> set the end of memory.   BASIC-80, release 5.0 and later, allocates string space dynamically. An ROut of string space error R occurs only if there is no free memory left for BASIC to use.
+CLEAR resets all variables to their initial values (0 for numbers, empty for strings) and optionally configures memory usage.
+
+### Parameters
+
+- **expression1**: If specified, sets the highest memory location available for BASIC to use
+- **expression2**: Sets the stack space reserved for BASIC (default: 256 bytes or 1/8 of available memory, whichever is smaller)
+
+### Memory Management
+
+**Note about string space:** In BASIC-80 release 5.0 and later (including MBASIC 5.21), string space is allocated dynamically. You'll only get an "Out of string space" error if there's no free memory left.
+
+**Historical note:** In earlier versions of BASIC-80, expression1 set the amount of string space and expression2 set the end of memory. This behavior changed in release 5.0.
 
 ## Example
 

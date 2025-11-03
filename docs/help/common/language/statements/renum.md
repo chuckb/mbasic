@@ -68,7 +68,7 @@ This is useful when:
   - xxxxx = the bad reference (not changed)
   - yyyyy = the line containing it (may be renumbered)
 
-## Examples
+## Example
 
 ### Example 1: Renumber Entire Program
 

@@ -28,9 +28,13 @@ To save a program file on disk.
 ## Example
 
 ```basic
-SAVE nCOM2 n ,A
-              SAVEnpRoo n , P
-              See also Appendix B.
+SAVE "MYPROGRAM.BAS"
+SAVE "MYPROGRAM.BAS", A  ' Save in ASCII format
+SAVE "SECRET.BAS", P     ' Save as protected file
+
+' To save current program with a user-specified name:
+10 INPUT "Filename"; F$
+20 SAVE F$
 ```
 
 ## See Also

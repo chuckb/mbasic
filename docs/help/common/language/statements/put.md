@@ -2,7 +2,7 @@
 category: file-io
 description: To write a record from a random buffer to a random file
 keywords: ['command', 'error', 'field', 'file', 'for', 'if', 'next', 'number', 'open', 'print']
-syntax: PUT (#]<file number>(,<record number>]
+syntax: PUT [#]<file number>[,<record number>]
 title: PUT
 type: statement
 ---
@@ -12,7 +12,7 @@ type: statement
 ## Syntax
 
 ```basic
-PUT (#]<file number>(,<record number>]
+PUT [#]<file number>[,<record number>]
 ```
 
 **Versions:** Disk

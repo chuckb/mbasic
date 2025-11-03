@@ -28,8 +28,17 @@ If a KILL statement is given for a file that is currently OPEN, a RFile already 
 ## Example
 
 ```basic
-200 KILL RDATA1R
-              See also Appendix B.
+10 KILL "TEMP.DAT"        ' Delete temporary file
+20 KILL "OLD_DATA.TXT"    ' Delete old data file
+
+' Delete file with error handling:
+100 ON ERROR GOTO 200
+110 INPUT "File to delete"; F$
+120 KILL F$
+130 PRINT "File deleted"
+140 END
+200 PRINT "Error: File not found or in use"
+210 RESUME 140
 ```
 
 ## See Also

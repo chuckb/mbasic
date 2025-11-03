@@ -87,7 +87,7 @@ If a type is specified in the function name:
 - If a function is called before it has been defined, an "Undefined user function" error occurs
 - DEF FN is illegal in direct mode
 
-## Examples
+## Example
 
 ### Example 1: Single-Character Name (Traditional Style)
 

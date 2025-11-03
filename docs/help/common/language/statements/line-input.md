@@ -1,8 +1,8 @@
 ---
 category: file-io
-description: To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters
+description: To input an entire line to a string variable without delimiters
 keywords: ['command', 'for', 'if', 'input', 'line', 'print', 'put', 'return', 'statement', 'string']
-syntax: LINE INPUT[i] [<"prompt string">i]<string variable>
+syntax: LINE INPUT [;"prompt string";]<string variable>
 title: LINE INPUT
 type: statement
 ---
@@ -12,7 +12,7 @@ type: statement
 ## Syntax
 
 ```basic
-LINE INPUT[i] [<"prompt string">i]<string variable>
+LINE INPUT [;"prompt string";]<string variable>
 ```
 
 ## Purpose

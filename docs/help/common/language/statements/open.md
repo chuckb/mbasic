@@ -28,8 +28,11 @@ A disk file must be OPENed before any disk I/O operation can be performed on tha
 ## Example
 
 ```basic
-10 OPEN "I",2,"INVEN"
-               See also Appendix B.
+10 OPEN "I", 1, "DATA.TXT"        ' Open for input
+20 OPEN "O", 2, "OUTPUT.TXT"      ' Open for output
+30 OPEN "R", 3, "RANDOM.DAT", 128 ' Open random file with 128-byte records
+40 ' Process files...
+50 CLOSE
 ```
 
 ## See Also

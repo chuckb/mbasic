@@ -2,7 +2,7 @@
 category: variables
 description: To exchange the values of two variables
 keywords: ['command', 'error', 'for', 'print', 'statement', 'string', 'swap', 'variable']
-syntax: SWAP <variab1e>,<variab1e>
+syntax: SWAP <variable>,<variable>
 title: SWAP
 type: statement
 ---
@@ -12,7 +12,7 @@ type: statement
 ## Syntax
 
 ```basic
-SWAP <variab1e>,<variab1e>
+SWAP <variable>,<variable>
 ```
 
 **Versions:** EXtended, Disk
@@ -23,7 +23,7 @@ To exchange the values of two variables.
 
 ## Remarks
 
-Any type variable may be SWAPped (integer, single precision, dQub1e precision, string), but the two variables must be of the same type or a "Type mismatch" error results.
+Any type variable may be SWAPped (integer, single precision, double precision, string), but the two variables must be of the same type or a "Type mismatch" error results.
 
 ## Example
 
