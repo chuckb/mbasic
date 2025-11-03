@@ -67,8 +67,12 @@ class KeymapWidget(urwid.WidgetWrap):
         """
         content = []
 
-        for category, bindings in KEYBINDINGS_BY_CATEGORY.items():
-            # Add category header (no blank line before or after)
+        for i, (category, bindings) in enumerate(KEYBINDINGS_BY_CATEGORY.items()):
+            # Add blank line before category header (except for the first one)
+            if i > 0:
+                content.append(urwid.Divider())
+
+            # Add category header
             content.append(
                 urwid.AttrMap(
                     urwid.Text(('category', category)),
