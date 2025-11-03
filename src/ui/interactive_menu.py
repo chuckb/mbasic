@@ -1,6 +1,7 @@
 """Interactive menu bar for curses UI using urwid."""
 
 import urwid
+from . import keybindings as kb
 
 
 class InteractiveMenuBar(urwid.WidgetWrap):
@@ -26,40 +27,47 @@ class InteractiveMenuBar(urwid.WidgetWrap):
         self.current_item_index = 0
 
         # Define menu structure: {menu_name: [(label, callback_name), ...]}
+        # Use keybindings module to get actual shortcuts
+        def fmt_key(display):
+            """Convert keybinding display to compact ^X format."""
+            if display.startswith('Ctrl+'):
+                return '^' + display[5:]
+            return display
+
         self.menus = {
             'File': [
-                ('New            ^N', '_new_program'),
-                ('Open...        ^L', '_load_program'),
+                (f'New            {fmt_key(kb.NEW_DISPLAY)}', '_new_program'),
+                (f'Open...        {fmt_key(kb.LIST_DISPLAY)}', '_load_program'),
                 ('Recent Files...', '_show_recent_files'),
-                ('Save           ^S', '_save_program'),
+                (f'Save           {fmt_key(kb.SAVE_DISPLAY)}', '_save_program'),
                 ('Save As...', '_save_as_program'),
                 ('---', None),  # Separator
-                ('Quit           ^Q', 'quit'),
+                (f'Quit           {fmt_key(kb.QUIT_DISPLAY)}', 'quit'),
             ],
             'Edit': [
-                ('Delete Line    ^D', '_delete_current_line'),
-                ('Insert Line    ^I', '_insert_line'),
-                ('Renumber...    ^E', '_renumber_program'),
+                (f'Delete Line    {fmt_key(kb.DELETE_LINE_DISPLAY)}', '_delete_current_line'),
+                (f'Insert Line    {fmt_key(kb.INSERT_LINE_DISPLAY)}', '_insert_line'),
+                (f'Renumber...    {fmt_key(kb.RENUMBER_DISPLAY)}', '_renumber_program'),
                 ('---', None),
-                ('Toggle Breakpoint ^B', '_toggle_breakpoint_current_line'),
+                (f'Toggle Breakpoint {fmt_key(kb.BREAKPOINT_DISPLAY)}', '_toggle_breakpoint_current_line'),
                 ('Clear All Breakpoints', '_clear_all_breakpoints'),
             ],
             'Run': [
-                ('Run Program    ^R', '_run_program'),
-                ('Continue       ^G', '_debug_continue'),
-                ('Step Line      ^L', '_debug_step_line'),
-                ('Step Statement ^T', '_debug_step_statement'),
-                ('Stop           ^X', '_debug_stop'),
+                (f'Run Program    {fmt_key(kb.RUN_DISPLAY)}', '_run_program'),
+                (f'Continue       {fmt_key(kb.CONTINUE_DISPLAY)}', '_debug_continue'),
+                (f'Step Line      {fmt_key(kb.LIST_DISPLAY)}', '_debug_step_line'),
+                (f'Step Statement {fmt_key(kb.STEP_DISPLAY)}', '_debug_step_statement'),
+                (f'Stop           {fmt_key(kb.STOP_DISPLAY)}', '_debug_stop'),
                 ('---', None),
-                ('Clear Output   ^Y', '_clear_output'),
+                (f'Clear Output   {fmt_key(kb.CLEAR_OUTPUT_DISPLAY)}', '_clear_output'),
             ],
             'Debug': [
-                ('Variables Window ^W', '_toggle_variables_window'),
-                ('Execution Stack  ^K', '_toggle_stack_window'),
+                (f'Variables Window {fmt_key(kb.VARIABLES_DISPLAY)}', '_toggle_variables_window'),
+                (f'Execution Stack  {fmt_key(kb.STACK_DISPLAY)}', '_toggle_stack_window'),
             ],
             'Help': [
-                ('Help           ^F', '_show_help'),
-                ('Settings       ^P', '_show_settings'),
+                (f'Help           {fmt_key(kb.HELP_DISPLAY)}', '_show_help'),
+                (f'Settings       {fmt_key(kb.SETTINGS_DISPLAY)}', '_show_settings'),
             ],
         }
 

@@ -114,8 +114,9 @@ NEW_KEY = _ctrl_key_to_urwid(_new_key)
 NEW_CHAR = _ctrl_key_to_char(_new_key)
 NEW_DISPLAY = _new_key
 
-# Save program
-_save_key = _get_key('editor', 'save') or 'Ctrl+S'
+# Save program (Ctrl+S unavailable - terminal flow control)
+# Use Ctrl+V instead (V for saVe)
+_save_key = _get_key('editor', 'save') or 'Ctrl+V'
 SAVE_KEY = _ctrl_key_to_urwid(_save_key)
 SAVE_CHAR = _ctrl_key_to_char(_save_key)
 SAVE_DISPLAY = _save_key
@@ -149,10 +150,11 @@ RENUMBER_KEY = 'ctrl e'
 RENUMBER_CHAR = '\x05'
 RENUMBER_DISPLAY = 'Ctrl+E'
 
-# Smart Insert Line (not in JSON, hardcoded)
-INSERT_LINE_KEY = 'ctrl i'
-INSERT_LINE_CHAR = '\x09'  # Same as tab, but urwid distinguishes 'ctrl i' from 'tab'
-INSERT_LINE_DISPLAY = 'Ctrl+I'
+# Smart Insert Line (Ctrl+I unavailable - identical to Tab)
+# Use Ctrl+J instead (J for inJect/insert)
+INSERT_LINE_KEY = 'ctrl j'
+INSERT_LINE_CHAR = '\x0a'
+INSERT_LINE_DISPLAY = 'Ctrl+J'
 
 # =============================================================================
 # Debugger Commands (loaded from JSON where available)
@@ -223,12 +225,14 @@ KEYBINDINGS_BY_CATEGORY = {
         (LIST_DISPLAY, 'List program'),
         (NEW_DISPLAY, 'New program'),
         (SAVE_DISPLAY, 'Save program'),
+        ('Shift+Ctrl+V', 'Save As'),
         (OPEN_DISPLAY, 'Open/Load program'),
+        ('Shift+Ctrl+O', 'Recent files'),
     ],
     'Editing': [
         (BREAKPOINT_DISPLAY, 'Toggle breakpoint on current line'),
         (DELETE_LINE_DISPLAY, 'Delete current line'),
-        (INSERT_LINE_DISPLAY, 'Smart insert line between current and next'),
+        (INSERT_LINE_DISPLAY, 'Smart insert line between current and next (^J - ^I unavailable)'),
         (RENUMBER_DISPLAY, 'Renumber all lines (RENUM)'),
     ],
     'Debugger (when program running)': [
@@ -245,6 +249,7 @@ KEYBINDINGS_BY_CATEGORY = {
     ],
     'Navigation': [
         (TAB_DISPLAY, 'Switch between editor and output'),
+        ('ESC', 'Cancel dialogs and input prompts'),
     ],
 }
 

@@ -21,9 +21,9 @@
       "description": "Run program"
     },
     "save": {
-      "keys": ["Ctrl+S"],
-      "primary": "Ctrl+S",
-      "description": "Save program"
+      "keys": ["Ctrl+V"],
+      "primary": "Ctrl+V",
+      "description": "Save program (Ctrl+S unavailable - terminal flow control)"
     },
     "parse": {
       "keys": ["Ctrl+P"],

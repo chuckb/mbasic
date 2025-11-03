@@ -190,27 +190,47 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # Initialize with empty program
         self._update_display()
 
+    def _parse_line_number(self, line):
+        """Extract line number from display line.
+
+        Format: "SNN CODE" where S=status, NN=line number (variable width)
+
+        Args:
+            line: Display line string
+
+        Returns:
+            tuple: (line_number, code_start_col) or (None, None) if no line number
+        """
+        if len(line) < 3:  # Need at least status + digit + space
+            return None, None
+
+        # Find first space after status character (marks end of line number)
+        space_idx = line.find(' ', 1)
+        if space_idx <= 1:
+            return None, None
+
+        try:
+            line_num = int(line[1:space_idx])
+            code_start_col = space_idx + 1  # After the space
+            return line_num, code_start_col
+        except ValueError:
+            return None, None
+
     def keypress(self, size, key):
         """Handle key presses for column-aware editing and auto-numbering.
 
         Format: "SNNNNN CODE"
         - Column 0: Status (●, ?, space) - read-only
-        - Columns 1-5: Line number (5 chars) - editable
-        - Column 6: Space
-        - Columns 7+: Code - editable
+        - Columns 1+: Line number (variable width) - editable
+        - After line number: Space
+        - After space: Code - editable
         """
-        # CRITICAL PERFORMANCE: For paste, skip ALL processing for normal typing
-        # Check if it's a single printable character (not a special key)
+        # FAST PATH: For normal printable characters, bypass all processing
+        # This is critical for responsive typing
         if len(key) == 1 and key >= ' ' and key <= '~':
-            # Fast path: normal printable ASCII - just pass through
-            # This avoids expensive text parsing on every pasted character
-
-            # Schedule deferred refresh - will happen 0.1s after typing stops
-            self._schedule_deferred_refresh()
-
             return super().keypress(size, key)
 
-        # NON-PRINTABLE KEY: Check if we have pending updates from paste
+        # Check if we have pending updates from paste
         # If so, process them NOW before handling this key
         if self._needs_refresh or self._needs_sort:
             self._perform_deferred_refresh()
@@ -222,13 +242,16 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # Find which line we're on and position within that line
         text_before_cursor = current_text[:cursor_pos]
         line_num = text_before_cursor.count('\n')
-        lines = current_text.split('\n')
 
-        if line_num < len(lines):
-            line_start_pos = sum(len(lines[i]) + 1 for i in range(line_num))  # +1 for \n
-            col_in_line = cursor_pos - line_start_pos
+        # Fast calculation: find last newline position instead of summing all lines
+        last_newline_pos = text_before_cursor.rfind('\n')
+        if last_newline_pos >= 0:
+            col_in_line = cursor_pos - last_newline_pos - 1
         else:
-            col_in_line = 0
+            col_in_line = cursor_pos
+
+        # Still need lines array for other operations
+        lines = current_text.split('\n')
 
         # Check if pressing a control key or navigation key
         is_control_key = key.startswith('ctrl ') or key in ['tab', 'enter', 'esc']
@@ -251,272 +274,68 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 text_before_cursor = current_text[:cursor_pos]
                 line_num = text_before_cursor.count('\n')
                 lines = current_text.split('\n')
-                if line_num < len(lines):
-                    line_start_pos = sum(len(lines[i]) + 1 for i in range(line_num))
-                    col_in_line = cursor_pos - line_start_pos
+                # Fast calculation: find last newline position
+                last_newline_pos = text_before_cursor.rfind('\n')
+                if last_newline_pos >= 0:
+                    col_in_line = cursor_pos - last_newline_pos - 1
+                else:
+                    col_in_line = cursor_pos
 
-        # PERFORMANCE: Skip right-justification during rapid typing/paste
-        # Only do it when navigating (which is when user expects formatting)
-        should_right_justify = False
-        if is_control_key or is_updown_arrow or is_other_nav_key:
-            # About to navigate - right-justify now
-            should_right_justify = True
-
-        if should_right_justify:
-            # Right-justify the line number on the current line
-            if line_num < len(lines) and len(lines[line_num]) >= 6:
-                line = lines[line_num]
-                # Extract line number area (columns 1-5)
-                if len(line) >= 6:
-                    status = line[0] if len(line) > 0 else ' '
-                    line_num_text = line[1:6].strip()
-                    rest_of_line = line[6:] if len(line) > 6 else ''
-
-                    # Right-justify the line number
-                    if line_num_text:
-                        line_num_formatted = f"{line_num_text:>5}"
-                        new_line = f"{status}{line_num_formatted}{rest_of_line}"
-
-                        # Replace the line
-                        lines[line_num] = new_line
-                        new_text = '\n'.join(lines)
-                        old_cursor = cursor_pos
-                        self.edit_widget.set_edit_text(new_text)
-                        self.edit_widget.set_edit_pos(old_cursor)
+        # Variable-width line numbers - no need to right-justify
 
         # Mark that sorting is needed when editing line numbers
-        if 1 <= col_in_line <= 6 and len(key) == 1 and key.isdigit():
-            # Typing digits in line number area - will need sorting later
-            self._needs_sort = True
+        # With variable width, check if we're in line number area (before first space after status)
+        if line_num < len(lines):
+            line = lines[line_num]
+            line_num_parsed, code_start = self._parse_line_number(line)
+            if line_num_parsed is not None and col_in_line > 0 and col_in_line < code_start:
+                if len(key) == 1 and key.isdigit():
+                    self._needs_sort = True
 
         # Sort lines only when navigating away (not on every keystroke)
-        # This makes paste much faster - only sort once at the end
         if (is_control_key or is_other_nav_key or is_updown_arrow) and self._needs_sort:
             # About to navigate - sort now if needed
-            if 1 <= col_in_line <= 6:
-                self._sort_and_position_line(lines, line_num, target_column=col_in_line)
-                self._needs_sort = False
-                return super().keypress(size, key)
+            self._sort_and_position_line(lines, line_num, target_column=col_in_line)
+            self._needs_sort = False
+            return super().keypress(size, key)
 
-        # Handle backspace key specially to protect separator space
+        # Handle backspace key to protect separator space and status column
         if key == 'backspace':
             if line_num < len(lines):
                 line = lines[line_num]
-                line_start = sum(len(lines[i]) + 1 for i in range(line_num))
+                line_num_parsed, code_start = self._parse_line_number(line)
 
-                # At column 7 (code start): move to column 6 but don't delete separator
-                if col_in_line == 7:
-                    new_cursor_pos = line_start + 6
-                    self.edit_widget.set_edit_pos(new_cursor_pos)
-                    return None
+                if line_num_parsed is not None:
+                    # If at code area start (right after space), don't delete the space
+                    if col_in_line == code_start:
+                        return None
+                    # If at space after line number, delete last digit of line number
+                    elif col_in_line == code_start - 1:
+                        # Let normal backspace work - it will delete the space
+                        # Then the line number and code will be adjacent, which is fine
+                        pass
 
-                # At column 6 (separator): delete rightmost digit of line number
-                elif col_in_line == 6:
-                    # Ensure line is at least 7 characters
-                    if len(line) < 7:
-                        line = line + ' ' * (7 - len(line))
-
-                    status = line[0]
-                    linenum_field = line[1:6]
-                    rest = line[6:]
-
-                    # Replace rightmost digit (position 4) with space
-                    linenum_list = list(linenum_field)
-                    linenum_list[4] = ' '
-                    linenum_field = ''.join(linenum_list)
-
-                    # Right-justify the line number
-                    line_num_text = linenum_field.strip()
-                    if line_num_text:
-                        linenum_field = f"{line_num_text:>5}"
-                    else:
-                        linenum_field = '     '
-
-                    # Rebuild line
-                    new_line = status + linenum_field + rest
-                    lines[line_num] = new_line
-                    new_text = '\n'.join(lines)
-                    self.edit_widget.set_edit_text(new_text)
-
-                    # Move cursor to column 5 (rightmost position after right-justify)
-                    new_cursor_pos = line_start + 5
-                    self.edit_widget.set_edit_pos(new_cursor_pos)
-                    return None
-
-                # At columns 1-5 (line number): replace digit at cursor with space
-                elif 1 <= col_in_line <= 5:
-                    # Ensure line is at least 7 characters
-                    if len(line) < 7:
-                        line = line + ' ' * (7 - len(line))
-
-                    status = line[0]
-                    linenum_field = line[1:6]
-                    rest = line[6:]
-
-                    # Replace character at cursor position with space
-                    linenum_list = list(linenum_field)
-                    pos_in_field = col_in_line - 1
-                    linenum_list[pos_in_field] = ' '
-                    linenum_field = ''.join(linenum_list)
-
-                    # Right-justify the line number
-                    line_num_text = linenum_field.strip()
-                    if line_num_text:
-                        linenum_field = f"{line_num_text:>5}"
-                    else:
-                        linenum_field = '     '
-
-                    # Rebuild line
-                    new_line = status + linenum_field + rest
-                    lines[line_num] = new_line
-                    new_text = '\n'.join(lines)
-                    self.edit_widget.set_edit_text(new_text)
-
-                    # After right-justify, move cursor to rightmost position (col 5)
-                    # This gives consistent behavior and user knows where they are
-                    new_cursor_pos = line_start + 5
-                    self.edit_widget.set_edit_pos(new_cursor_pos)
+                # Don't allow backspace at column 0 (status column)
+                if col_in_line == 0:
                     return None
 
         # Prevent typing in status column (column 0)
-        if col_in_line < 1 and len(key) == 1 and key.isprintable():
+        if col_in_line == 0 and len(key) == 1 and key.isprintable():
             # Move cursor to line number column (column 1)
-            new_cursor_pos = cursor_pos + (1 - col_in_line)
+            new_cursor_pos = cursor_pos + 1
             self.edit_widget.set_edit_pos(new_cursor_pos)
-            # Process the key at new position
-            cursor_pos = new_cursor_pos
-            col_in_line = 1
-
-        # Handle input in line number column (1-5)
-        if 1 <= col_in_line <= 5 and len(key) == 1 and key.isprintable():
-            if not key.isdigit():
-                # Move cursor to code area (column 7) and insert character there
-                if line_num < len(lines):
-                    line_start = sum(len(lines[i]) + 1 for i in range(line_num))
-                    # Ensure line is at least 7 characters long
-                    line = lines[line_num]
-                    if len(line) < 7:
-                        # Pad line to have at least 7 characters
-                        line = line + ' ' * (7 - len(line))
-                        lines[line_num] = line
-                        current_text = '\n'.join(lines)
-                        self.edit_widget.set_edit_text(current_text)
-                    # Move cursor to column 7
-                    new_cursor_pos = line_start + 7
-                    self.edit_widget.set_edit_pos(new_cursor_pos)
-                    # Now let the key be processed at the new position
-                    return super().keypress(size, key)
-            else:
-                # Typing a digit in line number area
-                if line_num < len(lines):
-                    line_start = sum(len(lines[i]) + 1 for i in range(line_num))
-                    line = lines[line_num]
-
-                    # Ensure line is at least 7 characters
-                    if len(line) < 7:
-                        line = line + ' ' * (7 - len(line))
-
-                    # Extract parts: status (0), linenum (1-5), space (6), code (7+)
-                    status = line[0]
-                    linenum_field = line[1:6]  # 5 characters
-                    rest = line[6:]
-
-                    # Find position within linenum_field (0-4)
-                    pos_in_field = col_in_line - 1
-
-                    # Check if at rightmost position (column 5, pos_in_field 4)
-                    if pos_in_field == 4:
-                        # At rightmost position: shift left and add new digit at end
-                        linenum_list = list(linenum_field)
-                        linenum_list.append(key)
-                        # Keep only rightmost 5 characters (shift left if overflow)
-                        linenum_list = linenum_list[-5:]
-                        linenum_field = ''.join(linenum_list)
-                        # Stay at same position (rightmost)
-                        new_col = 5
-                    else:
-                        # Not at rightmost: overwrite at position
-                        linenum_list = list(linenum_field)
-                        if pos_in_field < len(linenum_list):
-                            linenum_list[pos_in_field] = key
-                        linenum_field = ''.join(linenum_list)
-                        # Move cursor right after typed digit
-                        new_col = min(col_in_line + 1, 5)
-
-                    # Rebuild line
-                    new_line = status + linenum_field + rest
-                    lines[line_num] = new_line
-                    new_text = '\n'.join(lines)
-
-                    # Update text
-                    self.edit_widget.set_edit_text(new_text)
-
-                    # Position cursor
-                    new_cursor_pos = line_start + new_col
-                    self.edit_widget.set_edit_pos(new_cursor_pos)
-
-                    return None
-
-        # Handle input at column 6 (separator space)
-        if col_in_line == 6 and len(key) == 1 and key.isprintable():
-            if line_num < len(lines):
-                line_start = sum(len(lines[i]) + 1 for i in range(line_num))
-                line = lines[line_num]
-
-                # Ensure line is at least 7 characters long
-                if len(line) < 7:
-                    line = line + ' ' * (7 - len(line))
-
-                if key.isdigit():
-                    # Digit at column 6: shift left and add new digit at end
-                    status = line[0]
-                    linenum_field = line[1:6]  # 5 characters
-                    rest = line[6:]
-
-                    # Shift left and add new digit at end (calculator style)
-                    linenum_list = list(linenum_field)
-                    linenum_list.append(key)
-                    # Keep only rightmost 5 characters (shift left if overflow)
-                    linenum_list = linenum_list[-5:]
-                    linenum_field = ''.join(linenum_list)
-
-                    # Rebuild line
-                    new_line = status + linenum_field + rest
-                    lines[line_num] = new_line
-                    new_text = '\n'.join(lines)
-                    self.edit_widget.set_edit_text(new_text)
-
-                    # Keep cursor at column 6 (after the line number)
-                    new_cursor_pos = line_start + 6
-                    self.edit_widget.set_edit_pos(new_cursor_pos)
-                    return None
-                else:
-                    # Non-digit at column 6: moving to code area - sort lines first
-                    self._sort_and_position_line(lines, line_num)
-                    # Now let the key be processed at the new position
-                    return super().keypress(size, key)
+            # Let key be processed at new position
+            return super().keypress(size, key)
 
         # Handle Enter key - commits line and moves to next with auto-numbering
         if key == 'enter' and self.auto_number_enabled:
-            # Right-justify current line number before committing
+            # Parse current line number (variable width)
             current_line_number = None
-            if line_num < len(lines) and len(lines[line_num]) >= 6:
+            if line_num < len(lines):
                 line = lines[line_num]
-                status = line[0] if len(line) > 0 else ' '
-                line_num_text = line[1:6].strip()
-                rest_of_line = line[6:] if len(line) > 6 else ''
-
-                if line_num_text:
-                    # Parse current line number
-                    try:
-                        current_line_number = int(line_num_text)
-                    except:
-                        pass
-
-                    line_num_formatted = f"{line_num_text:>5}"
-                    lines[line_num] = f"{status}{line_num_formatted}{rest_of_line}"
-                    current_text = '\n'.join(lines)
-                    self.edit_widget.set_edit_text(current_text)
+                line_num_parsed, code_start = self._parse_line_number(line)
+                if line_num_parsed is not None:
+                    current_line_number = line_num_parsed
 
             # Move to end of current line
             if line_num < len(lines):
@@ -533,9 +352,14 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             # Get all existing line numbers from display
             existing_line_nums = set()
             for display_line in lines:
-                if len(display_line) >= 6:
+                if len(display_line) >= 3:  # At least status + 1-digit + space
                     try:
-                        existing_line_nums.add(int(display_line[1:6].strip()))
+                        # Parse line number after status character (variable width)
+                        # Find the space after the line number
+                        space_idx = display_line.find(' ', 1)
+                        if space_idx > 1:
+                            line_num_str = display_line[1:space_idx]
+                            existing_line_nums.add(int(line_num_str))
                     except:
                         pass
 
@@ -572,8 +396,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                         # User declined - just stay on current line
                         return None
 
-            # Format new line: " NNNNN "
-            new_line_prefix = f"\n {next_num:5d} "
+            # Format new line: " NN " (with status space)
+            new_line_prefix = f"\n {next_num} "
 
             # Insert newline and prefix at end of current line
             current_text = self.edit_widget.get_edit_text()
@@ -611,7 +435,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             status = ' '
 
         # Line number column (5 chars, right-aligned)
-        line_num_str = f"{line_num:5d}"
+        line_num_str = f"{line_num}"
 
         # Prefix: status + line_num + space
         prefix = f"{status}{line_num_str} "
@@ -662,11 +486,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             statement_table: Optional StatementTable for getting statement info
         """
         if not self.lines:
-            # Empty program - start with first line number ready
-            # Format: "SNNNNN " where S=status (1), NNNNN=line# (5), space (1)
-            display_text = f" {self.next_auto_line_num:5d} "
-            # Increment counter since we've used this number for display
-            self.next_auto_line_num += self.auto_number_increment
+            # Empty program - show line with auto-number prompt
+            # Format: "SNN " where S=status (1 space), NN=line# (variable), space (1)
+            display_text = f" {self.next_auto_line_num} "
+            # DON'T increment counter here - that happens only on Enter
+            # This was the bug causing "0    1" issue
         else:
             # Format all lines (with optional highlighting)
             formatted_lines = []
@@ -700,9 +524,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # Update the edit widget
         self.edit_widget.set_edit_text(display_text)
 
-        # If empty program, position cursor at code column (after line number)
+        # If empty program, position cursor at line number start (column 1, after status)
         if not self.lines:
-            self.edit_widget.set_edit_pos(7)  # Position 7 is start of code area
+            # Position at column 1 (start of line number, after status character)
+            self.edit_widget.set_edit_pos(1)
 
     def get_program_text(self):
         """Get the program as line-numbered text.
@@ -950,23 +775,16 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         self.syntax_errors.clear()
 
         for i, line in enumerate(lines):
-            if not line or len(line) < 7:
+            if not line or len(line) < 3:
                 continue
 
-            # Extract parts
+            # Parse line (variable width)
+            line_number, code_start = self._parse_line_number(line)
             status = line[0]
-            linenum_col = line[1:6]
-            code_area = line[7:] if len(line) > 7 else ""
-
-            # Parse line number
-            line_number_str = linenum_col.strip()
-            try:
-                line_number = int(line_number_str) if line_number_str else 0
-            except:
-                line_number = 0
+            code_area = line[code_start:] if line_number is not None and code_start < len(line) else ""
 
             # Skip empty code lines
-            if not code_area.strip():
+            if not code_area.strip() or line_number is None:
                 # Clear error status for empty lines, but preserve breakpoints
                 if line_number > 0:
                     new_status = self._get_status_char(line_number, has_syntax_error=False)
@@ -1095,8 +913,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             if len(line) >= 7:
                 # Extract status, line number column, and code area
                 status = line[0]
-                linenum_col = line[1:6]  # Existing line number column
-                code_area = line[7:] if len(line) >= 7 else ""
+                linenum_int, code_start_col = self._parse_line_number(line)  # Variable width
+                code_area = line[code_start_col:] if code_start_col and code_start_col < len(line) else ""
 
                 # Check if code area starts with a number (after stripping leading spaces)
                 # (It's never legal for BASIC code to start with a digit)
@@ -1226,15 +1044,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         current_line_text = lines[current_line_index]
 
         for idx, line in enumerate(lines):
-            if len(line) >= 6:
-                try:
-                    line_num = int(line[1:6].strip())
-                    parsed_lines.append((line_num, line))
-                except:
-                    # If can't parse line number, keep it in original position
-                    parsed_lines.append((999999 + idx, line))
+            line_num, code_start = self._parse_line_number(line)
+            if line_num is not None:
+                parsed_lines.append((line_num, line))
             else:
-                # Short line, keep in original position
+                # If can't parse line number, keep it in original position
                 parsed_lines.append((999999 + idx, line))
 
         # Sort by line number
@@ -1685,8 +1499,8 @@ class CursesBackend(UIBackend):
 
         elif key == LIST_KEY:
             # Context-sensitive: Step Line when debugging, List program otherwise
-            if self.interpreter and self.interpreter.get_state().status in ('paused', 'at_breakpoint', 'running'):
-                # Debugging: Ctrl+L = Step Line
+            if self.interpreter and self.interpreter.get_state().status in ('paused', 'at_breakpoint', 'running', 'idle'):
+                # Debugging: Ctrl+L = Step Line (or start in step mode if idle)
                 self._debug_step_line()
             else:
                 # Editing: Ctrl+L = List program
@@ -1700,7 +1514,7 @@ class CursesBackend(UIBackend):
             # Save program
             self._save_program()
 
-        elif key == 'shift ctrl s' or key == 'ctrl S':
+        elif key == 'shift ctrl v' or key == 'ctrl V':
             # Save As - always prompt for filename
             self._save_as_program()
 
@@ -1896,59 +1710,64 @@ class CursesBackend(UIBackend):
     def _debug_step_line(self):
         """Execute all statements on current line and pause (step by line)."""
         if not self.interpreter:
-            self.status_bar.set_text("No program running")
-            return
+            # No program running - start in step mode
+            self._run_program()
+            if not self.interpreter:
+                return  # Failed to start
 
         try:
             state = self.interpreter.get_state()
-            if state.status in ('paused', 'at_breakpoint', 'running'):
-                # Execute all statements on line
-                self.status_bar.set_text("Stepping line...")
-                state = self.interpreter.tick(mode='step_line', max_statements=100)
 
-                # Collect any output
-                new_output = self.io_handler.get_and_clear_output()
-                if new_output:
-                    self.output_buffer.extend(new_output)
-                    self._update_output()
-
-                # Update editor display
-                if state.status in ('paused', 'at_breakpoint') and state.current_line:
-                    self.editor._update_display(
-                        highlight_line=state.current_line,
-                        highlight_stmt=0,  # Highlight whole line, not specific statement
-                        statement_table=self.runtime.statement_table if self.runtime else None
-                    )
-
-                    # Update variables window if visible
-                    if self.watch_window_visible:
-                        self._update_variables_window()
-
-                    # Update stack window if visible
-                    if self.stack_window_visible:
-                        self._update_stack_window()
-
-                    # Show where we paused
-                    self.output_buffer.append(f"→ Paused at line {state.current_line}")
-                    self._update_output()
-                    self.status_bar.set_text(f"Paused at line {state.current_line} - Ctrl+L=Step Line, Ctrl+T=Step Stmt, Ctrl+G=Continue")
-                    self._update_immediate_status()
-                elif state.status == 'done':
-                    self.editor._update_display()
-                    self.output_buffer.append("Program completed")
-                    self._update_output()
-                    self.status_bar.set_text("Program completed")
-                    self._update_immediate_status()
-                elif state.status == 'error':
-                    self.editor._update_display()
-                    error_msg = state.error_info.error_message if state.error_info else "Unknown error"
-                    line_num = state.error_info.pc.line_num if state.error_info else "?"
-                    self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
-                    self._update_output()
-                    self.status_bar.set_text("Error during step")
-                    self._update_immediate_status()
-            else:
+            # Check if we can step
+            if state.status not in ('idle', 'paused', 'at_breakpoint', 'running'):
                 self.status_bar.set_text(f"Cannot step (status: {state.status})")
+                return
+
+            # Execute all statements on current line
+            self.status_bar.set_text("Stepping line...")
+            state = self.interpreter.tick(mode='step_line', max_statements=100)
+
+            # Collect any output
+            new_output = self.io_handler.get_and_clear_output()
+            if new_output:
+                self.output_buffer.extend(new_output)
+                self._update_output()
+
+            # Update editor display based on new state
+            if state.status in ('paused', 'at_breakpoint') and state.current_line:
+                self.editor._update_display(
+                    highlight_line=state.current_line,
+                    highlight_stmt=0,  # Highlight whole line, not specific statement
+                    statement_table=self.runtime.statement_table if self.runtime else None
+                )
+
+                # Update variables window if visible
+                if self.watch_window_visible:
+                    self._update_variables_window()
+
+                # Update stack window if visible
+                if self.stack_window_visible:
+                    self._update_stack_window()
+
+                # Show where we paused
+                self.output_buffer.append(f"→ Paused at line {state.current_line}")
+                self._update_output()
+                self.status_bar.set_text(f"Paused at line {state.current_line} - Ctrl+L=Step Line, Ctrl+T=Step Stmt, Ctrl+G=Continue")
+                self._update_immediate_status()
+            elif state.status == 'done':
+                self.editor._update_display()
+                self.output_buffer.append("Program completed")
+                self._update_output()
+                self.status_bar.set_text("Program completed")
+                self._update_immediate_status()
+            elif state.status == 'error':
+                self.editor._update_display()
+                error_msg = state.error_info.error_message if state.error_info else "Unknown error"
+                line_num = state.error_info.pc.line_num if state.error_info else "?"
+                self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
+                self._update_output()
+                self.status_bar.set_text("Error during step")
+                self._update_immediate_status()
         except Exception as e:
             import traceback
 
@@ -2012,16 +1831,11 @@ class CursesBackend(UIBackend):
 
         line = lines[line_index]
 
-        # Extract line number from columns 1-5
-        if len(line) < 6:
-            return
-
-        line_number_str = line[1:6].strip()
-        if not line_number_str or not line_number_str.isdigit():
+        # Extract line number (variable width)
+        line_number, code_start = self.editor._parse_line_number(line)
+        if line_number is None:
             self.status_bar.set_text("No line number to delete")
             return
-
-        line_number = int(line_number_str)
 
         # Remove the line from the display
         del lines[line_index]
@@ -2041,12 +1855,13 @@ class CursesBackend(UIBackend):
         self.editor.edit_widget.set_edit_text(new_text)
 
         # Position cursor at beginning of next line (or previous if at end)
+        # Always position at column 1 (start of line number field)
         if line_index < len(lines):
-            # Position at start of line that moved up
+            # Position at start of line that moved up (column 1)
             if line_index > 0:
-                new_cursor_pos = sum(len(lines[i]) + 1 for i in range(line_index))
+                new_cursor_pos = sum(len(lines[i]) + 1 for i in range(line_index)) + 1
             else:
-                new_cursor_pos = 0
+                new_cursor_pos = 1  # First line, column 1
         else:
             # Was last line, position at end of previous line
             if lines:
@@ -2092,20 +1907,17 @@ class CursesBackend(UIBackend):
             self.status_bar.set_text("Current line has no line number")
             return
 
-        line_number_str = current_line[1:6].strip()
-        if not line_number_str or not line_number_str.isdigit():
+        current_line_num, code_start = self.editor._parse_line_number(current_line)
+        if current_line_num is None:
             self.status_bar.set_text("Current line has no line number")
             return
 
-        current_line_num = int(line_number_str)
-
-        # Collect all line numbers in program
+        # Collect all line numbers in program (variable width)
         all_line_numbers = []
         for line in lines:
-            if len(line) >= 6:
-                num_str = line[1:6].strip()
-                if num_str and num_str.isdigit():
-                    all_line_numbers.append(int(num_str))
+            line_num, _ = self.editor._parse_line_number(line)
+            if line_num is not None:
+                all_line_numbers.append(line_num)
 
         all_line_numbers = sorted(set(all_line_numbers))
 
@@ -2151,7 +1963,7 @@ class CursesBackend(UIBackend):
         # Insert blank line BEFORE current line (at current line's position)
         # Format: status(1) + line_num(5) + space + code
         status_char = ' '  # New line has no breakpoint or error
-        new_line_text = f"{status_char}{insert_num:5d} "
+        new_line_text = f"{status_char}{insert_num} "
 
         # Insert at current position
         lines.insert(line_index, new_line_text)
@@ -2187,12 +1999,10 @@ class CursesBackend(UIBackend):
         # Count valid program lines
         valid_lines = []
         for line in lines:
-            if len(line) >= 7:
-                line_number_str = line[1:6].strip()
-                if line_number_str and line_number_str.isdigit():
-                    line_number = int(line_number_str)
-                    code = line[7:]
-                    valid_lines.append((line_number, code, line[0]))  # (line_num, code, status)
+            line_number, code_start = self.editor._parse_line_number(line)
+            if line_number is not None:
+                code = line[code_start:] if code_start < len(line) else ""
+                valid_lines.append((line_number, code, line[0]))  # (line_num, code, status)
 
         if not valid_lines:
             self.status_bar.set_text("No lines to renumber")
@@ -2200,7 +2010,11 @@ class CursesBackend(UIBackend):
 
         # Get renumber parameters from user
         start_str = self._get_input_dialog("RENUM - Start line number (default 10): ")
-        if start_str is None or start_str == '':
+        if start_str is None:
+            # User cancelled
+            self.status_bar.set_text("Renumber cancelled")
+            return
+        elif start_str == '':
             start = 10
         else:
             try:
@@ -2210,7 +2024,11 @@ class CursesBackend(UIBackend):
                 return
 
         increment_str = self._get_input_dialog("RENUM - Increment (default 10): ")
-        if increment_str is None or increment_str == '':
+        if increment_str is None:
+            # User cancelled
+            self.status_bar.set_text("Renumber cancelled")
+            return
+        elif increment_str == '':
             increment = 10
         else:
             try:
@@ -2248,7 +2066,7 @@ class CursesBackend(UIBackend):
             new_status = self.editor._get_status_char(new_line_num, has_syntax_error)
 
             # Format new line
-            formatted_line = f"{new_status}{new_line_num:5d} {code}"
+            formatted_line = f"{new_status}{new_line_num} {code}"
             new_lines.append(formatted_line)
 
             new_line_num += increment
@@ -2282,15 +2100,10 @@ class CursesBackend(UIBackend):
 
         line = lines[line_index]
 
-        # Extract line number from columns 1-5
-        if len(line) < 6:
+        # Extract line number (variable width)
+        line_number, code_start = self.editor._parse_line_number(line)
+        if line_number is None:
             return
-
-        line_number_str = line[1:6].strip()
-        if not line_number_str or not line_number_str.isdigit():
-            return
-
-        line_number = int(line_number_str)
 
         # Toggle breakpoint
         if line_number in self.editor.breakpoints:
@@ -3304,6 +3117,10 @@ class CursesBackend(UIBackend):
         # Get input from user
         result = self._get_input_dialog(prompt)
 
+        # If user cancelled (ESC), treat as empty string
+        if result is None:
+            result = ""
+
         # Provide input to interpreter
         self.interpreter.provide_input(result)
 
@@ -3350,6 +3167,9 @@ class CursesBackend(UIBackend):
         self._update_output()
         self._update_status_with_errors("Ready")
 
+        # Reset auto-numbering to start value
+        self.editor.next_auto_line_num = self.editor.auto_number_start
+
         # Start autosave for new file
         self.auto_save.start_autosave(
             'untitled.bas',
@@ -3367,18 +3187,13 @@ class CursesBackend(UIBackend):
 
         # Parse each line
         for line in text.split('\n'):
-            if len(line) < 7:  # Too short to have status + linenum + separator
+            # Use helper to parse variable-width line numbers
+            line_num, code_start = self.editor._parse_line_number(line)
+            if line_num is None:
                 continue
 
-            # Extract line number from columns 1-5
-            line_num_text = line[1:6].strip()
-            if not line_num_text or not line_num_text.isdigit():
-                continue
-
-            line_num = int(line_num_text)
-
-            # Extract code from column 7 onwards
-            code = line[7:] if len(line) > 7 else ""
+            # Extract code after the space
+            code = line[code_start:] if len(line) > code_start else ""
 
             # Store in editor_lines
             self.editor_lines[line_num] = code
@@ -3505,32 +3320,40 @@ class CursesBackend(UIBackend):
                 self.loop.widget = original_widget
             return None
 
-        # Temporarily override input handler
+        # Store old handler
         old_handler = self.loop.unhandled_input
-        self.loop.unhandled_input = handle_input
 
-        # Run loop until we get input
-        while not done['flag']:
-            self.loop.draw_screen()
-            keys = self.loop.screen.get_input()
-            for key in keys:
-                self.loop.process_input(keys)
+        # Create wrapped handler that processes input and checks for completion
+        def wrapped_handler(key):
+            result_key = handle_input(key)
             if done['flag']:
-                break
+                # Restore and exit
+                self.loop.unhandled_input = old_handler
+                raise urwid.ExitMainLoop()
+            return result_key
 
-        # Restore handler
-        self.loop.unhandled_input = old_handler
+        self.loop.unhandled_input = wrapped_handler
+
+        # Run nested main loop for this dialog
+        try:
+            self.loop.run()
+        except urwid.ExitMainLoop:
+            pass  # Dialog closed
 
         return result['value']
 
     def _get_input_dialog(self, prompt, initial=""):
-        """Show input dialog and get user response."""
+        """Show input dialog and get user response.
+
+        Returns:
+            str: The entered text, or None if cancelled with ESC
+        """
         # Create input widget with optional initial value
         edit = urwid.Edit(caption=prompt, edit_text=initial)
 
         # Create dialog
         fill = urwid.Filler(edit, valign='top')
-        box = urwid.LineBox(fill, title="Input Required - Press Enter to submit")
+        box = urwid.LineBox(fill, title="Input Required - Press Enter to submit, ESC to cancel")
         overlay = urwid.Overlay(
             urwid.AttrMap(box, 'body'),
             self.loop.widget,
@@ -3545,37 +3368,43 @@ class CursesBackend(UIBackend):
         self.loop.widget = overlay
 
         # Variable to store result
-        result = {'value': ''}
+        result = {'value': None, 'cancelled': False}
         done = {'flag': False}
 
         def handle_input(key):
             if key == 'enter':
                 result['value'] = edit.get_edit_text()
+                result['cancelled'] = False
                 done['flag'] = True
                 self.loop.widget = original_widget
             elif key == 'esc':
-                result['value'] = ''
+                result['value'] = None
+                result['cancelled'] = True
                 done['flag'] = True
                 self.loop.widget = original_widget
             else:
                 # Let edit widget handle it
                 return key
 
-        # Temporarily override input handler
+        # Store old handler
         old_handler = self.loop.unhandled_input
-        self.loop.unhandled_input = handle_input
 
-        # Run loop until we get input
-        while not done['flag']:
-            self.loop.draw_screen()
-            keys = self.loop.screen.get_input()
-            for key in keys:
-                self.loop.process_input(keys)
+        # Create wrapped handler that processes input and checks for completion
+        def wrapped_handler(key):
+            result_key = handle_input(key)
             if done['flag']:
-                break
+                # Restore and exit
+                self.loop.unhandled_input = old_handler
+                raise urwid.ExitMainLoop()
+            return result_key
 
-        # Restore handler
-        self.loop.unhandled_input = old_handler
+        self.loop.unhandled_input = wrapped_handler
+
+        # Run nested main loop for this dialog
+        try:
+            self.loop.run()
+        except urwid.ExitMainLoop:
+            pass  # Dialog closed
 
         return result['value']
 
