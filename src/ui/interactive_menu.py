@@ -37,7 +37,7 @@ class InteractiveMenuBar(urwid.WidgetWrap):
         self.menus = {
             'File': [
                 (f'New            {fmt_key(kb.NEW_DISPLAY)}', '_new_program'),
-                (f'Open...        {fmt_key(kb.LIST_DISPLAY)}', '_load_program'),
+                (f'Open...        {fmt_key(kb.OPEN_DISPLAY)}', '_load_program'),
                 ('Recent Files...', '_show_recent_files'),
                 (f'Save           {fmt_key(kb.SAVE_DISPLAY)}', '_save_program'),
                 ('Save As...', '_save_as_program'),

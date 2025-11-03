@@ -2231,14 +2231,17 @@ class CursesBackend(UIBackend):
         # Store original widget (the main UI without any overlays)
         main_widget = self.loop.widget.base_widget if hasattr(self.loop.widget, 'base_widget') else self.loop.widget
 
+        # Track current menu overlay (updated when refreshing)
+        current_overlay = {'widget': overlay}
+
         # Set up keypress handler for menu navigation
         def menu_input(key):
             result = self.menu_bar.handle_key(key)
             if result == 'close':
                 # Close menu and return to main UI
                 # BUT: if an overlay was just opened, don't overwrite it
-                # Check if loop.widget changed (indicates a dialog/overlay was opened)
-                if self.loop.widget != overlay:
+                # Check if loop.widget changed from menu (indicates a dialog/overlay was opened)
+                if self.loop.widget != current_overlay['widget']:
                     # An overlay was opened from menu (recent files, etc.), it's already handling the widget
                     pass
                 elif hasattr(self, '_settings_overlay') and self._settings_overlay:
@@ -2256,6 +2259,7 @@ class CursesBackend(UIBackend):
                 # Don't call draw_screen() - it uses default colors (39;49) which may be white
                 new_overlay = self.menu_bar._show_dropdown(base_widget=main_widget)
                 self.loop.widget = new_overlay
+                current_overlay['widget'] = new_overlay  # Track new overlay
             # Otherwise continue with menu navigation
 
         # Show overlay and set handler
