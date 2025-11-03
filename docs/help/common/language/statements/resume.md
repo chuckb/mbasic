@@ -245,5 +245,6 @@ Verified behavior against real MBASIC 5.21:
 - ✅ "RESUME without error" when used outside error handler
 
 ## See Also
-- [ERROR](error.md) - 1) To simulate the occurrence of a BASIC-80 error1   or 2) to allow error codes to be defined by the user
-- [ON ERROR GOTO](on-error-goto.md) - To enable error trapping and specify the   first line of the error handling subroutine
+- [ERROR](error.md) - To simulate the occurrence of a BASIC-80 error or to allow error codes to be defined by the user
+- [ON ERROR GOTO](on-error-goto.md) - To enable error trapping and specify the first line of the error handling subroutine
+- [ERR/ERL Variables](../functions/err-erl.md) - Error code and line number variables

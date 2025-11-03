@@ -18,7 +18,7 @@ INPUT[:] [<"prompt string">:]<list of variables>
 
 ## Purpose
 
-To allow input from the terminal during      program execution.
+To allow input from the terminal during program execution.
 
 ## Remarks
 
@@ -37,31 +37,42 @@ Key behaviors:
 
 ## Example
 
+### Example 1: Basic Input
+
 ```basic
-10 INPUT x
-            20 PRINT X "SQUARED IS" X"'2
-            30 END
-            RUN
-            ? 5      (The 5 was typed in by the user
-                      in response to the question mark.)
-             5 SQUARED IS 25
-            Ok
-            LIST
-            10 PI=3.14
-            20 INPUT "WHAT IS THE RADIUS":R
-            30 A=PI*R"'2
-            40 PRINT "THE AREA OF THE CIRCLE IS":A
-            50 PRINT
-            60 GOTO 20
-            Ok
-            RUN
-            WHAT IS THE RADIUS? 7.4 (User types 7.4)
-            THE AREA OF THE CIRCLE IS 171.946
-            WHAT IS THE RADIUS?
-            etc.
+10 INPUT X
+20 PRINT X "SQUARED IS" X^2
+30 END
+```
+
+Output:
+```
+? 5
+ 5 SQUARED IS 25
+```
+
+### Example 2: Input with Prompt
+
+```basic
+10 PI = 3.14
+20 INPUT "WHAT IS THE RADIUS"; R
+30 A = PI * R^2
+40 PRINT "THE AREA OF THE CIRCLE IS"; A
+50 PRINT
+60 GOTO 20
+```
+
+Output:
+```
+WHAT IS THE RADIUS? 7.4
+THE AREA OF THE CIRCLE IS 171.9464
+
+WHAT IS THE RADIUS? _
 ```
 
 ## See Also
-- [LINE INPUT](line-input.md) - To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters
+- [LINE INPUT](line-input.md) - To input an entire line (up to 254 characters) to a string variable, without the use of delimiters
 - [PRINT](print.md) - Output text and values to the screen
+- [INPUT#](inputi.md) - Read data from a sequential file
+- [READ](read.md) - Read values from DATA statements
 - [WRITE](write.md) - To output data at the terminal

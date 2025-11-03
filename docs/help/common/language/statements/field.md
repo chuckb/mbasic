@@ -23,7 +23,15 @@ To allocate space for variables in a random file buffer.
 
 ## Remarks
 
-To get data out of a random buffer after a GET or to enter data before a PUT, a FIELD statement must have been executed. <file number> is the number und~r which the file was OPENed.    <field width> is the number of characters to be allocated to <string variable>. For example, FIELD 1, 20 AS N$, 10 AS ID$, 40 AS ADD$ allocates the first 20 positions. (bytes) in the· random file buffer to the string variable N$, the next 10 positions to ID$, and the next 40 positions to ADD$.     FIELD does NOT place any data in the random file buffer.   (See LSET/RSET and GET.) The total number of bytes allocated in a FIELD statement must not exceed the record length that was specified when the      file    was  OPENed. Otherwise, a "Field overflow" error occurs. (The default record length is l28.) Any number of FIELD statements may be executed for the same file, and all FIELD statements that have been executed are in effect at the same time.
+To get data out of a random buffer after a GET or to enter data before a PUT, a FIELD statement must have been executed. `<file number>` is the number under which the file was OPENed. `<field width>` is the number of characters to be allocated to `<string variable>`.
+
+For example, FIELD 1, 20 AS N$, 10 AS ID$, 40 AS ADD$ allocates the first 20 positions (bytes) in the random file buffer to the string variable N$, the next 10 positions to ID$, and the next 40 positions to ADD$.
+
+FIELD does NOT place any data in the random file buffer. (See LSET/RSET and GET.)
+
+The total number of bytes allocated in a FIELD statement must not exceed the record length that was specified when the file was OPENed. Otherwise, a "Field overflow" error occurs. (The default record length is 128.)
+
+Any number of FIELD statements may be executed for the same file, and all FIELD statements that have been executed are in effect at the same time.
 
 ## Example
 
