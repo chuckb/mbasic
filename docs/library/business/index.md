@@ -4,6 +4,17 @@ Business applications and tools
 
 ## Available Business Programs
 
+### Airmiles
+
+
+
+**Year:** 1980s
+**Tags:** 
+
+**[Download airmiles.bas](airmiles.bas)**
+
+---
+
 ### Budget
 
 
@@ -23,6 +34,17 @@ Business applications and tools
 **Tags:** 
 
 **[Download cpm-pert.bas](cpm-pert.bas)**
+
+---
+
+### Diary
+
+
+
+**Year:** 1980s
+**Tags:** 
+
+**[Download diary.bas](diary.bas)**
 
 ---
 

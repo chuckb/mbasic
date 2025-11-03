@@ -27,6 +27,22 @@
       "tags": []
     },
     {
+      "filename": "rbsclock.bas",
+      "source_path": "basic/ham_radio/rbsclock.bas",
+      "title": "Rbsclock",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "rbspurge.bas",
+      "source_path": "basic/ham_radio/rbspurge.bas",
+      "title": "Rbspurge",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
       "filename": "rbsutl31.bas",
       "source_path": "basic/ham_radio/rbsutl31.bas",
       "title": "Rbsutl31",

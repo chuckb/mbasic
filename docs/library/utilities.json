@@ -75,6 +75,14 @@
       "tags": []
     },
     {
+      "filename": "rotate.bas",
+      "source_path": "basic/utilities/rotate.bas",
+      "title": "Rotate",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
       "filename": "search.bas",
       "source_path": "basic/utilities/search.bas",
       "title": "Search",
@@ -99,6 +107,14 @@
       "tags": []
     },
     {
+      "filename": "un-prot.bas",
+      "source_path": "basic/utilities/un-prot.bas",
+      "title": "Un-Prot",
+      "description": "Fixup for ** UN.COM **",
+      "year": "1980s",
+      "tags": []
+    },
+    {
       "filename": "unprotct.bas",
       "source_path": "basic/utilities/unprotct.bas",
       "title": "Unprotct",
@@ -111,6 +127,22 @@
       "source_path": "basic/utilities/uudecode.bas",
       "title": "Uudecode",
       "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "xextract.bas",
+      "source_path": "basic/utilities/xextract.bas",
+      "title": "Xextract",
+      "description": "0 -->END PAGE / 1-20 -->EXTRACT ITEM / 21 -->RESTART",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "xscan.bas",
+      "source_path": "basic/utilities/xscan.bas",
+      "title": "Xscan",
+      "description": "0 -->END PAGE / 1-20 -->DELETE ITEM / 21 -->RESTART",
       "year": "1980s",
       "tags": []
     }

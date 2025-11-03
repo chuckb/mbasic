@@ -3,6 +3,14 @@
   "description": "Business applications and tools",
   "programs": [
     {
+      "filename": "airmiles.bas",
+      "source_path": "basic/business/airmiles.bas",
+      "title": "Airmiles",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
       "filename": "budget.bas",
       "source_path": "basic/business/budget.bas",
       "title": "Budget",
@@ -14,6 +22,14 @@
       "filename": "cpm-pert.bas",
       "source_path": "basic/business/cpm-pert.bas",
       "title": "Cpm-Pert",
+      "description": "",
+      "year": "1980s",
+      "tags": []
+    },
+    {
+      "filename": "diary.bas",
+      "source_path": "basic/business/diary.bas",
+      "title": "Diary",
       "description": "",
       "year": "1980s",
       "tags": []

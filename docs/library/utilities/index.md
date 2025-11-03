@@ -103,6 +103,17 @@ Utility programs for file management, conversion, and system tools
 
 ---
 
+### Rotate
+
+
+
+**Year:** 1980s
+**Tags:** 
+
+**[Download rotate.bas](rotate.bas)**
+
+---
+
 ### Search
 
 
@@ -136,6 +147,17 @@ Utility programs for file management, conversion, and system tools
 
 ---
 
+### Un-Prot
+
+Fixup for ** UN.COM **
+
+**Year:** 1980s
+**Tags:** 
+
+**[Download un-prot.bas](un-prot.bas)**
+
+---
+
 ### Unprotct
 
 
@@ -155,6 +177,28 @@ Utility programs for file management, conversion, and system tools
 **Tags:** 
 
 **[Download uudecode.bas](uudecode.bas)**
+
+---
+
+### Xextract
+
+0 -->END PAGE / 1-20 -->EXTRACT ITEM / 21 -->RESTART
+
+**Year:** 1980s
+**Tags:** 
+
+**[Download xextract.bas](xextract.bas)**
+
+---
+
+### Xscan
+
+0 -->END PAGE / 1-20 -->DELETE ITEM / 21 -->RESTART
+
+**Year:** 1980s
+**Tags:** 
+
+**[Download xscan.bas](xscan.bas)**
 
 ---
 
