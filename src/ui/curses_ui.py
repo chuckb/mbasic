@@ -1646,12 +1646,13 @@ class CursesBackend(UIBackend):
         if not self.interpreter or not hasattr(self.interpreter, 'state') or not self.interpreter.state:
             # No program running - start it and step immediately
             self._run_program()
-            # Program is now running async - halt it immediately and step
+            # Program is now running async - halt it immediately
             self.runtime.halted = True
-            # _run_program() is async, so io_handler might not be ready yet
-            if not self.io_handler:
-                return  # Wait for next call
-            # Now fall through to step below
+            return  # Wait for setup to complete on next call
+
+        # Check if io_handler is ready (may not be on first call after _run_program)
+        if not self.io_handler:
+            return  # Still setting up, try again
 
         try:
             # If halted, clear it to resume execution (like a microprocessor)
@@ -1729,12 +1730,13 @@ class CursesBackend(UIBackend):
         if not self.interpreter or not hasattr(self.interpreter, 'state') or not self.interpreter.state:
             # No program running - start it and step immediately
             self._run_program()
-            # Program is now running async - halt it immediately and step
+            # Program is now running async - halt it immediately
             self.runtime.halted = True
-            # _run_program() is async, so io_handler might not be ready yet
-            if not self.io_handler:
-                return  # Wait for next call
-            # Now fall through to step below
+            return  # Wait for setup to complete on next call
+
+        # Check if io_handler is ready (may not be on first call after _run_program)
+        if not self.io_handler:
+            return  # Still setting up, try again
 
         try:
             # If halted, clear it to resume execution (like a microprocessor)
