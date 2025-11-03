@@ -2,8 +2,8 @@
 
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
-**Last Updated:** 2025-11-02
-**Total Documents:** 153
+**Last Updated:** 2025-11-03
+**Total Documents:** 155
 
 ## What's Here
 
@@ -34,6 +34,8 @@ If you're contributing to MBASIC:
 - [Auto Numbering Visual Ui Design](AUTO_NUMBERING_VISUAL_UI_DESIGN.md)
 - [Auto Numbering Web Ui Fix](AUTO_NUMBERING_WEB_UI_FIX.md)
 - [Curses Feature Parity Complete](CURSES_FEATURE_PARITY_COMPLETE.md)
+- [Curses Menu White Background Todo](CURSES_MENU_WHITE_BACKGROUND_TODO.md)
+- [Curses Mouse Support Todo](CURSES_MOUSE_SUPPORT_TODO.md)
 - [Curses Ui Feature Parity](CURSES_UI_FEATURE_PARITY.md)
 - [Curses Ui File Loading Fix](CURSES_UI_FILE_LOADING_FIX.md)
 - [Curses Ui Testing](CURSES_UI_TESTING.md)
