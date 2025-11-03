@@ -51,8 +51,10 @@ class KeymapWidget(urwid.WidgetWrap):
         self.listbox = urwid.ListBox(self.listwalker)
 
         # Wrap in line box with black background
+        # Set title to None to suppress the title line space
         linebox = urwid.LineBox(
-            urwid.AttrMap(self.listbox, 'body')
+            urwid.AttrMap(self.listbox, 'body'),
+            title=None
         )
 
         super().__init__(urwid.AttrMap(linebox, 'body'))
