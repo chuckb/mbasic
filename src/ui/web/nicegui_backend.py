@@ -1760,8 +1760,8 @@ class NiceGUIBackend(UIBackend):
 
             # Start interpreter (sets up statement table, etc.)
             state = self.interpreter.start()
-            if state.status == 'error':
-                error_msg = state.error_info.error_message if state.error_info else 'Unknown'
+            if state.error_info:
+                error_msg = state.error_info.error_message
                 self._append_output(f"\n--- Setup error: {error_msg} ---\n")
                 self._set_status('Error')
                 self.running = False  # For display only (spinner)
@@ -1812,32 +1812,20 @@ class NiceGUIBackend(UIBackend):
             return
 
         try:
-            status = self.interpreter.state.status if self.interpreter else 'no interpreter'
+            state = self.interpreter.state if self.interpreter else None
+            if not state:
+                return
 
             # If waiting for input, don't tick - wait for input to be provided
-            if status == 'waiting_for_input':
+            if state.input_prompt:
                 return
 
             # Execute one tick (up to 1000 statements)
             state = self.interpreter.tick(mode='run', max_statements=1000)
 
-            # Handle state
-            if state.status == 'done':
-                self._append_output("\n--- Program finished ---\n")
-                self._set_status("Ready")
-                self.running = False
-                # Hide current line highlight
-                if self.current_line_label:
-                    self.current_line_label.visible = False
-                if self.exec_timer:
-                    self.exec_timer.cancel()
-                    self.exec_timer = None
-            elif state.status == 'waiting_for_input':
-                # Pause execution until input is provided
-                self._set_status("Waiting for input...")
-                # Don't cancel timer - keep ticking to check when input is provided
-            elif state.status == 'error':
-                error_msg = state.error_info.error_message if state.error_info else "Unknown error"
+            # Handle state using microprocessor model
+            if state.error_info:
+                error_msg = state.error_info.error_message
                 self._append_output(f"\n--- Error: {error_msg} ---\n")
                 self._set_status("Error")
                 self.running = False
@@ -1847,18 +1835,37 @@ class NiceGUIBackend(UIBackend):
                 if self.exec_timer:
                     self.exec_timer.cancel()
                     self.exec_timer = None
-            elif state.status == 'paused' or state.status == 'at_breakpoint':
-                self._set_status(f"Paused at line {state.current_line}")
-                self.running = True  # Keep running=True so Continue works
-                self.paused = True
-                # Show current line highlight
-                if self.current_line_label:
-                    self.current_line_label.set_text(f'>>> Executing line {state.current_line}')
-                    self.current_line_label.visible = True
-                # Highlight current statement in CodeMirror
-                char_start = state.current_statement_char_start if state.current_statement_char_start > 0 else None
-                char_end = state.current_statement_char_end if state.current_statement_char_end > 0 else None
-                self.editor.set_current_statement(state.current_line, char_start, char_end)
+            elif state.input_prompt:
+                # Pause execution until input is provided
+                self._set_status("Waiting for input...")
+                # Don't cancel timer - keep ticking to check when input is provided
+            elif self.runtime.halted:
+                # Check if done or paused at breakpoint
+                pc = self.runtime.pc
+                if pc.halted() or not self.runtime.statement_table.get(pc):
+                    # Past end of program - done
+                    self._append_output("\n--- Program finished ---\n")
+                    self._set_status("Ready")
+                    self.running = False
+                    # Hide current line highlight
+                    if self.current_line_label:
+                        self.current_line_label.visible = False
+                    if self.exec_timer:
+                        self.exec_timer.cancel()
+                        self.exec_timer = None
+                else:
+                    # Paused at a statement (breakpoint or step)
+                    self._set_status(f"Paused at line {state.current_line}")
+                    self.running = True  # Keep running=True so Continue works
+                    self.paused = True
+                    # Show current line highlight
+                    if self.current_line_label:
+                        self.current_line_label.set_text(f'>>> Executing line {state.current_line}')
+                        self.current_line_label.visible = True
+                    # Highlight current statement in CodeMirror
+                    char_start = state.current_statement_char_start if state.current_statement_char_start > 0 else None
+                    char_end = state.current_statement_char_end if state.current_statement_char_end > 0 else None
+                    self.editor.set_current_statement(state.current_line, char_start, char_end)
                 if self.exec_timer:
                     self.exec_timer.cancel()
                     self.exec_timer = None
@@ -1878,7 +1885,7 @@ class NiceGUIBackend(UIBackend):
 
         # Stop the interpreter
         if self.interpreter:
-            self.interpreter.state.status = 'paused'
+            self.runtime.halted = True
 
         # Update UI state
         self.running = False
@@ -1927,8 +1934,8 @@ class NiceGUIBackend(UIBackend):
 
                 # Start interpreter
                 state = self.interpreter.start()
-                if state.status == 'error':
-                    error_msg = state.error_info.error_message if state.error_info else 'Unknown'
+                if state.error_info:
+                    error_msg = state.error_info.error_message
                     self._append_output(f"\n--- Setup error: {error_msg} ---\n")
                     self._set_status('Error')
                     return
@@ -1979,8 +1986,8 @@ class NiceGUIBackend(UIBackend):
 
                 # Start interpreter
                 state = self.interpreter.start()
-                if state.status == 'error':
-                    error_msg = state.error_info.error_message if state.error_info else 'Unknown'
+                if state.error_info:
+                    error_msg = state.error_info.error_message
                     self._append_output(f"\n--- Setup error: {error_msg} ---\n")
                     self._set_status('Error')
                     return
@@ -2001,18 +2008,9 @@ class NiceGUIBackend(UIBackend):
 
     def _handle_step_result(self, state, step_type):
         """Handle result of a step operation."""
-        if state.status == 'done':
-            self._append_output("\n--- Program finished ---\n")
-            self._set_status("Ready")
-            self.running = False
-            self.paused = False
-            # Hide current line highlight
-            if self.current_line_label:
-                self.current_line_label.visible = False
-            # Clear CodeMirror current statement highlight
-            self.editor.set_current_statement(None)
-        elif state.status == 'error':
-            error_msg = state.error_info.error_message if state.error_info else "Unknown error"
+        # Use microprocessor model: check error_info, input_prompt, and runtime.halted
+        if state.error_info:
+            error_msg = state.error_info.error_message
             self._append_output(f"\n--- Error: {error_msg} ---\n")
             self._set_status("Error")
             self.running = False
@@ -2022,19 +2020,34 @@ class NiceGUIBackend(UIBackend):
                 self.current_line_label.visible = False
             # Clear CodeMirror current statement highlight
             self.editor.set_current_statement(None)
-        elif state.status in ('paused', 'at_breakpoint'):
-            self._set_status(f"Paused at line {state.current_line}")
-            self.running = True
-            self.paused = True
-            # Show current line highlight
-            if self.current_line_label:
-                self.current_line_label.set_text(f'>>> Executing line {state.current_line}')
-                self.current_line_label.visible = True
-            # Highlight current statement in CodeMirror (with character positions for statement-level highlighting)
-            char_start = state.current_statement_char_start if state.current_statement_char_start > 0 else None
-            char_end = state.current_statement_char_end if state.current_statement_char_end > 0 else None
-            self.editor.set_current_statement(state.current_line, char_start, char_end)
-        elif state.status == 'running':
+        elif self.runtime.halted:
+            # Check if done or paused
+            pc = self.runtime.pc
+            if pc.halted() or not self.runtime.statement_table.get(pc):
+                # Past end - done
+                self._append_output("\n--- Program finished ---\n")
+                self._set_status("Ready")
+                self.running = False
+                self.paused = False
+                # Hide current line highlight
+                if self.current_line_label:
+                    self.current_line_label.visible = False
+                # Clear CodeMirror current statement highlight
+                self.editor.set_current_statement(None)
+            else:
+                # Paused at a statement
+                self._set_status(f"Paused at line {state.current_line}")
+                self.running = True
+                self.paused = True
+                # Show current line highlight
+                if self.current_line_label:
+                    self.current_line_label.set_text(f'>>> Executing line {state.current_line}')
+                    self.current_line_label.visible = True
+                # Highlight current statement in CodeMirror (with character positions for statement-level highlighting)
+                char_start = state.current_statement_char_start if state.current_statement_char_start > 0 else None
+                char_end = state.current_statement_char_end if state.current_statement_char_end > 0 else None
+                self.editor.set_current_statement(state.current_line, char_start, char_end)
+        else:
             # Still running after step - mark as paused to prevent automatic continuation
             self._set_status(f"Paused at line {state.current_line}")
             self.running = True
@@ -2700,7 +2713,7 @@ class NiceGUIBackend(UIBackend):
         self._hide_input_row()
 
         # If interpreter is waiting for input, provide it
-        if self.interpreter and self.interpreter.state.status == 'waiting_for_input':
+        if self.interpreter and self.interpreter.state.input_prompt:
             self.interpreter.provide_input(value)
             # Execution will resume on next tick
 
