@@ -3498,7 +3498,8 @@ class TkBackend(UIBackend):
 
         # Check if safe to execute - use both can_execute_immediate() AND self.running flag
         # The running flag is set False immediately when program stops, even before tick completes
-        can_execute = self.immediate_executor.can_execute_immediate() and not self.running
+        can_exec_immediate = self.immediate_executor.can_execute_immediate()
+        can_execute = can_exec_immediate and not self.running
 
         if can_execute:
             # Safe to execute - enable input

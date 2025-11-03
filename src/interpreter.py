@@ -291,6 +291,8 @@ class Interpreter:
                 # Check if halted
                 if pc.halted() or self.runtime.halted:
                     # Already halted - PC should be pointing past last statement
+                    # Ensure runtime.halted is set if PC is halted
+                    self.runtime.halted = True
                     self._restore_break_handler()
                     return self.state
 
