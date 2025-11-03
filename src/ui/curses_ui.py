@@ -2221,20 +2221,6 @@ class CursesBackend(UIBackend):
         self.loop.widget = overlay
         self.loop.unhandled_input = None  # Keymap handles its own input
 
-        # Set up keypress handler to close help when ESC/Q pressed
-        def help_input(key):
-            # Let the help widget handle the key first
-            result = help_widget.keypress((80, 24), key)
-            if result == 'esc':
-                # Help widget wants to close
-                self.loop.widget = main_widget
-                self.loop.unhandled_input = self._handle_input
-            # Don't return anything - we handled it
-
-        # Show overlay and set handler
-        self.loop.widget = overlay
-        self.loop.unhandled_input = help_input
-
     def _activate_menu(self):
         """Activate the interactive menu bar."""
         # Get the dropdown overlay from menu bar

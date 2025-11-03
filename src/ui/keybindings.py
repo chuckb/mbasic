@@ -70,6 +70,8 @@ MENU_KEY = 'ctrl u'
 MENU_CHAR = '\x15'
 MENU_DISPLAY = 'Ctrl+U'
 
+# Keymap window - accessible via menu only (no dedicated key to avoid conflicts with typing)
+
 # Quit
 _quit_key = _get_key('editor', 'quit') or 'Ctrl+Q'
 QUIT_KEY = _ctrl_key_to_urwid(_quit_key)
@@ -254,9 +256,9 @@ KEYBINDINGS_BY_CATEGORY = {
 }
 
 # Quick reference for status bar - use compact ^ notation instead of Ctrl+
-STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu (keyboard shortcuts)  ^W vars  ^K stack  Tab cycle  ^Q quit"
-EDITOR_STATUS = "Editor - ^F help  ^U menu (keyboard shortcuts)  Tab cycle"
-OUTPUT_STATUS = "Output - Up/Down scroll  Tab cycle  ^U menu (keyboard shortcuts)"
+STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu (keymap)  ^W vars  ^K stack  Tab cycle  ^Q quit"
+EDITOR_STATUS = "Editor - ^F help  ^U menu (keymap)  Tab cycle"
+OUTPUT_STATUS = "Output - Up/Down scroll  Tab cycle  ^U menu (keymap)"
 
 # =============================================================================
 # Character Code Reference (for testing and documentation)
