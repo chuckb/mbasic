@@ -2,17 +2,18 @@
 category: file-io
 description: To write data to a sequential disk file
 keywords: ['command', 'data', 'field', 'file', 'for', 'if', 'input', 'line', 'number', 'open']
-syntax: PRINTt<filenumb~r>,[USING<string      exp>;]<list of exps>
-title: PRINTi AND PRINTi USING
+syntax: PRINT#<file number>,[USING<string exp>;]<list of expressions>
+title: PRINT# AND PRINT# USING
 type: statement
 ---
 
-# PRINTi AND PRINTi USING
+# PRINT# AND PRINT# USING
 
 ## Syntax
 
 ```basic
-PRINTt<filenumb~r>,[USING<string      exp>;]<list of exps>
+PRINT#<file number>, [<list of expressions>]
+PRINT#<file number>, USING <string exp>; <list of expressions>
 ```
 
 **Versions:** Disk
@@ -23,21 +24,28 @@ To write data to a sequential disk file.
 
 ## Remarks
 
+PRINT# writes data to a sequential file opened for output (mode "O") or append (mode "A"). The file number must refer to a file opened with the OPEN statement.
+
+**PRINT#** works exactly like PRINT except output goes to the file instead of the screen:
+- Items separated by commas are printed in print zones
+- Items separated by semicolons are printed adjacent to each other
+- A semicolon at the end suppresses the carriage return
+
+**PRINT# USING** formats output using a format string, just like PRINT USING:
+- # for digit positions
+- . for decimal point
+- $$ for floating dollar sign
+- ** for asterisk fill
+- , for thousands separator
+
+The file must be opened before using PRINT#. Data written with PRINT# can be read back with INPUT# or LINE INPUT#.
+
 ## See Also
-- [CLOSE](close.md) - To conclude I/O to a disk file
-- [EOF](../functions/eof.md) - Returns -1 (true) if the end of a sequential file has been reached
-- [FIELD](field.md) - To allocate space for variables in a random file buffer
-- [FILES](files.md) - Displays the directory of files on disk
-- [GET](get.md) - To read a record from a random disk file into    a random buffer
-- [INPUT$](../functions/input_dollar.md) - Returns a string of X characters, read from the terminal or from file number Y
-- [LOC](../functions/loc.md) - With random disk files, LOC returns the next record number to be used if a GET or PUT (without a record number) is executed
-- [LOF](../functions/lof.md) - Returns the length of a file in bytes
-- [LPOS](../functions/lpos.md) - Returns the current position of the line printer print head within the line printer buffer
-- [LSET](lset.md) - Left-justifies a string in a field for random file output
-- [OPEN](open.md) - To allow I/O to a disk file
-- [POS](../functions/pos.md) - Returns the current cursor position
-- [PUT](put.md) - To write a record from a random buffer to a random file
-- [RESET](reset.md) - Closes all open files
-- [RSET](rset.md) - Right-justifies a string in a field for random file output
-- [WRITE #](writei.md) - Write data to a sequential file with delimiters
-- [~ INPUTi](inputi.md) - To read an entire line (up to 254 characters), without delimiters, from a sequential disk data file to a string variable
+- [OPEN](open.md) - Open a file for output
+- [CLOSE](close.md) - Close the file when done
+- [INPUT#](input_hash.md) - Read data from sequential file
+- [LINE INPUT#](inputi.md) - Read entire line from file
+- [WRITE#](writei.md) - Write data with automatic delimiters
+- [PRINT](print.md) - Output to screen
+- [PRINT USING](print.md) - Formatted output to screen
+- [EOF](../functions/eof.md) - Test for end of file
