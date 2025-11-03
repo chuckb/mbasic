@@ -33,31 +33,26 @@ class KeymapWidget(urwid.WidgetWrap):
         """
         self.on_close = on_close
 
-        # Build the keymap content
-        content = self._build_keymap_content()
+        # Build the keymap content with instructions at the top
+        content = []
+
+        # Add instructions as first item
+        instructions = urwid.AttrMap(
+            urwid.Text("↑/↓ scroll  ESC/Q close", align='center'),
+            'help_text'
+        )
+        content.append(instructions)
+
+        # Add keymap content
+        content.extend(self._build_keymap_content())
 
         # Create scrollable listbox
         self.listwalker = urwid.SimpleFocusListWalker(content)
         self.listbox = urwid.ListBox(self.listwalker)
 
-        # Add instructions at top
-        instructions = urwid.Text(
-            "↑/↓ scroll  ESC/Q close",
-            align='center'
-        )
-
-        # Build the layout
-        pile = urwid.Pile([
-            ('pack', urwid.AttrMap(instructions, 'help_text')),
-            self.listbox,
-        ])
-
         # Wrap in line box with black background
-        # Use empty string for tline to suppress the title line space
         linebox = urwid.LineBox(
-            urwid.AttrMap(pile, 'body'),
-            title='',
-            tline=''
+            urwid.AttrMap(self.listbox, 'body')
         )
 
         super().__init__(urwid.AttrMap(linebox, 'body'))
