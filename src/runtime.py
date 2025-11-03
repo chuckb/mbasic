@@ -71,7 +71,7 @@ class Runtime:
         self.statement_table = StatementTable()  # Ordered collection of statements indexed by PC
 
         # Execution control
-        self.halted = False           # Program finished?
+        self.halted = True            # Start halted (no program loaded yet)
 
         # Unified execution stack - tracks all active control flow (GOSUB, FOR, WHILE) in nesting order
         # Each entry: {'type': 'GOSUB'|'FOR'|'WHILE', ...type-specific fields...}
