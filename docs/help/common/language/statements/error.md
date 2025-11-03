@@ -15,11 +15,11 @@ type: statement
 ERROR <integer expression>
 ```
 
-**Versions:** Extend~d,   Disk
+**Versions:** Extended, Disk
 
 ## Purpose
 
-1) To simulate the occurrence of a BASIC-80 error1   or 2) to allow error codes to be defined by the user.
+1) To simulate the occurrence of a BASIC-80 error or 2) to allow error codes to be defined by the user.
 
 ## Remarks
 

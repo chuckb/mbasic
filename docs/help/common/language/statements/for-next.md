@@ -18,7 +18,7 @@ NEXT [<variable>] [,<variable> ••• ]
 where x, y and z are numeric expressions.
 ```
 
-**Versions:** SK, Extended, Disk
+**Versions:** 8K, Extended, Disk
 
 ## Purpose
 

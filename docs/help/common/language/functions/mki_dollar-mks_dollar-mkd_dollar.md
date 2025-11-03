@@ -2,7 +2,7 @@
 category: type-conversion
 description: Convert numeric values to string values
 keywords: ['complementary', 'field', 'file', 'for', 'function', 'mkd', 'mki', 'mks', 'number', 'poke']
-syntax: MKI$«integer expression» MKS$«single precision expression» MKD$«double precision expression» OCT$ (X) PEEK (I)
+syntax: MKI$(integer_expression) MKS$(single_precision_expression) MKD$(double_precision_expression)
 title: MKI$, MKS$, MKD$
 type: function
 ---
@@ -12,14 +12,16 @@ type: function
 ## Syntax
 
 ```basic
-MKI$«integer expression» MKS$«single precision expression» MKD$«double precision expression» OCT$ (X) PEEK (I)
+MKI$(integer_expression)
+MKS$(single_precision_expression)
+MKD$(double_precision_expression)
 ```
 
-**Versions:** Disk Extended, Disk SK, Extended, Disk
+**Versions:** Disk
 
 ## Description
 
-Convert numeric values to string values. Any numeric value that is plac'ed in a random file buffer with an LSET or RSET statement must be converted to a string. MKI$ converts an integer to a 2-byte string. MKS$ converts a single precision number to a 4-byte string. MKD$ converts a double precision number to an 8-byte string. Returns a string which represents the octal value of the decimal argument. X is rounded to an integer before OCT$(X) is evaluated. Returns the byte (decimal integer in the range a to 255) read from memory location I. With the SK version of BASIC-SO, I must be less than 3276S. To PEEK at a memory location above 3276S, subtract 65536 from the desired address. With Extended and Disk BASIC-SO, I must be in the range a to 65536. PEEK is the complementary function to the POKE statement, Section 2.4S.
+Convert numeric values to string values. Any numeric value that is placed in a random file buffer with an LSET or RSET statement must be converted to a string. MKI$ converts an integer to a 2-byte string. MKS$ converts a single precision number to a 4-byte string. MKD$ converts a double precision number to an 8-byte string.
 
 ## Example
 

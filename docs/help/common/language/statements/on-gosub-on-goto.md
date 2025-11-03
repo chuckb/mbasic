@@ -16,7 +16,7 @@ ON <expression> GOTO <list of line numbers>
 ON <expression> GOSUB <list of line numbers>
 ```
 
-**Versions:** SK, Extended, Disk
+**Versions:** 8K, Extended, Disk
 
 ## Purpose
 

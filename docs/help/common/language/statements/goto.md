@@ -16,7 +16,7 @@ type: statement
 GOTO <line number>
 ```
 
-**Versions:** SK, Extended, Disk
+**Versions:** 8K, Extended, Disk
 
 ## Purpose
 

@@ -15,7 +15,7 @@ type: function
 COS (X)
 ```
 
-**Versions:** SK, Extended, Disk Extended, Disk
+**Versions:** 8K, Extended, Disk Extended, Disk
 
 ## Description
 

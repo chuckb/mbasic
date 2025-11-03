@@ -2,7 +2,7 @@
 category: file-io
 description: Returns -1 (true) if the end of a sequential file has been reached
 keywords: ['data', 'eof', 'error', 'file', 'for', 'function', 'goto', 'if', 'input', 'number']
-syntax: EOF«file number»
+syntax: EOF(file number)
 title: EOF
 type: function
 ---
@@ -12,7 +12,7 @@ type: function
 ## Syntax
 
 ```basic
-EOF«file number»
+EOF(file number)
 ```
 
 **Versions:** Disk

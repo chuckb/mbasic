@@ -21,7 +21,7 @@ IF <expression> GOTO <line number>
 [ELSE <statement(s)>     I <line number>]
 ```
 
-**Versions:** SK, Extended, Disk NOTE:          The ELSE clause is allowed only in Extended        and Disk versions.
+**Versions:** 8K, Extended, Disk NOTE:          The ELSE clause is allowed only in Extended        and Disk versions.
 
 ## Purpose
 

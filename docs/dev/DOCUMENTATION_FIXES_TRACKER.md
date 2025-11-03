@@ -1,12 +1,12 @@
 # Documentation Fixes Tracking
 **Source**: docs/history/docs_inconsistencies_report1-v2.md
 **Total Issues**: 126
-**Last Updated**: 2025-11-03 (Session 5)
-**Status**: Active - 89/126 fixed
+**Last Updated**: 2025-11-03 (Session 6)
+**Status**: Active - 109/126 fixed
 
 ## Progress Summary
-- ✅ **Fixed**: 89 (70.6%)
-- ❌ **Remaining**: 37 (29.4%)
+- ✅ **Fixed**: 109 (86.5%)
+- ❌ **Remaining**: 17 (13.5%)
 
 ## High Severity (17/17 fixed - 100%)
 
@@ -62,7 +62,7 @@
 ### ❌ Remaining (0)
 All medium severity issues have been resolved!
 
-## Low Severity (28/62 fixed - 45.2%)
+## Low Severity (48/62 fixed - 77.4%)
 
 ### ✅ Fixed
 1. **missing_category** - TAB function → output-formatting
@@ -95,8 +95,17 @@ All medium severity issues have been resolved!
 - Added debugging commands section to editor-commands.md
 - Verified shortcuts.md exists (false positive)
 - Verified math-functions.md exists (false positive)
+29-48. **Session 6 additions:**
+- Fixed "Extend~d" to "Extended" in error.md
+- Fixed "error1" to "error" in error.md
+- Fixed "8R" to "8K" in len.md
+- Fixed "SK" to "8K" in 13 files (all version strings)
+- Fixed MKI/MKS/MKD syntax removing OCT$ and PEEK
+- Fixed MKI/MKS/MKD garbled versions
+- Cleaned MKI/MKS/MKD description
+- Fixed angle brackets to parentheses in 3 files
 
-### ❌ Remaining (34)
+### ❌ Remaining (14)
 [List continues with all low severity issues...]
 
 ## Next Actions (Priority Order)

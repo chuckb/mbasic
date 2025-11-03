@@ -17,7 +17,7 @@ RUN [line number]
 RUN "filename"
 ```
 
-**Versions:** SK, Extended, Disk
+**Versions:** 8K, Extended, Disk
 
 ## Purpose
 

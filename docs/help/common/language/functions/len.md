@@ -15,7 +15,7 @@ type: function
 LEN (X$)
 ```
 
-**Versions:** 8R, Extended, Disk
+**Versions:** 8K, Extended, Disk
 
 ## Description
 

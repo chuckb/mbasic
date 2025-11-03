@@ -16,7 +16,7 @@ related: ['read', 'data']
 RESTORE [line number]
 ```
 
-**Versions:** SK, Extended, Disk
+**Versions:** 8K, Extended, Disk
 
 ## Purpose
 

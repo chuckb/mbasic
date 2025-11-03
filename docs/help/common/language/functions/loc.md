@@ -2,7 +2,7 @@
 category: file-io
 description: With random disk files, LOC returns the next record number to be used if a GET or PUT (without a record number) is executed
 keywords: ['execute', 'file', 'function', 'get', 'if', 'loc', 'next', 'number', 'open', 'put']
-syntax: LOC«file number»
+syntax: LOC(file number)
 title: LOC
 type: function
 ---
@@ -12,7 +12,7 @@ type: function
 ## Syntax
 
 ```basic
-LOC«file number»
+LOC(file number)
 ```
 
 **Versions:** Disk

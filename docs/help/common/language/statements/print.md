@@ -18,7 +18,7 @@ PRINT [<list of expressions>]
 PRINT USING <string   exp>~<list   of expressions>
 ```
 
-**Versions:** SK, Extended, Disk Extended, Disk
+**Versions:** 8K, Extended, Disk Extended, Disk
 
 ## Purpose
 

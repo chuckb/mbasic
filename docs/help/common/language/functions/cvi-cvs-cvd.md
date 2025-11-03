@@ -2,7 +2,7 @@
 category: type-conversion
 description: Convert string values to numeric values
 keywords: ['cvd', 'cvi', 'cvs', 'field', 'file', 'function', 'get', 'number', 'read', 'string']
-syntax: CVI«2-byte string» CVS«4-byte string» CVD«8-byte string»
+syntax: CVI(2-byte string) CVS(4-byte string) CVD(8-byte string)
 title: CVI, CVS, CVD
 type: function
 ---
@@ -12,7 +12,7 @@ type: function
 ## Syntax
 
 ```basic
-CVI«2-byte string» CVS«4-byte string» CVD«8-byte string»
+CVI(2-byte string) CVS(4-byte string) CVD(8-byte string)
 ```
 
 **Versions:** Disk
