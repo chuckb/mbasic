@@ -3490,9 +3490,7 @@ class CursesBackend(UIBackend):
             # Sync program to editor
             self._sync_program_to_editor()
 
-            # Reset runtime (like NEW command) - clears variables, resets state
-            # Keep runtime/interpreter objects alive (created at startup)
-            self.runtime.reset_for_run({}, {})
+            # Runtime will be reset when user actually runs the program
 
             # Add to recent files
             self.recent_files.add_file(filename)
