@@ -16,6 +16,48 @@ with open(_config_path, 'r') as f:
     _config = json.load(f)
 
 
+def _validate_keybindings():
+    """Validate keybindings at module load time.
+
+    Rules:
+    1. Control keys must be Ctrl+A through Ctrl+Z (or Shift+Ctrl+A through Shift+Ctrl+Z)
+    2. No duplicate key assignments
+    """
+    seen_keys = {}  # key -> (context, action, description)
+    valid_ctrl_keys = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+
+    for context, bindings in _config.items():
+        for action, config in bindings.items():
+            for key in config.get('keys', []):
+                # Validate control keys
+                if key.startswith('Ctrl+'):
+                    letter = key[5:]
+                    if len(letter) != 1 or letter.upper() not in valid_ctrl_keys:
+                        raise ValueError(f"Invalid control key '{key}' in {context}.{action}: "
+                                       f"Control keys must be Ctrl+A through Ctrl+Z")
+
+                elif key.startswith('Shift+Ctrl+'):
+                    letter = key[11:]
+                    if len(letter) != 1 or letter.upper() not in valid_ctrl_keys:
+                        raise ValueError(f"Invalid control key '{key}' in {context}.{action}: "
+                                       f"Control keys must be Shift+Ctrl+A through Shift+Ctrl+Z")
+
+                # Check for duplicates (within same context)
+                if key in seen_keys and seen_keys[key][0] == context:
+                    prev_action, prev_desc = seen_keys[key][1], seen_keys[key][2]
+                    curr_desc = config.get('description', action)
+                    raise ValueError(f"Duplicate keybinding '{key}' in {context}:\n"
+                                   f"  1) {prev_action}: {prev_desc}\n"
+                                   f"  2) {action}: {curr_desc}\n"
+                                   f"Each key can only have one function per context.")
+
+                seen_keys[key] = (context, action, config.get('description', action))
+
+
+# Validate at module load time
+_validate_keybindings()
+
+
 def _ctrl_key_to_urwid(key_string):
     """
     Convert keybinding string to urwid format.
