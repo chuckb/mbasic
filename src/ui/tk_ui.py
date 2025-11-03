@@ -2144,7 +2144,7 @@ class TkBackend(UIBackend):
             self._set_status(f"Syntax error{plural} in program - cannot run")
         else:
             # No errors - clear any previous error status
-            if hasattr(self, 'status_label') and self.status_label:
+            if self.status_label:
                 current_status = self.status_label.cget('text')
                 if 'Syntax error' in current_status:
                     self._set_status("Ready")
@@ -3582,9 +3582,9 @@ class TkBackend(UIBackend):
                 self.root.after(10, self._execute_tick)
 
         # Update variables/stack windows if they exist
-        if hasattr(self, 'variables_window') and self.variables_window:
+        if self.variables_window:
             self._update_variables()
-        if hasattr(self, 'stack_window') and self.stack_window and self.stack_visible:
+        if self.stack_window and self.stack_visible:
             self._update_stack()
 
     def _add_immediate_output(self, text):
