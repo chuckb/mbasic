@@ -21,6 +21,8 @@ from typing import List, Dict, Any
 import hashlib
 import time
 
+USE_MODEL='claude-sonnet-4-5'
+
 try:
     import anthropic
 except ImportError:
@@ -176,7 +178,7 @@ Return ONLY the JSON array, no other text."""
 
         try:
             response = self.client.messages.create(
-                model="claude-sonnet-4-5",
+                model=USE_MODEL
 #                model="claude-3-5-sonnet-20241022",
                 max_tokens=4000,
                 temperature=0,
@@ -266,7 +268,7 @@ Return ONLY the JSON array."""
 
         try:
             response = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
+                model=USE_MODEL
                 max_tokens=4000,
                 temperature=0,
                 messages=[{"role": "user", "content": prompt}]
