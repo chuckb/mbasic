@@ -26,8 +26,9 @@ Intrinsic functions provided by BASIC-80. These functions may be called from any
 - [LEFT$](left_dollar.md) - Left substring
 - [LEN](len.md) - String length
 - [MID$](mid_dollar.md) - Middle substring
+- [OCT$](oct_dollar.md) - Number to octal
 - [RIGHT$](right_dollar.md) - Right substring
-- [SPACE$](spaces.md) - Spaces
+- [SPACE$](space_dollar.md) - Returns a string of spaces
 - [SPC](spc.md) - Skip spaces
 - [STR$](str_dollar.md) - Number to string
 - [STRING$](string_dollar.md) - Repeated character
@@ -43,6 +44,7 @@ Intrinsic functions provided by BASIC-80. These functions may be called from any
 - [EOF](eof.md) - End of file
 - [INPUT$](input_dollar.md) - Read characters
 - [LOC](loc.md) - File position
+- [LOF](lof.md) - Length of file
 - [LPOS](lpos.md) - Printer position
 - [POS](pos.md) - Cursor position
 
@@ -50,12 +52,13 @@ Intrinsic functions provided by BASIC-80. These functions may be called from any
 - [FRE](fre.md) - Free memory
 - [INKEY$](inkey_dollar.md) - Read keyboard
 - [INP](inp.md) - Port input
+- [PEEK](peek.md) - Read memory location
 - [USR](usr.md) - Machine language call
 - [VARPTR](varptr.md) - Variable address
 
 ## Alphabetical Quick Reference
 
-[ABS](abs.md) | [ASC](asc.md) | [ATN](atn.md) | [CDBL](cdbl.md) | [CHR$](chr_dollar.md) | [CINT](cint.md) | [COS](cos.md) | [CVD/CVI/CVS](cvi-cvs-cvd.md) | [EOF](eof.md) | [EXP](exp.md) | [FIX](fix.md) | [FRE](fre.md) | [HEX$](hex_dollar.md) | [INKEY$](inkey_dollar.md) | [INP](inp.md) | [INPUT$](input_dollar.md) | [INSTR](instr.md) | [INT](int.md) | [LEFT$](left_dollar.md) | [LEN](len.md) | [LOC](loc.md) | [LOG](log.md) | [LPOS](lpos.md) | [MID$](mid_dollar.md) | [MKD$/MKI$/MKS$](mki_dollar-mks_dollar-mkd_dollar.md) | [POS](pos.md) | [RIGHT$](right_dollar.md) | [RND](rnd.md) | [SGN](sgn.md) | [SIN](sin.md) | [SPACE$](spaces.md) | [SPC](spc.md) | [SQR](sqr.md) | [STR$](str_dollar.md) | [STRING$](string_dollar.md) | [TAB](tab.md) | [TAN](tan.md) | [USR](usr.md) | [VAL](val.md) | [VARPTR](varptr.md)
+[ABS](abs.md) | [ASC](asc.md) | [ATN](atn.md) | [CDBL](cdbl.md) | [CHR$](chr_dollar.md) | [CINT](cint.md) | [COS](cos.md) | [CVD/CVI/CVS](cvi-cvs-cvd.md) | [EOF](eof.md) | [EXP](exp.md) | [FIX](fix.md) | [FRE](fre.md) | [HEX$](hex_dollar.md) | [INKEY$](inkey_dollar.md) | [INP](inp.md) | [INPUT$](input_dollar.md) | [INSTR](instr.md) | [INT](int.md) | [LEFT$](left_dollar.md) | [LEN](len.md) | [LOC](loc.md) | [LOF](lof.md) | [LOG](log.md) | [LPOS](lpos.md) | [MID$](mid_dollar.md) | [MKD$/MKI$/MKS$](mki_dollar-mks_dollar-mkd_dollar.md) | [OCT$](oct_dollar.md) | [PEEK](peek.md) | [POS](pos.md) | [RIGHT$](right_dollar.md) | [RND](rnd.md) | [SGN](sgn.md) | [SIN](sin.md) | [SPACE$](space_dollar.md) | [SPC](spc.md) | [SQR](sqr.md) | [STR$](str_dollar.md) | [STRING$](string_dollar.md) | [TAB](tab.md) | [TAN](tan.md) | [USR](usr.md) | [VAL](val.md) | [VARPTR](varptr.md)
 
 ## See Also
 

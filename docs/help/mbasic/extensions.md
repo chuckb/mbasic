@@ -14,9 +14,9 @@ This is **MBASIC-2025**, a modern implementation of Microsoft BASIC-80 5.21 (CP/
 
 These features are **NOT** in the original CP/M MBASIC 5.21 from 1981. They are modern additions for improved development experience.
 
-### 🔍 Debugging Commands (CLI Only)
+### 🔍 Debugging Commands
 
-**IMPORTANT:** These commands are exclusive to the CLI backend and are **NOT in original MBASIC 5.21**.
+**IMPORTANT:** These commands are **NOT in original MBASIC 5.21**. They are modern extensions that may be available in different forms depending on the UI backend.
 
 #### BREAK - Breakpoint Management
 ```basic
@@ -26,6 +26,7 @@ BREAK CLEAR            ' Clear all breakpoints
 BREAK CLEAR 100        ' Clear specific breakpoint
 ```
 **Status:** ⚠️ MBASIC-2025 Extension (Not in MBASIC 5.21)
+**Availability:** CLI (command form), Curses (Ctrl+B), Tk (UI controls)
 
 #### STEP - Single-Step Execution
 ```basic
@@ -35,6 +36,7 @@ STEP INTO              ' Step into subroutines (planned)
 STEP OVER              ' Step over subroutines (planned)
 ```
 **Status:** ⚠️ MBASIC-2025 Extension (Not in MBASIC 5.21)
+**Availability:** CLI (command form), Curses (Ctrl+T/Ctrl+K), Tk (UI controls)
 
 #### STACK - Call Stack Display
 ```basic
@@ -43,6 +45,7 @@ STACK GOSUB            ' Show only GOSUB stack
 STACK FOR              ' Show only FOR loop stack
 ```
 **Status:** ⚠️ MBASIC-2025 Extension (Not in MBASIC 5.21)
+**Availability:** CLI (command form), Curses (menu access), Tk (stack window)
 
 ### 🖥️ Multiple User Interfaces
 

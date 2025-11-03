@@ -10,10 +10,11 @@ Clear the current program and start fresh.
 ### Open/Load File (Ctrl+O)
 Load a BASIC program from disk. Opens a file browser to select the file.
 
-### Save File (Ctrl+S)
+### Save File (Ctrl+V)
 Save the current program to disk. If no filename is set, prompts for one.
+Note: Uses Ctrl+V because Ctrl+S is reserved for terminal flow control.
 
-### Save As (Ctrl+Shift+S)
+### Save As (Shift+Ctrl+V)
 Save the current program with a new filename.
 
 ### Recent Files (Ctrl+Shift+O)
@@ -36,11 +37,11 @@ Execute the current BASIC program from the beginning.
 ### Stop/Interrupt (Ctrl+X)
 Stop a running program immediately.
 
-### Continue (Ctrl+G)
+### Continue (Ctrl+C)
 Resume execution after hitting a breakpoint or stepping.
 
-### List Program (Ctrl+L)
-Display the program listing in the editor.
+### List Program (Menu only)
+Display the program listing in the editor. Access through the menu bar.
 
 ### Renumber (Ctrl+E)
 Renumber all program lines with consistent increments. Opens a dialog to specify start line and increment.
@@ -58,7 +59,7 @@ Toggle a breakpoint on the current line. Execution will pause when reaching this
 ### Step Statement (Ctrl+T)
 Execute one BASIC statement and pause. Useful for debugging complex lines with multiple statements.
 
-### Step Line (Ctrl+L when paused)
+### Step Line (Ctrl+K)
 Execute the next line of code and pause. Advances one line number at a time.
 
 ### Clear All Breakpoints (Ctrl+Shift+B)
@@ -90,12 +91,12 @@ Cycle through different sort orders:
 
 Press 'd' to reverse sort direction.
 
-### Execution Stack (Ctrl+K)
+### Execution Stack (Menu only)
 View the call stack showing:
 - Active GOSUB calls
 - FOR/NEXT loops
 - WHILE loops
-Helps understand program flow and nesting levels.
+Helps understand program flow and nesting levels. Access through the menu bar.
 
 ### Resource Usage
 Monitor memory and variable usage in the status bar.

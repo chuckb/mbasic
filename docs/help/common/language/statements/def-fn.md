@@ -27,7 +27,9 @@ DEF FN<name>(<parameter list>)=<function definition>       ' Without spaces
 
 ## Parameters
 
-- **name** - A legal variable name that becomes the function name after FN. **Can be one or more characters** (e.g., `A`, `ABC`, `UCASE$`, `DISTANCE`).
+- **name** - A legal variable name that becomes the function name after FN.
+  - **Original MBASIC 5.21**: Single character only (e.g., `A`, `B`, `X$`)
+  - **This implementation**: Can be one or more characters (e.g., `A`, `ABC`, `UCASE$`, `DISTANCE`)
 - **parameter list** - Variable names in the function definition that are to be replaced when the function is called. Items are separated by commas.
 - **function definition** - An expression that performs the operation of the function. Limited to one line.
 
@@ -35,8 +37,12 @@ DEF FN<name>(<parameter list>)=<function definition>       ' Without spaces
 
 ### Function Names
 
-**Function names can be multiple characters**, not just single letters:
+**Original MBASIC 5.21**: Function names were limited to a single character after FN:
 - ✓ `FNA` - single character
+- ✓ `FNB$` - single character with type suffix
+
+**This implementation (extension)**: Function names can be multiple characters:
+- ✓ `FNA` - single character (compatible with original)
 - ✓ `FNABC` - multiple characters
 - ✓ `FNUCASE$` - multi-character with type suffix
 - ✓ `FNDIST` - descriptive multi-character name

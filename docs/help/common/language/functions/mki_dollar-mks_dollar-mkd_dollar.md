@@ -1,5 +1,5 @@
 ---
-category: NEEDS_CATEGORIZATION
+category: type-conversion
 description: Convert numeric values to string values
 keywords: ['complementary', 'field', 'file', 'for', 'function', 'mkd', 'mki', 'mks', 'number', 'poke']
 syntax: MKI$«integer expression» MKS$«single precision expression» MKD$«double precision expression» OCT$ (X) PEEK (I)
@@ -52,5 +52,5 @@ A=PEEK (&H5AOO)
 - [INPUT#](../statements/input_hash.md) - To read data items from a sequential disk    file and assign them to program variables
 - [LINE INPUT](../statements/line-input.md) - To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters
 - [LPRINT AND LPRINT USING](../statements/lprint-lprint-using.md) - To print data at the line printer
-- [SPACES](spaces.md) - Returns a string of spaces of length X
+- [SPACE$](space_dollar.md) - Returns a string of spaces of length X
 - [TAB](tab.md) - Spaces to position I on the terminal

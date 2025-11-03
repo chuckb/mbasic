@@ -2,7 +2,7 @@
 category: string
 description: Returns a string which represents the hexadecimal value of the decimal argument
 keywords: ['for', 'function', 'hex', 'input', 'print', 'put', 'return', 'string']
-syntax: HEX$ (X) Versionsr Extended, Disk
+syntax: HEX$(X)
 title: HEX$
 type: function
 ---
@@ -12,8 +12,10 @@ type: function
 ## Syntax
 
 ```basic
-HEX$ (X) Versionsr Extended, Disk
+HEX$(X)
 ```
+
+**Versions:** Extended, Disk
 
 ## Description
 

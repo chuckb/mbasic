@@ -1,5 +1,5 @@
 ---
-description: NEEDS_DESCRIPTION
+description: Guide to saving and loading BASIC programs in the Curses UI
 keywords:
 - command
 - curses
@@ -21,7 +21,7 @@ How to save and load BASIC programs.
 
 ## Saving Programs
 
-1. Press **F5** or **Ctrl+S**
+1. Press **Ctrl+V** (Note: Ctrl+S unavailable due to terminal flow control)
 2. Status line prompts: "Save as: _"
 3. Type filename (e.g., `myprogram.bas`)
 4. Press **Enter**
@@ -37,7 +37,7 @@ How to save and load BASIC programs.
 ### Example
 
 ```
-Press F5
+Press Ctrl+V
 Type: hello.bas
 Press Enter
 → "Saved to hello.bas"
@@ -45,7 +45,7 @@ Press Enter
 
 ## Loading Programs
 
-1. Press **b** or **Ctrl+O**
+1. Press **Ctrl+O**
 2. Status line prompts: "Load file: _"
 3. Type filename
 4. Press **Enter**

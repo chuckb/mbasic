@@ -1,5 +1,5 @@
 ---
-category: NEEDS_CATEGORIZATION
+category: output-formatting
 description: Spaces to position I on the terminal
 keywords: ['data', 'function', 'if', 'line', 'next', 'print', 'read', 'statement', 'tab']
 syntax: TAB (I)
@@ -44,4 +44,4 @@ Spaces to position I on the terminal. If the current print position is already b
 - [LINE INPUT](../statements/line-input.md) - To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters
 - [LPRINT AND LPRINT USING](../statements/lprint-lprint-using.md) - To print data at the line printer
 - [MKI$, MKS$, MKD$](mki_dollar-mks_dollar-mkd_dollar.md) - Convert numeric values to string values
-- [SPACES](spaces.md) - Returns a string of spaces of length X
+- [SPACE$](space_dollar.md) - Returns a string of spaces of length X

@@ -1,5 +1,5 @@
 ---
-category: NEEDS_CATEGORIZATION
+category: type-declaration
 description: To declare variable types as integer,        single precision, double precision, or string
 keywords: ['command', 'dbl', 'defint', 'for', 'if', 'number', 'program', 'sng', 'statement', 'str']
 syntax: DEF<type> <range(s) of letters>
@@ -52,5 +52,5 @@ A DEFtype statement declares that the variable names beginning with the 1etter(s
 - [LINE INPUT](line-input.md) - To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters
 - [LPRINT AND LPRINT USING](lprint-lprint-using.md) - To print data at the line printer
 - [MKI$, MKS$, MKD$](../functions/mki_dollar-mks_dollar-mkd_dollar.md) - Convert numeric values to string values
-- [SPACES](../functions/spaces.md) - Returns a string of spaces of length X
+- [SPACE$](../functions/space_dollar.md) - Returns a string of spaces of length X
 - [TAB](../functions/tab.md) - Spaces to position I on the terminal

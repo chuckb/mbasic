@@ -1,5 +1,5 @@
 ---
-description: NEEDS_DESCRIPTION
+description: Guide to writing and editing BASIC programs in the Curses UI
 keywords:
 - command
 - curses

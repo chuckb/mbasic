@@ -19,7 +19,7 @@ How to execute your BASIC programs.
 
 ## Running a Program
 
-1. Press **F2** or **Ctrl+R**
+1. Press **Ctrl+R**
 2. Program executes in the output window
 3. Output appears below the editor
 
@@ -30,7 +30,7 @@ How to execute your BASIC programs.
 20 END
 ```
 
-Press **F2** → Output window shows:
+Press **Ctrl+R** → Output window shows:
 ```
 Hello, World!
 ```
@@ -67,11 +67,11 @@ Programs normally run until:
 - STOP statement
 - Runtime error
 
-**Note**: Currently no way to interrupt running programs (use Ctrl+C to exit entirely).
+**Note**: Press **Ctrl+X** to stop a running program.
 
 ## Listing Programs
 
-Press **F3** or **Ctrl+L** to list the program to the output window.
+Access through the menu bar to list the program to the output window.
 
 This shows all program lines with line numbers.
 

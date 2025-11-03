@@ -8,6 +8,7 @@ RESUME <line number>
 "
 title: RESUME
 type: statement
+related: ['error', 'on-error-goto', 'err-erl-variables']
 ---
 
 # RESUME

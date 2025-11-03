@@ -1,5 +1,5 @@
 ---
-category: NEEDS_CATEGORIZATION
+category: type-conversion
 description: Convert string values to numeric values
 keywords: ['cvd', 'cvi', 'cvs', 'field', 'file', 'function', 'get', 'number', 'read', 'string']
 syntax: CVI«2-byte string» CVS«4-byte string» CVD«8-byte string»
@@ -42,5 +42,5 @@ Convert string values to numeric values. Numeric values that are read in from a 
 - [LINE INPUT](../statements/line-input.md) - To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters
 - [LPRINT AND LPRINT USING](../statements/lprint-lprint-using.md) - To print data at the line printer
 - [MKI$, MKS$, MKD$](mki_dollar-mks_dollar-mkd_dollar.md) - Convert numeric values to string values
-- [SPACES](spaces.md) - Returns a string of spaces of length X
+- [SPACE$](space_dollar.md) - Returns a string of spaces of length X
 - [TAB](tab.md) - Spaces to position I on the terminal

@@ -18,7 +18,7 @@ LEFT$ (X$, I)
 
 ## Description
 
-Returns a string comprised of the leftmost I characters of X$. I must be in the range 0 to 255. If I is greater than LEN (X$), the. entire string (X$) will be returned. If I=O, the null string (length zero) is returned.
+Returns a string comprised of the leftmost I characters of X$. I must be in the range 0 to 255. If I is greater than LEN(X$), the entire string (X$) will be returned. If I=0, the null string (length zero) is returned.
 
 ## Example
 

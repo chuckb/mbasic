@@ -1,5 +1,5 @@
 ---
-category: NEEDS_CATEGORIZATION
+category: file-io
 description: To save the program or an       array   currently     in memory on cassette tape
 keywords: ['array', 'command', 'csave', 'dec', 'dim', 'execute', 'file', 'for', 'if', 'included']
 title: CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION
@@ -35,5 +35,5 @@ CSAVE "TIMER"
 - [LINE INPUT](line-input.md) - To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters
 - [LPRINT AND LPRINT USING](lprint-lprint-using.md) - To print data at the line printer
 - [MKI$, MKS$, MKD$](../functions/mki_dollar-mks_dollar-mkd_dollar.md) - Convert numeric values to string values
-- [SPACES](../functions/spaces.md) - Returns a string of spaces of length X
+- [SPACE$](../functions/space_dollar.md) - Returns a string of spaces of length X
 - [TAB](../functions/tab.md) - Spaces to position I on the terminal

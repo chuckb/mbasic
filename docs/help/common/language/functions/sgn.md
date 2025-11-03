@@ -1,6 +1,6 @@
 ---
 category: mathematical
-description: NEEDS_DESCRIPTION
+description: Returns the sign of X (-1, 0, or 1)
 keywords: ['branch', 'function', 'goto', 'if', 'return', 'sgn']
 syntax: SGN(X)
 title: SGN
@@ -19,7 +19,7 @@ SGN(X)
 
 ## Description
 
-. If X>O, SGN(X) returns 1. If X=O, SGN(X) returns O. If X<O, SGN(X) returns -1.
+Returns the sign of a number. If X>0, SGN(X) returns 1. If X=0, SGN(X) returns 0. If X<0, SGN(X) returns -1.
 
 ## Example
 

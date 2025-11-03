@@ -1,5 +1,5 @@
 ---
-category: NEEDS_CATEGORIZATION
+category: file-io
 description: To load a program or an array from cassette tape into memory
 keywords: ['array', 'cload', 'command', 'data', 'dec', 'dim', 'execute', 'file', 'for', 'if']
 title: CLOAD THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION
@@ -32,5 +32,5 @@ CLOAD "MAX2"
 - [LINE INPUT](line-input.md) - To input an entire line (up to 254 characters) to   a string variable, without the use of delimiters
 - [LPRINT AND LPRINT USING](lprint-lprint-using.md) - To print data at the line printer
 - [MKI$, MKS$, MKD$](../functions/mki_dollar-mks_dollar-mkd_dollar.md) - Convert numeric values to string values
-- [SPACES](../functions/spaces.md) - Returns a string of spaces of length X
+- [SPACE$](../functions/space_dollar.md) - Returns a string of spaces of length X
 - [TAB](../functions/tab.md) - Spaces to position I on the terminal

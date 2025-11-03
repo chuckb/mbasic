@@ -25,14 +25,14 @@ Quick reference for the curses text UI.
 | **Ctrl+U** | Show menu |
 | **{{kbd:help}}** | Help (with search) |
 | **Ctrl+W** | Toggle variables watch window |
-| **Ctrl+K** | Toggle execution stack window |
+| **Menu only** | Toggle execution stack window |
 
 ## Program Management
 
 | Key | Action |
 |-----|--------|
 | **{{kbd:run}}** | Run program |
-| **Ctrl+L** | List program (or Step Line when debugging) |
+| **Menu only** | List program |
 | **{{kbd:new}}** | New program |
 | **{{kbd:save}}** | Save program |
 | **Ctrl+O** | Open/Load program |
@@ -49,12 +49,12 @@ Quick reference for the curses text UI.
 
 | Key | Action |
 |-----|--------|
-| **{{kbd:goto_line}}** | Continue execution (Go) |
-| **Ctrl+L** | Step Line - execute all statements on current line |
+| **{{kbd:continue}}** | Continue execution |
+| **{{kbd:step_line}}** | Step Line - execute all statements on current line |
 | **{{kbd:step}}** | Step Statement - execute one statement at a time |
-| **Ctrl+X** | Stop execution (eXit) |
+| **{{kbd:stop}}** | Stop execution |
 | **Ctrl+W** | Show/hide variables window |
-| **Ctrl+K** | Show/hide execution stack window |
+| **Menu only** | Show/hide execution stack window |
 
 ## Variables Window (when visible)
 
