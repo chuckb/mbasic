@@ -1642,62 +1642,62 @@ class CursesBackend(UIBackend):
             return
 
         try:
-            state = self.interpreter.get_state()
-            if state.status in ('paused', 'at_breakpoint', 'running'):
-                # Execute one statement
-                self.status_bar.set_text("Stepping...")
-                state = self.interpreter.tick(mode='step', max_statements=1)
+            # If halted, clear it to resume execution (like a microprocessor)
+            if self.runtime and self.runtime.halted:
+                self.runtime.halted = False
 
-                # Collect any output
-                new_output = self.io_handler.get_and_clear_output()
-                if new_output:
-                    self.output_buffer.extend(new_output)
-                    self._update_output()
+            # Execute one statement
+            self.status_bar.set_text("Stepping...")
+            state = self.interpreter.tick(mode='step', max_statements=1)
 
-                # Update editor display with statement highlighting
-                if state.status in ('paused', 'at_breakpoint') and state.current_line:
-                    # Highlight the current statement in the editor
-                    pc = self.runtime.pc if self.runtime else None
-                    self.editor._update_display(
-                        highlight_line=state.current_line,
-                        highlight_stmt=pc.stmt_offset if pc else 0,
-                        statement_table=self.runtime.statement_table if self.runtime else None
-                    )
+            # Collect any output
+            new_output = self.io_handler.get_and_clear_output()
+            if new_output:
+                self.output_buffer.extend(new_output)
+                self._update_output()
 
-                    # Update variables window if visible
-                    if self.watch_window_visible:
-                        self._update_variables_window()
+            # Update editor display with statement highlighting
+            if state.status in ('paused', 'at_breakpoint') and state.current_line:
+                # Highlight the current statement in the editor
+                pc = self.runtime.pc if self.runtime else None
+                self.editor._update_display(
+                    highlight_line=state.current_line,
+                    highlight_stmt=pc.stmt_offset if pc else 0,
+                    statement_table=self.runtime.statement_table if self.runtime else None
+                )
 
-                    # Update stack window if visible
-                    if self.stack_window_visible:
-                        self._update_stack_window()
+                # Update variables window if visible
+                if self.watch_window_visible:
+                    self._update_variables_window()
 
-                # Show where we paused
-                if state.status in ('paused', 'at_breakpoint'):
-                    pc = self.runtime.pc if self.runtime else None
-                    stmt_info = f" statement {pc.stmt_offset + 1}" if pc and pc.stmt_offset > 0 else ""
-                    self.output_buffer.append(f"→ Paused at line {state.current_line}{stmt_info}")
-                    self._update_output()
-                    self.status_bar.set_text(f"Paused at line {state.current_line}{stmt_info} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
-                    self._update_immediate_status()
-                elif state.status == 'done':
-                    # Clear highlighting when done
-                    self.editor._update_display()
-                    self.output_buffer.append("Program completed")
-                    self._update_output()
-                    self.status_bar.set_text("Program completed")
-                    self._update_immediate_status()
-                elif state.status == 'error':
-                    # Clear highlighting on error
-                    self.editor._update_display()
-                    error_msg = state.error_info.error_message if state.error_info else "Unknown error"
-                    line_num = state.error_info.pc.line_num if state.error_info else "?"
-                    self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
-                    self._update_output()
-                    self.status_bar.set_text("Error during step")
-                    self._update_immediate_status()
-            else:
-                self.status_bar.set_text(f"Cannot step (status: {state.status})")
+                # Update stack window if visible
+                if self.stack_window_visible:
+                    self._update_stack_window()
+
+            # Show where we paused
+            if state.status in ('paused', 'at_breakpoint'):
+                pc = self.runtime.pc if self.runtime else None
+                stmt_info = f" statement {pc.stmt_offset + 1}" if pc and pc.stmt_offset > 0 else ""
+                self.output_buffer.append(f"→ Paused at line {state.current_line}{stmt_info}")
+                self._update_output()
+                self.status_bar.set_text(f"Paused at line {state.current_line}{stmt_info} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
+                self._update_immediate_status()
+            elif state.status == 'done':
+                # Clear highlighting when done
+                self.editor._update_display()
+                self.output_buffer.append("Program completed")
+                self._update_output()
+                self.status_bar.set_text("Program completed")
+                self._update_immediate_status()
+            elif state.status == 'error':
+                # Clear highlighting on error
+                self.editor._update_display()
+                error_msg = state.error_info.error_message if state.error_info else "Unknown error"
+                line_num = state.error_info.pc.line_num if state.error_info else "?"
+                self.output_buffer.append(f"Error at line {line_num}: {error_msg}")
+                self._update_output()
+                self.status_bar.set_text("Error during step")
+                self._update_immediate_status()
         except Exception as e:
             import traceback
 
@@ -1721,12 +1721,9 @@ class CursesBackend(UIBackend):
                 return  # Failed to start
 
         try:
-            state = self.interpreter.get_state()
-
-            # Check if we can step
-            if state.status not in ('idle', 'paused', 'at_breakpoint', 'running'):
-                self.status_bar.set_text(f"Cannot step (status: {state.status})")
-                return
+            # If halted, clear it to resume execution (like a microprocessor)
+            if self.runtime and self.runtime.halted:
+                self.runtime.halted = False
 
             # Execute all statements on current line
             self.status_bar.set_text("Stepping line...")
