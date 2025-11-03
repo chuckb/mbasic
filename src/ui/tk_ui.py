@@ -14,7 +14,7 @@ from .auto_save import AutoSaveManager
 from src.immediate_executor import ImmediateExecutor, OutputCapturingIOHandler
 from src.iohandler.base import IOHandler
 from src.input_sanitizer import sanitize_and_clear_parity, is_valid_input_char
-from src.debug_logger import debug_log_error, is_debug_mode, debug_log
+from src.debug_logger import debug_log_error, is_debug_mode
 from src.ui.variable_sorting import sort_variables, get_sort_mode_label, cycle_sort_mode, get_default_reverse_for_mode
 from src.pc import PC
 
@@ -795,43 +795,32 @@ class TkBackend(UIBackend):
     def _menu_continue(self):
         """Run > Continue (from breakpoint or error)"""
         import tkinter as tk
-        from src.debug_logger import debug_log
-
-        debug_log(f"_menu_continue called: interpreter={self.interpreter is not None}, paused={self.paused_at_breakpoint}", level=1)
 
         if not self.interpreter or not self.paused_at_breakpoint:
             self._set_status("Not paused")
-            debug_log(f"Continue rejected: not paused", level=1)
             return
 
         try:
             # If we're continuing from an error, re-parse the program to incorporate edits
             if self.interpreter.state.error_info:
-                debug_log(f"Continuing from error state", level=1)
                 self._add_output("\n--- Re-parsing program after edit ---\n")
 
                 # Clear all error markers first
-                debug_log(f"Clearing all error markers", level=1)
                 self.editor_text.clear_all_errors()
 
                 # Get current editor text
-                debug_log(f"Getting editor text", level=1)
                 program_text = self.editor_text.get("1.0", tk.END)
-                debug_log(f"Got {len(program_text)} chars of program text", level=1)
 
                 # Parse the updated program
                 from src.parser import Parser
                 from src.lexer import Lexer, create_keyword_case_manager
                 try:
-                    debug_log(f"Starting parse", level=1)
                     keyword_mgr = create_keyword_case_manager()
                     lexer = Lexer(program_text, keyword_case_manager=keyword_mgr)
                     tokens = lexer.tokenize()
                     parser = Parser(tokens)
                     program = parser.parse()
-                    debug_log(f"Parse successful, got {len(program.lines)} lines", level=1)
                 except Exception as parse_error:
-                    debug_log(f"Parse FAILED: {parse_error}", level=1)
                     self._add_output(f"Parse error: {parse_error}\n")
                     self._add_output("Fix the syntax error and try again.\n")
                     self._set_status("Parse error - fix and retry")
@@ -842,8 +831,6 @@ class TkBackend(UIBackend):
                 for line in program.lines:
                     self.runtime.statement_table.replace_line(line.line_number, line)
 
-                debug_log(f"Updated statement_table with {len(program.lines)} lines", level=1)
-
                 # Validate execution stack after program edits
                 valid, removed_entries, messages = self.runtime.validate_stack()
                 if removed_entries:
@@ -851,11 +838,9 @@ class TkBackend(UIBackend):
                     for msg in messages:
                         self._add_output(f"  • {msg}\n")
                     self._add_output(f"  {len(removed_entries)} stack entry(ies) removed\n\n")
-                    debug_log(f"Stack validation removed {len(removed_entries)} entries", level=1)
 
                 # Clear error state (halted flag already set)
                 self.interpreter.state.error_info = None
-                debug_log(f"Cleared error state", level=1)
 
                 self._add_output("--- Program updated, resuming execution ---\n")
 
@@ -863,17 +848,12 @@ class TkBackend(UIBackend):
             self.running = True
             self.paused_at_breakpoint = False
             self._set_status("Continuing...")
-            debug_log(f"Scheduling next tick, running={self.running}", level=1)
 
             # Schedule next tick
             self.tick_timer_id = self.root.after(10, self._execute_tick)
-            debug_log(f"Next tick scheduled with timer_id={self.tick_timer_id}", level=1)
 
         except Exception as e:
             import traceback
-            from src.debug_logger import debug_log
-            debug_log(f"Continue EXCEPTION: {e}", level=1)
-            debug_log(f"Traceback: {traceback.format_exc()}", level=1)
             self._add_output(f"Continue error: {e}\n")
             self._add_output(f"Traceback: {traceback.format_exc()}\n")
             self._set_status("Error")
@@ -2167,9 +2147,6 @@ class TkBackend(UIBackend):
             error_count = len(errors_found)
             plural = "s" if error_count > 1 else ""
             self._set_status(f"Syntax error{plural} in program - cannot run")
-
-            from debug_logger import debug_log
-            debug_log(f"Validation found {error_count} error(s), status set", level=2)
         else:
             # No errors - clear any previous error status
             if hasattr(self, 'status_label') and self.status_label:
@@ -2738,12 +2715,7 @@ class TkBackend(UIBackend):
         """Handle Ctrl+I - smart insert line.
 
         Returns 'break' to prevent tab insertion.
-        """
-        from debug_logger import debug_log
-        debug_log("Ctrl+I handler called", level=1)
-        self._smart_insert_line()
-        debug_log("Ctrl+I handler returning 'break'", level=1)
-        return 'break'
+        """        self._smart_insert_line()        return 'break'
 
     def _smart_insert_line(self):
         """Smart insert - insert blank line between current and next line.
@@ -2756,9 +2728,7 @@ class TkBackend(UIBackend):
         """
         import tkinter as tk
         from tkinter import messagebox
-        from src.ui.ui_helpers import calculate_midpoint
-        from debug_logger import debug_log
-        import re
+        from src.ui.ui_helpers import calculate_midpoint        import re
 
         # Get current line BEFORE refresh
         current_pos = self.editor_text.text.index(tk.INSERT)
@@ -2768,18 +2738,13 @@ class TkBackend(UIBackend):
             f'{current_line_index}.end'
         ).strip()
 
-        debug_log(f"Smart insert: line_index={current_line_index}, text={repr(current_line_text)}", level=1)
-
         # Parse current line number BEFORE refresh
         match = re.match(r'^(\d+)', current_line_text)
         if not match:
-            debug_log(f"No match for line number in: {repr(current_line_text)}", level=1)
             messagebox.showinfo("Smart Insert", "Current line has no line number.\nAdd a line number first.")
             return
 
         current_line_num = int(match.group(1))
-        debug_log(f"Current line number: {current_line_num}", level=1)
-
         # Save the editor to program to get rid of any blank numbered lines
         self._save_editor_to_program()
         self._refresh_editor()
@@ -2980,27 +2945,12 @@ class TkBackend(UIBackend):
                 self._set_status(f"Error at line {line_num} - Edit and Continue, or Stop")
                 self._update_immediate_status()
 
-                # Highlight the error statement (yellow highlight)
-                from src.debug_logger import debug_log
-                debug_log(f"Error state: line={state.current_line}, char_start={state.current_statement_char_start}, char_end={state.current_statement_char_end}", level=1)
-                if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
-                    debug_log(f"Highlighting error statement", level=1)
-                    self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
+                # Highlight the error statement (yellow highlight)                if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:                    self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
                 else:
-                    debug_log(f"NOT highlighting - char positions are 0", level=1)
-
                 # Mark the error line with red ? indicator
                 if line_num and line_num != "?":
                     try:
-                        line_num_int = int(line_num)
-                        from src.debug_logger import debug_log
-                        debug_log(f"Setting error marker on line {line_num_int}: {error_msg}", level=1)
-                        self.editor_text.set_error(line_num_int, True, error_msg)
-                        debug_log(f"Error marker set successfully", level=1)
-                    except (ValueError, AttributeError, TypeError) as e:
-                        from src.debug_logger import debug_log
-                        debug_log(f"Failed to set error marker: {e}", level=1)
-
+                        line_num_int = int(line_num)                        self.editor_text.set_error(line_num_int, True, error_msg)                    except (ValueError, AttributeError, TypeError) as e:
                 # Update stack and variables to show state at error
                 if self.stack_visible:
                     self._update_stack()
@@ -3084,23 +3034,15 @@ class TkBackend(UIBackend):
 
             # Highlight the error statement (yellow highlight)
             if self.interpreter and hasattr(self.interpreter, 'state'):
-                state = self.interpreter.state
-                from src.debug_logger import debug_log
-                debug_log(f"Exception handler: line={state.current_line}, char_start={state.current_statement_char_start}, char_end={state.current_statement_char_end}", level=1)
-                if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
+                state = self.interpreter.state                if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
                     self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
 
             # Mark the error line with red ? indicator
             if error_line and error_line != "?":
                 try:
                     error_line_int = int(error_line)
-                    from src.debug_logger import debug_log
-                    debug_log(f"Setting error marker on line {error_line_int} (from exception handler)", level=1)
                     self.editor_text.set_error(error_line_int, True, str(e))
                 except (ValueError, AttributeError, TypeError) as marker_error:
-                    from src.debug_logger import debug_log
-                    debug_log(f"Failed to set error marker: {marker_error}", level=1)
-
             # Update stack and variables to show state at error
             if self.stack_visible:
                 self._update_stack()
@@ -3609,19 +3551,11 @@ class TkBackend(UIBackend):
 
         # If statement set NPC (like RUN/GOTO), move it to PC
         # This is what the tick loop does after executing a statement
-        if self.runtime.npc is not None:
-            from src.debug_logger import debug_log
-            debug_log(f"[Immediate] Moving NPC {self.runtime.npc} to PC", level=1)
-            self.runtime.pc = self.runtime.npc
+        if self.runtime.npc is not None:            self.runtime.pc = self.runtime.npc
             self.runtime.npc = None
-            debug_log(f"[Immediate] PC is now {self.runtime.pc}, halted={self.runtime.halted}", level=1)
-
         # Check if interpreter has work to do (after RUN statement)
         # No state checking - just ask the interpreter
-        has_work = self.interpreter.has_work() if self.interpreter else False
-        from src.debug_logger import debug_log
-        debug_log(f"[Immediate] has_work={has_work}, running={self.running}", level=1)
-        if self.interpreter and has_work:
+        has_work = self.interpreter.has_work() if self.interpreter else False        if self.interpreter and has_work:
             # Start execution if not already running
             if not self.running:
                 # Switch interpreter IO to output to main output pane (not immediate output)
@@ -3632,18 +3566,13 @@ class TkBackend(UIBackend):
                 # Initialize interpreter state for execution
                 # NOTE: Don't call interpreter.start() because it resets PC!
                 # RUN 120 already set PC to line 120, so just clear halted flag
-                from src.interpreter import InterpreterState
-                from src.debug_logger import debug_log
-                debug_log(f"[Immediate] Initializing interpreter state for execution at PC={self.runtime.pc}", level=1)
-                if not hasattr(self.interpreter, 'state') or self.interpreter.state is None:
+                from src.interpreter import InterpreterState                if not hasattr(self.interpreter, 'state') or self.interpreter.state is None:
                     self.interpreter.state = InterpreterState(_interpreter=self.interpreter)
                 self.runtime.halted = False  # Clear halted flag to start execution
                 self.interpreter.state.is_first_line = True
 
                 self._set_status('Running...')
-                self.running = True
-                debug_log(f"[Immediate] Starting tick loop", level=1)
-                self.root.after(10, self._execute_tick)
+                self.running = True                self.root.after(10, self._execute_tick)
 
         # Update variables/stack windows if they exist
         if hasattr(self, 'variables_window') and self.variables_window:
