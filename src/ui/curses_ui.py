@@ -1553,6 +1553,7 @@ class CursesBackend(UIBackend):
 
         elif key == LIST_KEY:
             # Ctrl+L = Step Line (execute all statements on current line)
+            self.status_bar.set_text(f"Got Ctrl+L, calling _debug_step_line...")
             self._debug_step_line()
 
         elif key == OPEN_KEY:
@@ -1769,8 +1770,13 @@ class CursesBackend(UIBackend):
 
     def _debug_step_line(self):
         """Execute all statements on current line and pause (step by line)."""
+        self.output_buffer.append(f"[DEBUG _debug_step_line: interpreter={self.interpreter is not None}, state={hasattr(self.interpreter, 'state') if self.interpreter else False}]")
+        self._update_output()
+
         if not self.interpreter or not hasattr(self.interpreter, 'state') or not self.interpreter.state:
             # No program running - start it and step immediately
+            self.output_buffer.append("[DEBUG: Starting program...]")
+            self._update_output()
             self._run_program()
             # Program is now running async - halt it immediately
             self.runtime.halted = True
