@@ -300,6 +300,8 @@ class TkBackend(UIBackend):
         # Create empty runtime that both immediate mode and programs will use
         from resource_limits import create_unlimited_limits
         self.runtime = Runtime({}, {})
+        # Sync breakpoints from UI to runtime
+        self.runtime.breakpoints = self.breakpoints.copy()
 
         # Create IOHandler that outputs to output pane
         tk_io = TkIOHandler(self._add_output, self.root, backend=self)
@@ -947,9 +949,9 @@ class TkBackend(UIBackend):
             else:
                 self._set_status(f"Breakpoint set on line {line_number}")
 
-        # Update interpreter state if running
-        if self.interpreter:
-            self.interpreter.state.breakpoints = self.breakpoints.copy()
+        # Update runtime breakpoints
+        if self.runtime:
+            self.runtime.breakpoints = self.breakpoints.copy()
 
     def _clear_all_breakpoints(self):
         """Clear all breakpoints."""
@@ -969,9 +971,9 @@ class TkBackend(UIBackend):
         # Clear set
         self.breakpoints.clear()
 
-        # Update interpreter state if running
-        if self.interpreter:
-            self.interpreter.state.breakpoints = self.breakpoints.copy()
+        # Update runtime breakpoints
+        if self.runtime:
+            self.runtime.breakpoints = self.breakpoints.copy()
 
         self._set_status("All breakpoints cleared")
 
