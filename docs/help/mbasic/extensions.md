@@ -63,7 +63,7 @@ The GUI interfaces (Curses, Tk, Web) are **NOT in MBASIC 5.21**.
 **Features NOT in original MBASIC 5.21:**
 - Full-screen editing (Curses, Tk, Web)
 - Syntax highlighting (Tk, Web)
-- Find (Tk has Find, Replace planned for future)
+- Find and Replace (Tk only)
 - Cut/Copy/Paste (Tk, Web)
 - Mouse support (Tk, Web)
 - Auto-save (Web)

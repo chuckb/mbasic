@@ -159,10 +159,20 @@ This document lists all features implemented in this MBASIC interpreter.
 ### Tkinter GUI
 
 - **Graphical interface** - Windows, menus, toolbars
-- **Syntax highlighting** (if available)
+- **Syntax highlighting** - Color-coded keywords, strings, numbers
+- **Find and Replace** - Search and replace text (Ctrl+F/Ctrl+H)
 - **Menu bar** - File, Edit, Run operations
 - **Toolbar** - Quick access buttons
 - **Status bar** - Program state display
+
+### Web UI
+
+- **Browser-based IDE** - Run MBASIC in any modern browser
+- **Syntax highlighting** - Color-coded editor
+- **Auto-save** - Automatic saving to browser storage
+- **Three-panel layout** - Editor, output, and command areas
+- **In-memory filesystem** - File operations in browser memory
+- **Basic debugging** - Simple breakpoint support via menu
 
 ## Compiler Features
 

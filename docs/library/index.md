@@ -89,7 +89,8 @@ These programs represent the collaborative work of countless programmers, hobbyi
 1. **Browse** by category above
 2. **Download** the .bas file you want to use
 3. **Load in MBASIC:**
-   - **GUI (Web/Tk):** File → Open, select the downloaded file
+   - **Web UI:** File → Open, then select the downloaded file using browser file picker
+   - **Tk UI:** File → Open, select the downloaded file
    - **CLI:** Type `LOAD "filename.bas"`
 4. **Run:** Type `RUN` or click the Run button
 

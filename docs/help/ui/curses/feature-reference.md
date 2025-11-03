@@ -109,11 +109,10 @@ Edit BASIC code line-by-line with full cursor navigation.
 ### Multi-Line Edit
 Edit multiple lines at once in the full-screen editor.
 
-### Cut/Copy/Paste
-Standard clipboard operations using system clipboard:
-- Cut: Ctrl+X
-- Copy: Ctrl+C
-- Paste: Ctrl+V
+### Cut/Copy/Paste (Not implemented)
+Standard clipboard operations are not available in the Curses UI.
+Note: Ctrl+X is used for Stop/Interrupt, Ctrl+C exits the program, and Ctrl+V is used for Save.
+Use your terminal's native copy/paste functions instead (typically Shift+Ctrl+C/V or mouse selection).
 
 ### Find/Replace (Not yet implemented)
 Find and Replace functionality is not yet available in Curses UI.

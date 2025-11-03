@@ -1,44 +1,37 @@
 # Web UI Debugging Guide
 
-The Web UI provides comprehensive debugging tools for BASIC program development with visual feedback and interactive controls.
+The Web UI provides debugging tools for BASIC program development with visual feedback and interactive controls.
 
 ## Overview
 
-The Web UI debugger offers:
-- Visual breakpoint management
+The Web UI debugger currently offers:
+- Basic breakpoint management (via Run menu)
 - Step-by-step execution
-- Real-time variable inspection
-- Call stack visualization
-- Execution flow tracking
-- Interactive variable editing
+- Variable inspection
+- Visual indicators in editor
 
 ## Setting Breakpoints
 
-### Click to Set
+### Currently Implemented
 
-1. **Click any line number** in the editor
-2. A **red dot** appears indicating breakpoint
-3. Click again to remove
+1. Use **Run → Toggle Breakpoint** menu option
+2. Enter the line number when prompted
+3. A visual indicator appears in the editor
+4. Use **Run → Clear All Breakpoints** to remove all
 
 ### Breakpoint Indicators
 
-- 🔴 **Red dot** - Active breakpoint
-- 🟡 **Yellow dot** - Disabled breakpoint
-- 🟢 **Green arrow** - Current execution line
+- Visual markers show where breakpoints are set
+- Current execution line is highlighted during debugging
 
 ### Managing Breakpoints
 
-**Right-click line number for menu:**
-- Toggle Breakpoint
-- Disable/Enable Breakpoint
-- Clear All Breakpoints
-- Run to This Line
+**Current capabilities:**
+- Toggle breakpoint via Run menu
+- Clear all breakpoints via Run menu
+- Breakpoints persist within the current session
 
-**Breakpoint Panel:**
-- View all breakpoints
-- Jump to breakpoint location
-- Enable/disable individually
-- Clear selected or all
+**Note:** Advanced features like clicking line numbers to set breakpoints, conditional breakpoints, and a dedicated breakpoint panel are planned for future releases but not yet implemented.
 
 ## Starting Debug Session
 
@@ -170,81 +163,44 @@ Enable trace mode to see:
 - Loop boundaries marked
 - IF/THEN branches shown
 
-## Advanced Debugging
+## Advanced Debugging (Planned Features)
 
-### Conditional Breakpoints
+**Note:** The following features are planned for future releases but not yet implemented:
 
-Right-click breakpoint to set condition:
+### Conditional Breakpoints (Future)
 
-```basic
-Break when: A > 100
-Break when: B$ = "ERROR"
-Break when: I MOD 10 = 0
-```
+Will allow setting conditions for breakpoints:
+- Break when variable reaches specific value
+- Break on expression evaluation
+- Break after N hits
 
-### Logpoints
+### Logpoints (Future)
 
-Non-breaking points that log values:
+Non-breaking points that will log values:
+- Log variable values without stopping
+- Custom log messages
+- Trace execution flow
 
-1. Right-click line number
-2. Select "Add Logpoint"
-3. Enter message: `"A={A}, B={B}"`
-4. Values logged to console
+### Data Breakpoints (Future)
 
-### Data Breakpoints
+Will break when variable changes:
+- Monitor specific variables
+- Break on value changes
+- Track variable access
 
-Break when variable changes:
+### Debug Console (Future)
 
-1. Right-click variable in inspector
-2. Select "Break on Change"
-3. Program pauses when value modified
+Will provide interactive debugging console:
+- Direct BASIC statement execution
+- Variable inspection and modification
+- Debug command support
 
-## Debug Console
+### Performance Profiling (Future)
 
-### Using the Console
-
-Bottom panel during debugging:
-
-```
-Debug> PRINT A
-42
-Debug> A = 100
-Debug> PRINT B$
-Hello
-Debug> CONT
-```
-
-**Commands:**
-- Direct BASIC statements
-- Variable assignments
-- PRINT expressions
-- Debug commands
-
-### Debug Commands
-
-- `PRINT var` - Show variable value
-- `STACK` - Show call stack
-- `BREAK` - List breakpoints
-- `CONT` - Continue execution
-- `STEP` - Single step
-
-## Performance Profiling
-
-### Timing Information
-
-Enable profiling to see:
+Will provide timing and performance data:
 - Line execution counts
-- Time spent per line
-- Hotspot identification
-- Call frequency
-
-### Memory Usage
-
-Monitor during debug:
-- Variable count
-- Array allocations
-- String usage
-- Stack depth
+- Performance hotspot identification
+- Memory usage tracking
 
 ## Debug Settings
 

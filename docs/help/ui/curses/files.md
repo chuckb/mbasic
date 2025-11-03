@@ -61,7 +61,7 @@ Press Enter
 ### Example
 
 ```
-Press b
+Press Ctrl+O
 Type: hello.bas
 Press Enter
 → Program loads into editor

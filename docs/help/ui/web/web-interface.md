@@ -76,6 +76,7 @@ Access File, Edit, Run, and Help functions.
 ### File Menu
 
 - **New** - Clear the editor and start a new program
+- **Open** - Load a .bas file from your computer (via browser file picker)
 - **Load Example** - Choose from sample BASIC programs
 - **Clear Output** - Clear the output area
 
@@ -174,9 +175,9 @@ Works best with modern browsers:
 ## Limitations
 
 Compared to desktop UIs, the web UI:
-- Cannot access local filesystem
-- No debugger or breakpoint support (yet)
-- Files don't persist after session ends
+- Cannot directly access local filesystem (but can load files via browser file picker)
+- Limited debugger support (basic breakpoints only via Run menu)
+- Files don't persist after session ends (stored in browser memory only)
 
 ## Troubleshooting
 

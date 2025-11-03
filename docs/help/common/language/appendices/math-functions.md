@@ -18,7 +18,7 @@ type: reference
 
 ## Built-In Mathematical Functions
 
-MBASIC 5.21 provides the following built-in mathematical functions:
+BASIC-80 provides the following built-in mathematical functions:
 
 ### Trigonometric Functions
 - [SIN](../functions/sin.md) - Sine
@@ -58,7 +58,7 @@ The following functions are NOT built-in but can be calculated using the intrins
 | **Inverse Cosine** | `ARCCOS(X) = -ATN(X/SQR(-X*X+1)) + 1.5708` |
 | **Inverse Secant** | `ARCSEC(X) = ATN(X/SQR(X*X-1)) + SGN(SGN(X)-1) * 1.5708` |
 | **Inverse Cosecant** | `ARCCSC(X) = ATN(X/SQR(X*X-1)) + (SGN(X)-1) * 1.5708` |
-| **Inverse Cotangent** | `ARCCOT(X) = ATN(X) + 1.5708` |
+| **Inverse Cotangent** | `ARCCOT(X) = -ATN(X) + 1.5708` |
 
 ## Hyperbolic Functions
 
