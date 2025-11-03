@@ -2715,7 +2715,9 @@ class TkBackend(UIBackend):
         """Handle Ctrl+I - smart insert line.
 
         Returns 'break' to prevent tab insertion.
-        """        self._smart_insert_line()        return 'break'
+        """
+        self._smart_insert_line()
+        return 'break'
 
     def _smart_insert_line(self):
         """Smart insert - insert blank line between current and next line.
@@ -2728,7 +2730,8 @@ class TkBackend(UIBackend):
         """
         import tkinter as tk
         from tkinter import messagebox
-        from src.ui.ui_helpers import calculate_midpoint        import re
+        from src.ui.ui_helpers import calculate_midpoint
+        import re
 
         # Get current line BEFORE refresh
         current_pos = self.editor_text.text.index(tk.INSERT)
@@ -2945,12 +2948,17 @@ class TkBackend(UIBackend):
                 self._set_status(f"Error at line {line_num} - Edit and Continue, or Stop")
                 self._update_immediate_status()
 
-                # Highlight the error statement (yellow highlight)                if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:                    self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
-                else:
+                # Highlight the error statement (yellow highlight)
+                if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
+                    self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
+
                 # Mark the error line with red ? indicator
                 if line_num and line_num != "?":
                     try:
-                        line_num_int = int(line_num)                        self.editor_text.set_error(line_num_int, True, error_msg)                    except (ValueError, AttributeError, TypeError) as e:
+                        line_num_int = int(line_num)
+                        self.editor_text.set_error(line_num_int, True, error_msg)
+                    except (ValueError, AttributeError, TypeError) as e:
+                        pass
                 # Update stack and variables to show state at error
                 if self.stack_visible:
                     self._update_stack()
@@ -3034,7 +3042,8 @@ class TkBackend(UIBackend):
 
             # Highlight the error statement (yellow highlight)
             if self.interpreter and hasattr(self.interpreter, 'state'):
-                state = self.interpreter.state                if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
+                state = self.interpreter.state
+                if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
                     self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
 
             # Mark the error line with red ? indicator
@@ -3043,6 +3052,7 @@ class TkBackend(UIBackend):
                     error_line_int = int(error_line)
                     self.editor_text.set_error(error_line_int, True, str(e))
                 except (ValueError, AttributeError, TypeError) as marker_error:
+                    pass
             # Update stack and variables to show state at error
             if self.stack_visible:
                 self._update_stack()
@@ -3551,11 +3561,14 @@ class TkBackend(UIBackend):
 
         # If statement set NPC (like RUN/GOTO), move it to PC
         # This is what the tick loop does after executing a statement
-        if self.runtime.npc is not None:            self.runtime.pc = self.runtime.npc
+        if self.runtime.npc is not None:
+            self.runtime.pc = self.runtime.npc
             self.runtime.npc = None
+
         # Check if interpreter has work to do (after RUN statement)
         # No state checking - just ask the interpreter
-        has_work = self.interpreter.has_work() if self.interpreter else False        if self.interpreter and has_work:
+        has_work = self.interpreter.has_work() if self.interpreter else False
+        if self.interpreter and has_work:
             # Start execution if not already running
             if not self.running:
                 # Switch interpreter IO to output to main output pane (not immediate output)
@@ -3566,13 +3579,15 @@ class TkBackend(UIBackend):
                 # Initialize interpreter state for execution
                 # NOTE: Don't call interpreter.start() because it resets PC!
                 # RUN 120 already set PC to line 120, so just clear halted flag
-                from src.interpreter import InterpreterState                if not hasattr(self.interpreter, 'state') or self.interpreter.state is None:
+                from src.interpreter import InterpreterState
+                if not hasattr(self.interpreter, 'state') or self.interpreter.state is None:
                     self.interpreter.state = InterpreterState(_interpreter=self.interpreter)
                 self.runtime.halted = False  # Clear halted flag to start execution
                 self.interpreter.state.is_first_line = True
 
                 self._set_status('Running...')
-                self.running = True                self.root.after(10, self._execute_tick)
+                self.running = True
+                self.root.after(10, self._execute_tick)
 
         # Update variables/stack windows if they exist
         if hasattr(self, 'variables_window') and self.variables_window:
