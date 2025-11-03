@@ -2217,9 +2217,15 @@ class CursesBackend(UIBackend):
             height=('relative', 85)
         )
 
+        # Set up input handler for keymap
+        def keymap_input(key):
+            # All input is handled by the keymap widget itself
+            # Just return None to indicate we didn't handle it (widget did)
+            return None
+
         self._keymap_overlay = overlay
         self.loop.widget = overlay
-        self.loop.unhandled_input = None  # Keymap handles its own input
+        self.loop.unhandled_input = keymap_input
 
     def _activate_menu(self):
         """Activate the interactive menu bar."""

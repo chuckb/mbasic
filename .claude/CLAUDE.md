@@ -54,7 +54,10 @@
 
 ## Code & UI Rules
 - **Code style**: Python 3, type hints, pathlib, docstrings, comments for complex logic
-- **UI/UX**: NO FUNCTION KEYS (F1-F12) - user cannot use them. Use Ctrl+letter instead (Ctrl+G, Ctrl+T, etc.)
+- **UI/UX**:
+  - NO FUNCTION KEYS (F1-F12) - user cannot use them. Use Ctrl+letter instead (Ctrl+G, Ctrl+T, etc.)
+  - NO PRINTABLE CHARACTER KEYS (?, /, etc.) - they must be typeable in the editor. Only use control characters.
+  - **Key notation**: ALWAYS use `^X` notation (e.g., `^F`, `^Q`), NEVER use `Ctrl+X` in user-facing text or status bars
 
 ## Testing
 - **Test files**: `basic/bas_tests/` - MBASIC 5.21 syntax only

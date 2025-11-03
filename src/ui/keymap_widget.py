@@ -4,6 +4,24 @@ import urwid
 from .keybindings import KEYBINDINGS_BY_CATEGORY
 
 
+def _format_key_display(key_str):
+    """Convert Ctrl+ notation to ^ notation for consistency.
+
+    Args:
+        key_str: Key string like "Ctrl+F" or "^F"
+
+    Returns:
+        Formatted string using ^ notation like "^F"
+    """
+    if key_str.startswith('Ctrl+'):
+        # Convert "Ctrl+F" to "^F"
+        return '^' + key_str[5:]
+    elif key_str.startswith('Shift+Ctrl+'):
+        # Convert "Shift+Ctrl+V" to "Shift+^V"
+        return 'Shift+^' + key_str[11:]
+    return key_str
+
+
 class KeymapWidget(urwid.WidgetWrap):
     """Display all keyboard shortcuts in a scrollable window."""
 
@@ -67,7 +85,9 @@ class KeymapWidget(urwid.WidgetWrap):
             for key, description in bindings:
                 # Format: "  Key         Description"
                 # Use 16 chars for key column for alignment
-                line = f"  {key:<16} {description}"
+                # Convert Ctrl+ to ^ notation for consistency
+                formatted_key = _format_key_display(key)
+                line = f"  {formatted_key:<16} {description}"
                 content.append(
                     urwid.Text(line)
                 )
