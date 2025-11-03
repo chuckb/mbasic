@@ -1762,12 +1762,13 @@ class CursesBackend(UIBackend):
             # Show where we halted (if not an error and not completed)
             if self.runtime.halted and not state.error_info:
                 pc = self.runtime.pc
-                stmt_info = f" statement {pc.stmt_offset + 1}" if pc and pc.stmt_offset > 0 else ""
+                # Show PC in line.statement format (e.g., "10.2")
+                pc_display = f"{pc.line_num}.{pc.stmt_offset}" if pc and not pc.halted() else str(state.current_line)
                 # Show current line with code
                 line_code = self.editor_lines.get(state.current_line, "")
-                self.output_buffer.append(f"→ Paused at line {state.current_line}{stmt_info}: {line_code}")
+                self.output_buffer.append(f"→ Paused at {pc_display}: {line_code}")
                 self._update_output()
-                self.status_bar.set_text(f"Paused at line {state.current_line}{stmt_info} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
+                self.status_bar.set_text(f"Paused at {pc_display} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
                 self._update_immediate_status()
             elif state.error_info:
                 # Clear highlighting on error
@@ -1844,10 +1845,13 @@ class CursesBackend(UIBackend):
                 if self.stack_window_visible:
                     self._update_stack_window()
 
-                # Show where we paused
-                self.output_buffer.append(f"→ Paused at line {state.current_line}")
+                # Show where we paused (with PC format)
+                pc = self.runtime.pc
+                pc_display = f"{pc.line_num}.{pc.stmt_offset}" if pc and not pc.halted() else str(state.current_line)
+                line_code = self.editor_lines.get(state.current_line, "")
+                self.output_buffer.append(f"→ Paused at {pc_display}: {line_code}")
                 self._update_output()
-                self.status_bar.set_text(f"Paused at line {state.current_line} - Ctrl+L=Step Line, Ctrl+T=Step Stmt, Ctrl+G=Continue")
+                self.status_bar.set_text(f"Paused at {pc_display} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
                 self._update_immediate_status()
             elif state.error_info:
                 self.editor._update_display()
