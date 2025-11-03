@@ -574,6 +574,20 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         self._update_display()
 
+        # Position cursor after first line number and space
+        if self.lines:
+            display_text = self.edit_widget.get_edit_text()
+            if display_text:
+                # Find first newline or use whole text if one line
+                first_line = display_text.split('\n')[0] if '\n' in display_text else display_text
+                # Skip status char (1), then digits, then space
+                pos = 1  # Skip status char
+                while pos < len(first_line) and first_line[pos].isdigit():
+                    pos += 1
+                if pos < len(first_line) and first_line[pos] == ' ':
+                    pos += 1  # Skip space after line number
+                self.edit_widget.set_edit_pos(pos)
+
     def set_edit_text(self, text):
         """Compatibility alias for set_program_text.
 
@@ -1514,6 +1528,10 @@ class CursesBackend(UIBackend):
 
     def _handle_input(self, key):
         """Handle global keyboard shortcuts."""
+        # Debug: log all ctrl keys
+        if key.startswith('ctrl '):
+            self.status_bar.set_text(f"Got key: {repr(key)}")
+
         if key == QUIT_KEY or key == QUIT_ALT_KEY:
             # Quit
             raise urwid.ExitMainLoop()
