@@ -209,8 +209,8 @@ Bottom panel during debugging:
 Debug> PRINT A
 42
 Debug> A = 100
-Debug> WATCH B$
-B$ = "Hello"
+Debug> PRINT B$
+Hello
 Debug> CONT
 ```
 
@@ -222,8 +222,7 @@ Debug> CONT
 
 ### Debug Commands
 
-- `WATCH var` - Show variable value
-- `WATCH` - Show all variables
+- `PRINT var` - Show variable value
 - `STACK` - Show call stack
 - `BREAK` - List breakpoints
 - `CONT` - Continue execution
@@ -415,6 +414,6 @@ mbasic.exportDebugState()
 ## See Also
 
 - [Getting Started](getting-started.md) - Web UI basics
-- [Keyboard Shortcuts](keyboard-shortcuts.md) - Complete reference
+- [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md) - Complete reference
 - [Features](features.md) - All Web UI capabilities
 - [Variable Types](../../common/language/variables.md) - BASIC variables

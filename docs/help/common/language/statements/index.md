@@ -20,6 +20,7 @@ All BASIC-80 commands and statements are described in this reference.
 ### D
 - [DATA](data.md) - Store data values in program
 - [DEF FN](def-fn.md) - Define user function
+- [DEF USR](def-usr.md) - Define assembly language subroutine address
 - [DEFINT/SNG/DBL/STR](defint-sng-dbl-str.md) - Set default variable types
 - [DELETE](delete.md) - Delete program lines
 - [DIM](dim.md) - Dimension arrays
@@ -59,7 +60,7 @@ All BASIC-80 commands and statements are described in this reference.
 
 ### M
 - [MERGE](merge.md) - Merge program from disk
-- [MID$](mid_dollar.md) - Replace characters in string
+- [MID$](mid-assignment.md) - Replace characters in string
 
 ### N
 - [NAME](name.md) - Rename disk file
@@ -163,6 +164,7 @@ All BASIC-80 commands and statements are described in this reference.
 
 ### Functions
 - [DEF FN](def-fn.md) - Define user function
+- [DEF USR](def-usr.md) - Define assembly subroutine address
 
 ### Error Handling
 - [ERR and ERL](err-erl-variables.md) - Error variables
@@ -171,7 +173,7 @@ All BASIC-80 commands and statements are described in this reference.
 - [RESUME](resume.md) - Resume after error
 
 ### String Manipulation
-- [MID$](mid_dollar.md) - Replace substring
+- [MID$](mid-assignment.md) - Replace substring
 
 ### Memory and Hardware
 - [CALL](call.md) - Call machine language

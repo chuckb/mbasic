@@ -104,4 +104,4 @@ Sample programs to learn from.
 
 ## See Also
 
-- [Keyboard Commands](keyboard-commands.md) - All editor shortcuts
+- [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md) - All editor shortcuts

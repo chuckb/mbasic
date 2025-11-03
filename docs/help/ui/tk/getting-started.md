@@ -68,6 +68,6 @@ Congratulations! You've run your first MBASIC program.
 
 - [Essential Features](features.md) - Learn about Smart Insert, Breakpoints, etc.
 - [Common Workflows](workflows.md) - Step-by-step guides
-- [Keyboard Shortcuts](keyboard-shortcuts.md) - Complete reference
+- [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md) - Complete reference
 
 [← Back to Tk GUI Help](index.md)

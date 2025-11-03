@@ -22,7 +22,7 @@ Learn how to use the terminal interface:
 
 - [Getting Started](getting-started.md) - First steps with the curses UI
 - [Quick Reference](quick-reference.md) - All keyboard shortcuts in one place
-- [Keyboard Commands](keyboard-commands.md) - Complete keyboard reference
+- [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md) - Complete keyboard reference (auto-generated)
 - [Editing Programs](editing.md) - How to write and edit programs
 - [Running Programs](running.md) - Execute and debug your code
 - [File Operations](files.md) - Save and load your programs

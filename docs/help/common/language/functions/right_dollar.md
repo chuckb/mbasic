@@ -40,7 +40,6 @@ Returns the rightmost I characters of string X$. If I=LEN{X$), returns X$. If I=
 - [LEFT$](left_dollar.md) - Return the leftmost N characters from a string
 - [LEN](len.md) - Returns the number of characters in X$
 - [MID$](mid_dollar.md) - Extract a substring from the middle of a string
-- [MID$](../statements/mid_dollar.md) - To replace a portion of one string with    another string
 - [MID$ Assignment](../statements/mid-assignment.md) - Replace characters within a string variable
 - [OCT$](oct_dollar.md) - Returns a string which represents the octal value of the decimal argument
 - [SPACE$](space_dollar.md) - Returns a string of I spaces

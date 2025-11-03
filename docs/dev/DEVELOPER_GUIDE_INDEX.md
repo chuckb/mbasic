@@ -50,7 +50,7 @@ Welcome to the MBASIC developer documentation! This index organizes all develope
 
 ## Current Work
 
-- **[Work in Progress](WORK_IN_PROGRESS.md)** - Current multi-step tasks (if exists)
+- **Work in Progress** - Check for WORK_IN_PROGRESS.md if present
 
 ## Package Installation & Distribution
 

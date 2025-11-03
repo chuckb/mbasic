@@ -88,5 +88,5 @@ Check the project repository for updates on Find/Replace implementation for Curs
 ## See Also
 
 - [Editing Commands](editing.md) - Current editing features
-- [Keyboard Commands](keyboard-commands.md) - Available shortcuts
+- [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md) - Available shortcuts
 - [Tk Features](../tk/features.md) - Tk UI with Find/Replace

@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2025-11-03
-**Total Documents:** 155
+**Total Documents:** 154
 
 ## What's Here
 
@@ -174,7 +174,6 @@ If you're contributing to MBASIC:
 
 - [Runtime Interpreter Split Todo](RUNTIME_INTERPRETER_SPLIT_TODO.md)
 - [Work In Progress Template](WORK_IN_PROGRESS_TEMPLATE.md)
-- [Work In Progress](WORK_IN_PROGRESS.md)
 
 ### Other
 

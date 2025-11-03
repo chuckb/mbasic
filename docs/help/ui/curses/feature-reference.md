@@ -169,4 +169,4 @@ Press ? with cursor on a BASIC keyword to get help for that specific command.
 
 ---
 
-*See also: [Keyboard Commands](keyboard-commands.md), [Getting Started](getting-started.md)*
+*See also: [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md), [Getting Started](getting-started.md)*

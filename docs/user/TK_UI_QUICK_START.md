@@ -571,7 +571,7 @@ Try both and use whichever feels faster!
 ### Learn More About...
 
 - **Debugging**: See [Debugging Features](../help/common/debugging.md)
-- **Keyboard Shortcuts**: See [Tk Keyboard Shortcuts](../help/ui/tk/keyboard-shortcuts.md)
+- **Keyboard Shortcuts**: See [Tk Keyboard Shortcuts](keyboard-shortcuts.md)
 - **BASIC Language**: See [Language Reference](../help/common/language/index.md)
 - **Editor Features**: See [Editor Commands](../help/common/editor-commands.md)
 

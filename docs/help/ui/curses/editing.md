@@ -110,6 +110,6 @@ This leaves room to insert lines later.
 
 ## See Also
 
-- [Keyboard Commands](keyboard-commands.md) - All shortcuts
+- [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md) - All shortcuts
 - [Running Programs](running.md) - Execute your code
 - [File Operations](files.md) - Save and load

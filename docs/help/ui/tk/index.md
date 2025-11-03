@@ -22,7 +22,7 @@ Learn how to use the graphical interface:
 
 - [Getting Started](getting-started.md) - First steps with the GUI
 - [Essential Features](features.md) - Smart Insert, Breakpoints, Variables Window, etc.
-- [Keyboard Shortcuts](keyboard-shortcuts.md) - Complete keyboard reference
+- [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md) - Complete keyboard reference (auto-generated)
 - [Common Workflows](workflows.md) - Step-by-step guides for typical tasks
 - [Settings & Configuration](settings.md) - Variable case, keyword case, and more
 - [Tips & Tricks](tips.md) - Best practices and productivity tips

@@ -315,7 +315,7 @@ See: [CLI Settings Commands](../cli/settings.md)
 - [Settings System Overview](../../common/settings.md)
 - [Tk GUI Features](features.md)
 - [Tk GUI Getting Started](getting-started.md)
-- [Tk GUI Keyboard Shortcuts](keyboard-shortcuts.md)
+- [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md)
 - [CLI Settings Commands](../cli/settings.md)
 - [Tk GUI Index](index.md)
 

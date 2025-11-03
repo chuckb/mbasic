@@ -39,33 +39,12 @@ A DEFtype statement declares that the variable names beginning with the 1etter(s
                             the letters I, J, K, L, M,
                             N, W, X, Y, Z will be integer
                             variables.
- 2.13   ~    USR
- Format:       DEF USR[<digit>]=<integer expression>
- Versions:     Extended, Disk
- Purpose:      To specify the starting address of   an    assembly
-               language subroutine.
- Remarks:     <digit> may be any digit from 0 to 9. The digit
-              corresponds to the number of the USR routine
-              whose address is being specified. If <digit> is
-              omitted, DEF USRO is assumed.       The value of
-              <integer expression> is the starting address of
-              the USR routine.      See Appendix C, Assembly_
-              Language Subroutines.
-              Any number of DEF USR statements may appear in a
-              program    to   redefine   subroutine   starting
-              addresses, thus allowing access to as many
-              subroutines as necessary.
-_ Example:         •
-                   .
-              200 DEFUSRO=24000
-              210 X=USRO(y A 2/2.89)
-                   ."
 ```
 
 ## See Also
 - [CLOAD THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](cload.md) - To load a program or an array from cassette tape into memory
-- [COBL](../functions/cobl.md) - Converts X to a double precision number
-- [CRR$](../functions/crr_dollar.md) - Returns a string whose one element has ASCII code I
+- [CDBL](../functions/cdbl.md) - Converts X to a double-precision floating-point number
+- [CHR$](../functions/chr_dollar.md) - Returns a one-character string whose ASCII code is the specified value
 - [CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](csave.md) - To save the program or an       array   currently     in memory on cassette tape
 - [CVI, CVS, CVD](../functions/cvi-cvs-cvd.md) - Convert string values to numeric values
 - [ERR AND ERL VARIABLES](err-erl-variables.md) - NEEDS_DESCRIPTION

@@ -36,15 +36,6 @@ STEP OVER              ' Step over subroutines (planned)
 ```
 **Status:** ⚠️ MBASIC-2025 Extension (Not in MBASIC 5.21)
 
-#### WATCH - Variable Inspection
-```basic
-WATCH                  ' List all variables
-WATCH A                ' Show specific variable
-WATCH A, B, C$         ' Show multiple variables
-WATCH A=10             ' Set variable (immediate mode only)
-```
-**Status:** ⚠️ MBASIC-2025 Extension (Not in MBASIC 5.21)
-
 #### STACK - Call Stack Display
 ```basic
 STACK                  ' Show full call stack
@@ -114,7 +105,7 @@ The GUI interfaces (Curses, Tk, Web) are **NOT in MBASIC 5.21**.
 ⚠️ **Programs using extensions will NOT run on original MBASIC 5.21**
 
 If you use:
-- BREAK, STEP, WATCH, STACK commands
+- BREAK, STEP, STACK commands
 - Visual debugging features
 - GUI-specific features
 - Modern file paths
@@ -137,7 +128,6 @@ To ensure compatibility with original MBASIC 5.21:
 | **Core BASIC** | ✅ | ✅ | 100% compatible |
 | **BREAK command** | ❌ | ✅ | Extension |
 | **STEP command** | ❌ | ✅ | Extension |
-| **WATCH command** | ❌ | ✅ | Extension |
 | **STACK command** | ❌ | ✅ | Extension |
 | **GUI interfaces** | ❌ | ✅ | Extension |
 | **Syntax highlighting** | ❌ | ✅ | Extension |
@@ -164,7 +154,7 @@ If you want the authentic MBASIC 5.21 experience:
 python3 mbasic --ui cli
 ```
 Then avoid using:
-- BREAK, STEP, WATCH, STACK
+- BREAK, STEP, STACK
 - Any GUI features
 - Long filenames
 - Modern paths

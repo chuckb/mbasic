@@ -129,7 +129,7 @@ Quick reference for the curses text UI.
 
 ## See Also
 
-- [Keyboard Commands](keyboard-commands.md) - Full command reference
+- [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md) - Full command reference
 - [Editing Programs](editing.md) - Detailed editing guide
 - [Running Programs](running.md) - Execution and debugging
 - [File Operations](files.md) - Save and load programs

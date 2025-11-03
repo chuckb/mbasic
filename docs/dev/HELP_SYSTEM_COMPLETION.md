@@ -36,7 +36,7 @@ Location: `docs/help/ui/` (per-backend subdirectories: `curses/`, `cli/`, `tk/`)
 **Curses UI:**
 - [getting-started.md](../help/ui/curses/getting-started.md) - First steps
 - [quick-reference.md](../help/ui/curses/quick-reference.md) - Keyboard shortcuts
-- [keyboard-commands.md](../help/ui/curses/keyboard-commands.md) - Complete command reference
+- [keyboard-shortcuts.md](../user/keyboard-shortcuts.md) - Complete keyboard reference (auto-generated)
 - [editing.md](../help/ui/curses/editing.md) - Program editing
 - [running.md](../help/ui/curses/running.md) - Execution and debugging
 - [files.md](../help/ui/curses/files.md) - File operations

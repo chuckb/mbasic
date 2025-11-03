@@ -24,7 +24,7 @@ Learn how to use the web interface:
 - [Web Interface](web-interface.md) - Editor, menus, and components
 - [Features](features.md) - Auto-numbering, command area, file I/O
 - [Debugging Guide](debugging.md) - Debug tools and features
-- [Keyboard Shortcuts](keyboard-shortcuts.md) - Complete keyboard reference
+- [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md) - Complete keyboard reference (auto-generated)
 - [Settings & Configuration](settings.md) - Customize your experience
 
 ## 📗 MBASIC Interpreter

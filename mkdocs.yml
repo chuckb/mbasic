@@ -125,3 +125,4 @@ site_dir: site
 # Exclude files that conflict or shouldn't be in the site
 exclude_docs: |
   README.md
+  history/docs_inconsistencies_report*.md

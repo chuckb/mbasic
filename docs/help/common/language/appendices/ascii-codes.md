@@ -116,12 +116,12 @@ Complete ASCII character code reference for BASIC-80.
 ### String Functions Using ASCII
 
 - [ASC](../functions/asc.md) - Get ASCII code of first character
-- [CHR$](../functions/crr_dollar.md) - Get character from ASCII code
+- [CHR$](../functions/chr_dollar.md) - Get character from ASCII code
 - [INKEY$](../functions/inkey_dollar.md) - Read keyboard (returns ASCII)
 - [INPUT$](../functions/input_dollar.md) - Read characters
 
 ## See Also
 
-- [CHR$ Function](../functions/crr_dollar.md) - Convert ASCII code to character
+- [CHR$ Function](../functions/chr_dollar.md) - Convert ASCII code to character
 - [ASC Function](../functions/asc.md) - Convert character to ASCII code
 - [Character Set](../character-set.md) - BASIC-80 character set overview

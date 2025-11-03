@@ -33,8 +33,8 @@ Convert string values to numeric values. Numeric values that are read in from a 
 
 ## See Also
 - [CLOAD THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](../statements/cload.md) - To load a program or an array from cassette tape into memory
-- [COBL](cobl.md) - Converts X to a double precision number
-- [CRR$](crr_dollar.md) - Returns a string whose one element has ASCII code I
+- [CDBL](cdbl.md) - Converts X to a double-precision floating-point number
+- [CHR$](chr_dollar.md) - Returns a one-character string whose ASCII code is the specified value
 - [CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](../statements/csave.md) - To save the program or an       array   currently     in memory on cassette tape
 - [DEFINT/SNG/DBL/STR](../statements/defint-sng-dbl-str.md) - To declare variable types as integer,        single precision, double precision, or string
 - [ERR AND ERL VARIABLES](../statements/err-erl-variables.md) - NEEDS_DESCRIPTION

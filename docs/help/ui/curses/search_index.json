@@ -15,13 +15,6 @@
       "description": "NEEDS_DESCRIPTION"
     },
     {
-      "path": "keyboard-commands.md",
-      "title": "Curses UI Keyboard Commands",
-      "type": "guide",
-      "category": "",
-      "description": "NEEDS_DESCRIPTION"
-    },
-    {
       "path": "quick-reference.md",
       "title": "MBASIC - Keyboard Shortcuts",
       "type": "guide",
@@ -53,13 +46,11 @@
   "keywords": {
     "command": [
       "editing.md",
-      "files.md",
-      "keyboard-commands.md"
+      "files.md"
     ],
     "curses": [
       "editing.md",
       "files.md",
-      "keyboard-commands.md",
       "getting-started.md"
     ],
     "editing": [
@@ -71,13 +62,11 @@
     ],
     "file": [
       "editing.md",
-      "files.md",
-      "keyboard-commands.md"
+      "files.md"
     ],
     "for": [
       "editing.md",
-      "files.md",
-      "keyboard-commands.md"
+      "files.md"
     ],
     "if": [
       "editing.md",
@@ -85,34 +74,27 @@
     ],
     "line": [
       "editing.md",
-      "files.md",
-      "keyboard-commands.md"
+      "files.md"
     ],
     "next": [
       "editing.md",
-      "files.md",
-      "keyboard-commands.md"
+      "files.md"
     ],
     "number": [
       "editing.md",
       "files.md"
     ],
     "error": [
-      "files.md",
-      "keyboard-commands.md"
+      "files.md"
     ],
     "operations": [
       "files.md"
     ],
     "commands": [
-      "keyboard-commands.md",
       "quick-reference.md"
     ],
-    "function": [
-      "keyboard-commands.md"
-    ],
+    "function": [],
     "keyboard": [
-      "keyboard-commands.md",
       "quick-reference.md"
     ],
     "shortcuts": [

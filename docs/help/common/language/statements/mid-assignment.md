@@ -79,7 +79,6 @@ Ok
 - [LEFT$](../functions/left_dollar.md) - Return the leftmost N characters from a string
 - [LEN](../functions/len.md) - Returns the number of characters in X$
 - [MID$](../functions/mid_dollar.md) - Extract a substring from the middle of a string
-- [MID$](mid_dollar.md) - To replace a portion of one string with    another string
 - [OCT$](../functions/oct_dollar.md) - Returns a string which represents the octal value of the decimal argument
 - [RIGHT$](../functions/right_dollar.md) - Return the rightmost N characters from a string
 - [SPACE$](../functions/space_dollar.md) - Returns a string of I spaces

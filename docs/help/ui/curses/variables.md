@@ -257,7 +257,7 @@ Large arrays:
 
 ## See Also
 
-- [Keyboard Commands](keyboard-commands.md) - All shortcuts
+- [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md) - All shortcuts
 - [Running Programs](running.md) - Running and debugging programs
 - [Getting Started](getting-started.md) - Curses UI basics
 - [CLI Variables](../cli/variables.md) - CLI comparison

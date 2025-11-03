@@ -111,5 +111,5 @@ Check if:
 ## See Also
 
 - [Editing Programs](editing.md) - Write code
-- [Keyboard Commands](keyboard-commands.md) - All shortcuts
+- [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md) - All shortcuts
 - [BASIC Statements](../../common/language/statements/index.md) - Language reference

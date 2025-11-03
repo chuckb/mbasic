@@ -10,8 +10,6 @@ type: statement
 
 ## See Also
 - [CLOAD THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](cload.md) - To load a program or an array from cassette tape into memory
-- [COBL](../functions/cobl.md) - Converts X to a double precision number
-- [CRR$](../functions/crr_dollar.md) - Returns a string whose one element has ASCII code I
 - [CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](csave.md) - To save the program or an       array   currently     in memory on cassette tape
 - [CVI, CVS, CVD](../functions/cvi-cvs-cvd.md) - Convert string values to numeric values
 - [DEFINT/SNG/DBL/STR](defint-sng-dbl-str.md) - To declare variable types as integer,        single precision, double precision, or string

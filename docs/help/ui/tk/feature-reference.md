@@ -285,4 +285,4 @@ The Tk UI fully supports mouse operations:
 
 ---
 
-*See also: [Keyboard Shortcuts](keyboard-shortcuts.md), [Getting Started](getting-started.md), [Workflows](workflows.md)*
+*See also: [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md), [Getting Started](getting-started.md), [Workflows](workflows.md)*

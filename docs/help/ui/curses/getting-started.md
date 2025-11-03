@@ -76,7 +76,7 @@ Now that you've run your first program:
 - [Editing Programs](editing.md) - Learn line editing
 - [Running Programs](running.md) - More about execution
 - [File Operations](files.md) - Save and load programs
-- [Keyboard Commands](keyboard-commands.md) - All shortcuts
+- [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md) - All shortcuts
 
 Or jump to the BASIC language:
 

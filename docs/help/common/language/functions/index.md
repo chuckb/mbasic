@@ -20,7 +20,7 @@ Intrinsic functions provided by BASIC-80. These functions may be called from any
 
 ### String Functions
 - [ASC](asc.md) - Character to ASCII code
-- [CHR$](crr_dollar.md) - ASCII code to character
+- [CHR$](chr_dollar.md) - ASCII code to character
 - [HEX$](hex_dollar.md) - Number to hexadecimal
 - [INSTR](instr.md) - Find substring
 - [LEFT$](left_dollar.md) - Left substring
@@ -34,7 +34,7 @@ Intrinsic functions provided by BASIC-80. These functions may be called from any
 - [VAL](val.md) - String to number
 
 ### Type Conversion Functions
-- [CDBL](cobl.md) - To double precision
+- [CDBL](cdbl.md) - To double precision
 - [CINT](cint.md) - To integer
 - [CVD, CVI, CVS](cvi-cvs-cvd.md) - String to number
 - [MKD$, MKI$, MKS$](mki_dollar-mks_dollar-mkd_dollar.md) - Number to string
@@ -55,7 +55,7 @@ Intrinsic functions provided by BASIC-80. These functions may be called from any
 
 ## Alphabetical Quick Reference
 
-[ABS](abs.md) | [ASC](asc.md) | [ATN](atn.md) | [CDBL](cobl.md) | [CHR$](crr_dollar.md) | [CINT](cint.md) | [COS](cos.md) | [CVD/CVI/CVS](cvi-cvs-cvd.md) | [EOF](eof.md) | [EXP](exp.md) | [FIX](fix.md) | [FRE](fre.md) | [HEX$](hex_dollar.md) | [INKEY$](inkey_dollar.md) | [INP](inp.md) | [INPUT$](input_dollar.md) | [INSTR](instr.md) | [INT](int.md) | [LEFT$](left_dollar.md) | [LEN](len.md) | [LOC](loc.md) | [LOG](log.md) | [LPOS](lpos.md) | [MID$](mid_dollar.md) | [MKD$/MKI$/MKS$](mki_dollar-mks_dollar-mkd_dollar.md) | [POS](pos.md) | [RIGHT$](right_dollar.md) | [RND](rnd.md) | [SGN](sgn.md) | [SIN](sin.md) | [SPACE$](spaces.md) | [SPC](spc.md) | [SQR](sqr.md) | [STR$](str_dollar.md) | [STRING$](string_dollar.md) | [TAB](tab.md) | [TAN](tan.md) | [USR](usr.md) | [VAL](val.md) | [VARPTR](varptr.md)
+[ABS](abs.md) | [ASC](asc.md) | [ATN](atn.md) | [CDBL](cdbl.md) | [CHR$](chr_dollar.md) | [CINT](cint.md) | [COS](cos.md) | [CVD/CVI/CVS](cvi-cvs-cvd.md) | [EOF](eof.md) | [EXP](exp.md) | [FIX](fix.md) | [FRE](fre.md) | [HEX$](hex_dollar.md) | [INKEY$](inkey_dollar.md) | [INP](inp.md) | [INPUT$](input_dollar.md) | [INSTR](instr.md) | [INT](int.md) | [LEFT$](left_dollar.md) | [LEN](len.md) | [LOC](loc.md) | [LOG](log.md) | [LPOS](lpos.md) | [MID$](mid_dollar.md) | [MKD$/MKI$/MKS$](mki_dollar-mks_dollar-mkd_dollar.md) | [POS](pos.md) | [RIGHT$](right_dollar.md) | [RND](rnd.md) | [SGN](sgn.md) | [SIN](sin.md) | [SPACE$](spaces.md) | [SPC](spc.md) | [SQR](sqr.md) | [STR$](str_dollar.md) | [STRING$](string_dollar.md) | [TAB](tab.md) | [TAN](tan.md) | [USR](usr.md) | [VAL](val.md) | [VARPTR](varptr.md)
 
 ## See Also
 

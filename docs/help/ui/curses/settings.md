@@ -254,7 +254,7 @@ Changes persist across sessions automatically.
 ## See Also
 
 - [Settings System Overview](../../common/settings.md)
-- [Curses Keyboard Commands](keyboard-commands.md)
+- [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md)
 - [Curses Getting Started](getting-started.md)
 - [Curses Index](index.md)
 

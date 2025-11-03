@@ -274,7 +274,7 @@ Planned enhancements for web settings:
 - [Settings System Overview](../../common/settings.md)
 - [Web UI Features](features.md)
 - [Web UI Getting Started](getting-started.md)
-- [Web UI Keyboard Shortcuts](keyboard-shortcuts.md)
+- [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md)
 - [Web UI Index](index.md)
 
 [← Back to Web UI Help](index.md)

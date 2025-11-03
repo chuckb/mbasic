@@ -495,6 +495,6 @@ History Size: 50
 ## See Also
 
 - [Getting Started](getting-started.md) - First steps
-- [Keyboard Shortcuts](keyboard-shortcuts.md) - Quick reference
+- [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md) - Quick reference
 - [Debugging Guide](debugging.md) - Debug features
 - [Settings](settings.md) - Configuration options

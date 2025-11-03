@@ -34,7 +34,6 @@ The CLI provides a classic MBASIC command-line interface with direct mode and pr
 - [Debugging Guide](debugging.md) - Complete debugging reference
 - BREAK - Set/clear breakpoints
 - STEP - Single-step execution
-- WATCH - Inspect variables
 - STACK - View call stack
 
 ## 📗 MBASIC Interpreter

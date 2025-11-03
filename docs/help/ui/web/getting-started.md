@@ -365,7 +365,7 @@ The Web UI works with modern browsers:
 Now that you know the basics:
 
 - [Web UI Index](index.md) - Complete feature overview
-- [Keyboard Shortcuts](keyboard-shortcuts.md) - Quick reference
+- [Keyboard Shortcuts](../../../user/keyboard-shortcuts.md) - Quick reference
 - [Debugging Guide](debugging.md) - Advanced debugging
 - [Language Reference](../../common/language/index.md) - BASIC language syntax
 

@@ -38,7 +38,6 @@ Returns a string comprised of the leftmost I characters of X$. I must be in the 
 - [INSTR](instr.md) - Searches for the first occurrence of string Y$ in X$ and returns the position at which the match is found
 - [LEN](len.md) - Returns the number of characters in X$
 - [MID$](mid_dollar.md) - Extract a substring from the middle of a string
-- [MID$](../statements/mid_dollar.md) - To replace a portion of one string with    another string
 - [MID$ Assignment](../statements/mid-assignment.md) - Replace characters within a string variable
 - [OCT$](oct_dollar.md) - Returns a string which represents the octal value of the decimal argument
 - [RIGHT$](right_dollar.md) - Return the rightmost N characters from a string

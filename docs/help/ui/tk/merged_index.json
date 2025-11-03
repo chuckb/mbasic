@@ -51,27 +51,11 @@
       "tier": "language"
     },
     {
-      "path": "common/language/functions/cobl.md",
-      "title": "COBL",
-      "type": "function",
-      "category": "NEEDS_CATEGORIZATION",
-      "description": "Converts X to a double precision number",
-      "tier": "language"
-    },
-    {
       "path": "common/language/functions/cos.md",
       "title": "COS",
       "type": "function",
       "category": "mathematical",
       "description": "Returns the cosine of X in radians",
-      "tier": "language"
-    },
-    {
-      "path": "common/language/functions/crr_dollar.md",
-      "title": "CRR$",
-      "type": "function",
-      "category": "NEEDS_CATEGORIZATION",
-      "description": "Returns a string whose one element has ASCII code I",
       "tier": "language"
     },
     {
@@ -216,14 +200,6 @@
       "type": "function",
       "category": "file-io",
       "description": "Returns the current position of the line printer print head within the line printer buffer",
-      "tier": "language"
-    },
-    {
-      "path": "common/language/functions/mid_dollar.md",
-      "title": "MID$",
-      "type": "function",
-      "category": "string",
-      "description": "Extract a substring from the middle of a string",
       "tier": "language"
     },
     {
@@ -712,14 +688,6 @@
       "type": "statement",
       "category": "string",
       "description": "Replace characters within a string variable",
-      "tier": "language"
-    },
-    {
-      "path": "common/language/statements/mid_dollar.md",
-      "title": "MID$",
-      "type": "statement",
-      "category": "strings",
-      "description": "To replace a portion of one string with    another string",
       "tier": "language"
     },
     {
