@@ -1198,8 +1198,50 @@ class CursesBackend(UIBackend):
 
         self.runtime = Runtime({}, {})
 
-        # Create capturing IO handler for execution
-        self.io_handler = None  # Will be created fresh for each run
+        # Create capturing IO handler for execution (created once, reused)
+        class CapturingIOHandler:
+            """IO handler that captures output to a buffer."""
+            def __init__(self):
+                self.output_buffer = []
+                self.debug_enabled = False
+
+            def output(self, text, end='\n'):
+                if end == '\n':
+                    self.output_buffer.append(str(text))
+                else:
+                    if self.output_buffer:
+                        self.output_buffer[-1] += str(text) + end
+                    else:
+                        self.output_buffer.append(str(text) + end)
+
+            def get_and_clear_output(self):
+                output = self.output_buffer[:]
+                self.output_buffer.clear()
+                return output
+
+            def set_debug(self, enabled):
+                self.debug_enabled = enabled
+
+            def input(self, prompt=''):
+                return ""
+
+            def input_line(self, prompt=''):
+                return ""
+
+            def input_char(self, blocking=True):
+                return ""
+
+            def clear_screen(self):
+                pass
+
+            def error(self, message):
+                self.output(f"Error: {message}")
+
+            def debug(self, message):
+                if self.debug_enabled:
+                    self.output(f"Debug: {message}")
+
+        self.io_handler = CapturingIOHandler()
 
         # Create one interpreter for the session - don't create multiple!
         # Use unlimited limits for immediate mode (runs will use local limits)
@@ -1650,10 +1692,6 @@ class CursesBackend(UIBackend):
             self.runtime.halted = True
             return  # Wait for setup to complete on next call
 
-        # Check if io_handler is ready (may not be on first call after _run_program)
-        if not self.io_handler:
-            return  # Still setting up, try again
-
         try:
             # If halted, clear it to resume execution (like a microprocessor)
             if self.runtime.halted:
@@ -1733,10 +1771,6 @@ class CursesBackend(UIBackend):
             # Program is now running async - halt it immediately
             self.runtime.halted = True
             return  # Wait for setup to complete on next call
-
-        # Check if io_handler is ready (may not be on first call after _run_program)
-        if not self.io_handler:
-            return  # Still setting up, try again
 
         try:
             # If halted, clear it to resume execution (like a microprocessor)
@@ -2920,66 +2954,15 @@ class CursesBackend(UIBackend):
                     self.status_bar.set_text("Parse error - Fix and try again")
                     return
 
-            # Create a capturing IO handler that just buffers output
-            class CapturingIOHandler:
-                """IO handler that captures output to a buffer.
-
-                Output is collected during tick execution and then
-                picked up by the UI after the tick returns.
-                """
-                def __init__(self):
-                    self.output_buffer = []
-                    self.debug_enabled = False
-
-                def output(self, text, end='\n'):
-                    """Capture output to buffer."""
-                    if end == '\n':
-                        self.output_buffer.append(str(text))
-                    else:
-                        # For same-line output, append to last line or create new
-                        if self.output_buffer:
-                            self.output_buffer[-1] += str(text) + end
-                        else:
-                            self.output_buffer.append(str(text) + end)
-
-                def get_and_clear_output(self):
-                    """Get buffered output and clear the buffer."""
-                    output = self.output_buffer[:]
-                    self.output_buffer.clear()
-                    return output
-
-                def set_debug(self, enabled):
-                    self.debug_enabled = enabled
-
-                # Stub methods required by IOHandler interface
-                def input(self, prompt=''):
-                    return ""
-
-                def input_line(self, prompt=''):
-                    return ""
-
-                def input_char(self, blocking=True):
-                    return ""
-
-                def clear_screen(self):
-                    pass
-
-                def error(self, message):
-                    self.output(f"Error: {message}")
-
-                def debug(self, message):
-                    if self.debug_enabled:
-                        self.output(f"Debug: {message}")
-
             # Reset runtime with current program - RUN = CLEAR + GOTO first line
             # This preserves breakpoints but clears variables
             self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
-            # Update interpreter's IO handler to output to execution pane
-            # (reuse existing interpreter - don't create new one!)
-            io_handler = CapturingIOHandler()
-            self.interpreter.io = io_handler
-            self.io_handler = io_handler  # Keep reference to get output later
+            # Clear any buffered output from previous run
+            self.io_handler.get_and_clear_output()
+
+            # Update interpreter to use the session's io_handler
+            self.interpreter.io = self.io_handler
 
             # Start interpreter (sets up statement table, etc.)
             state = self.interpreter.start()
