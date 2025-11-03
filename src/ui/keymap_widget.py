@@ -40,8 +40,7 @@ class KeymapWidget(urwid.WidgetWrap):
         self.listwalker = urwid.SimpleFocusListWalker(content)
         self.listbox = urwid.ListBox(self.listwalker)
 
-        # Add title and borders
-        title = urwid.Text(('title', 'Keyboard Shortcuts'), align='center')
+        # Add instructions at top
         instructions = urwid.Text(
             "↑/↓ scroll  ESC/Q close",
             align='center'
@@ -49,8 +48,6 @@ class KeymapWidget(urwid.WidgetWrap):
 
         # Build the layout
         pile = urwid.Pile([
-            ('pack', urwid.AttrMap(title, 'title')),
-            ('pack', urwid.Divider('─')),
             ('pack', urwid.AttrMap(instructions, 'help_text')),
             ('pack', urwid.Divider()),
             self.listbox,
@@ -72,14 +69,13 @@ class KeymapWidget(urwid.WidgetWrap):
         content = []
 
         for category, bindings in KEYBINDINGS_BY_CATEGORY.items():
-            # Add category header
+            # Add category header (no blank line before or after)
             content.append(
                 urwid.AttrMap(
-                    urwid.Text(('category', f'\n{category}')),
+                    urwid.Text(('category', category)),
                     'category'
                 )
             )
-            content.append(urwid.Divider())
 
             # Add keybindings in this category
             for key, description in bindings:
