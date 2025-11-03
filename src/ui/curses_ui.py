@@ -1635,10 +1635,12 @@ class CursesBackend(UIBackend):
             self.status_bar.set_text(f"Continue error: {e}")
 
     def _debug_step(self):
-        """Execute one line and pause (single-step debugging)."""
+        """Execute one statement and pause (single-step debugging)."""
         if not self.interpreter:
-            self.status_bar.set_text("No program running")
-            return
+            # No program running - start in step mode
+            self._run_program()
+            if not self.interpreter:
+                return  # Failed to start
 
         try:
             # If halted, clear it to resume execution (like a microprocessor)
