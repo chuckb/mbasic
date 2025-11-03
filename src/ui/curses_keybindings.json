@@ -6,8 +6,8 @@
       "description": "Open help browser"
     },
     "load": {
-      "keys": ["Ctrl+L"],
-      "primary": "Ctrl+L",
+      "keys": ["Shift+Ctrl+L"],
+      "primary": "Shift+Ctrl+L",
       "description": "Step Line (execute all statements on current line)"
     },
     "open": {

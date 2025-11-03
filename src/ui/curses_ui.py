@@ -516,20 +516,35 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             # Join lines - handle both string and markup formats
             if any(isinstance(line, list) for line in formatted_lines):
                 # We have markup - need to join carefully
-                display_text = []
+                display_markup = []
                 for i, line in enumerate(formatted_lines):
                     if i > 0:
-                        display_text.append('\n')
+                        display_markup.append('\n')
                     if isinstance(line, list):
-                        display_text.extend(line)
+                        display_markup.extend(line)
                     else:
-                        display_text.append(line)
+                        display_markup.append(line)
+                display_text = display_markup
             else:
                 # All strings - simple join
                 display_text = '\n'.join(formatted_lines)
 
         # Update the edit widget
-        self.edit_widget.set_edit_text(display_text)
+        if isinstance(display_text, list):
+            # Markup format - convert to plain text string (Edit widget doesn't support markup)
+            # Extract just the text from markup tuples: ('attr', 'text') -> 'text'
+            plain_text = []
+            for item in display_text:
+                if isinstance(item, tuple):
+                    # ('attr', 'text') -> extract 'text'
+                    plain_text.append(item[1])
+                else:
+                    # Plain string
+                    plain_text.append(item)
+            self.edit_widget.set_edit_text(''.join(plain_text))
+        else:
+            # Plain string
+            self.edit_widget.set_edit_text(display_text)
 
         # If empty program, position cursor after line number and space (ready to type code)
         if not self.lines:
@@ -1699,8 +1714,14 @@ class CursesBackend(UIBackend):
 
     def _debug_step(self):
         """Execute one statement and pause (single-step debugging)."""
-        if not self.interpreter or not hasattr(self.interpreter, 'state') or not self.interpreter.state:
-            # No program running - set it up without starting async execution
+        # Check if we need to setup/restart the program
+        needs_setup = (not self.interpreter or
+                      not hasattr(self.interpreter, 'state') or
+                      not self.interpreter.state or
+                      self.runtime.pc.halted())
+
+        if needs_setup:
+            # No program running or program completed - set it up without starting async execution
             if not self._setup_program():
                 return  # Setup failed (error already displayed)
             # Fall through to execute first step
@@ -1778,8 +1799,14 @@ class CursesBackend(UIBackend):
 
     def _debug_step_line(self):
         """Execute all statements on current line and pause (step by line)."""
-        if not self.interpreter or not hasattr(self.interpreter, 'state') or not self.interpreter.state:
-            # No program running - set it up without starting async execution
+        # Check if we need to setup/restart the program
+        needs_setup = (not self.interpreter or
+                      not hasattr(self.interpreter, 'state') or
+                      not self.interpreter.state or
+                      self.runtime.pc.halted())
+
+        if needs_setup:
+            # No program running or program completed - set it up without starting async execution
             if not self._setup_program():
                 return  # Setup failed (error already displayed)
             # Fall through to execute first step

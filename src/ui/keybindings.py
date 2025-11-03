@@ -65,9 +65,13 @@ def _ctrl_key_to_urwid(key_string):
     Examples:
         "Ctrl+H" -> "ctrl h"
         "Ctrl+Q" -> "ctrl q"
+        "Shift+Ctrl+L" -> "shift ctrl l"
         "/" -> "/"
     """
-    if key_string.startswith('Ctrl+'):
+    if key_string.startswith('Shift+Ctrl+'):
+        letter = key_string[11:].lower()
+        return f'shift ctrl {letter}'
+    elif key_string.startswith('Ctrl+'):
         letter = key_string[5:].lower()
         return f'ctrl {letter}'
     return key_string.lower()
