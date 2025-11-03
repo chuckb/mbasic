@@ -165,7 +165,8 @@ Return ONLY the JSON array, no other text."""
 
         try:
             response = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
+                model="claude-sonnet-4-5",
+#                model="claude-3-5-sonnet-20241022",
                 max_tokens=4000,
                 temperature=0,
                 messages=[{"role": "user", "content": prompt}]
