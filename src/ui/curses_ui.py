@@ -3487,6 +3487,11 @@ class CursesBackend(UIBackend):
             # Sync program to editor
             self._sync_program_to_editor()
 
+            # Clear old interpreter/runtime (like NEW command)
+            # This ensures stepping will start fresh with the newly loaded program
+            self.interpreter = None
+            self.runtime = None
+
             # Add to recent files
             self.recent_files.add_file(filename)
 
