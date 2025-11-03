@@ -30,9 +30,9 @@ MBASIC 5.21 is a classic BASIC dialect from the CP/M era (late 1970s - early 198
 
     ---
 
-    Choose your interface: Curses (terminal), CLI (command-line), or Tkinter (GUI)
+    Choose your interface: Curses (terminal), CLI (command-line), Tkinter (GUI), or Web (browser)
 
-    [:octicons-arrow-right-24: UI Guides](help/ui/curses/index.md)
+    [:octicons-arrow-right-24: UI Guides](help/ui/index.md)
 
 -   :material-cog:{ .lg .middle } __Implementation Details__
 
@@ -63,7 +63,7 @@ MBASIC 5.21 is a classic BASIC dialect from the CP/M era (late 1970s - early 198
 ## Key Features
 
 - ✅ **100% MBASIC 5.21 Compatibility** - Run authentic MBASIC programs
-- ✅ **Multiple User Interfaces** - CLI, Curses terminal, or Tkinter GUI
+- ✅ **Multiple User Interfaces** - CLI, Curses terminal, Tkinter GUI, or Web browser
 - ✅ **Cross-Platform** - Linux, macOS, Windows
 - ✅ **Zero Dependencies** - Pure Python, no external libraries required for core functionality
 - ✅ **Advanced Optimizations** - Semantic analyzer with 18 compiler optimizations
@@ -80,6 +80,7 @@ Interface-specific documentation for each UI:
 - **[Curses UI](help/ui/curses/index.md)** - Full-screen terminal interface
 - **[CLI](help/ui/cli/index.md)** - Classic command-line REPL
 - **[Tkinter GUI](help/ui/tk/index.md)** - Graphical interface
+- **[Web IDE](help/ui/web/index.md)** - Browser-based interface
 
 ### 2. MBASIC Interpreter (📗)
 
