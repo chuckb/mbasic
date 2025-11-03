@@ -1457,6 +1457,10 @@ class CursesBackend(UIBackend):
             ('link', 'light cyan,bold', 'black'),
             # Dimmed text for hints
             ('dim', 'dark gray', 'black'),
+            # Keymap widget
+            ('title', 'light cyan,bold', 'black'),
+            ('category', 'yellow,bold', 'black'),
+            ('help_text', 'dark gray', 'black'),
         ]
 
     def _handle_input(self, key):
@@ -2175,6 +2179,47 @@ class CursesBackend(UIBackend):
 
         # Store original widget BEFORE replacing it
         main_widget = self.loop.widget
+
+    def _show_keymap(self):
+        """Show keyboard shortcuts reference."""
+        from .keymap_widget import KeymapWidget
+
+        # Check if keymap is already open
+        if hasattr(self, '_keymap_overlay') and self._keymap_overlay:
+            # Close keymap
+            self.loop.widget = self._keymap_main_widget
+            self.loop.unhandled_input = self._handle_input
+            self._keymap_overlay = None
+            self._keymap_main_widget = None
+            return
+
+        def close_keymap():
+            """Close keymap and restore main UI."""
+            self.loop.widget = self._keymap_main_widget
+            self.loop.unhandled_input = self._handle_input
+            self._keymap_overlay = None
+            self._keymap_main_widget = None
+
+        # Create keymap widget
+        keymap_widget = KeymapWidget(on_close=close_keymap)
+
+        # Use the stored main widget (not current loop.widget which might be a menu)
+        main_widget = self.main_widget
+        self._keymap_main_widget = main_widget
+
+        # Create overlay
+        overlay = urwid.Overlay(
+            keymap_widget,
+            main_widget,
+            align='center',
+            width=('relative', 80),
+            valign='middle',
+            height=('relative', 85)
+        )
+
+        self._keymap_overlay = overlay
+        self.loop.widget = overlay
+        self.loop.unhandled_input = None  # Keymap handles its own input
 
         # Set up keypress handler to close help when ESC/Q pressed
         def help_input(key):

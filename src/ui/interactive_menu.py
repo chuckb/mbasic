@@ -67,6 +67,7 @@ class InteractiveMenuBar(urwid.WidgetWrap):
             ],
             'Help': [
                 (f'Help           {fmt_key(kb.HELP_DISPLAY)}', '_show_help'),
+                ('Keyboard Shortcuts', '_show_keymap'),
                 (f'Settings       {fmt_key(kb.SETTINGS_DISPLAY)}', '_show_settings'),
             ],
         }

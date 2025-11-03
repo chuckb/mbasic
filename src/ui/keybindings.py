@@ -254,9 +254,9 @@ KEYBINDINGS_BY_CATEGORY = {
 }
 
 # Quick reference for status bar - use compact ^ notation instead of Ctrl+
-STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu  ^W vars  ^K stack  Tab cycle  ^Q quit"
-EDITOR_STATUS = "Editor - ^F help  ^U menu  Tab cycle"
-OUTPUT_STATUS = "Output - Up/Down scroll  Tab cycle"
+STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu (keyboard shortcuts)  ^W vars  ^K stack  Tab cycle  ^Q quit"
+EDITOR_STATUS = "Editor - ^F help  ^U menu (keyboard shortcuts)  Tab cycle"
+OUTPUT_STATUS = "Output - Up/Down scroll  Tab cycle  ^U menu (keyboard shortcuts)"
 
 # =============================================================================
 # Character Code Reference (for testing and documentation)
