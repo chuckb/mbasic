@@ -61,6 +61,9 @@ class Runtime:
         # Maps normalized name (lowercase) to list of all case variants seen: {'targetangle': [('TargetAngle', line, col), ('targetangle', line, col)]}
         self._variable_case_variants = {}
 
+        # Array element tracking for per-element read/write timestamps
+        self._array_element_tracking = {}
+
         self.common_vars = []         # List of variable names declared in COMMON (order matters!)
         self.array_base = 0           # Array index base (0 or 1, set by OPTION BASE)
         self.option_base_executed = False  # Track if OPTION BASE has been executed (can only execute once)
@@ -647,10 +650,6 @@ class Runtime:
             # Create tracking key for this array element (for per-element tracking)
             element_key = f"{full_name}[{','.join(map(str, subscripts))}]"
 
-            # Initialize tracking dict if needed
-            if not hasattr(self, '_array_element_tracking'):
-                self._array_element_tracking = {}
-
             if element_key not in self._array_element_tracking:
                 self._array_element_tracking[element_key] = {
                     'last_read': None,
@@ -711,10 +710,6 @@ class Runtime:
 
             # Create tracking key for this array element (for per-element tracking)
             element_key = f"{full_name}[{','.join(map(str, subscripts))}]"
-
-            # Initialize tracking dict if needed
-            if not hasattr(self, '_array_element_tracking'):
-                self._array_element_tracking = {}
 
             if element_key not in self._array_element_tracking:
                 self._array_element_tracking[element_key] = {

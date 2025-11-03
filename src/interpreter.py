@@ -64,7 +64,7 @@ class InterpreterState:
     @property
     def current_line(self) -> Optional[int]:
         """Get current line from runtime.pc (computed property, not cached)"""
-        if self._interpreter and hasattr(self._interpreter, 'runtime'):
+        if self._interpreter:
             pc = self._interpreter.runtime.pc
             return pc.line_num if pc and not pc.halted() else None
         return None
@@ -72,7 +72,7 @@ class InterpreterState:
     @property
     def current_statement_char_start(self) -> int:
         """Get current statement char_start from statement table (computed property)"""
-        if self._interpreter and hasattr(self._interpreter, 'runtime'):
+        if self._interpreter:
             pc = self._interpreter.runtime.pc
             if pc and not pc.halted():
                 stmt = self._interpreter.runtime.statement_table.get(pc)
@@ -90,7 +90,7 @@ class InterpreterState:
         - If char_end is correct (most tokens), it will be >= next_char_start - 1
         - If char_end is too short (string tokens), next_char_start - 1 is larger
         """
-        if self._interpreter and hasattr(self._interpreter, 'runtime'):
+        if self._interpreter:
             pc = self._interpreter.runtime.pc
             if pc and not pc.halted():
                 stmt = self._interpreter.runtime.statement_table.get(pc)
@@ -100,7 +100,7 @@ class InterpreterState:
                     # Check if there's a next statement on same line
                     next_pc = PC(pc.line_num, pc.stmt_offset + 1)
                     next_stmt = self._interpreter.runtime.statement_table.get(next_pc)
-                    if next_stmt and hasattr(next_stmt, 'char_start') and next_stmt.char_start > 0:
+                    if next_stmt and next_stmt.char_start > 0:
                         # Use max of char_end and (next_start - 1)
                         # This handles both correct char_end and incorrect string token char_end
                         return max(stmt_char_end, next_stmt.char_start - 1)
@@ -530,17 +530,15 @@ class Interpreter:
         # Start execution
         state = self.start()
 
-        if state.status == 'error':
-            if state.error_info:
-                raise RuntimeError(state.error_info.error_message)
-            return
+        if state.error_info:
+            raise RuntimeError(state.error_info.error_message)
 
         # Run until done
-        while state.status not in ('done', 'error'):
+        while not self.runtime.halted and not state.error_info:
             state = self.tick(mode='run', max_statements=10000)
 
             # Handle input synchronously for CLI
-            if state.status == 'waiting_for_input':
+            if state.input_prompt:
                 # Synchronous input for CLI
                 try:
                     value = input()  # Use built-in input() for CLI
@@ -555,7 +553,7 @@ class Interpreter:
                     return
 
         # Handle final errors
-        if state.status == 'error' and state.error_info:
+        if state.error_info:
             raise RuntimeError(state.error_info.error_message)
 
 
