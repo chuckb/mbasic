@@ -3496,7 +3496,11 @@ class TkBackend(UIBackend):
         if not self.immediate_executor or not self.immediate_entry or not self.immediate_prompt_label:
             return
 
-        if self.immediate_executor.can_execute_immediate():
+        # Check if safe to execute - use both can_execute_immediate() AND self.running flag
+        # The running flag is set False immediately when program stops, even before tick completes
+        can_execute = self.immediate_executor.can_execute_immediate() and not self.running
+
+        if can_execute:
             # Safe to execute - enable input
             # Update prompt label color based on current state using microprocessor model
             if hasattr(self.interpreter, 'state') and self.interpreter.state:
