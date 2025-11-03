@@ -30,13 +30,15 @@ class ErrorInfo:
 
 @dataclass
 class InterpreterState:
-    """Complete execution state of the interpreter at any point in time"""
+    """Complete execution state of the interpreter at any point in time
 
-    # Execution status
-    status: Literal['idle', 'running', 'paused', 'done',
-                    'waiting_for_input', 'at_breakpoint', 'error'] = 'idle'
+    State is now simplified - no complex status modes:
+    - Check runtime.halted to see if stopped (paused/done/at breakpoint)
+    - Check input_prompt to see if waiting for input
+    - Check error_info to see if there's an error
+    """
 
-    # Input handling (THE CRITICAL STATE)
+    # Input handling (THE CRITICAL STATE - blocks execution)
     input_prompt: Optional[str] = None
     input_variables: list = field(default_factory=list)  # Variables waiting for input
     input_buffer: list = field(default_factory=list)  # Buffered input values
@@ -212,7 +214,7 @@ class Interpreter:
 
             # Initialize state
             self.state = InterpreterState(_interpreter=self)
-            self.state.status = 'running'
+            self.runtime.halted = False
             self.state.is_first_line = True
 
             # Setup Ctrl+C handler
@@ -222,7 +224,7 @@ class Interpreter:
 
         except Exception as e:
             # Setup failed
-            self.state.status = 'error'
+            self.runtime.halted = True
             self.state.error_info = ErrorInfo(
                 error_code=5,  # Illegal function call (generic error)
                 pc=PC.halted_pc(),  # No valid PC during setup
@@ -279,7 +281,7 @@ class Interpreter:
             while statements_in_tick < max_statements:
                 # Check for pause request
                 if self.state.pause_requested:
-                    self.state.status = 'paused'
+                    self.runtime.halted = True
                     self.state.pause_requested = False
                     return self.state
 
@@ -288,7 +290,7 @@ class Interpreter:
 
                 # Check if halted
                 if pc.halted() or self.runtime.halted:
-                    self.state.status = 'done'
+                    # Already halted - PC should be pointing past last statement
                     self._restore_break_handler()
                     return self.state
 
@@ -296,9 +298,9 @@ class Interpreter:
                 if self.runtime.break_requested:
                     self.runtime.break_requested = False
                     self.runtime.stopped = True
+                    self.runtime.halted = True
                     self.io.output("")
                     self.io.output(f"Break in {pc}")
-                    self.state.status = 'paused'
                     # Keep PC at current position for resume
                     return self.state
 
@@ -315,7 +317,7 @@ class Interpreter:
 
                 if at_breakpoint:
                     if not self.state.skip_next_breakpoint_check:
-                        self.state.status = 'at_breakpoint'
+                        self.runtime.halted = True
                         self.state.skip_next_breakpoint_check = True
                         return self.state
                     else:
@@ -345,8 +347,8 @@ class Interpreter:
                 except BreakException:
                     # User pressed Ctrl+C during INPUT
                     self.runtime.stopped = True
+                    self.runtime.halted = True
                     self.io.output(f"Break in {pc}")
-                    self.state.status = 'paused'
                     return self.state
 
                 except Exception as e:
@@ -370,13 +372,13 @@ class Interpreter:
                         self.state.statements_executed += 1
                         # Fall through to NPC handling below
                     else:
-                        # No error handler (or recursive error) - set error state and raise
-                        self.state.status = 'error'
+                        # No error handler (or recursive error) - halt and raise
+                        self.runtime.halted = True
                         self._restore_break_handler()
                         raise
 
                 # Check if we're waiting for input
-                if self.state.status == 'waiting_for_input':
+                if self.state.input_prompt is not None:
                     return self.state
 
                 # Advance PC: if NPC was set by statement (GOTO/GOSUB/RETURN/etc.), use it;
@@ -390,11 +392,11 @@ class Interpreter:
                 # Check for step mode before updating PC
                 if mode == 'step_statement':
                     self.runtime.pc = next_pc
-                    self.state.status = 'paused'
+                    self.runtime.halted = True
                     return self.state
                 elif mode == 'step_line' and pc.is_step_point(next_pc, 'step_line'):
                     self.runtime.pc = next_pc
-                    self.state.status = 'paused'
+                    self.runtime.halted = True
                     return self.state
 
                 # Update PC for next iteration
@@ -406,8 +408,8 @@ class Interpreter:
 
         except Exception as e:
             # Unhandled error
-            if self.state.status != 'error':
-                self.state.status = 'error'
+            if self.state.error_info is None:
+                self.runtime.halted = True
                 self.state.error_info = ErrorInfo(
                     error_code=5,
                     pc=self.runtime.pc if not self.runtime.pc.halted() else PC.halted_pc(),
@@ -422,22 +424,22 @@ class Interpreter:
         return self.state
 
     def provide_input(self, value: str):
-        """Provide input when state.status == 'waiting_for_input'.
+        """Provide input when state.input_prompt is set.
 
         Args:
             value: User input string (will be parsed based on variable type)
 
         Returns:
-            InterpreterState: Updated state (typically status='running')
+            InterpreterState: Updated state
         """
-        if self.state.status != 'waiting_for_input':
+        if self.state.input_prompt is None:
             raise RuntimeError("Not waiting for input")
 
         # Add value to input buffer
         self.state.input_buffer.append(value)
 
-        # Resume execution - the INPUT handler will consume from buffer
-        self.state.status = 'running'
+        # Clear input prompt - execution will resume automatically
+        self.state.input_prompt = None
 
         return self.state
 
@@ -453,15 +455,15 @@ class Interpreter:
         return self.state
 
     def continue_execution(self):
-        """Continue from paused/breakpoint state.
+        """Continue from halted state.
 
         Returns:
-            InterpreterState: Updated state (status='running')
+            InterpreterState: Updated state
         """
-        if self.state.status not in ('paused', 'at_breakpoint'):
-            raise RuntimeError("Not paused or at breakpoint")
+        if not self.runtime.halted:
+            raise RuntimeError("Not halted")
 
-        self.state.status = 'running'
+        self.runtime.halted = False
         return self.state
 
     def reset(self):
@@ -1545,15 +1547,14 @@ class Interpreter:
                     self.io.output("? ", end='')
                     full_prompt = "? "
 
-                # Transition to waiting_for_input state
-                self.state.status = 'waiting_for_input'
+                # Set input prompt - execution will pause
                 self.state.input_prompt = full_prompt
                 self.state.input_variables = stmt.variables  # Save variables for resumption
                 self.state.input_file_number = None
 
                 # Save statement for resumption
                 # We'll need to re-execute this statement when input is provided
-                # The tick() loop will detect waiting_for_input and return
+                # The tick() loop will detect input_prompt and return
                 return
 
         # Parse comma-separated values
@@ -1687,13 +1688,12 @@ class Interpreter:
                 else:
                     full_prompt = ""
 
-                # Transition to waiting_for_input state
-                self.state.status = 'waiting_for_input'
+                # Set input prompt - execution will pause
                 self.state.input_prompt = full_prompt
                 self.state.input_variables = [stmt.variable]  # Save variable for resumption
                 self.state.input_file_number = None
 
-                # The tick() loop will detect waiting_for_input and return
+                # The tick() loop will detect input_prompt and return
                 return
 
         # Assign entire line to variable (no parsing)
