@@ -7,11 +7,11 @@ Variables store data values that can change during program execution. MBASIC sup
 Variable names in MBASIC:
 - Must start with a letter (A-Z)
 - Can contain letters, digits (0-9), and periods (.)
-- Are limited to 40 characters (only first 2 are significant)
+- Are limited to 40 characters
 - Are not case-sensitive (ABC = abc = Abc)
 - Cannot be reserved words (PRINT, FOR, etc.)
 
-**Important:** Only the first 2 characters are significant. Variables AB, ABC, and ABCDEF are all the same variable.
+**Note on Variable Name Significance:** In the original MBASIC 5.21, only the first 2 characters of variable names were significant (AB, ABC, and ABCDEF would be the same variable). This Python implementation uses the full variable name for identification, allowing distinct variables like COUNT and COUNTER. The case handling is configurable via the `variables.case_conflict` setting.
 
 ## Variable Types
 
@@ -144,7 +144,7 @@ Some variables have special meanings:
 
 ## Common Pitfalls
 
-1. **Two-character significance**: Variables COUNT and COUNTER are the same
+1. **Case sensitivity**: Variable names are case-insensitive (see `variables.case_conflict` setting for handling conflicts)
 2. **Type mismatches**: Assigning string to numeric variable causes error
 3. **Array bounds**: Exceeding declared dimensions causes "Subscript out of range"
 4. **Memory limits**: Too many variables can cause "Out of memory"

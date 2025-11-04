@@ -60,6 +60,7 @@ The file must be opened for sequential output before using WRITE #.
 - The file number must refer to a file opened for output ("O") or append ("A")
 
 ## See Also
+- [WRITE](write.md) - Write data to terminal (terminal output variant)
 - [INPUT#](input_hash.md) - Read data from a sequential file
 - [PRINT#](printi-printi-using.md) - Write formatted data to a file
 - [OPEN](open.md) - Open a file for I/O
