@@ -130,10 +130,10 @@ class CodeMirror5Editor(ui.element, component='codemirror5_editor.js'):
         self.run_method('scrollToLine', line)
 
     def get_cursor_position(self) -> dict:
-        """Get current cursor position.
+        """Get current cursor position (placeholder implementation).
 
         Returns:
-            Dict with 'line' and 'column' keys (0-based)
+            Dict with 'line' and 'column' keys (always returns {0, 0} - not implemented)
         """
         # This would need async support, for now return placeholder
         return {'line': 0, 'column': 0}

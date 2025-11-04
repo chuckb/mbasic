@@ -1146,13 +1146,13 @@ class NiceGUIBackend(UIBackend):
             self.auto_numbering_in_progress = False  # Prevent recursive calls
             self.editor_has_been_used = False  # Track if user has typed anything
 
-            # Event handlers now handled through CodeMirror's on_change callback
+            # Content change handlers via CodeMirror's on_change callback
             # The _on_editor_change method (defined below) handles:
             # - Removing blank lines
             # - Auto-numbering
             # - Placeholder clearing
 
-            # Note: click and blur handlers can still work with CodeMirror
+            # Click and blur handlers registered separately
             self.editor.on('click', self._on_editor_click, throttle=0.05)
             self.editor.on('blur', self._on_editor_blur)
 
