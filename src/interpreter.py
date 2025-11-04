@@ -1301,8 +1301,8 @@ class Interpreter:
 
         # Determine where to resume
         if stmt.line_number is None or stmt.line_number == 0:
-            # RESUME - retry the statement that caused the error
-            # Note: line_number == 0 is an internal sentinel, not valid user syntax
+            # RESUME or RESUME 0 - retry the statement that caused the error
+            # Both forms are valid BASIC syntax with identical meaning
             self.runtime.npc = error_pc
         elif stmt.line_number == -1:
             # RESUME NEXT - continue at statement after the error

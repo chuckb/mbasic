@@ -3657,8 +3657,9 @@ class Parser:
         line_number = None
         if self.match(TokenType.NEXT):
             self.advance()
-            line_number = -1  # -1 means RESUME NEXT (0 is a valid line number)
+            line_number = -1  # -1 sentinel means RESUME NEXT
         elif self.match(TokenType.LINE_NUMBER, TokenType.NUMBER):
+            # Note: RESUME 0 is valid BASIC syntax meaning "retry error statement" (same as RESUME)
             line_number = int(self.advance().value)
 
         return ResumeStatementNode(
