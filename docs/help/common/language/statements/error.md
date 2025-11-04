@@ -50,5 +50,5 @@ You can use ERROR with custom codes (typically > 200) to implement your own erro
 ## See Also
 - [ON ERROR GOTO](on-error-goto.md) - To enable error trapping and specify the first line of the error handling subroutine
 - [RESUME](resume.md) - Continue program execution after error recovery
-- [ERR](../functions/err-erl.md) - Error code variable
-- [ERL](../functions/err-erl.md) - Error line number variable
+- [ERR](err-erl-variables.md) - Error code variable
+- [ERL](err-erl-variables.md) - Error line number variable

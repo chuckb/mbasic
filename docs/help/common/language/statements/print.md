@@ -82,8 +82,8 @@ This also works
 ```
 
 ## See Also
-- [PRINT USING](print-using.md) - Formatted output
+- [PRINT USING](lprint-lprint-using.md) - Formatted output
 - [INPUT](input.md) - Read user input
 - [WRITE](write.md) - Output data with delimiters
-- [LPRINT](lprint.md) - Print to line printer
+- [LPRINT](lprint-lprint-using.md) - Print to line printer
 - [PRINT#](printi-printi-using.md) - Write to file

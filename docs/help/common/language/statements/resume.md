@@ -231,11 +231,7 @@ Common error codes used with RESUME:
 | 57 | Device I/O error |
 | 62 | Input past end of file |
 
-See [Error Codes](../appendices/error-codes.md) for complete list.
-
 ## Testing RESUME
-
-Test file: `tests/test_resume.bas`, `tests/test_resume2.bas`, `tests/test_resume3.bas`
 
 Verified behavior against real MBASIC 5.21:
 - ✅ RESUME retries error line
@@ -247,4 +243,4 @@ Verified behavior against real MBASIC 5.21:
 ## See Also
 - [ERROR](error.md) - To simulate the occurrence of a BASIC-80 error or to allow error codes to be defined by the user
 - [ON ERROR GOTO](on-error-goto.md) - To enable error trapping and specify the first line of the error handling subroutine
-- [ERR/ERL Variables](../functions/err-erl.md) - Error code and line number variables
+- [ERR/ERL Variables](err-erl-variables.md) - Error code and line number variables

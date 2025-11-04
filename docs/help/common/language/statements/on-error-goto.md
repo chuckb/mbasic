@@ -48,4 +48,4 @@ This example sets up error handling for division by zero and type mismatches.
 ## See Also
 - [ERROR](error.md) - To simulate the occurrence of a BASIC-80 error or to allow error codes to be defined by the user
 - [RESUME](resume.md) - Continue program execution after error recovery
-- [ERR/ERL](../functions/err-erl.md) - Error code and line number variables
+- [ERR/ERL](err-erl-variables.md) - Error code and line number variables
