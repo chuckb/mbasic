@@ -196,7 +196,7 @@ class SettingsWidget(urwid.WidgetWrap):
         return True
 
     def _on_apply(self):
-        """Handle Apply button."""
+        """Handle Apply action (Ctrl+A keyboard shortcut)."""
         if self._apply_settings():
             # Update original values so Cancel won't revert
             self._load_current_values()
@@ -204,12 +204,12 @@ class SettingsWidget(urwid.WidgetWrap):
             self._emit('applied')
 
     def _on_ok(self):
-        """Handle OK button."""
+        """Handle OK action (Enter keyboard shortcut)."""
         if self._apply_settings():
             self._emit('close')
 
     def _on_cancel(self):
-        """Handle Cancel button."""
+        """Handle Cancel action (ESC keyboard shortcut)."""
         # Restore original values
         for key, value in self.original_values.items():
             try:
@@ -220,7 +220,7 @@ class SettingsWidget(urwid.WidgetWrap):
         self._emit('close')
 
     def _on_reset(self):
-        """Handle Reset to Defaults button."""
+        """Handle Reset to Defaults action (Ctrl+R keyboard shortcut)."""
         # Set all widgets to default values
         for key, defn in SETTING_DEFINITIONS.items():
             if key in self.widgets:

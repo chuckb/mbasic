@@ -1,7 +1,7 @@
 """CLI backend for MBASIC interpreter.
 
 This module provides the command-line interface (REPL) backend.
-Currently wraps InteractiveMode for backward compatibility.
+Wraps the existing InteractiveMode class to provide UIBackend interface.
 """
 
 from .base import UIBackend
@@ -13,9 +13,9 @@ class CLIBackend(UIBackend):
     Provides traditional REPL (Read-Eval-Print Loop) interface
     with commands like LIST, RUN, SAVE, LOAD, etc.
 
-    Currently wraps the existing InteractiveMode for backward
-    compatibility. In the future, this could be refactored to
-    use UIBackend interface more directly.
+    Implementation: Wraps the existing InteractiveMode class to reuse
+    its command parsing and execution logic. Future refactoring could
+    move command logic directly into this UIBackend subclass.
 
     Usage:
         from src.iohandler.console import ConsoleIOHandler
