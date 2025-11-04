@@ -20,20 +20,22 @@ from src.ui.web.codemirror5_editor import CodeMirror5Editor
 
 
 def log_web_error(context: str, exception: Exception):
-    """Log web UI error to stderr for debugging.
+    """Log web UI error to /tmp/web_debug.log for debugging.
 
     Args:
         context: Description of where error occurred (e.g., "_menu_run")
         exception: The exception that was caught
     """
-    sys.stderr.write(f"\n{'='*70}\n")
-    sys.stderr.write(f"WEB UI ERROR in {context}\n")
-    sys.stderr.write(f"{'='*70}\n")
-    sys.stderr.write(f"Error: {exception}\n")
-    sys.stderr.write(f"{'-'*70}\n")
-    traceback.print_exc(file=sys.stderr)
-    sys.stderr.write(f"{'='*70}\n\n")
-    sys.stderr.flush()
+    with open('/tmp/web_debug.log', 'a') as f:
+        f.write(f"\n{'='*70}\n")
+        f.write(f"WEB UI DEBUG in {context}\n")
+        f.write(f"{'='*70}\n")
+        f.write(f"Message: {exception}\n")
+        f.write(f"{'-'*70}\n")
+        if isinstance(exception, Exception):
+            traceback.print_exc(file=f)
+        f.write(f"{'='*70}\n\n")
+        f.flush()
 
 
 class SimpleWebIOHandler(IOHandler):
@@ -1917,9 +1919,6 @@ class NiceGUIBackend(UIBackend):
     async def _menu_step_line(self):
         """Run > Step Line - Execute all statements on current line and pause."""
         try:
-            # Debug logging
-            log_web_error("_menu_step_line", f"Called - running={self.running}, paused={self.paused}, has_interpreter={self.interpreter is not None}")
-
             if not self.running and not self.paused:
                 # Not running - start program and step one line
                 if not self._save_editor_to_program():
@@ -1961,12 +1960,11 @@ class NiceGUIBackend(UIBackend):
 
             else:
                 # Already running - step one line
-                log_web_error("_menu_step_line", "In ELSE branch - continuing step")
                 if self.interpreter:
                     try:
-                        log_web_error("_menu_step_line", "About to call tick()")
+                        # Clear halted flag to allow execution (step will set it again after executing)
+                        self.runtime.halted = False
                         state = self.interpreter.tick(mode='step_line', max_statements=100)
-                        log_web_error("_menu_step_line", f"tick() returned - halted={state.halted}, error={state.error_info}, line={state.current_line}")
                         self._handle_step_result(state, 'line')
                     except Exception as e:
                         log_web_error("_menu_step_line tick", e)
@@ -1975,7 +1973,6 @@ class NiceGUIBackend(UIBackend):
                         self.running = False
                         self.paused = False
                 else:
-                    log_web_error("_menu_step_line", "No interpreter")
                     self._notify('No interpreter - program not started', type='warning')
 
         except Exception as e:
@@ -2028,6 +2025,8 @@ class NiceGUIBackend(UIBackend):
                 # Already running - step one statement
                 if self.interpreter:
                     try:
+                        # Clear halted flag to allow execution (step will set it again after executing)
+                        self.runtime.halted = False
                         state = self.interpreter.tick(mode='step_statement', max_statements=1)
                         self._handle_step_result(state, 'statement')
                     except Exception as e:
@@ -2073,9 +2072,34 @@ class NiceGUIBackend(UIBackend):
             # Clear CodeMirror current statement highlight
             self.editor.set_current_statement(None)
         elif self.runtime.halted:
-            # Check if done or paused
-            if not self.runtime.is_paused_at_statement():
-                # Past end - done
+            # Runtime is halted - could be paused at statement or finished
+            # Check PC directly - state.current_line returns None when halted
+            pc = self.runtime.pc
+            if pc and pc.line_num is not None:
+                # Paused at a statement - ready for next step
+                self._set_status(f"Paused at line {pc.line_num}")
+                self.running = True
+                self.paused = True
+                # Show current line highlight
+                if self.current_line_label:
+                    self.current_line_label.set_text(f'>>> Executing line {pc.line_num}')
+                    self.current_line_label.visible = True
+                # Get char positions directly from statement_table (state properties return 0 when halted)
+                char_start = None
+                char_end = None
+                stmt = self.runtime.statement_table.get(pc)
+                if stmt:
+                    char_start = getattr(stmt, 'char_start', 0) if hasattr(stmt, 'char_start') else 0
+                    char_end = getattr(stmt, 'char_end', 0) if hasattr(stmt, 'char_end') else 0
+                    if char_start > 0 and char_end > char_start:
+                        # Valid positions
+                        pass
+                    else:
+                        char_start = None
+                        char_end = None
+                self.editor.set_current_statement(pc.line_num, char_start, char_end)
+            else:
+                # No current line - program finished
                 self._append_output("\n--- Program finished ---\n")
                 self._set_status("Ready")
                 self.running = False
@@ -2085,19 +2109,6 @@ class NiceGUIBackend(UIBackend):
                     self.current_line_label.visible = False
                 # Clear CodeMirror current statement highlight
                 self.editor.set_current_statement(None)
-            else:
-                # Paused at a statement
-                self._set_status(f"Paused at line {state.current_line}")
-                self.running = True
-                self.paused = True
-                # Show current line highlight
-                if self.current_line_label:
-                    self.current_line_label.set_text(f'>>> Executing line {state.current_line}')
-                    self.current_line_label.visible = True
-                # Highlight current statement in CodeMirror (with character positions for statement-level highlighting)
-                char_start = state.current_statement_char_start if state.current_statement_char_start > 0 else None
-                char_end = state.current_statement_char_end if state.current_statement_char_end > 0 else None
-                self.editor.set_current_statement(state.current_line, char_start, char_end)
         else:
             # Still running after step - mark as paused to prevent automatic continuation
             self._set_status(f"Paused at line {state.current_line}")
@@ -3098,10 +3109,14 @@ def start_web_ui(port=8080):
         # Build the UI for this client
         backend.build_ui()
 
-    # Start NiceGUI server
-    ui.run(
-        title='MBASIC 5.21 - Web IDE',
-        port=port,
-        reload=False,
-        show=True
-    )
+    # Start NiceGUI server with cleaner Ctrl+C handling
+    try:
+        ui.run(
+            title='MBASIC 5.21 - Web IDE',
+            port=port,
+            reload=False,
+            show=True
+        )
+    except KeyboardInterrupt:
+        print("\n\nMBASIC Web UI: Exiting due to Ctrl+C\n")
+        sys.exit(0)
