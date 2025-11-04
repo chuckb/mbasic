@@ -609,8 +609,9 @@ class Interpreter:
 
     def _invoke_error_handler(self, error_code, error_pc):
         """Invoke the error handler"""
-        # Note: error_info is already set by caller (in tick_pc exception handler)
-        # We're now in the error handler
+        # Note: error_info is set by the exception handler that caught the error.
+        # Multiple exception handlers in tick_pc() set error_info before calling this.
+        # We're now ready to invoke the error handler
 
         # Set ERR%, ERL%, and ERS% system variables
         self.runtime.set_variable_raw('err%', error_code)
