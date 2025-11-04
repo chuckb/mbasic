@@ -5,7 +5,7 @@ When enabled, errors and debug info are output to both the UI and stderr for
 easy visibility when debugging with Claude Code or other tools.
 
 Usage:
-    from debug_logger import debug_log_error, is_debug_mode
+    from src.debug_logger import debug_log_error, is_debug_mode
 
     if is_debug_mode():
         debug_log_error("Error details", exception, context_info)

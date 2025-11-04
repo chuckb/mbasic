@@ -35,7 +35,7 @@ class InMemoryFileHandle(FileHandle):
 
     def flush(self):
         """Flush write buffers."""
-        # StringIO/BytesIO don't need explicit flushing, but provide for compatibility
+        # StringIO/BytesIO have flush() methods (no-ops) - hasattr check for safety
         if hasattr(self.file_obj, 'flush'):
             self.file_obj.flush()
 

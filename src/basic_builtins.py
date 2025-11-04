@@ -633,7 +633,7 @@ class BuiltinFunctions:
         return ord(s[0])
 
     def CHR(self, x):
-        """Character from ASCII code"""
+        """CHR$ - Character from ASCII code"""
         code = int(x)
         if code < 0 or code > 255:
             raise ValueError("Illegal function call: CHR code out of range")
@@ -975,6 +975,7 @@ class BuiltinFunctions:
     def INPUT(self, num, file_num=None):
         """
         INPUT$ - Read num characters from keyboard or file.
+        (Method name is INPUT since Python doesn't allow $ in names)
 
         INPUT$(n) - read n characters from keyboard
         INPUT$(n, #filenum) - read n characters from file
