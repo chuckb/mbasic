@@ -174,7 +174,8 @@ class PositionSerializer:
         self.reset()
         self.current_line = line_node.line_number
 
-        # AST is the single source of truth - always serialize from AST
+        # AST is the source of truth for content - serialize from AST while
+        # attempting to preserve original token positions/spacing
         # Start with line number
         line_num_text = str(line_node.line_number)
         output = self.emit_token(line_num_text, 0, "LineNumber")

@@ -94,8 +94,8 @@ class Runtime:
         # User-defined functions
         self.user_functions = {}      # fn_name -> DefFnStatementNode
 
-        # Note: Type defaults (DEFINT, DEFSNG, etc.) are handled by Parser.def_type_map
-        # at parse time, not at runtime
+        # Note: Type defaults (DEFINT, DEFSNG, etc.) are handled by parser's def_type_map
+        # at parse time (Parser class), not at runtime
 
         # File I/O
         self.files = {}               # file_number -> file_handle
