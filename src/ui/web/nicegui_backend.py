@@ -1132,8 +1132,10 @@ class NiceGUIBackend(UIBackend):
             ui.button('Cont', on_click=self._menu_continue, icon='play_circle').mark('btn_continue')
             ui.separator().props('vertical')
             ui.button(icon='check_circle', on_click=self._check_syntax).mark('btn_check_syntax').props('flat').tooltip('Check Syntax')
-            ui.separator().props('vertical')
-            ui.label('Command:').classes('text-sm')
+
+        # Command input row
+        with ui.row().classes('w-full bg-gray-100 px-2 pb-2 gap-2').style('align-items: center;'):
+            ui.label('>').classes('text-lg font-mono')
             self.immediate_entry = ui.input(placeholder='BASIC command...').classes('flex-grow').mark('immediate_entry')
             self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
             ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
