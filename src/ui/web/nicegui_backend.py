@@ -2021,7 +2021,21 @@ class NiceGUIBackend(UIBackend):
     def _handle_step_result(self, state, step_type):
         """Handle result of a step operation."""
         # Use microprocessor model: check error_info, input_prompt, and runtime.halted
-        if state.error_info:
+        if state.input_prompt:
+            # Waiting for input - show input UI
+            self._show_input_prompt(state.input_prompt)
+            self.running = True
+            self.paused = True
+            self._set_status(f"Waiting for input at line {state.current_line}")
+            # Show current line highlight
+            if self.current_line_label:
+                self.current_line_label.set_text(f'>>> Waiting for input at line {state.current_line}')
+                self.current_line_label.visible = True
+            # Highlight current statement
+            char_start = state.current_statement_char_start if state.current_statement_char_start > 0 else None
+            char_end = state.current_statement_char_end if state.current_statement_char_end > 0 else None
+            self.editor.set_current_statement(state.current_line, char_start, char_end)
+        elif state.error_info:
             error_msg = state.error_info.error_message
             self._append_output(f"\n--- Error: {error_msg} ---\n")
             self._set_status("Error")
