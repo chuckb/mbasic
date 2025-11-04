@@ -3562,7 +3562,7 @@ class TkBackend(UIBackend):
             self.runtime.npc = None
 
         # Check if interpreter has work to do (after RUN statement)
-        # No state checking - just ask the interpreter
+        # Query interpreter directly via has_work() instead of checking runtime flags
         has_work = self.interpreter.has_work()
         if has_work:
             # Start execution if not already running
@@ -3842,7 +3842,7 @@ class TkIOHandler(IOHandler):
         """Input complete line from user via modal dialog.
 
         Used by LINE INPUT statement for reading entire line as string.
-        Identical to input() for Tk UI.
+        Unlike input(), always uses modal dialog (not inline input field).
         """
         from tkinter import simpledialog
 
@@ -3893,7 +3893,7 @@ class TkIOHandler(IOHandler):
         return result[0] if result else ""
     
     def clear_screen(self) -> None:
-        """Clear screen - no-op for Tk UI."""
+        """Clear screen - no-op for Tk UI (GUI output not clearable like terminal)."""
         pass
     
     def error(self, message: str) -> None:
