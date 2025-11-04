@@ -48,7 +48,8 @@ class InterpreterState:
     input_file_number: Optional[int] = None  # If reading from file
 
     # Debugging (breakpoints are stored in Runtime, not here)
-    skip_next_breakpoint_check: bool = False  # Set to True after hitting breakpoint to allow execution
+    skip_next_breakpoint_check: bool = False  # Allows execution past a breakpoint after stopping on it
+                                               # (prevents re-triggering the same breakpoint immediately)
     pause_requested: bool = False  # Set by pause() method
 
     # Error handling
@@ -1048,10 +1049,10 @@ class Interpreter:
             raise RuntimeError(f"RETURN error: line {return_line} no longer exists")
 
         line_statements = self.runtime.statement_table.get_line_statements(return_line)
-        # return_stmt is 0-indexed offset. Valid values are 0 to len(statements).
-        # return_stmt == len(statements) means "continue at next line" (GOSUB was last statement).
-        # return_stmt > len(statements) is invalid (statement was deleted).
-        if return_stmt > len(line_statements):
+        # return_stmt is 0-indexed offset. Valid range: 0 to len(statements) inclusive.
+        # return_stmt == len(statements) is valid: "continue at next line" (GOSUB was last stmt)
+        # return_stmt > len(statements) is invalid: statement was deleted (validation error)
+        if return_stmt > len(line_statements):  # Check for strictly greater than (== len is OK)
             raise RuntimeError(f"RETURN error: statement {return_stmt} in line {return_line} no longer exists")
 
         # Jump back to the line and statement after GOSUB
