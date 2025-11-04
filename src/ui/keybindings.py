@@ -136,7 +136,7 @@ VARIABLES_KEY = _ctrl_key_to_urwid(_variables_key)
 VARIABLES_CHAR = _ctrl_key_to_char(_variables_key)
 VARIABLES_DISPLAY = _variables_key
 
-# Execution stack window (menu only - Ctrl+K reassigned to step line)
+# Execution stack window (menu only - no dedicated key, step_line uses Ctrl+K)
 STACK_KEY = ''  # No keyboard shortcut
 STACK_CHAR = ''
 STACK_DISPLAY = 'Menu only'

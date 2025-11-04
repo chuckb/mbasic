@@ -30,6 +30,7 @@ class HelpWidget(urwid.WidgetWrap):
         """
         self.help_root = Path(help_root)
         self.renderer = MarkdownRenderer()
+        # HelpWidget is curses-specific (uses urwid), so hardcode 'curses' UI name
         self.macros = HelpMacros('curses', help_root)
 
         # Navigation state
@@ -53,7 +54,7 @@ class HelpWidget(urwid.WidgetWrap):
 
         # Create frame with title and footer
         self.title = urwid.Text("")
-        self.footer = urwid.Text(" ↑/↓=Scroll Tab=Next Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
+        self.footer = urwid.Text(" ↑/↓=Scroll Tab=Next Link Enter=Follow /=Search u=Back ESC/Q=Exit ")
 
         frame = urwid.Frame(
             self.listbox,
@@ -144,7 +145,7 @@ class HelpWidget(urwid.WidgetWrap):
         """Execute search and display results."""
         if not self.search_query:
             self.search_mode = False
-            self.footer.set_text(" ↑/↓=Scroll Tab=Next Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
+            self.footer.set_text(" ↑/↓=Scroll Tab=Next Link Enter=Follow /=Search u=Back ESC/Q=Exit ")
             self._load_topic(self.current_topic)
             return
 
