@@ -1917,6 +1917,9 @@ class NiceGUIBackend(UIBackend):
     async def _menu_step_line(self):
         """Run > Step Line - Execute all statements on current line and pause."""
         try:
+            # Debug logging
+            log_web_error("_menu_step_line", f"Called - running={self.running}, paused={self.paused}, has_interpreter={self.interpreter is not None}")
+
             if not self.running and not self.paused:
                 # Not running - start program and step one line
                 if not self._save_editor_to_program():
@@ -1958,9 +1961,12 @@ class NiceGUIBackend(UIBackend):
 
             else:
                 # Already running - step one line
+                log_web_error("_menu_step_line", "In ELSE branch - continuing step")
                 if self.interpreter:
                     try:
+                        log_web_error("_menu_step_line", "About to call tick()")
                         state = self.interpreter.tick(mode='step_line', max_statements=100)
+                        log_web_error("_menu_step_line", f"tick() returned - halted={state.halted}, error={state.error_info}, line={state.current_line}")
                         self._handle_step_result(state, 'line')
                     except Exception as e:
                         log_web_error("_menu_step_line tick", e)
