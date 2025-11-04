@@ -144,7 +144,7 @@ class TkHelpBrowser(tk.Toplevel):
 
         # Make text read-only but allow copy (Ctrl+C) and find (Ctrl+F)
         def readonly_key_handler(event):
-            # Allow copy operations and find
+            # Allow Ctrl+C (copy), Ctrl+A (select all), Ctrl+F (find)
             if event.state & 0x4:  # Control key
                 if event.keysym in ('c', 'C', 'a', 'A'):  # Ctrl+C, Ctrl+A
                     return  # Allow these
@@ -720,7 +720,7 @@ class TkHelpBrowser(tk.Toplevel):
             try:
                 menu.tk_popup(event.x_root, event.y_root)
             finally:
-                # Release grab after a short delay to allow menu interaction
+                # Release grab immediately (tk_popup handles menu interaction)
                 menu.grab_release()
 
             # Bind ESC and clicks outside to dismiss

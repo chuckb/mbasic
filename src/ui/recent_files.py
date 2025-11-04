@@ -9,8 +9,8 @@ Features:
 - Stores last 10 recently opened files
 - Records full path and last access timestamp
 - Automatically creates config directory if needed
-- Thread-safe file operations
 - Cross-platform (uses pathlib)
+- Note: Not thread-safe (no locking mechanism)
 
 Usage:
     from src.ui.recent_files import RecentFilesManager
