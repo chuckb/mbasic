@@ -3,7 +3,7 @@ category: file-io
 description: To read an entire line from a sequential file to a string variable
 keywords: ['close', 'command', 'data', 'field', 'file', 'for', 'if', 'input', 'inputi', 'line']
 syntax: LINE INPUT#<file number>,<string variable>
-title: LINE INPUT#
+title: "LINE INPUT# (File)"
 type: statement
 ---
 
