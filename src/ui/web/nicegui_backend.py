@@ -1931,8 +1931,13 @@ class NiceGUIBackend(UIBackend):
         self.running = False
         self.paused = False
 
-        # Hide input row if visible
-        self._hide_input_row()
+        # Cancel inline input if waiting
+        if self.waiting_for_input:
+            self.waiting_for_input = False
+            self.input_prompt_text = None
+            # Make output readonly again
+            self.output.props(remove='readonly')
+            self.output.props(add='readonly')
 
         # Update UI
         self._set_status('Stopped')
