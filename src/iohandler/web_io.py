@@ -24,7 +24,7 @@ class WebIOHandler(IOHandler):
         self._input_result = None
         self._input_ready = None
 
-    def print(self, text="", end="\n"):
+    def output(self, text="", end="\n"):
         """
         Output text to the web UI log.
 
@@ -32,15 +32,20 @@ class WebIOHandler(IOHandler):
             text: Text to print
             end: Line ending (default newline)
         """
-        output = str(text) + end
+        output_str = str(text) + end
         # Remove trailing newline for log display
-        if output.endswith("\n"):
-            output = output[:-1]
+        if output_str.endswith("\n"):
+            output_str = output_str[:-1]
 
-        if output:  # Only push non-empty lines
-            self.output_log.push(output)
+        if output_str:  # Only push non-empty lines
+            self.output_log.push(output_str)
         elif end == "\n":  # Empty line with newline
             self.output_log.push("")
+
+    # Alias for backward compatibility
+    def print(self, text="", end="\n"):
+        """Deprecated: Use output() instead."""
+        self.output(text, end)
 
     def input(self, prompt=""):
         """
@@ -109,26 +114,91 @@ class WebIOHandler(IOHandler):
         self._input_result = ""
         dialog.close()
 
-    def get_char(self):
+    def input_line(self, prompt=""):
         """
-        Get single character input (for INKEY$).
+        Get a complete line from user via dialog (LINE INPUT statement).
+
+        Similar to input() but preserves all characters exactly as typed.
+
+        Args:
+            prompt: Prompt to display
+
+        Returns:
+            Complete line entered by user
+        """
+        # For web UI, input() and input_line() work the same way
+        return self.input(prompt)
+
+    def input_char(self, blocking=True):
+        """
+        Get single character input (for INKEY$, INPUT$).
+
+        Args:
+            blocking: If True, wait for keypress. If False, return "" if no key ready.
+
+        Returns:
+            Single character string, or "" if not available
 
         Note: Not yet implemented for web UI.
         Returns empty string.
         """
         return ""
 
+    # Alias for backward compatibility
+    def get_char(self):
+        """Deprecated: Use input_char() instead."""
+        return self.input_char(blocking=False)
+
     def clear_screen(self):
         """Clear the output log."""
         self.output_log.clear()
 
-    def set_cursor_position(self, row, col):
+    def error(self, message):
         """
-        Set cursor position.
+        Output error message to the web UI log.
+
+        Args:
+            message: Error message to display
+        """
+        # Output error with prefix to distinguish from regular output
+        self.output(f"Error: {message}")
+
+    def debug(self, message):
+        """
+        Output debug message to the web UI log (if debugging enabled).
+
+        Args:
+            message: Debug message to display
+
+        Note: For web UI, debug messages are output like regular messages.
+        In production, this could be filtered or sent to browser console.
+        """
+        # For now, output debug messages to the log
+        # Could be enhanced to use browser console or separate debug log
+        self.output(f"Debug: {message}")
+
+    def locate(self, row, col):
+        """
+        Move cursor to specific position (LOCATE statement).
+
+        Args:
+            row: Row number (1-based)
+            col: Column number (1-based)
 
         Note: Not applicable for log-based output.
         """
         pass
+
+    def get_cursor_position(self):
+        """
+        Get current cursor position.
+
+        Returns:
+            Tuple of (row, col) where both are 1-based
+
+        Note: Log-based output doesn't track cursor, returns default (1, 1).
+        """
+        return (1, 1)
 
     def get_screen_size(self):
         """

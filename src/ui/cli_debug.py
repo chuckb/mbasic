@@ -92,11 +92,17 @@ class CLIDebugger:
                 self.interactive.io_handler.output("Invalid line number")
 
     def cmd_step(self, args=""):
-        """STEP command - execute one line/statement.
+        """STEP command - execute one statement and pause.
+
+        Executes a single statement (not a full line). If a line contains multiple
+        statements separated by colons, each statement is executed separately.
+
+        This matches the curses UI 'Step Statement' command (Ctrl+T).
+        For line-based stepping, see the UI-specific step_line command.
 
         Usage:
-            STEP        - Execute next line and pause
-            STEP n      - Execute n lines
+            STEP        - Execute next statement and pause
+            STEP n      - Execute n statements
         """
         if not self.interactive.program_runtime:
             self.interactive.io_handler.output("No program running. Use RUN first.")
@@ -169,7 +175,11 @@ class CLIDebugger:
             self.interactive.io_handler.output("No active FOR loops")
 
     def _execute_single_step(self):
-        """Execute a single line/statement"""
+        """Execute a single statement (not a full line).
+
+        Uses the interpreter's tick() or execute_next() method to execute
+        one statement at the current program counter position.
+        """
         if self.interactive.program_interpreter:
             # Use interpreter's tick() method if available
             if hasattr(self.interactive.program_interpreter, 'tick'):

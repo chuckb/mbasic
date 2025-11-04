@@ -349,7 +349,9 @@ class Runtime:
             name: Variable name (e.g., 'x', 'foo')
             type_suffix: Type suffix ($, %, !, #) or None
             def_type_map: Optional DEF type mapping
-            token: REQUIRED - Token object with line and position info for tracking
+            token: REQUIRED - Token object with line and position info for tracking.
+                   The token must not be None, but may lack 'line' or 'position'
+                   attributes (fallback logic handles missing attributes).
 
         Returns:
             Variable value (default 0 for numeric, "" for string)
@@ -619,6 +621,10 @@ class Runtime:
         """
         Get array element value, optionally tracking read access.
 
+        Auto-dimensioning: If the array has not been explicitly dimensioned via DIM,
+        it will be automatically dimensioned to (10, 10, ...) with one dimension
+        per subscript. This matches MBASIC-80 5.21 behavior.
+
         Args:
             name: Array name
             type_suffix: Type suffix or None
@@ -680,6 +686,10 @@ class Runtime:
     def set_array_element(self, name, type_suffix, subscripts, value, def_type_map=None, token=None):
         """
         Set array element value, optionally tracking write access.
+
+        Auto-dimensioning: If the array has not been explicitly dimensioned via DIM,
+        it will be automatically dimensioned to (10, 10, ...) with one dimension
+        per subscript. This matches MBASIC-80 5.21 behavior.
 
         Args:
             name: Array name
@@ -1247,7 +1257,11 @@ class Runtime:
 
         Returns:
             list: Tuples of (line_number, stmt_offset) where GOSUB was called
-                 Example: [(100, 0), (500, 2), (1000, 1)]  # Called GOSUB at 100.0, 500.2, 1000.1
+                 Example: [(100, 0), (500, 2), (1000, 1)]
+                 This represents GOSUB called from:
+                   - line 100, statement 0 (first statement on line 100)
+                   - line 500, statement 2 (third statement on line 500)
+                   - line 1000, statement 1 (second statement on line 1000)
 
         Note: The first element is the oldest GOSUB, the last is the most recent.
         """
