@@ -45,9 +45,20 @@ jobs:
         run: python3 utils/build_library_docs.py
         # Generates docs/library/games/ with current .bas files
 
-      - name: Build documentation
+      - name: Build user documentation
         run: mkdocs build --strict --verbose
         # Strict mode enforces zero broken links
+        # Builds to ./site with limited navigation (help/, library/)
+
+      - name: Build developer documentation
+        run: mkdocs build --strict --verbose -f mkdocs-dev.yml
+        # Builds to ./site-dev with full navigation (includes dev/)
+
+      - name: Merge documentation sites
+        run: |
+          mkdir -p site/dev-docs
+          cp -r site-dev/* site/dev-docs/
+        # Copy dev docs into site/dev-docs/ so both are deployed
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
