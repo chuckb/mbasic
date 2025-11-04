@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mbasic"
-version = "1.0.629"
-description = "MBASIC 5.21 (BASIC-80) interpreter - Independent open-source implementation"
+version = "1.0.635"
+description = "MBASIC2025 5.21 BASIC language - Independent open-source implementation"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}

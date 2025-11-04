@@ -1126,6 +1126,15 @@ class NiceGUIBackend(UIBackend):
                 .nicegui-content > .q-pa-md {
                     padding: 0 !important;
                 }
+                /* Aggressively remove ALL row gaps and spacing */
+                .row, .q-row, [class*="row"] {
+                    gap: 0 !important;
+                    row-gap: 0 !important;
+                }
+                /* Remove any child spacing in rows */
+                .row > *, .q-row > * {
+                    margin: 0 !important;
+                }
             </style>
         ''')
 
@@ -1144,73 +1153,75 @@ class NiceGUIBackend(UIBackend):
         self.delete_lines_dialog = DeleteLinesDialog(self)
         self.renumber_dialog = RenumberDialog(self)
 
-        # Menu bar
-        self._create_menu()
+        # Wrap top rows in column with zero gap to eliminate spacing between them
+        with ui.column().style('row-gap: 0; width: 100%;'):
+            # Menu bar
+            self._create_menu()
 
-        # Toolbar
-        with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 36px; margin-top: 1px; margin-bottom: 0;'):
-            ui.button('Run', on_click=self._menu_run, icon='play_arrow', color='green').mark('btn_run')
-            ui.button('Stop', on_click=self._menu_stop, icon='stop', color='red').mark('btn_stop')
-            ui.button('Step', on_click=self._menu_step_line, icon='skip_next').mark('btn_step_line')
-            ui.button('Stmt', on_click=self._menu_step_stmt, icon='redo').mark('btn_step_stmt')
-            ui.button('Cont', on_click=self._menu_continue, icon='play_circle').mark('btn_continue')
-            ui.separator().props('vertical')
-            ui.button(icon='check_circle', on_click=self._check_syntax).mark('btn_check_syntax').props('flat').tooltip('Check Syntax')
+            # Toolbar
+            with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 36px; margin: 2px 0;'):
+                ui.button('Run', on_click=self._menu_run, icon='play_arrow', color='green').mark('btn_run')
+                ui.button('Stop', on_click=self._menu_stop, icon='stop', color='red').mark('btn_stop')
+                ui.button('Step', on_click=self._menu_step_line, icon='skip_next').mark('btn_step_line')
+                ui.button('Stmt', on_click=self._menu_step_stmt, icon='redo').mark('btn_step_stmt')
+                ui.button('Cont', on_click=self._menu_continue, icon='play_circle').mark('btn_continue')
+                ui.separator().props('vertical')
+                ui.button(icon='check_circle', on_click=self._check_syntax).mark('btn_check_syntax').props('flat').tooltip('Check Syntax')
 
-        # Command input row - single line like status bar
-        with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 32px; margin-bottom: 1px;'):
-            ui.label('>').classes('font-mono')
-            self.immediate_entry = ui.input(placeholder='BASIC command...').classes('flex-grow').props('dense outlined').mark('immediate_entry')
-            self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
-            ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').props('dense flat').mark('btn_immediate')
+            # Command input row - single line like status bar
+            with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 32px; margin: 0;'):
+                ui.label('>').classes('font-mono')
+                self.immediate_entry = ui.input(placeholder='BASIC command...').classes('flex-grow').props('dense outlined').mark('immediate_entry')
+                self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
+                ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').props('dense flat').mark('btn_immediate')
 
-        # Status bar
-        with ui.row().classes('w-full bg-gray-200 px-2').style('justify-content: space-between; min-height: 28px; align-items: center; margin-bottom: 1px;'):
-            self.status_label = ui.label('Ready').mark('status')
-            with ui.row().classes('gap-4'):
-                self.auto_line_label = ui.label('').classes('text-gray-600 font-mono')
-                self.resource_usage_label = ui.label('').classes('text-gray-600')
-                ui.label(f'v{VERSION}').classes('text-gray-600')
+            # Status bar
+            with ui.row().classes('w-full bg-gray-200 px-2').style('justify-content: space-between; min-height: 28px; align-items: center; margin: 0;'):
+                self.status_label = ui.label('Ready').mark('status')
+                with ui.row().classes('gap-4'):
+                    self.auto_line_label = ui.label('').classes('text-gray-600 font-mono')
+                    self.resource_usage_label = ui.label('').classes('text-gray-600')
+                    ui.label(f'v{VERSION}').classes('text-gray-600')
 
-        # Main content area - use flexbox to fill remaining space
-        with ui.element('div').style('width: 100%; flex: 1; display: flex; flex-direction: column; min-height: 0;'):
-            # Editor - using CodeMirror 5 (legacy, no ES6 modules) - fixed height
-            self.editor = CodeMirror5Editor(
-                value='',
-                on_change=self._on_editor_change
-            ).style('width: 100%; height: 300px; flex-shrink: 0; border: 1px solid #ccc;').mark('editor')
+            # Main content area - use flexbox to fill remaining space
+            with ui.element('div').style('width: 100%; flex: 1; display: flex; flex-direction: column; min-height: 0;'):
+                # Editor - using CodeMirror 5 (legacy, no ES6 modules) - fixed height
+                self.editor = CodeMirror5Editor(
+                    value='',
+                    on_change=self._on_editor_change
+                ).style('width: 100%; height: 300px; flex-shrink: 0; border: 1px solid #ccc;').mark('editor')
 
-            # Add auto-numbering handlers
-            # Track last edited line for auto-numbering
-            self.last_edited_line_index = None
-            self.last_edited_line_text = None
-            self.last_line_count = 0  # Track number of lines to detect Enter
-            self.auto_numbering_in_progress = False  # Prevent recursive calls
-            self.editor_has_been_used = False  # Track if user has typed anything
+                # Add auto-numbering handlers
+                # Track last edited line for auto-numbering
+                self.last_edited_line_index = None
+                self.last_edited_line_text = None
+                self.last_line_count = 0  # Track number of lines to detect Enter
+                self.auto_numbering_in_progress = False  # Prevent recursive calls
+                self.editor_has_been_used = False  # Track if user has typed anything
 
-            # Content change handlers via CodeMirror's on_change callback
-            # The _on_editor_change method (defined below) handles:
-            # - Removing blank lines
-            # - Auto-numbering
-            # - Placeholder clearing
+                # Content change handlers via CodeMirror's on_change callback
+                # The _on_editor_change method (defined below) handles:
+                # - Removing blank lines
+                # - Auto-numbering
+                # - Placeholder clearing
 
-            # Click and blur handlers registered separately
-            self.editor.on('click', self._on_editor_click, throttle=0.05)
-            self.editor.on('blur', self._on_editor_blur)
+                # Click and blur handlers registered separately
+                self.editor.on('click', self._on_editor_click, throttle=0.05)
+                self.editor.on('blur', self._on_editor_blur)
 
-            # Current line indicator
-            self.current_line_label = ui.label('').classes('text-sm font-mono bg-yellow-100 p-1')
-            self.current_line_label.visible = False
+                # Current line indicator
+                self.current_line_label = ui.label('').classes('text-sm font-mono bg-yellow-100 p-1')
+                self.current_line_label.visible = False
 
-            # Syntax error indicator
-            self.syntax_error_label = ui.label('').classes('text-sm font-mono bg-red-100 text-red-700 p-1')
-            self.syntax_error_label.visible = False
+                # Syntax error indicator
+                self.syntax_error_label = ui.label('').classes('text-sm font-mono bg-red-100 text-red-700 p-1')
+                self.syntax_error_label.visible = False
 
-            # Output - flexible, takes remaining space
-            self.output = ui.textarea(
-                value=f'MBASIC 5.21 Web IDE - {VERSION}\n',
-                placeholder='Output'
-            ).style('width: 100%; flex: 1; min-height: 0;').props('readonly outlined dense spellcheck=false').mark('output')
+                # Output - flexible, takes remaining space
+                self.output = ui.textarea(
+                    value=f'MBASIC 5.21 Web IDE - {VERSION}\n',
+                    placeholder='Output'
+                ).style('width: 100%; flex: 1; min-height: 0;').props('readonly outlined dense spellcheck=false').mark('output')
 
         # INPUT handling: Make output textarea editable when input needed
         # Store state for inline input handling
@@ -1240,7 +1251,7 @@ class NiceGUIBackend(UIBackend):
 
     def _create_menu(self):
         """Create menu bar."""
-        with ui.row().classes('w-full bg-gray-800 text-white px-2 gap-4').style('min-height: 36px; align-items: center; margin-bottom: 1px;'):
+        with ui.row().classes('w-full bg-gray-800 text-white px-2 gap-4').style('min-height: 36px; align-items: center; margin: 0;'):
             # File menu
             with ui.button('File', icon='menu').props('flat color=white'):
                 with ui.menu() as file_menu:

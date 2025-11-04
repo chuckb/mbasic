@@ -9,19 +9,18 @@
 
 ## Issues to Fix
 
-### 1. Web UI Spacing - TOO MUCH SPACE BETWEEN TOP ROWS ⚠️
-**Status**: Working on it (attempt #7+)
+### 1. Web UI Spacing - ✅ FIXED!
+**Status**: COMPLETE - User confirmed "spacing is good now"
 
-**Problem**: User reports "the spacing is the same. too much betwen top rows"
+**Problem**: User reported "4 bands of white" between top 4 rows (menu, toolbar, command input, status bar)
 
-**Previous attempts** (all failed):
-- v1.0.599-616: Multiple CSS changes - kept shifting space between top and bottom
-- v1.0.617: Set gap:0 on .column, added targeted 2px margins - STILL too much space
+**Root cause discovered**: NiceGUI's default page container has hardcoded CSS gap property that creates vertical spacing (see GitHub issue #2171)
 
-**Next approach**:
-- Need to MEASURE actual spacing in browser
-- Check if NiceGUI is adding padding to menu bar or other elements
-- May need to override NiceGUI's menu bar spacing directly
+**Solution (v1.0.634-635)**:
+- v1.0.634: Wrapped all 4 top rows in `ui.column().style('row-gap: 0; width: 100%;')` - eliminated unwanted gaps
+- v1.0.635: Added 2px margin around toolbar for visual breathing room + moved main content into column wrapper to eliminate gap between status bar and editor
+
+**Final result**: Clean, compact layout with appropriate spacing
 
 ### 2. Duplicate Line Numbers in Error Messages ⚠️
 **Status**: Not started
