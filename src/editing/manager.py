@@ -20,7 +20,7 @@ class ProgramManager:
     - Line storage (line_number -> text)
     - AST storage (line_number -> parsed LineNode)
     - Parsing (with error handling)
-    - File operations (SAVE, LOAD)
+    - File operations (SAVE, LOAD, MERGE)
     - Line editing (NEW, DELETE, RENUM)
 
     Usage:
@@ -33,6 +33,7 @@ class ProgramManager:
         # Save/load
         manager.save_to_file("program.bas")
         manager.load_from_file("program.bas")
+        manager.merge_from_file("overlay.bas")  # Merges without clearing
 
         # Get program AST for execution
         program_ast = manager.get_program_ast()

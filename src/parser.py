@@ -363,7 +363,9 @@ class Parser:
             if self.match(TokenType.COLON):
                 self.advance()
             elif self.match(TokenType.SEMICOLON):
-                # Allow trailing semicolon (treat as no-op, like some dialects)
+                # Allow trailing semicolon at end of line (treat as no-op).
+                # Note: Semicolons in PRINT statements are separators (handled in parse_print),
+                # but standalone semicolons as statement separators are treated as trailing no-ops.
                 self.advance()
                 # If there's more after the semicolon, treat it as error
                 # But allow end of line or colon after semicolon

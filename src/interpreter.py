@@ -1446,7 +1446,7 @@ class Interpreter:
         - All arrays are erased
         - All open files are closed
         - COMMON variables list is preserved (for CHAIN compatibility)
-        - String space and stack space parameters are ignored (as requested)
+        - String space and stack space parameters are ignored (Python manages memory automatically)
         """
         # Clear resource limits tracking
         self.limits.clear_all()
@@ -1469,7 +1469,7 @@ class Interpreter:
         self.runtime.field_buffers.clear()
 
         # Note: We preserve runtime.common_vars for CHAIN compatibility
-        # Note: We ignore string_space and stack_space parameters as requested
+        # Note: We ignore string_space and stack_space parameters (Python manages memory automatically)
 
     def execute_randomize(self, stmt):
         """Execute RANDOMIZE statement
@@ -2179,7 +2179,7 @@ class Interpreter:
             OPEN "I", #1, "filename"        - Open for input
             OPEN "O", #2, "filename"        - Open for output
             OPEN "A", #3, "filename"        - Open for append
-            OPEN "R", #4, "filename", 128   - Open for random access (not fully supported)
+            OPEN "R", #4, "filename", 128   - Open for random access (FIELD, GET, PUT, LSET, RSET supported)
 
         Note: CP/M files used ^Z (ASCII 26) as EOF marker. We respect this on input.
         """
