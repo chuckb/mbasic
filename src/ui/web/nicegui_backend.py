@@ -1124,7 +1124,7 @@ class NiceGUIBackend(UIBackend):
         self._create_menu()
 
         # Toolbar
-        with ui.row().classes('w-full bg-gray-100 p-2 gap-2').style('align-items: center;'):
+        with ui.row().classes('w-full bg-gray-100 px-2 py-1 gap-2').style('align-items: center;'):
             ui.button('Run', on_click=self._menu_run, icon='play_arrow', color='green').mark('btn_run')
             ui.button('Stop', on_click=self._menu_stop, icon='stop', color='red').mark('btn_stop')
             ui.button('Step', on_click=self._menu_step_line, icon='skip_next').mark('btn_step_line')
@@ -1134,7 +1134,7 @@ class NiceGUIBackend(UIBackend):
             ui.button(icon='check_circle', on_click=self._check_syntax).mark('btn_check_syntax').props('flat').tooltip('Check Syntax')
 
         # Command input row
-        with ui.row().classes('w-full bg-gray-100 px-2 pb-2 gap-2').style('align-items: center;'):
+        with ui.row().classes('w-full bg-gray-100 px-2 py-1 gap-2').style('align-items: center;'):
             ui.label('>').classes('text-lg font-mono')
             self.immediate_entry = ui.input(placeholder='BASIC command...').classes('flex-grow').mark('immediate_entry')
             self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
@@ -1149,7 +1149,7 @@ class NiceGUIBackend(UIBackend):
                 ui.label(f'v{VERSION}').classes('text-gray-600')
 
         # Main content area - use flexbox with viewport height
-        with ui.element('div').style('width: 100%; height: calc(100vh - 200px); display: flex; flex-direction: column;'):
+        with ui.element('div').style('width: 100%; height: calc(100vh - 140px); display: flex; flex-direction: column;'):
             # Editor - using CodeMirror 5 (legacy, no ES6 modules) - 40% of available space
             self.editor = CodeMirror5Editor(
                 value='',
@@ -1217,7 +1217,7 @@ class NiceGUIBackend(UIBackend):
 
     def _create_menu(self):
         """Create menu bar."""
-        with ui.row().classes('w-full bg-gray-800 text-white p-2 gap-4'):
+        with ui.row().classes('w-full bg-gray-800 text-white px-2 py-1 gap-4'):
             # File menu
             with ui.button('File', icon='menu').props('flat color=white'):
                 with ui.menu() as file_menu:
