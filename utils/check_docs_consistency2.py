@@ -270,10 +270,11 @@ Return a JSON array of conflicts. Return empty array [] if no conflicts found.
 IMPORTANT: If you cannot determine whether the code or comment is correct, mark type as "unclear" and suggested_fix as "NEEDS_HUMAN_REVIEW".
 
 OUTPUT REQUIREMENTS:
-- Return ONLY the JSON array starting with [ and ending with ]
-- No markdown formatting, no ```json tags
-- No explanatory text before or after
-- Just the raw JSON array"""
+- Return ONLY the raw JSON array starting with [ and ending with ]
+- DO NOT wrap the JSON in markdown code blocks (no ``` or ```json)
+- No markdown formatting whatsoever
+- No explanatory text before or after the JSON
+- Just the pure JSON array text"""
 
             try:
                 response = self.client.messages.create(
@@ -287,13 +288,25 @@ OUTPUT REQUIREMENTS:
 
                 # Try to extract JSON from response
                 file_conflicts = None
+
+                # First, strip markdown code block formatting if present
+                import re
+                # Remove ```json at start and ``` at end
+                cleaned_text = response_text
+                if cleaned_text.startswith('```json'):
+                    cleaned_text = cleaned_text[7:]  # Remove ```json
+                elif cleaned_text.startswith('```'):
+                    cleaned_text = cleaned_text[3:]  # Remove ```
+                if cleaned_text.endswith('```'):
+                    cleaned_text = cleaned_text[:-3]  # Remove trailing ```
+                cleaned_text = cleaned_text.strip()
+
                 try:
-                    # First try direct JSON parsing
-                    file_conflicts = json.loads(response_text)
+                    # Try direct JSON parsing on cleaned text
+                    file_conflicts = json.loads(cleaned_text)
                 except json.JSONDecodeError:
                     # Try to extract JSON array from response text
-                    import re
-                    json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+                    json_match = re.search(r'\[.*\]', cleaned_text, re.DOTALL)
                     if json_match:
                         try:
                             file_conflicts = json.loads(json_match.group())
@@ -465,7 +478,7 @@ Format your response as a JSON array. Each item should have:
 - "conflict_type": (for code/comment conflicts) "code_bug", "comment_outdated", or "unclear"
 - "needs_clarification": true if human review needed to determine which is correct
 
-Return ONLY the JSON array, no other text. Empty array [] if no issues."""
+Return ONLY the raw JSON array, no markdown formatting (no ``` or ```json), no other text. Empty array [] if no issues."""
 
         try:
             response = self.client.messages.create(
@@ -477,14 +490,28 @@ Return ONLY the JSON array, no other text. Empty array [] if no issues."""
 
             response_text = response.content[0].text.strip()
 
+            # Strip markdown code block formatting if present
+            import re
+            cleaned_text = response_text
+            if cleaned_text.startswith('```json'):
+                cleaned_text = cleaned_text[7:]  # Remove ```json
+            elif cleaned_text.startswith('```'):
+                cleaned_text = cleaned_text[3:]  # Remove ```
+            if cleaned_text.endswith('```'):
+                cleaned_text = cleaned_text[:-3]  # Remove trailing ```
+            cleaned_text = cleaned_text.strip()
+
             try:
-                result = json.loads(response_text)
+                result = json.loads(cleaned_text)
                 return result
             except json.JSONDecodeError:
-                import re
-                json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+                json_match = re.search(r'\[.*\]', cleaned_text, re.DOTALL)
                 if json_match:
-                    return json.loads(json_match.group())
+                    try:
+                        return json.loads(json_match.group())
+                    except json.JSONDecodeError:
+                        print(f"Warning: Could not parse JSON from response")
+                        return []
                 else:
                     print(f"Warning: Could not parse JSON from response")
                     return []
