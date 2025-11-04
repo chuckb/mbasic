@@ -1,8 +1,9 @@
 """
 Position-Aware AST Serialization
 
-Serializes AST nodes back to source text while preserving the original
-token positions and spacing. Includes debug tracking for position conflicts.
+Serializes AST nodes back to source text while attempting to preserve original
+token positions and spacing. Tracks position conflicts when actual output column
+doesn't match expected token column (conflicts occur during AST modifications).
 """
 
 from typing import List, Optional, Tuple, Dict

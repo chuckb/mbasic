@@ -3585,18 +3585,20 @@ class Parser:
 
     def parse_call(self) -> CallStatementNode:
         """
-        Parse CALL statement - call machine language routine (MBASIC 5.21)
+        Parse CALL statement - call machine language routine
 
-        Standard MBASIC 5.21 Syntax:
+        MBASIC 5.21 standard syntax:
             CALL address           - Call machine code at numeric address
+
+        Extended syntax (other BASIC dialects):
+            CALL ROUTINE(X,Y)      - Call with arguments (fully parsed/supported)
 
         Examples:
             CALL 16384             - Call decimal address
             CALL &HC000            - Call hex address
             CALL A                 - Call address in variable
             CALL DIO+1             - Call computed address
-
-        Note: Also accepts extended syntax for other BASIC dialects.
+            CALL MYSUB(X,Y)        - Call with arguments (extended)
         """
         token = self.advance()
 
