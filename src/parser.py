@@ -9,6 +9,10 @@ Key differences from interpreter:
 - DEF type statements are applied globally at compile time
 - Array dimensions must be constant expressions
 - Variable types are fixed throughout the program
+
+Expression parsing notes:
+- Functions generally require parentheses: SIN(X), CHR$(65)
+- Exception: RND and INKEY$ can be called without parentheses (MBASIC 5.21 compatibility)
 """
 
 from typing import List, Optional, Dict, Tuple
@@ -131,8 +135,9 @@ class Parser:
     def at_end_of_line(self) -> bool:
         """Check if at end of logical line (NEWLINE or EOF)
 
-        Note: APOSTROPHE is now treated as a statement (comment), not end-of-line,
-        so it can be preserved in the AST.
+        Note: APOSTROPHE starts a comment statement and ends the current statement,
+        but not the line itself (the comment content continues on the same line).
+        This allows comment statements to be preserved in the AST.
         """
         if self.at_end_of_tokens():
             return True
@@ -364,8 +369,8 @@ class Parser:
                 self.advance()
             elif self.match(TokenType.SEMICOLON):
                 # Allow trailing semicolon at end of line (treat as no-op).
-                # Note: Semicolons in PRINT statements are separators (handled in parse_print),
-                # but standalone semicolons as statement separators are treated as trailing no-ops.
+                # Context matters: Semicolons WITHIN PRINT/LPRINT are item separators (parsed there),
+                # but semicolons BETWEEN statements are treated as trailing no-ops (handled here).
                 self.advance()
                 # If there's more after the semicolon, treat it as error
                 # But allow end of line or colon after semicolon
@@ -585,7 +590,7 @@ class Parser:
             # Look ahead to distinguish MID$ statement from MID$ function
             # MID$ statement has pattern: MID$ ( ... ) =
             # MID$ is tokenized as single MID token ($ is part of the keyword)
-            # We need to peek past the parentheses to see if there's an =
+            # Complex lookahead: scan past parentheses (tracking depth) to find = sign
             saved_pos = self.position
             try:
                 self.advance()  # Skip MID
