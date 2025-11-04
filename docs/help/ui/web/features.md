@@ -86,22 +86,17 @@ Complete reference of all features available in the MBASIC Web UI.
 **Save Options:**
 - Save to browser
 - Download as file
-- Export to GitHub
-- Share via link
 
 ### Format Support
 
 **Input Formats:**
 - .BAS files
 - .TXT files
-- Tokenized BASIC
 - ASCII text
 
 **Output Formats:**
 - Standard .BAS
 - Formatted text
-- Tokenized format
-- PDF export
 
 ## Program Execution
 
@@ -240,18 +235,9 @@ Complete reference of all features available in the MBASIC Web UI.
 
 ## Advanced Features
 
-### Collaboration
+### Session Management
 
-**Sharing:**
-- Share via link
-- Read-only mode
-- Collaborative editing
-- Live output sharing
-
-**Version Control:**
-- Local history
-- Snapshot saves
-- Diff viewer
+**Note:** Collaboration features (sharing, collaborative editing, version control) are not currently implemented. Programs are stored locally in browser storage only.
 
 ### Performance
 
@@ -274,12 +260,6 @@ Complete reference of all features available in the MBASIC Web UI.
 - File system access
 - Notifications
 - Fullscreen API
-
-**External Tools:**
-- Export to GitHub
-- Import from URL
-- WebDAV support
-- Cloud storage
 
 ## Productivity Tools
 

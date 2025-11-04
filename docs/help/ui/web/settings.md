@@ -14,8 +14,7 @@ The web UI provides a simplified settings dialog for configuring essential MBASI
 
 **Methods:**
 1. Click the **⚙️ Settings** icon in the navigation bar
-2. Use keyboard shortcut: `Ctrl+,` (if enabled)
-3. Click menu → Settings
+2. Click menu → Settings
 
 ## Settings Dialog Interface
 
