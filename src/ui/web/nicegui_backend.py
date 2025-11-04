@@ -1141,12 +1141,12 @@ class NiceGUIBackend(UIBackend):
             ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').mark('btn_immediate')
 
         # Main content area - use flexbox with viewport height
-        with ui.element('div').style('width: 100%; height: calc(100vh - 160px); display: flex; flex-direction: column;'):
-            # Editor - using CodeMirror 5 (legacy, no ES6 modules) - 50% of viewport
+        with ui.element('div').style('width: 100%; height: calc(100vh - 200px); display: flex; flex-direction: column;'):
+            # Editor - using CodeMirror 5 (legacy, no ES6 modules) - 40% of available space
             self.editor = CodeMirror5Editor(
                 value='',
                 on_change=self._on_editor_change
-            ).style('width: 100%; height: 50vh; min-height: 250px; border: 1px solid #ccc;').mark('editor')
+            ).style('width: 100%; height: 40%; min-height: 200px; border: 1px solid #ccc;').mark('editor')
 
             # Add auto-numbering handlers
             # Track last edited line for auto-numbering
@@ -1174,11 +1174,11 @@ class NiceGUIBackend(UIBackend):
             self.syntax_error_label = ui.label('').classes('text-sm font-mono bg-red-100 text-red-700 p-1')
             self.syntax_error_label.visible = False
 
-            # Output - flexible, takes remaining space
+            # Output - flexible, takes remaining space (60% of available)
             self.output = ui.textarea(
                 value=f'MBASIC 5.21 Web IDE - {VERSION}\n',
                 placeholder='Output'
-            ).style('width: 100%; flex: 1; min-height: 200px;').props('readonly outlined dense spellcheck=false').mark('output')
+            ).style('width: 100%; flex: 1; min-height: 150px;').props('readonly outlined dense spellcheck=false').mark('output')
 
             # INPUT row (hidden by default)
             self.input_row = ui.row().classes('w-full bg-blue-50 q-pa-sm')
