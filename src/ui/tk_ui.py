@@ -690,7 +690,7 @@ class TkBackend(UIBackend):
         try:
             state = self.interpreter.tick(mode='step_line', max_statements=100)
 
-            # Handle state using microprocessor model
+            # Handle interpreter state (error, halted, or running)
             if state.error_info:
                 # Error state
                 error_msg = state.error_info.error_message
@@ -748,7 +748,7 @@ class TkBackend(UIBackend):
         try:
             state = self.interpreter.tick(mode='step_statement', max_statements=1)
 
-            # Handle state using microprocessor model
+            # Handle interpreter state (error, halted, or running)
             if state.error_info:
                 # Error state
                 error_msg = state.error_info.error_message
@@ -2932,7 +2932,7 @@ class TkBackend(UIBackend):
 
             # Output is routed to output pane via TkIOHandler
 
-            # Handle state using microprocessor model
+            # Handle interpreter state (error, halted, or running)
             if state.error_info:
                 # Error state
                 self.running = False
@@ -3070,8 +3070,8 @@ class TkBackend(UIBackend):
             # Get program AST
             program_ast = self.program.get_program_ast()
 
-            # Reset runtime with current program - RUN = CLEAR + GOTO first line
-            # This preserves breakpoints but clears variables
+            # Reset runtime with current program - RUN clears variables and starts execution
+            # Preserves breakpoints (unlike CLEAR which removes program entirely)
             self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
             # Update interpreter's IO handler to output to execution pane
@@ -3799,7 +3799,8 @@ class TkIOHandler(IOHandler):
     def input(self, prompt: str = '') -> str:
         """Input from user via inline input field.
 
-        Used by INPUT statement for reading comma-separated values.
+        Used by INPUT statement to read user input (raw string).
+        Comma-separated parsing happens at interpreter level.
         Shows an inline input field below output pane.
         """
         # Show prompt in output first

@@ -200,9 +200,9 @@ def update_line_references(code: str, line_mapping: Dict[int, int]) -> str:
         >>> update_line_references("ON X GOTO 10,20", mapping)
         'ON X GOTO 100,200'
     """
-    # Pattern matches: GOTO/GOSUB/THEN/ELSE followed by line numbers
-    # Also handles: ON <expr> GOTO/GOSUB
-    # Also handles: IF...THEN line_num, IF...ELSE line_num
+    # Two-pass regex approach:
+    # Pass 1: Match keyword + first line number (GOTO/GOSUB/THEN/ELSE/ON...GOTO/ON...GOSUB)
+    # Pass 2: Match comma-separated line numbers (for ON...GOTO/GOSUB lists)
 
     def replace_line_ref(match):
         keyword = match.group(1)
