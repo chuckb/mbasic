@@ -17,7 +17,6 @@ from src.iohandler.base import IOHandler
 from src.version import VERSION
 from src.pc import PC
 from src.ui.web.codemirror5_editor import CodeMirror5Editor
-import re
 
 
 def log_web_error(context: str, exception: Exception):
@@ -2456,8 +2455,7 @@ class NiceGUIBackend(UIBackend):
         - Auto-numbering lines
         """
         try:
-            # Clear placeholder once user starts typing (no longer needed for CodeMirror)
-            # CodeMirror doesn't use placeholder prop like textarea
+            # Track when editor has been used (for placeholder management)
             if not self.editor_has_been_used and self.editor.value:
                 self.editor_has_been_used = True
 
@@ -2821,7 +2819,7 @@ class NiceGUIBackend(UIBackend):
                     self.runtime.npc = None
 
                 # Check if interpreter has work to do (after RUN statement)
-                # No state checking - just ask the interpreter
+                # Query interpreter directly via has_work() instead of checking runtime flags
                 has_work = self.interpreter.has_work() if self.interpreter else False
                 if self.interpreter and has_work:
                     # Start execution timer if not already running
