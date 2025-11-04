@@ -1,7 +1,7 @@
 """
 TK Settings Dialog for MBASIC
 
-Provides a GUI dialog for viewing and modifying settings.
+Provides a GUI dialog for modifying settings.
 """
 
 import tkinter as tk
@@ -12,7 +12,7 @@ from src.settings import get, set as set_setting
 
 
 class SettingsDialog(tk.Toplevel):
-    """Dialog for viewing and modifying MBASIC settings."""
+    """Dialog for modifying MBASIC settings."""
 
     def __init__(self, parent):
         """Initialize settings dialog.

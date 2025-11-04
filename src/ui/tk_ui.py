@@ -25,7 +25,7 @@ class TkBackend(UIBackend):
     Provides a graphical UI with:
     - Menu bar (File, Edit, Run, Help)
     - Toolbar with common actions
-    - Split pane: editor on left, output on right
+    - 3-pane vertical layout: editor (top), output (middle), immediate mode (bottom)
     - Line numbers in editor
     - Syntax highlighting (optional)
     - File dialogs for Open/Save
@@ -145,7 +145,7 @@ class TkBackend(UIBackend):
         paned = ttk.PanedWindow(self.root, orient=tk.VERTICAL)
         paned.pack(fill=tk.BOTH, expand=True)
 
-        # Top pane: Editor with line numbers (60% of space)
+        # Top pane: Editor with line numbers (weight=3, ~50% of space)
         editor_frame = ttk.Frame(paned)
         paned.add(editor_frame, weight=3)
 
@@ -181,7 +181,7 @@ class TkBackend(UIBackend):
         # Set up editor context menu
         self._setup_editor_context_menu()
 
-        # Middle pane: Output (30% of space)
+        # Middle pane: Output (weight=2, ~33% of space)
         output_frame = ttk.Frame(paned)
         paned.add(output_frame, weight=2)
 
@@ -222,9 +222,9 @@ class TkBackend(UIBackend):
         import queue
         self.input_queue = queue.Queue()
 
-        # Bottom pane: Immediate Mode - just the input line
+        # Bottom pane: Immediate Mode - just the input line (weight=1, ~17% of space)
         immediate_frame = ttk.Frame(paned)
-        paned.add(immediate_frame, weight=1)  # Reduced weight since no history
+        paned.add(immediate_frame, weight=1)
 
         # Immediate mode input (just the prompt and entry, no header or history)
         input_frame = ttk.Frame(immediate_frame, height=40)
