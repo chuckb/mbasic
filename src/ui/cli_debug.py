@@ -37,8 +37,8 @@ class CLIDebugger:
         self.interactive.start = enhanced_start
 
     def _add_debug_help(self):
-        """Add debug commands to help system"""
-        # This would integrate with help system
+        """Add debug commands to help system (not yet implemented)"""
+        # TODO: Integrate debug commands with help system
         pass
 
     def cmd_break(self, args=""):

@@ -457,7 +457,7 @@ class Runtime:
 
         # Update last_write tracking
         if debugger_set:
-            # Debugger/prompt set: use line -1 as sentinel
+            # Debugger/prompt/internal set: use line -1 as sentinel
             self._variables[full_name]['last_write'] = {
                 'line': -1,
                 'position': None,
@@ -1179,7 +1179,7 @@ class Runtime:
                  'dimensions': [10, 5], 'base': 0, 'last_read': None, 'last_write': None}
             ]
 
-        Note: line -1 in last_write indicates debugger/prompt set
+        Note: line -1 in last_write indicates debugger/prompt/internal set
         """
         result = []
 
@@ -1293,13 +1293,15 @@ class Runtime:
                      'current': 5,
                      'end': 10,
                      'step': 1,
-                     'line': 100
+                     'line': 100,
+                     'stmt': 0             # Statement offset
                  }
 
                  For WHILE loops:
                  {
                      'type': 'WHILE',
-                     'line': 150
+                     'line': 150,
+                     'stmt': 0             # Statement offset
                  }
 
                  Example with nested control flow:
