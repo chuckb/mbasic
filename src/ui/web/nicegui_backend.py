@@ -1217,13 +1217,13 @@ class NiceGUIBackend(UIBackend):
                 placeholder='Output'
             ).style('width: 100%; flex: 1; min-height: 0;').props('readonly outlined dense spellcheck=false').mark('output')
 
-        # INPUT row (hidden by default) - position at bottom with absolute positioning
-        self.input_row = ui.row().classes('w-full bg-blue-50 q-pa-sm').style('position: fixed; bottom: 0; left: 0; right: 0; display: none; z-index: 1000;')
-        with self.input_row:
-            self.input_label = ui.label('').classes('font-bold text-blue-600')
-            self.input_field = ui.input(placeholder='Enter value...').classes('flex-grow').mark('input_field')
-            self.input_field.on('keydown.enter', self._submit_input)
-            self.input_submit_btn = ui.button('Submit', on_click=self._submit_input, icon='send', color='primary').mark('btn_input_submit')
+        # INPUT handling: Make output textarea editable when input needed
+        # Store state for inline input handling
+        self.input_prompt_text = None  # Track where prompt starts for inline input
+        self.waiting_for_input = False
+
+        # Set up Enter key handler for inline input in output textarea
+        self.output.on('keydown.enter', self._handle_output_enter)
 
         # Start auto-save timer
         self._start_auto_save()
@@ -2852,38 +2852,78 @@ class NiceGUIBackend(UIBackend):
                 }, 10);
             ''')
 
-    def _show_input_row(self, prompt=''):
-        """Show the INPUT row with prompt."""
-        if self.input_row and self.input_label and self.input_field:
-            self.input_label.text = prompt
-            self.input_field.value = ''
-            self.input_row.style('display: flex;')  # Show with flex display
-            # Focus on input field (NiceGUI will handle this automatically)
-
-    def _hide_input_row(self):
-        """Hide the INPUT row."""
-        if self.input_row:
-            self.input_row.style('display: none;')  # Hide with display none
-
-    def _submit_input(self):
-        """Submit INPUT value from inline input field."""
-        if not self.input_field:
+    def _handle_output_enter(self, e):
+        """Handle Enter key in output textarea for inline input."""
+        if not self.waiting_for_input:
+            # Not waiting for input, ignore Enter
+            e.sender.run_method('event.preventDefault')
             return
 
-        value = self.input_field.value
-        self.input_field.value = ''
+        # Get the text from the output
+        current_text = self.output.value or ''
 
-        # Hide the input row
-        self._hide_input_row()
+        # Find what the user typed after the prompt
+        if self.input_prompt_text:
+            # Extract user input (everything after the prompt)
+            prompt_pos = current_text.rfind(self.input_prompt_text)
+            if prompt_pos >= 0:
+                user_input = current_text[prompt_pos + len(self.input_prompt_text):]
+            else:
+                user_input = ''
+        else:
+            # Get last line as input
+            lines = current_text.split('\n')
+            user_input = lines[-1] if lines else ''
 
-        # If interpreter is waiting for input, provide it
+        # Clean up the input (remove trailing whitespace)
+        user_input = user_input.strip()
+
+        # Add newline after input to move to next line
+        self.output.value = current_text + '\n'
+
+        # Make output readonly again
+        self.output.props(remove='readonly')
+        self.output.props(add='readonly')
+
+        # Mark that we're no longer waiting
+        self.waiting_for_input = False
+        self.input_prompt_text = None
+
+        # Provide input to interpreter
         if self.interpreter and self.interpreter.state.input_prompt:
-            self.interpreter.provide_input(value)
-            # Execution will resume on next tick
+            self.interpreter.provide_input(user_input)
 
         # Also handle async input futures for compatibility
         if self.input_future and not self.input_future.done():
-            self.input_future.set_result(value)
+            self.input_future.set_result(user_input)
+
+        # Prevent default Enter behavior
+        e.sender.run_method('event.preventDefault')
+
+    def _enable_inline_input(self, prompt=''):
+        """Enable inline input in output textarea."""
+        # Append prompt to output without newline
+        current_text = self.output.value or ''
+        if not current_text.endswith('\n') and current_text:
+            self.output.value = current_text + '\n' + prompt
+        else:
+            self.output.value = current_text + prompt
+
+        # Store prompt for later extraction of user input
+        self.input_prompt_text = prompt
+        self.waiting_for_input = True
+
+        # Make output editable
+        self.output.props(remove='readonly')
+
+        # Focus and position cursor at end
+        self.output.run_method('focus')
+        self.output.run_method('''() => {
+            const el = this.$el.querySelector('textarea');
+            if (el) {
+                el.setSelectionRange(el.value.length, el.value.length);
+            }
+        }''')
 
     async def _get_input_async(self, prompt):
         """Get input from user (async version).
@@ -2894,14 +2934,11 @@ class NiceGUIBackend(UIBackend):
         loop = asyncio.get_event_loop()
         self.input_future = loop.create_future()
 
-        # Show input row
-        self._show_input_row(prompt)
+        # Enable inline input
+        self._enable_inline_input(prompt)
 
         # Wait for user to submit input
         result = await self.input_future
-
-        # Hide input row
-        self._hide_input_row()
 
         return result
 
@@ -2910,11 +2947,11 @@ class NiceGUIBackend(UIBackend):
 
         Instead of blocking, this shows the input UI and returns empty string.
         The interpreter will transition to 'waiting_for_input' state, and
-        when the user submits input via _submit_input(), it will call
+        when the user submits input via _handle_output_enter(), it will call
         interpreter.provide_input() to continue execution.
         """
-        # Show the input row for user to enter data
-        self._show_input_row(prompt)
+        # Enable inline input in output textarea
+        self._enable_inline_input(prompt)
 
         # Return empty string - signals interpreter to transition to 'waiting_for_input'
         # state (state transition happens in interpreter when it receives empty string
