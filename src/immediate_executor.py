@@ -223,8 +223,9 @@ class ImmediateExecutor:
                 for stmt in line_node.statements:
                     interpreter.execute_statement(stmt)
 
-                # Don't restore PC - let statements like RUN change execution position
-                # Normal statements (PRINT, LET, etc.) don't modify PC anyway
+                # Note: We do not save/restore the PC before/after execution.
+                # This allows statements like RUN to change execution position.
+                # Normal statements (PRINT, LET, etc.) don't modify PC anyway.
 
             # Get captured output
             output = self.io.get_output() if self.io else ""

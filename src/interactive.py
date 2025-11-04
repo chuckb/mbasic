@@ -715,7 +715,7 @@ class InteractiveMode:
 
             # Run the program
             from resource_limits import create_unlimited_limits
-            runtime = Runtime(self.line_asts)
+            runtime = Runtime(self.line_asts, self.lines)
             interpreter = Interpreter(runtime, self.io, limits=create_unlimited_limits())
             interpreter.interactive_mode = self
 
@@ -744,19 +744,27 @@ class InteractiveMode:
             print_error(e, self.program_runtime if hasattr(self, 'program_runtime') else None)
 
     def cmd_delete(self, args):
-        """DELETE - Delete line or range of lines using ui_helpers.
+        """DELETE - Delete line or range of lines.
+
+        Delegates to ui_helpers.delete_lines_from_program() which handles:
+        - Parsing the delete range syntax
+        - Removing lines from program manager
+        - Updating runtime statement table if program is loaded
 
         Syntax:
             DELETE 40       - Delete single line 40
             DELETE 40-100   - Delete lines 40 through 100 (inclusive)
             DELETE -40      - Delete all lines up to and including 40
             DELETE 40-      - Delete from line 40 to end of program
+
+        Raises:
+            ValueError: Invalid syntax or line range
         """
         from src.ui.ui_helpers import delete_lines_from_program
 
         try:
-            deleted = delete_lines_from_program(self, args, self.program_runtime)
-            # Success - deleted will contain list of deleted line numbers
+            # delete_lines_from_program returns list of deleted line numbers (not used here)
+            delete_lines_from_program(self, args, self.program_runtime)
         except ValueError as e:
             print(f"?{e}")
         except Exception as e:
@@ -1258,7 +1266,8 @@ class InteractiveMode:
                 # Initialize immediate mode runtime if needed
                 if self.runtime is None:
                     from resource_limits import create_unlimited_limits
-                    self.runtime = Runtime(ast)
+                    # Pass empty line_text_map for immediate mode (line 0 is temporary)
+                    self.runtime = Runtime(ast, {})
                     self.runtime.setup()
                     self.interpreter = Interpreter(self.runtime, self.io, limits=create_unlimited_limits())
                     # Pass reference to interactive mode for commands like LOAD/SAVE
@@ -1269,14 +1278,17 @@ class InteractiveMode:
             # Execute just the statement at line 0
             if ast.lines and len(ast.lines) > 0:
                 line_node = ast.lines[0]
-                # Save old PC (important for stopped programs)
+                # Save old PC to preserve stopped program position.
+                # Immediate mode does NOT support GOTO/GOSUB (see help text),
+                # so any PC changes from statements are not meaningful and
+                # would break CONT functionality for stopped programs.
                 old_pc = runtime.pc
 
                 # Execute each statement on line 0
                 for stmt in line_node.statements:
                     interpreter.execute_statement(stmt)
 
-                # Restore previous PC
+                # Restore previous PC to maintain stopped program position
                 runtime.pc = old_pc
 
         except Exception as e:

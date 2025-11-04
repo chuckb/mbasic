@@ -67,7 +67,7 @@ class CaseStringHandler:
                 return original_text
 
             # Register and get display case
-            display_case = table.register(text, original_text, line, column)
+            display_case = table.set(text, original_text, line, column)
             return display_case
 
         except Exception:

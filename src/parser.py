@@ -1507,15 +1507,6 @@ class Parser:
             column=token.column
         )
 
-    def parse_stop(self) -> StopStatementNode:
-        """Parse STOP statement"""
-        token = self.advance()
-
-        return StopStatementNode(
-            line_num=token.line,
-            column=token.column
-        )
-
     def parse_tron(self) -> TronStatementNode:
         """Parse TRON statement"""
         token = self.advance()
