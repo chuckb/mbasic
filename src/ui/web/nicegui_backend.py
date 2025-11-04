@@ -1932,8 +1932,7 @@ class NiceGUIBackend(UIBackend):
             self.waiting_for_input = False
             self.input_prompt_text = None
             # Make output readonly again
-            self.output.props(remove='readonly')
-            self.output.props(add='readonly')
+            self.output.props('readonly outlined dense spellcheck=false')
 
         # Update UI
         self._set_status('Stopped')
@@ -2886,8 +2885,7 @@ class NiceGUIBackend(UIBackend):
         self.output.value = current_text + '\n'
 
         # Make output readonly again
-        self.output.props(remove='readonly')
-        self.output.props(add='readonly')
+        self.output.props('readonly outlined dense spellcheck=false')
 
         # Mark that we're no longer waiting
         self.waiting_for_input = False
@@ -2917,8 +2915,10 @@ class NiceGUIBackend(UIBackend):
         self.input_prompt_text = prompt
         self.waiting_for_input = True
 
-        # Make output editable
-        self.output.props(remove='readonly')
+        # Make output editable by removing readonly from props
+        # Note: Can't use props(remove='readonly') because it's part of a space-separated list
+        # Must replace entire props string
+        self.output.props('outlined dense spellcheck=false')
 
         # Focus and position cursor at end
         self.output.run_method('focus')
