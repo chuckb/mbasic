@@ -21,7 +21,7 @@ class SimpleKeywordCase:
             policy: One of "force_lower", "force_upper", "force_capitalize"
         """
         if policy not in ["force_lower", "force_upper", "force_capitalize"]:
-            # Fallback for old policies
+            # Fallback for invalid/unknown policy values (defensive programming)
             policy = "force_lower"
         self.policy = policy
 
