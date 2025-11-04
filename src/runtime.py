@@ -523,11 +523,11 @@ class Runtime:
         """
         Set variable by full name (e.g., 'err%', 'erl%').
 
-        Use this only for special cases like system variables.
-        For normal variables, use set_variable() instead.
+        Convenience wrapper for system/internal variable updates (ERR%, ERL%, etc.).
+        Internally calls set_variable() for uniform handling with line=-1 token.
 
-        This now calls set_variable() internally for uniform handling.
-        Uses a fake token with line=-1 to indicate internal/system setting.
+        For normal program variables, prefer set_variable() which accepts separate
+        name and type_suffix parameters.
 
         Args:
             full_name: Full variable name with suffix (lowercase)

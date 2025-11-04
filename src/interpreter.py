@@ -32,10 +32,13 @@ class ErrorInfo:
 class InterpreterState:
     """Complete execution state of the interpreter at any point in time
 
-    State is now simplified - no complex status modes:
-    - Check runtime.halted to see if stopped (paused/done/at breakpoint)
-    - Check input_prompt to see if waiting for input
-    - Check error_info to see if there's an error
+    Primary execution states (check these to determine current status):
+    - runtime.halted: True if stopped (paused/done/at breakpoint)
+    - input_prompt: Non-None if waiting for input
+    - error_info: Non-None if an error occurred
+
+    Also tracks: input buffering, debugging flags, performance metrics, and
+    provides computed properties for current line/statement position.
     """
 
     # Input handling (THE CRITICAL STATE - blocks execution)
@@ -1272,7 +1275,8 @@ class Interpreter:
 
         # Determine where to resume
         if stmt.line_number is None or stmt.line_number == 0:
-            # RESUME or RESUME 0 - retry the statement that caused the error
+            # RESUME - retry the statement that caused the error
+            # Note: line_number == 0 is an internal sentinel, not valid user syntax
             self.runtime.npc = error_pc
         elif stmt.line_number == -1:
             # RESUME NEXT - continue at statement after the error

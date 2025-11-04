@@ -268,7 +268,9 @@ class UsingFormatter:
         else:
             rounded = round(value)
 
-        # Determine sign - use original sign for values that round to zero
+        # Determine sign - preserve negative sign for values that round to zero.
+        # This matches BASIC behavior where -0.001 formatted with no decimal places
+        # displays as "-0" (not "0"). Positive values that round to zero display as "0".
         if rounded == 0 and original_negative:
             is_negative = True
         else:

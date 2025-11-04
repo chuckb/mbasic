@@ -329,9 +329,9 @@ variables in immediate mode:
 LIMITATIONS:
 ───────────────────────────────────────────────────────────────────
 
-  • Cannot use multi-statement lines (no : separator)
-  • Cannot use GOTO, GOSUB, or control flow statements
-  • Cannot define or call functions (DEF FN)
+  • Multi-statement lines (: separator) work but are not recommended
+  • GOTO, GOSUB, and control flow statements are not supported
+  • DEF FN works, but FN calls may fail without proper program context
   • Cannot execute during INPUT or program running state
 
 SPECIAL COMMANDS:
