@@ -125,8 +125,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
     Columns:
     1. Status (1 char): ● for breakpoint, ? for error, space otherwise
-    2. Line number (5 chars): auto-numbered line numbers
+    2. Line number (variable width): auto-numbered line numbers
     3. Program text (rest): BASIC code
+
+    Note: Line numbers use variable width (not fixed 5 chars) for flexibility with large programs.
     """
 
     def __init__(self):
@@ -219,7 +221,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
     def keypress(self, size, key):
         """Handle key presses for column-aware editing and auto-numbering.
 
-        Format: "SNNNNN CODE"
+        Format: "S<linenum> CODE" (where <linenum> is variable width)
         - Column 0: Status (●, ?, space) - read-only
         - Columns 1+: Line number (variable width) - editable
         - After line number: Space
@@ -484,7 +486,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         else:
             status = ' '
 
-        # Line number column (5 chars, right-aligned)
+        # Line number column (variable width)
         line_num_str = f"{line_num}"
 
         # Prefix: status + line_num + space
@@ -2018,10 +2020,10 @@ class CursesBackend(UIBackend):
             self.loop.draw_screen()
 
     def _smart_insert_line(self):
-        """Smart insert - insert blank line between current and next line.
+        """Smart insert - insert blank line between previous and current line.
 
-        Uses midpoint calculation to find appropriate line number.
-        If no room, offers to renumber the program.
+        Uses midpoint calculation to find appropriate line number between prev and current.
+        If no room (consecutive line numbers), offers to renumber the program.
         """
         from src.ui.ui_helpers import calculate_midpoint
 
@@ -2064,8 +2066,8 @@ class CursesBackend(UIBackend):
             self.status_bar.set_text("No program lines found")
             return
 
-        # Find the next line after current (to insert between prev and current)
-        # We want to insert BEFORE current, so find line before current
+        # Find the previous line before current (to insert between prev and current)
+        # Insertion will use midpoint between prev_line_num and current_line_num
         prev_line_num = None
         for i, line_num in enumerate(all_line_numbers):
             if line_num == current_line_num:
@@ -2074,9 +2076,9 @@ class CursesBackend(UIBackend):
                     prev_line_num = all_line_numbers[i - 1]
                 break
 
-        # Calculate insertion point (insert BEFORE current line)
+        # Calculate insertion point (between prev and current, or before current if at start)
         if prev_line_num is None:
-            # At beginning of program - insert line before current
+            # At beginning of program - insert numbered line before current
             insert_num = max(1, current_line_num - self.editor.auto_number_increment)
             # Make sure we don't conflict with current
             if insert_num >= current_line_num:
