@@ -1217,8 +1217,8 @@ class NiceGUIBackend(UIBackend):
                 placeholder='Output'
             ).style('width: 100%; flex: 1; min-height: 0;').props('readonly outlined dense spellcheck=false').mark('output')
 
-        # INPUT row (hidden by default) - outside main content area, use display:none to not reserve space
-        self.input_row = ui.row().classes('w-full bg-blue-50 q-pa-sm').style('display: none;')
+        # INPUT row (hidden by default) - position at bottom with absolute positioning
+        self.input_row = ui.row().classes('w-full bg-blue-50 q-pa-sm').style('position: fixed; bottom: 0; left: 0; right: 0; display: none; z-index: 1000;')
         with self.input_row:
             self.input_label = ui.label('').classes('font-bold text-blue-600')
             self.input_field = ui.input(placeholder='Enter value...').classes('flex-grow').mark('input_field')
