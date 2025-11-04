@@ -352,8 +352,8 @@ python3 mbasic --ui tk
 
 ### Web
 ```bash
-# Optional: for auto-open browser
-pip install webbrowser
+# Requires nicegui
+pip install nicegui
 python3 mbasic --ui web
 ```
 

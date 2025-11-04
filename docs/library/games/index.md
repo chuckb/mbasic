@@ -554,7 +554,7 @@ Classic BASIC games from the CP/M era
 
 ---
 
-### \t\tHANGMAN.BAS\tDEMO
+### Hangman
 
 
 
