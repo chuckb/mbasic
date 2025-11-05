@@ -17,7 +17,7 @@ type: statement
 
 **Why**: Line printers are obsolete hardware. Modern systems use different printing paradigms.
 
-**Alternative**: Use [LIST](list.md) to display program to console or redirect console output to a file for printing:
+**Alternative**: Use [LIST](list.md) to display program to console, then redirect output to a file for printing using your operating system's print facilities:
 ```bash
 python3 mbasic yourprogram.bas > listing.txt
 # Then print listing.txt using your OS print facilities

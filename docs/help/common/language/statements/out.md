@@ -11,9 +11,9 @@ type: statement
 
 ## Implementation Note
 
-⚠️ **Not Implemented**: This feature requires direct hardware I/O port access and is not implemented in this Python-based interpreter.
+⚠️ **Emulated as No-Op**: This feature requires direct hardware I/O port access and is not implemented in this Python-based interpreter.
 
-**Behavior**: Statement is parsed but no operation is performed
+**Behavior**: Statement is parsed and executes successfully, but performs no operation
 
 **Why**: Cannot access hardware I/O ports from a Python interpreter. OUT was used to control hardware devices through port-based I/O.
 
