@@ -13,6 +13,18 @@
 | **ESC** | | Clear error message |
 | **Q** | | Quit IDE |
 
+## Debugging Commands
+
+| Key | Alternative | Action |
+|-----|-------------|--------|
+| **Ctrl+R** | | Run program from beginning |
+| **Ctrl+T** | | Step (execute one statement) |
+| **Ctrl+G** | | Continue (run to next breakpoint) |
+| **Ctrl+Q** | | Stop execution |
+| **Ctrl+V** | | Open Variables window |
+| **Ctrl+K** | | Open Execution Stack window |
+| **b** | **Ctrl+B** | Toggle breakpoint (Curses: **b**, Tk: **Ctrl+B**) |
+
 ## Editing Commands
 
 | Key | Alternative | Action |
@@ -46,9 +58,7 @@ When in help mode:
 - Press **ESC** anytime to clear error messages
 - The cursor shows where you're typing
 
-## Debugging Commands
-
-For debugging-specific commands like breakpoints and stepping, see [Debugging Features](debugging.md).
+For more detailed information about debugging features and workflows, see [Debugging Features](debugging.md).
 
 ## See Also
 

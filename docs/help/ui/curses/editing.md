@@ -52,8 +52,14 @@ Press Enter
 
 ## Deleting Lines
 
-To delete a line:
+To delete a line, use one of these methods:
 
+### Quick Delete (Ctrl+D)
+1. Navigate to the line
+2. Press **Ctrl+D**
+3. Line is deleted immediately
+
+### Manual Delete
 1. Navigate to the line
 2. Delete all text after the line number
 3. Press **Enter**

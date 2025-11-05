@@ -186,6 +186,12 @@ class CLIDebugger:
 
         Uses the interpreter's tick() or execute_next() method to execute
         one statement at the current program counter position.
+
+        Note: The actual statement-level granularity depends on the interpreter's
+        implementation of tick()/execute_next(). These methods are expected to
+        advance the program counter by one statement, handling colon-separated
+        statements separately. If the interpreter executes full lines instead,
+        this method will behave as line-level stepping rather than statement-level.
         """
         if self.interactive.program_interpreter:
             # Use interpreter's tick() method if available

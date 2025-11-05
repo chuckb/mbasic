@@ -102,7 +102,13 @@ Settings can be accessed differently depending on which UI you're using:
 SHOWSETTINGS                    ' Show all settings
 SHOWSETTINGS editor             ' Show editor settings only
 SETSETTING editor.auto_number_step 100   ' Change a setting
+HELPSETTING editor.auto_number_step      ' Get help for a specific setting
 ```
+
+**Available commands:**
+- [SHOWSETTINGS](language/statements/showsettings.md) - Display current settings
+- [SETSETTING](language/statements/setsetting.md) - Change a setting value
+- [HELPSETTING](language/statements/helpsetting.md) - Get help for a setting
 
 See: [CLI Settings Commands](../ui/cli/settings.md)
 

@@ -32,12 +32,15 @@ def apply_keyword_case_policy(keyword: str, policy: str, keyword_tracker: Option
     """Apply keyword case policy to a keyword.
 
     Args:
-        keyword: The keyword to transform (normalized lowercase)
+        keyword: The keyword to transform (may be any case - function handles normalization internally)
         policy: Case policy to apply (force_lower, force_upper, force_capitalize, first_wins, error, preserve)
         keyword_tracker: Dictionary tracking first occurrence of each keyword (for first_wins policy)
 
     Returns:
         Keyword with case policy applied
+
+    Note: The keyword argument is normalized to lowercase internally when needed (e.g., for
+    first_wins policy lookup). Callers may pass keywords in any case.
     """
     if policy == "force_lower":
         return keyword.lower()
@@ -221,7 +224,12 @@ class PositionSerializer:
             return " " + serialize_statement(stmt)
 
     def serialize_let_statement(self, stmt: ast_nodes.LetStatementNode) -> str:
-        """Serialize LET statement (LetStatementNode) which represents assignment in MBASIC"""
+        """Serialize LET statement (LetStatementNode).
+
+        Note: LetStatementNode represents both explicit LET statements (LET A=5)
+        and implicit assignments (A=5) in MBASIC. The node name 'LetStatementNode'
+        is used consistently throughout the codebase (not 'AssignmentStatementNode').
+        """
         result = ""
 
         # Variable

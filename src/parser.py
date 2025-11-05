@@ -136,8 +136,8 @@ class Parser:
         """Check if at end of logical line (NEWLINE or EOF)
 
         Note: This method does NOT check for comment tokens (REM, REMARK, APOSTROPHE).
-        Comments are handled separately in parse_line() where they explicitly end
-        statement parsing with a 'break' statement, consuming the rest of the line.
+        Comments are handled separately in parse_line() where they are parsed as
+        statements and can be followed by more statements when separated by COLON.
         """
         if self.at_end_of_tokens():
             return True
@@ -371,7 +371,7 @@ class Parser:
             elif self.match(TokenType.SEMICOLON):
                 # Allow trailing semicolon at end of line only (treat as no-op).
                 # Context matters: Semicolons WITHIN PRINT/LPRINT are item separators (parsed there),
-                # but semicolons at end of statement are NOT valid statement separators in MBASIC.
+                # but semicolons BETWEEN statements are NOT valid in MBASIC.
                 # MBASIC uses COLON (:) to separate statements, not semicolon (;).
                 self.advance()
                 # If there's more after the semicolon (except another colon or newline), it's an error
@@ -1196,8 +1196,9 @@ class Parser:
             file_number = self.parse_expression()
             # Optionally consume comma after file number
             # Note: MBASIC 5.21 typically uses comma (PRINT #1, "text"), but comma is
-            # technically optional. Some dialects allow semicolon. Our parser accepts both
-            # comma and no separator, treating them the same way.
+            # technically optional. Our parser accepts comma or no separator.
+            # If semicolon appears instead, it will be treated as an item separator
+            # in the expression list below (not as a file number separator).
             if self.match(TokenType.COMMA):
                 self.advance()
 
@@ -1381,11 +1382,11 @@ class Parser:
                 column=token.column
             )
             # Consume separator after prompt (comma or semicolon)
-            # Note: In MBASIC 5.21, the separator AFTER the prompt string doesn't affect
-            # whether "?" is displayed. Both INPUT "Name"; X and INPUT "Name", X display
-            # the prompt followed by "?". The suppress_question flag (set by INPUT; with
-            # semicolon BEFORE the prompt) is what controls "?" display, not the separator
-            # after the prompt.
+            # Note: In MBASIC 5.21, the separator after the prompt string affects "?" display:
+            # - INPUT "Name"; X  displays "Name? " (semicolon shows '?')
+            # - INPUT "Name", X  displays "Name " (comma suppresses '?')
+            # Additionally, INPUT; (semicolon immediately after INPUT keyword) can also
+            # suppress the '?' prompt, which is tracked by the suppress_question flag above.
             if self.match(TokenType.SEMICOLON):
                 self.advance()
             elif self.match(TokenType.COMMA):
@@ -1582,7 +1583,8 @@ class Parser:
             SHOWSETTINGS          - Show all settings
             SHOWSETTINGS pattern  - Show settings matching pattern
 
-        The pattern is an optional string expression to filter settings.
+        Args:
+            pattern: Optional string expression to filter which settings to display
         """
         token = self.advance()
 
@@ -1603,8 +1605,9 @@ class Parser:
         Syntax:
             SETSETTING setting_name value
 
-        The setting_name is a string expression identifying the setting.
-        The value is an expression that will be evaluated and assigned.
+        Args:
+            setting_name: String expression identifying the setting (e.g., "editor.auto_number")
+            value: Expression to evaluate and assign to the setting
         """
         token = self.advance()
 
@@ -2216,8 +2219,9 @@ class Parser:
 
         Syntax: FOR variable = start TO end [STEP step]
 
-        Note: Some files may have degenerate FOR loops like "FOR 1 TO 100"
-        which we'll try to handle gracefully
+        Note: Some files may have malformed FOR loops like "FOR 1 TO 100" (missing variable).
+        We handle this by creating a dummy variable 'I' to allow parsing to continue,
+        though this changes the semantics and may cause issues if variable I is referenced elsewhere.
         """
         token = self.advance()
 
@@ -3536,9 +3540,8 @@ class Parser:
 
         Syntax: WIDTH width [, device]
 
-        Sets output width for the specified device. Both parameters are parsed
-        but the statement is a no-op in execution (see execute_width).
-        Modern terminals handle line width automatically.
+        Parses a WIDTH statement that specifies output width for a device.
+        Both the width and optional device parameters are parsed as expressions.
 
         Args:
             width: Column width expression (typically 40 or 80)

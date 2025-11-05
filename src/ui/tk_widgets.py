@@ -27,8 +27,9 @@ class LineNumberedText(tk.Frame if tk else object):
     - ? takes priority (error shown)
     - After fixing error, ● becomes visible
 
-    Note: Line numbers should be part of the text content (not drawn separately).
-    This requires Phase 2 refactoring to integrate line numbers into text.
+    Note: BASIC line numbers are part of the text content (not drawn separately in the canvas).
+    Line numbers are parsed from the text using _parse_line_number() to map status indicators
+    to the correct lines.
     """
 
     def __init__(self, parent, **kwargs):
@@ -171,8 +172,8 @@ class LineNumberedText(tk.Frame if tk else object):
     def _redraw(self):
         """Redraw status column (●=breakpoint, ?=error).
 
-        Note: Line numbers are no longer drawn in canvas - they should be
-        part of the text content itself (Phase 2 of editor refactoring).
+        Note: BASIC line numbers are parsed from text content (not drawn in canvas).
+        See _parse_line_number() for the extraction logic.
         """
         self.canvas.delete('all')
 
@@ -226,7 +227,9 @@ class LineNumberedText(tk.Frame if tk else object):
         if not line_text:
             return None
 
-        match = re.match(r'^(\d+)(?:\s|$)', line_text)  # Whitespace or end of string
+        # Match line number followed by whitespace OR end of string (both valid)
+        # Examples: "10 PRINT" (whitespace after), "10" (end after), "10REM" (no match - invalid)
+        match = re.match(r'^(\d+)(?:\s|$)', line_text)
         if match:
             return int(match.group(1))
         return None
@@ -303,7 +306,11 @@ class LineNumberedText(tk.Frame if tk else object):
         return None
 
     def _on_status_click(self, event):
-        """Handle click on status column (show error for ?, breakpoint info for ●)."""
+        """Handle click on status column (show error for ?, breakpoint info for ●).
+
+        Note: This currently only displays information messages. It does NOT toggle
+        breakpoints - that must be done through the UI's breakpoint commands.
+        """
         import tkinter.messagebox as messagebox
 
         # Calculate which line was clicked based on Y coordinate
@@ -333,7 +340,7 @@ class LineNumberedText(tk.Frame if tk else object):
                     if metadata.get('has_breakpoint'):
                         messagebox.showinfo(
                             f"Breakpoint on Line {line_num}",
-                            f"Line {line_num} has a breakpoint set.\n\nClick the ● again to toggle it off."
+                            f"Line {line_num} has a breakpoint set.\n\nUse the debugger menu or commands to manage breakpoints."
                         )
         except Exception:
             pass  # Click outside valid lines

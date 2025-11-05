@@ -5,19 +5,23 @@ This module handles PROGRAM file operations (FILES, LOAD, SAVE, MERGE, KILL comm
 For RUNTIME file I/O (OPEN, CLOSE, INPUT#, PRINT# statements), see src/filesystem/base.py.
 
 TWO SEPARATE FILESYSTEM ABSTRACTIONS:
-1. FileIO (this file) - Program management operations
+1. FileIO (this file) - Program management operations (LOAD/SAVE/FILES/KILL)
    - Used by: Interactive mode, UI file browsers
    - Operations: FILES (list), LOAD/SAVE/MERGE (program files), KILL (delete)
    - Purpose: Load .BAS programs into memory, save from memory to disk
+   - Implementations:
+     * RealFileIO: Direct filesystem access (TK, Curses, CLI)
+     * SandboxedFileIO: Python server memory virtual filesystem (Web UI)
 
-2. FileSystemProvider (src/filesystem/base.py) - Runtime file I/O
+2. FileSystemProvider (src/filesystem/base.py) - Runtime file I/O (OPEN/CLOSE/INPUT#/PRINT#)
    - Used by: Interpreter during program execution
    - Operations: OPEN/CLOSE, INPUT#/PRINT#/WRITE#, EOF(), LOC(), LOF()
    - Purpose: File I/O from within running BASIC programs
+   - Implementations:
+     * LocalFileSystemProvider: Direct filesystem access (TK, Curses, CLI)
+     * SandboxedFileSystemProvider: Python server memory (Web UI)
 
-Provides sandboxed file operations for different UI contexts:
-- RealFileIO: Direct filesystem access (TK, Curses, CLI)
-- SandboxedFileIO: Server memory virtual filesystem (Web UI)
+Note: Both abstractions serve different purposes and are used at different times.
 """
 
 from typing import List, Tuple
@@ -162,13 +166,19 @@ class SandboxedFileIO(FileIO):
 
     Acts as an adapter to backend.sandboxed_fs (SandboxedFileSystemProvider from
     src/filesystem/sandboxed_fs.py), which provides an in-memory virtual filesystem.
-    Files are stored in Python server memory (not browser localStorage).
-    No access to server filesystem - all files are sandboxed in memory.
 
-    NOTE: Partially implemented. list_files() delegates to backend.sandboxed_fs,
-    but load_file(), save_file(), delete_file(), and file_exists() are STUBS that
-    raise IOError or return empty results. Full implementation needs async/await
-    refactoring since ui.run_javascript() cannot be called from synchronous code.
+    Storage location: Python server memory (NOT browser localStorage).
+    Security: No access to server filesystem - all files are sandboxed in memory.
+
+    Implementation status:
+    - list_files(): IMPLEMENTED - delegates to backend.sandboxed_fs
+    - load_file(): STUB - raises IOError (requires async/await refactor)
+    - save_file(): STUB - raises IOError (requires async/await refactor)
+    - delete_file(): STUB - raises IOError (requires async/await refactor)
+    - file_exists(): STUB - returns False (requires async/await refactor)
+
+    The stubs exist because ui.run_javascript() cannot be called from synchronous code.
+    Full implementation requires async/await refactoring of the FileIO interface.
     """
 
     def __init__(self, backend):

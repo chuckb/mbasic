@@ -31,6 +31,8 @@ The filespec may include:
 - Filename with or without extension
 - Wildcard characters (* and ?)
 
+**Note**: CP/M automatically adds .BAS extension if none is specified for BASIC program files.
+
 The display shows:
 - Filenames and extensions
 - File sizes (implementation dependent)

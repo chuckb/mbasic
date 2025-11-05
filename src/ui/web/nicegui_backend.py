@@ -17,6 +17,7 @@ from src.iohandler.base import IOHandler
 from src.version import VERSION
 from src.pc import PC
 from src.ui.web.codemirror5_editor import CodeMirror5Editor
+from src.ui.variable_sorting import sort_variables, get_sort_mode_label, cycle_sort_mode, get_default_reverse_for_mode
 
 
 def log_web_error(context: str, exception: Exception):
@@ -68,7 +69,8 @@ class SimpleWebIOHandler(IOHandler):
         and async web UI. The input field appears below the output pane,
         allowing users to see all previous output while typing.
         """
-        # Don't print prompt here - _enable_inline_input will add it
+        # Don't print prompt here - the input_callback (backend._get_input) handles
+        # prompt display via _enable_inline_input() method in the NiceGUIBackend class
         # Get input from UI (this will block until user enters input)
         result = self.input_callback(prompt)
 
@@ -130,7 +132,6 @@ class VariablesDialog(ui.dialog):
 
     def _cycle_mode(self):
         """Cycle to next sort mode and refresh display."""
-        from src.ui.variable_sorting import cycle_sort_mode, get_default_reverse_for_mode
         self.sort_mode = cycle_sort_mode(self.sort_mode)
         # Use default direction for the new mode
         self.sort_reverse = get_default_reverse_for_mode(self.sort_mode)
@@ -156,8 +157,7 @@ class VariablesDialog(ui.dialog):
             self.backend._notify('No variables defined yet', type='info')
             return
 
-        # Sort using common helper
-        from src.ui.variable_sorting import sort_variables, get_sort_mode_label, cycle_sort_mode
+        # Sort using common helper (imported at module level)
         variables_sorted = sort_variables(variables, self.sort_mode, self.sort_reverse)
 
         # Build dialog content
@@ -1223,7 +1223,9 @@ class NiceGUIBackend(UIBackend):
                     placeholder='Output'
                 ).style('width: 100%; flex: 1; min-height: 0;').props('readonly outlined dense spellcheck=false').mark('output')
 
-        # INPUT handling: Make output textarea editable when input needed
+        # INPUT handling: Output textarea is readonly by default (see props above),
+        # but becomes temporarily editable via JavaScript when INPUT statement executes
+        # (see _enable_inline_input() which removes readonly attribute dynamically)
         # Store state for inline input handling
         self.input_prompt_text = None  # Track where prompt starts for inline input
         self.waiting_for_input = False
@@ -1520,6 +1522,10 @@ class NiceGUIBackend(UIBackend):
             self.editor.clear_breakpoints()
 
             # Add markers for all current breakpoints
+            # Note: self.runtime.breakpoints is a set that can contain:
+            #   - PC objects (statement-level breakpoints, created by _toggle_breakpoint)
+            #   - Plain integers (line-level breakpoints, legacy/compatibility)
+            # This implementation uses PC objects exclusively, but handles both for robustness.
             for item in self.runtime.breakpoints:
                 # Handle both PC objects and plain integers
                 if isinstance(item, PC):
@@ -1779,8 +1785,9 @@ class NiceGUIBackend(UIBackend):
     async def _menu_run(self):
         """Run > Run Program - Execute program.
 
-        RUN is always valid - it's just CLEAR + GOTO first line.
-        RUN on empty program is fine (just clears variables).
+        RUN clears variables (like CLEAR statement) and starts execution from first line.
+        Note: This implementation does NOT clear output (see line 1799 comment below).
+        RUN on empty program is fine (just clears variables, no execution).
         RUN at a breakpoint restarts from the beginning.
         """
         try:
@@ -1849,13 +1856,13 @@ class NiceGUIBackend(UIBackend):
     def _execute_tick(self):
         """Execute one tick of the interpreter.
 
-        Note on Ctrl+C handling:
-        This method is called every 10ms by ui.timer(). During long-running programs,
-        this can make Ctrl+C unresponsive because Python signal handlers only run
-        between bytecode instructions, and the event loop stays busy.
+        This method is called every 10ms by ui.timer() during program execution.
 
-        The KeyboardInterrupt handling is done at the top level in mbasic,
-        which wraps start_web_ui() in a try/except.
+        Note on Ctrl+C handling (external to this method):
+        Ctrl+C interrupts are handled at the top level (in mbasic main, which wraps
+        start_web_ui() in a try/except). During long-running programs, Ctrl+C can be
+        unresponsive because Python signal handlers only run between bytecode instructions.
+        This method does not implement any Ctrl+C handling directly.
         """
         # Check if we have an interpreter before proceeding
         # Note: self.running is also set/cleared elsewhere but may not persist reliably in async callbacks
@@ -1991,6 +1998,7 @@ class NiceGUIBackend(UIBackend):
                 # If empty program, just show Ready (matches RUN behavior - silent success)
                 if not self.program.lines:
                     self._set_status('Ready')
+                    self.running = False  # Mark as not running (matches RUN behavior)
                     return
 
                 # Start execution
@@ -2056,6 +2064,7 @@ class NiceGUIBackend(UIBackend):
                 # If empty program, just show Ready (matches RUN behavior - silent success)
                 if not self.program.lines:
                     self._set_status('Ready')
+                    self.running = False  # Mark as not running (matches RUN behavior)
                     return
 
                 # Start execution
@@ -2197,9 +2206,12 @@ class NiceGUIBackend(UIBackend):
             if self.running and self.paused:
                 self.paused = False
                 self._set_status('Continuing...')
+                # Cancel any existing timer first (defensive programming - prevents multiple timers)
+                if self.exec_timer:
+                    self.exec_timer.cancel()
+                    self.exec_timer = None
                 # Start timer to continue execution in run mode
-                if not self.exec_timer:
-                    self.exec_timer = ui.timer(0.01, self._execute_tick, once=False)
+                self.exec_timer = ui.timer(0.01, self._execute_tick, once=False)
             else:
                 self._notify('Not paused', type='warning')
 
@@ -2448,8 +2460,8 @@ class NiceGUIBackend(UIBackend):
         otherwise resets PC to halted. This allows LIST and other commands to
         see the current program without starting execution.
         """
-        # Preserve current PC if it's valid (execution in progress)
-        # Otherwise ensure it stays halted
+        # Save current PC/halted state before rebuilding statement table
+        # We'll conditionally restore based on whether execution is active (see below)
         old_pc = self.runtime.pc
         old_halted = self.runtime.halted
 
@@ -2467,14 +2479,16 @@ class NiceGUIBackend(UIBackend):
                 pc = PC(line_num, stmt_offset)
                 self.runtime.statement_table.add(pc, stmt)
 
-        # Restore PC only if execution timer is actually running
-        # Otherwise ensure halted (don't accidentally start execution)
+        # Conditionally restore PC based on whether execution timer is active
+        # This logic is about PRESERVING vs RESETTING state, not about preventing accidental starts
         if self.exec_timer and self.exec_timer.active:
-            # Timer is running - preserve execution state
+            # Timer is active - execution is in progress, so preserve PC and halted state
+            # (allows program to resume from current position after statement table rebuild)
             self.runtime.pc = old_pc
             self.runtime.halted = old_halted
         else:
-            # No execution in progress - ensure halted
+            # Timer is not active - no execution in progress, so reset to halted state
+            # (ensures program doesn't start executing unexpectedly when LIST/edit commands run)
             self.runtime.pc = PC.halted_pc()
             self.runtime.halted = True
 
@@ -2961,11 +2975,15 @@ class NiceGUIBackend(UIBackend):
         self.waiting_for_input = False
         self.input_prompt_text = None
 
-        # Provide input to interpreter
+        # Provide input to interpreter via TWO mechanisms (both are needed):
+        # 1. interpreter.provide_input() - Primary path for synchronous interpreter
+        #    (see _get_input method which returns empty and relies on state transitions)
         if self.interpreter and self.interpreter.state.input_prompt:
             self.interpreter.provide_input(user_input)
 
-        # Also handle async input futures for compatibility
+        # 2. input_future.set_result() - Secondary path for async compatibility
+        #    (see _get_input_async method which uses asyncio.Future)
+        #    This ensures both synchronous and async code paths work correctly.
         if self.input_future and not self.input_future.done():
             self.input_future.set_result(user_input)
 

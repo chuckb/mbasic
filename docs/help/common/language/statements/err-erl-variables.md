@@ -31,8 +31,10 @@ These variables are automatically set when an error occurs and can be used in er
 - ERR is reset to 0 when:
   - RESUME statement is executed
   - A new RUN command is issued
-  - An error handling routine ends normally
+  - An error handling routine ends normally (without error)
 - ERL returns 0 if the error occurred in direct mode (no line number)
+- ERROR statement sets both ERR (to the specified code) and ERL (to the line where ERROR was executed)
+- Both ERR and ERL persist after an error handler completes, until the next error or RESUME
 
 ## Example
 

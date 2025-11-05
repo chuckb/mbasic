@@ -27,14 +27,20 @@ CLEAR resets all variables to their initial values (0 for numbers, empty for str
 
 ### Parameters
 
+**In MBASIC 5.21 (BASIC-80 release 5.0 and later):**
+
 - **expression1**: If specified, sets the highest memory location available for BASIC to use
 - **expression2**: Sets the stack space reserved for BASIC (default: 256 bytes or 1/8 of available memory, whichever is smaller)
 
 ### Memory Management
 
-**Note about string space:** In BASIC-80 release 5.0 and later (including MBASIC 5.21), string space is allocated dynamically. You'll only get an "Out of string space" error if there's no free memory left.
+**Note about string space:** In BASIC-80 release 5.0 and later (including MBASIC 5.21), string space is allocated dynamically from available memory. You'll only get an "Out of string space" error if there's no free memory left. The expression1 parameter does NOT control string space in MBASIC 5.21.
 
-**Historical note:** In earlier versions of BASIC-80, expression1 set the amount of string space and expression2 set the end of memory. This behavior changed in release 5.0.
+**Historical note:** In earlier versions of BASIC-80 (before release 5.0), the parameters had different meanings:
+- expression1 set the amount of string space
+- expression2 set the end of memory
+
+This behavior changed in release 5.0 to support dynamic string allocation.
 
 ## Example
 

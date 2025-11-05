@@ -205,15 +205,13 @@ Complete reference of features available and planned for the MBASIC Web UI.
 - Step line (Ctrl+K)
 - Stop (Ctrl+Q)
 
-**Step Controls (Planned):**
-- Step over (F10)
-- Step into (F11)
-- Step out (Shift+F11)
-- Run to cursor
-
-**Flow Control (Planned):**
-- Pause
-- Restart
+**Advanced Controls (Planned):**
+- Step over (planned for future release)
+- Step into (planned for future release)
+- Step out (planned for future release)
+- Run to cursor (planned for future release)
+- Pause (planned for future release)
+- Restart (planned for future release)
 
 ## User Interface
 

@@ -203,16 +203,18 @@ SET "editor.auto_number_step" 5
 
 ### interpreter.strict_mode
 
+**Status:** 🔧 PLANNED - Not yet implemented
+
 **Controls:** Enable strict error checking
 
 **Type:** Boolean
 
 **Default:** `false`
 
-**When enabled:**
+**When enabled (future):**
 - Additional error checks
-- Undefined variable warnings (future)
-- Type mismatch warnings (future)
+- Undefined variable warnings
+- Type mismatch warnings
 
 ### interpreter.max_execution_time
 
@@ -232,13 +234,15 @@ Set to `0` for unlimited execution time (use with caution).
 
 ### interpreter.debug_mode
 
+**Status:** 🔧 PLANNED - Not yet implemented
+
 **Controls:** Enable debug output
 
 **Type:** Boolean
 
 **Default:** `false`
 
-**When enabled:**
+**When enabled (future):**
 - Detailed execution traces
 - Variable access tracking
 - Performance metrics
@@ -249,13 +253,15 @@ Set to `0` for unlimited execution time (use with caution).
 
 ### ui.theme
 
+**Status:** 🔧 PLANNED - Not yet implemented
+
 **Controls:** Color theme for UI
 
 **Type:** Choice (enum)
 
 **Default:** `"default"`
 
-**Options:**
+**Options (future):**
 - `"default"` - Standard theme
 - `"dark"` - Dark background
 - `"light"` - Light background
@@ -263,13 +269,15 @@ Set to `0` for unlimited execution time (use with caution).
 
 ### ui.font_size
 
+**Status:** 🔧 PLANNED - Not yet implemented
+
 **Controls:** UI font size in points
 
 **Type:** Integer (8-32)
 
 **Default:** `12`
 
-**Example:**
+**Example (when implemented):**
 ```basic
 SET "ui.font_size" 14
 ' Increases font size for better readability

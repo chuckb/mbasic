@@ -118,16 +118,25 @@ The following functions are NOT built-in but can be calculated using the intrins
 ### Important Mathematical Constants
 
 ```basic
-PI = 3.141592653589793   ' Use ATN(1) * 4 for pi
-E = 2.718281828459045    ' Use EXP(1) for e
+' PI can be computed with ATN(1) * 4
+' (Note: ATN is evaluated in single precision, ~7 digits)
+PI = 3.1415927          ' Single-precision approximation
+PI# = 3.141592653589793 ' Double-precision value
+
+' E can be computed with EXP(1)
+E = 2.7182818           ' Single-precision approximation
+E# = 2.718281828459045  ' Double-precision value
 ```
 
 ### Computing Pi
 
 ```basic
-10 REM Calculate PI
+10 REM Calculate PI (single-precision)
 20 PI = ATN(1) * 4
 30 PRINT "PI = "; PI
+40 REM For double-precision, use CDBL or # suffix
+50 PI# = ATN(CDBL(1)) * 4
+60 PRINT "PI# = "; PI#
 ```
 
 ## Related Functions

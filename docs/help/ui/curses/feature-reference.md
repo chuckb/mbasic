@@ -76,8 +76,8 @@ The currently executing line is highlighted with a cyan background during progra
 ### Variables Window (Ctrl+W)
 Open/close the variables inspection window showing all program variables and their current values.
 
-### Edit Variable Value (Limited - Not fully implemented)
-⚠️ Variable editing is currently limited in Curses UI. You cannot directly edit values in the variables window. Use immediate mode commands to modify variable values instead.
+### Edit Variable Value (Not implemented)
+⚠️ Variable editing is not available in Curses UI. You cannot directly edit values in the variables window. Use immediate mode commands to modify variable values instead.
 
 ### Variable Filtering (f key in variables window)
 Filter the variables list to show only variables matching a search term.

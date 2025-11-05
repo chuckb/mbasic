@@ -41,7 +41,7 @@ The Tk UI is the default graphical interface for MBASIC.
 | **Ctrl+L** | Step through code (next line) |
 | **Ctrl+G** | Continue execution (go) |
 | **Ctrl+B** | Toggle breakpoint |
-| **Ctrl+H** | Find and replace |
+| **Ctrl+H** | Find and replace (Tk UI only) |
 
 ## Screen Layout
 

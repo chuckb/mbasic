@@ -23,8 +23,8 @@ Variables are typed by their suffix character:
 | Suffix | Type | Range | Precision |
 |--------|------|-------|-----------|
 | **%** | INTEGER | -32768 to 32767 | Whole numbers |
-| **!** | SINGLE | ±10^-38 to ±10^38 | ~7 digits |
-| **#** | DOUBLE | ±10^-308 to ±10^308 | ~16 digits |
+| **!** | SINGLE | ±2.938736×10^-39 to ±1.701412×10^38 | ~7 digits |
+| **#** | DOUBLE | ±2.938736×10^-39 to ±1.701412×10^38 | ~16 digits |
 | **$** | STRING | 0 to 255 characters | Text |
 
 ## INTEGER (%)
@@ -55,7 +55,7 @@ RATE! = 0.05
 VALUE! = 3.14159
 ```
 
-**Range:** Approximately ±10^-38 to ±10^38
+**Range:** Approximately 2.938736×10^-39 to 1.701412×10^38
 
 **Uses:**
 - Prices and money (with rounding)
@@ -75,7 +75,7 @@ BIGNUM# = 1.23456789012345D+100
 PRECISE# = 0.123456789012345
 ```
 
-**Range:** Approximately ±10^-308 to ±10^308
+**Range:** Approximately 2.938736×10^-39 to 1.701412×10^38 (same numerical range as single-precision, but with greater precision)
 
 **Uses:**
 - Scientific calculations

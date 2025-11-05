@@ -25,6 +25,7 @@ Quick reference for the curses text UI.
 | **Ctrl+U** | Show menu |
 | **^F** (Ctrl+F) | Help (with search) |
 | **Ctrl+W** | Toggle variables watch window |
+| **Ctrl+,** | Settings |
 | **Menu only** | Toggle execution stack window |
 
 ## Program Management
@@ -64,7 +65,7 @@ Quick reference for the curses text UI.
 |-----|--------|
 | **s** | Cycle sort mode (Accessed → Written → Read → Name) |
 | **d** | Toggle sort direction (ascending ↑ / descending ↓) |
-| **f** | Filter variables (All/Scalars/Arrays/Modified) |
+| **f** | Cycle filter mode (All → Scalars → Arrays → Modified) |
 | **/** | Search for variable |
 
 **Sort Modes:**

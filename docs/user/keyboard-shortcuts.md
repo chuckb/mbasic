@@ -1,5 +1,13 @@
 # MBASIC Curses UI Keyboard Shortcuts
 
+> **Note:** This document is specific to the Curses UI. Different UIs have different keyboard shortcuts:
+> - **Curses UI:** See this document
+> - **Tk UI:** See [TK_UI_QUICK_START.md](TK_UI_QUICK_START.md)
+> - **Web UI:** See `docs/help/ui/web/` for Web-specific shortcuts
+> - **CLI:** Command-based interface (no keyboard shortcuts)
+
+> **Important:** In Curses UI, `Ctrl+H` opens Help, while in Tk UI, `Ctrl+H` opens Find and Replace. See [UI_FEATURE_COMPARISON.md](UI_FEATURE_COMPARISON.md) for details.
+
 ## Global Commands
 
 | Key | Action |
@@ -10,7 +18,7 @@
 | `^F` | This help |
 | `Ctrl+P` | Settings |
 | `Ctrl+W` | Toggle variables watch window |
-| `Menu only` | Toggle execution stack window |
+| `Menu only` | Toggle execution stack window (no keyboard shortcut in Curses) |
 
 ## Program Management
 
@@ -41,7 +49,7 @@
 | `Ctrl+T` | Step Statement - execute one statement at a time |
 | `Ctrl+X` | Stop execution (eXit) |
 | `Ctrl+W` | Show/hide variables window |
-| `Menu only` | Show/hide execution stack window |
+| `Menu only` | Show/hide execution stack window (Tk UI: Ctrl+K) |
 
 ## Variables Window (when visible)
 

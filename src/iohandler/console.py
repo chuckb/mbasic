@@ -98,8 +98,14 @@ class ConsoleIOHandler(IOHandler):
                     import msvcrt
                     return msvcrt.getch().decode('utf-8', errors='ignore')
                 except ImportError:
-                    # Fallback: use input()
-                    return input()[:1] if input() else ""
+                    # Fallback for Windows without msvcrt: use input() with severe limitations
+                    # WARNING: This fallback calls input() which:
+                    # - Waits for Enter key (defeats the purpose of single-char input)
+                    # - Returns the entire line, not just one character
+                    # This is a known limitation when msvcrt is unavailable.
+                    # For proper single-character input on Windows, msvcrt is required.
+                    line = input()
+                    return line[:1] if line else ""
 
     def clear_screen(self) -> None:
         """Clear the console screen."""

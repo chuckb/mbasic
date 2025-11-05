@@ -11,7 +11,9 @@ Variable names in MBASIC:
 - Are not case-sensitive (ABC = abc = Abc)
 - Cannot be reserved words (PRINT, FOR, etc.)
 
-**Note on Variable Name Significance:** In the original MBASIC 5.21, only the first 2 characters of variable names were significant (AB, ABC, and ABCDEF would be the same variable). This Python implementation uses the full variable name for identification, allowing distinct variables like COUNT and COUNTER. The case handling is configurable via the `variables.case_conflict` setting.
+**Note on Variable Name Significance:** In the original MBASIC 5.21, only the first 2 characters of variable names were significant (AB, ABC, and ABCDEF would be the same variable). This Python implementation uses the full variable name for identification, allowing distinct variables like COUNT and COUNTER.
+
+**Case Sensitivity:** Variable names are not case-sensitive by default (Count = COUNT = count), but the behavior when using different cases can be configured via the `variables.case_conflict` setting, which controls whether the first occurrence wins, an error is raised, or a specific case preference is applied.
 
 ## Variable Types
 

@@ -65,9 +65,20 @@ Shows active FOR loops and GOSUB calls. Perfect for understanding nested structu
 - Press F3 to find next occurrence
 
 **Replace text (Ctrl+H):**
+- Opens combined Find/Replace dialog
 - Find and replace single or all occurrences
 - Visual highlighting of matches
 - Shows replacement count
+
+**Note:** Ctrl+F opens the Find dialog. Ctrl+H opens the Find/Replace dialog which includes both Find and Replace functionality.
+
+## Context Help (Shift+F1)
+
+Get instant help for any BASIC keyword:
+- Place cursor on a keyword (like PRINT, FOR, GOTO)
+- Press Shift+F1
+- Help page for that keyword opens automatically
+- Quick way to look up syntax and examples
 
 ## More Features
 

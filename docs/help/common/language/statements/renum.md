@@ -18,6 +18,8 @@ To renumber program lines and automatically update all line number references in
 
 ## Syntax
 
+**Versions:** Disk
+
 RENUM has four forms:
 
 ```basic

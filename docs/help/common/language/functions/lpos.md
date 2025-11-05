@@ -13,9 +13,9 @@ type: function
 
 ⚠️ **Not Implemented**: This feature requires line printer hardware and is not implemented in this Python-based interpreter.
 
-**Behavior**: Function always returns 0
+**Behavior**: Function always returns 0 (because there is no printer to track position for)
 
-**Why**: Line printers are obsolete hardware. There is no printer print head to track in modern systems.
+**Why**: Line printers are obsolete hardware. There is no printer print head to track in modern systems. The function exists for compatibility with old BASIC programs but cannot provide meaningful position data.
 
 **Alternative**: Use [POS](pos.md) to get the current console print position, or track position manually when writing to files with [PRINT#](../statements/printi-printi-using.md).
 

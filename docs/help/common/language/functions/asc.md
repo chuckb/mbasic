@@ -17,7 +17,7 @@ ASC (X$)
 
 ## Description
 
-Returns a numerical value that is the ASCII code of the first character of the string X$. (See Appendix M for ASCII codes.) If X$ is null, an "Illegal function call" error is returned.
+Returns a numerical value that is the ASCII code of the first character of the string X$. (See [ASCII Codes](../appendices/ascii-codes.md) for a complete reference.) If X$ is null, an "Illegal function call" error is returned.
 
 ## Example
 

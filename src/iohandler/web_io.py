@@ -42,9 +42,15 @@ class WebIOHandler(IOHandler):
         elif end == "\n":  # Empty line with newline
             self.output_log.push("")
 
-    # Alias for backward compatibility
+    # Backward compatibility alias
+    # This method was renamed from print() to output() to avoid conflicts with Python's
+    # built-in print function. The print() alias is maintained for backward compatibility
+    # with older code that may still call io_handler.print().
     def print(self, text="", end="\n"):
-        """Deprecated: Use output() instead."""
+        """Deprecated: Use output() instead.
+
+        This is a backward compatibility alias. New code should use output().
+        """
         self.output(text, end)
 
     def input(self, prompt=""):
@@ -146,9 +152,16 @@ class WebIOHandler(IOHandler):
         """
         return ""
 
-    # Alias for backward compatibility
+    # Backward compatibility alias
+    # This method was renamed from get_char() to input_char() for consistency with
+    # the IOHandler base class interface. The get_char() alias is maintained for
+    # backward compatibility with older code.
     def get_char(self):
-        """Deprecated: Use input_char() instead."""
+        """Deprecated: Use input_char() instead.
+
+        This is a backward compatibility alias. New code should use input_char().
+        Note: Always calls input_char(blocking=False) for non-blocking behavior.
+        """
         return self.input_char(blocking=False)
 
     def clear_screen(self):

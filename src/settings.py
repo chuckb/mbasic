@@ -23,8 +23,11 @@ from .settings_definitions import (
 class SettingsManager:
     """Manages user settings with scope precedence.
 
-    Current precedence: project > global > default
-    Future: file > project > global > default (file-level settings not yet implemented)
+    Precedence: project > global > default
+
+    Note: File-level settings (per-file overrides) are defined in the data structures
+    but not yet fully implemented. The file_settings dict exists and can be set/queried,
+    but there is no UI or command to manage per-file settings yet.
     """
 
     def __init__(self, project_dir: Optional[str] = None):
@@ -69,11 +72,13 @@ class SettingsManager:
     def load(self):
         """Load settings from disk (global and project).
 
-        Note: Settings are stored in flattened format on disk (e.g., 'editor.auto_number')
-        but _get_from_dict() and _set_in_dict() expect nested format internally
-        (e.g., {'editor': {'auto_number': True}}). Currently, load() does not unflatten,
-        which means settings set via set() will be nested but loaded settings remain flat.
-        This works because _get_from_dict() handles both formats, but it's inconsistent.
+        Implementation note: Settings are stored in flattened format on disk
+        (e.g., {'editor.auto_number': True}) and save() uses _flatten_settings() to write them.
+        However, load() intentionally does NOT call _unflatten_settings() - it keeps settings
+        in flattened format after loading. This is by design because _get_from_dict() can handle
+        both flattened ('editor.auto_number': True) and nested ({'editor': {'auto_number': True}})
+        formats. Settings modified via set() will be in nested format, while loaded settings
+        remain flat, but both work correctly in lookups.
         """
         # Load global settings
         if self.global_settings_path.exists():
@@ -171,8 +176,11 @@ class SettingsManager:
     def get(self, key: str, default: Optional[Any] = None) -> Any:
         """Get setting value with scope precedence.
 
-        Current precedence: project > global > definition default > provided default
-        Future: file > project > global > definition default > provided default
+        Precedence: file > project > global > definition default > provided default
+
+        Note: File-level settings are checked first but not yet fully implemented
+        (no UI/commands to manage them). If file_settings dict is empty (normal case),
+        this falls through to project/global settings.
 
         Args:
             key: Setting key (e.g., 'variables.case_conflict')

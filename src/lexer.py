@@ -11,15 +11,20 @@ def create_keyword_case_manager() -> SimpleKeywordCase:
     """
     Create a SimpleKeywordCase handler configured from settings.
 
-    Uses SimpleKeywordCase for straightforward case policy handling in the lexer.
-    Note: There is also a KeywordCaseManager class (src/keyword_case_manager.py)
-    that uses CaseKeeperTable for advanced policies (first_wins, preserve, error).
-    The parser and position_serializer use KeywordCaseManager, while the lexer
-    uses SimpleKeywordCase for simplicity since keywords only need force-based
-    policies (force_lower, force_upper, force_capitalize).
+    The lexer uses SimpleKeywordCase which supports force-based case policies:
+    - force_lower: Convert all keywords to lowercase
+    - force_upper: Convert all keywords to UPPERCASE
+    - force_capitalize: Convert all keywords to Capitalized form
+
+    Note: A separate KeywordCaseManager class exists (src/keyword_case_manager.py)
+    that provides additional advanced policies (first_wins, preserve, error) using
+    CaseKeeperTable for tracking case conflicts across the codebase. That class is
+    used by the parser and position_serializer where conflict detection is needed.
+    The lexer only needs simple force-based case conversion, so it uses the simpler
+    SimpleKeywordCase class.
 
     Returns:
-        SimpleKeywordCase with policy from settings, or default policy
+        SimpleKeywordCase with policy from settings, or default policy (force_lower)
     """
     try:
         from src.settings import get
@@ -48,10 +53,13 @@ class Lexer:
         self.column = 1
         self.tokens: List[Token] = []
 
-        # Keyword case handler - uses SimpleKeywordCase (force-based policies: force_lower, force_upper, force_capitalize)
-        # Note: KeywordCaseManager class (src/keyword_case_manager.py) is used by parser/position_serializer
-        # for more complex policies (first_wins, preserve, error) via CaseKeeperTable.
-        # The lexer uses SimpleKeywordCase for simplicity since keywords only need force-based policies.
+        # Keyword case handler - uses SimpleKeywordCase for force-based policies:
+        # force_lower, force_upper, force_capitalize (simple case conversion)
+        #
+        # Note: The separate KeywordCaseManager class (src/keyword_case_manager.py) is used by
+        # parser/position_serializer for advanced policies (first_wins, preserve, error) that
+        # require tracking case conflicts via CaseKeeperTable. The lexer only needs simple
+        # force-based case conversion, so it uses SimpleKeywordCase.
         self.keyword_case_manager = keyword_case_manager or SimpleKeywordCase(policy="force_lower")
 
     def current_char(self) -> Optional[str]:

@@ -1237,6 +1237,7 @@ class TkBackend(UIBackend):
             dimensions = self.runtime._arrays[full_name]['dims']
 
         # If no default subscripts, use first element based on array_base
+        # (OPTION BASE 0 uses zeros, OPTION BASE 1 uses ones, invalid values fallback to zeros)
         if not default_subscripts and dimensions:
             array_base = self.runtime.array_base
             if array_base == 0:
@@ -1246,7 +1247,7 @@ class TkBackend(UIBackend):
                 # OPTION BASE 1: use all ones
                 default_subscripts = ','.join(['1'] * len(dimensions))
             else:
-                # Invalid array_base - default to 0
+                # Invalid array_base (not 0 or 1) - fallback to 0
                 default_subscripts = ','.join(['0'] * len(dimensions))
 
         # Create custom dialog
@@ -2479,7 +2480,10 @@ class TkBackend(UIBackend):
 
                     return 'break'
 
-            # Multi-line paste or paste into blank line - use auto-numbering logic
+            # Multi-line paste or single-line paste into blank line - use auto-numbering logic
+            # This handles two cases:
+            # 1. Multi-line paste (sanitized_text contains \n) - auto-number if needed
+            # 2. Single-line paste into blank line (current_line_text is empty) - auto-number if needed
             from lexer import tokenize
             from parser import Parser
 
@@ -2827,9 +2831,12 @@ class TkBackend(UIBackend):
         new_line_text = f'{insert_num} \n'
         self.editor_text.text.insert(f'{insert_index}.0', new_line_text)
 
-        # DON'T save to program yet - the line is blank and would be filtered out
-        # Just position the cursor on the new line so user can start typing
-        # The line will be saved when they finish typing and move off it
+        # DON'T save to program yet - the line is blank and would be filtered out by
+        # _save_editor_to_program() which skips blank lines. Just position the cursor on
+        # the new line so user can start typing. The line will be saved to program when:
+        # 1. User types content and triggers _on_key_release -> _save_editor_to_program()
+        # 2. User switches focus or saves the file
+        # If user never types anything, the blank line remains in editor but won't be saved.
 
         # Position cursor at the end of the line number (ready to type code)
         col_pos = len(f'{insert_num} ')
@@ -3512,7 +3519,9 @@ class TkBackend(UIBackend):
             return
 
         # Check if safe to execute - use both can_execute_immediate() AND self.running flag
-        # The running flag is set False immediately when program stops, even before tick completes
+        # We check self.running to prevent immediate mode execution during program execution,
+        # even if the tick hasn't completed yet. This prevents race conditions where immediate
+        # mode could execute while the program is still running but between tick cycles.
         can_exec_immediate = self.immediate_executor.can_execute_immediate()
         can_execute = can_exec_immediate and not self.running
 
@@ -3583,7 +3592,8 @@ class TkBackend(UIBackend):
             self.runtime.npc = None
 
         # Check if interpreter has work to do (after RUN statement)
-        # Query interpreter directly via has_work() instead of checking runtime flags
+        # Use has_work() to check if the interpreter is ready to execute (e.g., after RUN command).
+        # This complements runtime flag checks (self.running, runtime.halted) used elsewhere.
         has_work = self.interpreter.has_work()
         if has_work:
             # Start execution if not already running
@@ -3610,7 +3620,13 @@ class TkBackend(UIBackend):
             self._update_stack()
 
     def _add_immediate_output(self, text):
-        """Add text to main output pane (immediate mode has no history widget)."""
+        """Add text to main output pane.
+
+        This method name is historical - it simply forwards to _add_output().
+        In the Tk UI, immediate mode output goes to the main output pane.
+        Note: self.immediate_history exists but is always None (see line ~291) -
+        it's a dummy attribute for compatibility with code that references it.
+        """
         self._add_output(text)
 
     def _setup_editor_context_menu(self):
@@ -3695,7 +3711,12 @@ class TkBackend(UIBackend):
         self.output_text.bind("<Button-3>", show_context_menu)
 
     def _setup_immediate_context_menu(self):
-        """Setup right-click context menu for immediate history widget."""
+        """Setup right-click context menu for immediate history widget.
+
+        NOTE: This method is currently unused - immediate_history is always None
+        in the Tk UI (see line ~291). This is dead code retained for potential
+        future use if immediate mode gets its own output widget.
+        """
         import tkinter as tk
 
         def show_context_menu(event):
@@ -3818,11 +3839,12 @@ class TkIOHandler(IOHandler):
             self.output_callback(full_text)
 
     def input(self, prompt: str = '') -> str:
-        """Input from user via inline input field.
+        """Input from user via inline input field (with fallback to modal dialog).
 
         Used by INPUT statement to read user input (raw string).
         Comma-separated parsing happens at interpreter level.
-        Shows an inline input field below output pane.
+        Prefers inline input field below output pane when backend is available,
+        but falls back to modal dialog if backend is not available.
         """
         # Show prompt in output first
         if prompt:
@@ -3863,7 +3885,8 @@ class TkIOHandler(IOHandler):
         """Input complete line from user via modal dialog.
 
         Used by LINE INPUT statement for reading entire line as string.
-        Unlike input(), always uses modal dialog (not inline input field).
+        Unlike input() which prefers inline input field, this ALWAYS uses
+        a modal dialog regardless of backend availability.
         """
         from tkinter import simpledialog
 

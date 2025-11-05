@@ -16,7 +16,7 @@ Complete list of all BASIC-80 error codes with descriptions and handling advice.
 - General errors (syntax, type mismatch, overflow, etc.)
 - Extended and Disk version errors
 - Disk I/O errors (file operations, bad file numbers, etc.)
-- Error handling examples
+- Error handling references (see [Error Handling](../statements/index.md#error-handling) for detailed examples)
 
 ### [ASCII Character Codes](ascii-codes.md)
 Complete ASCII character code reference with decimal and hexadecimal values.

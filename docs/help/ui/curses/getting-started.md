@@ -59,7 +59,7 @@ You don't need to memorize everything. The status line shows common commands:
 
 - **^F** (Ctrl+F) - Help (you're here now!)
 - **^R** (Ctrl+R) - Run program
-- **Q** - Quit
+- **^Q** (Ctrl+Q) - Quit
 
 No function keys needed!
 
@@ -86,6 +86,6 @@ Or jump to the BASIC language:
 ## Tips
 
 - Press **ESC** to clear error messages
-- Press **Ctrl+P** to open help
+- Press **^F** (Ctrl+F) to open help
 - Status line shows available commands
 - Lines auto-increment by 10 for easy editing

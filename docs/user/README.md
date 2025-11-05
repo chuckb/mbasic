@@ -13,8 +13,8 @@ External user-facing documentation and guides.
 - **[TK_UI_QUICK_START.md](TK_UI_QUICK_START.md)** - Tk/Tkinter UI quick start
 
 ### Reference Documentation
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick command reference
-- **[keyboard-shortcuts.md](keyboard-shortcuts.md)** - Keyboard shortcuts reference
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick command reference (Curses UI specific)
+- **[keyboard-shortcuts.md](keyboard-shortcuts.md)** - Keyboard shortcuts reference (Curses UI specific)
 - **[UI_FEATURE_COMPARISON.md](UI_FEATURE_COMPARISON.md)** - Feature comparison across UIs
 
 ### Configuration

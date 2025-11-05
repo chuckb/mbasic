@@ -826,7 +826,8 @@ class BuiltinFunctions:
         Test for end of file.
 
         Returns -1 if at EOF, 0 otherwise
-        Note: For input files, respects ^Z (ASCII 26) as EOF marker (CP/M style)
+        Note: For binary input files (mode 'I'), respects ^Z (ASCII 26) as EOF marker (CP/M style).
+        Text mode files and output files use standard Python EOF detection.
         """
         file_num = int(file_num)
         if file_num not in self.runtime.files:
@@ -839,18 +840,20 @@ class BuiltinFunctions:
             return -1
 
         # For input files opened in binary mode, check for EOF or ^Z
+        # Mode 'I' = binary input mode where ^Z checking is appropriate
         if file_info['mode'] == 'I':
             file_handle = file_info['handle']
             current_pos = file_handle.tell()
 
             # Peek at next byte to check for ^Z or EOF
+            # read(1) returns bytes in binary mode, so next_byte[0] gives the byte value
             next_byte = file_handle.read(1)
             if not next_byte:
                 # Physical EOF
                 file_info['eof'] = True
                 return -1
-            elif next_byte[0] == 26:  # ^Z
-                # CP/M EOF marker
+            elif next_byte[0] == 26:  # ^Z (ASCII 26)
+                # CP/M EOF marker - only checked in binary input mode
                 file_info['eof'] = True
                 file_handle.seek(current_pos)  # Restore position
                 return -1
@@ -1002,8 +1005,9 @@ class BuiltinFunctions:
             if file_num not in self.runtime.files:
                 raise ValueError(f"File #{file_num} not open")
 
-            # self.runtime.files[file_num] is a dict with 'handle', 'mode', 'eof' keys
-            # (see EOF() method for the same pattern)
+            # self.runtime.files[file_num] returns a dict with 'handle', 'mode', 'eof' keys
+            # Extract the file handle from the file_info dict to perform read operations
+            # (see EOF() method for the same access pattern)
             file_info = self.runtime.files[file_num]
             file_handle = file_info['handle']
             return file_handle.read(num)

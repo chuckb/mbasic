@@ -53,8 +53,10 @@ class Runtime:
 
         # Variable storage (PRIVATE - use get_variable/set_variable methods)
         # Each variable is stored as: name_with_suffix -> {'value': val, 'last_read': {...}, 'last_write': {...}, 'original_case': str}
-        # Note: line -1 in last_write indicates system/internal set (used by set_variable_raw for ERR%, ERL%,
-        #       and also by debugger_set=True calls). This distinguishes from normal program execution.
+        # Note: line -1 in last_write indicates non-program execution sources:
+        #       1. System/internal variables (ERR%, ERL%) via set_variable_raw() with FakeToken(line=-1)
+        #       2. Debugger/interactive prompt via set_variable() with debugger_set=True and token.line=-1
+        #       This distinguishes these special sources from normal program execution (line >= 0).
         self._variables = {}
         self._arrays = {}             # name_with_suffix -> {'dims': [...], 'data': [...]}
 
@@ -348,9 +350,15 @@ class Runtime:
             type_suffix: Type suffix ($, %, !, #) or None
             def_type_map: Optional DEF type mapping
             token: REQUIRED - Token object with line and position info for tracking.
-                   Must not be None. The token should have 'line' and 'position'
-                   attributes, but getattr() fallbacks are used if they're missing
-                   (falling back to self.pc.line_num for line, None for position).
+                   Must not be None (ValueError raised if None).
+
+                   The token is expected to have 'line' and 'position' attributes.
+                   If these attributes are missing, getattr() fallbacks are used:
+                   - 'line' falls back to self.pc.line_num (or None if PC is halted)
+                   - 'position' falls back to None
+
+                   This allows robust handling of tokens from various sources
+                   while still enforcing that a token object is provided.
 
         Returns:
             Variable value (default 0 for numeric, "" for string)
@@ -421,7 +429,8 @@ class Runtime:
         full_name, resolved_suffix = self._resolve_variable_name(name, type_suffix, def_type_map)
 
         # Check for case conflicts and get canonical case (skip for debugger sets)
-        if not debugger_set and token is not None:
+        # Note: If not debugger_set, token is guaranteed to be non-None by the ValueError check above
+        if not debugger_set:
             if original_case is None:
                 original_case = name  # Fallback if not provided
             canonical_case = self._check_case_conflict(name, original_case, token, settings_manager)
@@ -523,7 +532,12 @@ class Runtime:
         Set variable by full name (e.g., 'err%', 'erl%').
 
         Convenience wrapper for system/internal variable updates (ERR%, ERL%, etc.).
-        Internally calls set_variable() for uniform handling with line=-1 token.
+        Internally calls set_variable() with a FakeToken(line=-1) to mark this as
+        a system/internal set (not from program execution).
+
+        The line=-1 marker in last_write distinguishes system variables from:
+        - Normal program execution (line >= 0)
+        - Debugger sets (also use line=-1, but via debugger_set=True)
 
         For normal program variables, prefer set_variable() which accepts separate
         name and type_suffix parameters.
@@ -536,6 +550,7 @@ class Runtime:
         name, type_suffix = split_variable_name_and_suffix(full_name)
 
         # Create a fake token with line=-1 to indicate internal/system setting
+        # (see _variables comment in __init__ for details on line=-1 usage)
         class FakeToken:
             def __init__(self):
                 self.line = -1
@@ -843,9 +858,12 @@ class Runtime:
             'data': [default_value] * total_size,
             'last_read_subscripts': None,  # Last accessed subscripts for read
             'last_write_subscripts': None,  # Last accessed subscripts for write
-            'last_read': tracking_info,  # Track DIM location (allocation acts as initialization)
-            'last_write': tracking_info  # Track DIM location (array is created/initialized here)
+            'last_read': tracking_info,  # Track DIM location for debugger (shows where array was allocated)
+            'last_write': tracking_info  # Track DIM location (array initialization counts as write)
         }
+        # Note: DIM is tracked as both read and write for debugger display purposes.
+        # Technically DIM is an allocation/initialization (write-only), but tracking it
+        # as both allows debuggers to show "last accessed" info for unaccessed arrays.
 
     def delete_array(self, name, type_suffix=None, def_type_map=None):
         """

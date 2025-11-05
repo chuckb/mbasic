@@ -9,8 +9,8 @@ Complete language reference for MBASIC 5.21 (BASIC-80).
 
 ## Quick Access
 
-- [Functions](functions/index.md) - 40 intrinsic functions
-- [Statements](statements/index.md) - 63 commands and statements
+- [Functions](functions/index.md) - 45 intrinsic functions
+- [Statements](statements/index.md) - 77 commands and statements
 - [Appendices](appendices/index.md) - Error codes, ASCII table, math functions
 - [Compiled BASIC-80](../compiler/index.md) - Compiler optimizations and code generation
 

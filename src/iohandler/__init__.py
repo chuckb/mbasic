@@ -4,8 +4,10 @@ This module provides abstract interfaces for I/O operations,
 allowing the interpreter to work with different I/O backends
 (console, GUI, curses, embedded, etc.).
 
-Note: This module was originally named 'io' but was renamed to 'iohandler'
-to avoid conflicts with Python's built-in 'io' module.
+Module naming: This package is named 'iohandler' rather than 'io' to avoid
+conflicts with Python's built-in 'io' module, which is used elsewhere in the
+codebase (e.g., in src/filesystem/sandboxed_fs.py and test files) for standard
+I/O operations like io.StringIO and io.BytesIO.
 
 GUIIOHandler and WebIOHandler are not exported here because they have
 dependencies on their respective UI frameworks (tkinter, nicegui).

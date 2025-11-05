@@ -23,7 +23,9 @@ To delete a file from disk.
 
 ## Remarks
 
-If a KILL statement is given for a file that is currently OPEN, a RFile already open R error occurs. KILL is used for all types of disk files: program files, random data files and sequential data files.
+If a KILL statement is given for a file that is currently OPEN, a "File already open" error occurs (error code 55). KILL is used for all types of disk files: program files, random data files and sequential data files.
+
+**Note**: CP/M automatically adds .BAS extension if none is specified when deleting BASIC program files.
 
 ## Example
 

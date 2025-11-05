@@ -121,17 +121,17 @@ def make_output_line(text):
 
 
 class ProgramEditorWidget(urwid.WidgetWrap):
-    """3-column program editor widget for BASIC programs.
+    """3-field program editor widget for BASIC programs.
 
-    Columns:
-    1. Status (1 char): ● for breakpoint, ? for error, space otherwise
-    2. Line number (variable width): auto-numbered line numbers
-    3. Program text (rest): BASIC code
+    Display format: "S<linenum> CODE" where:
+    - Field 1 (1 char): Status (●=breakpoint, ?=error, space=normal)
+    - Field 2 (variable width): Line number (no fixed width, grows as needed)
+    - Field 3 (rest of line): Program text (BASIC code)
 
-    Note: Line numbers use variable width in display (_format_line), but when parsing
-    pasted content (_parse_line_numbers), line numbers are right-justified to 5 chars
-    for consistency. This means programmatically added lines have variable width while
-    pasted lines get 5-char formatting.
+    Note: This is NOT a true columnar layout with fixed column boundaries.
+    Line numbers have variable width in both display (_format_line returns variable-width
+    numbers) and editing (keypress method uses _parse_line_number to find code boundaries
+    dynamically). The layout is a formatted string with three fields, not three columns.
     """
 
     def __init__(self):
@@ -1101,7 +1101,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 line_start_pos = sum(len(lines[i]) + 1 for i in range(line_num))
                 col_in_line = cursor_pos - line_start_pos
 
-                if 1 <= col_in_line <= 6:
+                # Sort only if cursor is in line number area (before code starts)
+                # Check if we're editing the line number field (not the code)
+                line_num_parsed, code_start = self._parse_line_number(lines[line_num])
+                if line_num_parsed is not None and 1 <= col_in_line < code_start:
                     self._sort_and_position_line(lines, line_num, target_column=col_in_line)
 
             self._needs_sort = False
@@ -1327,17 +1330,19 @@ class CursesBackend(UIBackend):
         self.io_handler = CapturingIOHandler()
 
         # Interpreter Lifecycle:
-        # Create ONE interpreter for the session - shared across all executions!
-        # This interpreter is created here in __init__ and reused throughout the session.
-        # It is NOT recreated in start() - only the ImmediateExecutor is recreated.
+        # Created ONCE here in __init__ and reused throughout the session.
+        # The interpreter is NOT recreated in start() - only ImmediateExecutor is.
+        # Note: The immediate_io handler created here is temporary - ImmediateExecutor
+        # will be recreated in start() with a fresh OutputCapturingIOHandler, but
+        # this same interpreter instance will be reused with the new executor.
         # Use unlimited limits for immediate mode (runs will use local limits)
         immediate_io = OutputCapturingIOHandler()
         self.interpreter = Interpreter(self.runtime, immediate_io, limits=create_unlimited_limits())
 
         # ImmediateExecutor Lifecycle:
-        # Create initial ImmediateExecutor here, but it will be recreated in start()
-        # with a fresh OutputCapturingIOHandler. This initial creation ensures the
-        # attribute exists, but the working instance is created in start().
+        # Created here with temporary IO handler (to ensure attribute exists),
+        # then recreated in start() with a fresh OutputCapturingIOHandler.
+        # The new executor in start() will reuse this same self.interpreter instance.
         self.immediate_executor = ImmediateExecutor(self.runtime, self.interpreter, immediate_io)
 
         # Immediate mode UI widgets
@@ -2324,8 +2329,9 @@ class CursesBackend(UIBackend):
         help_widget = HelpWidget(str(help_root), "index.md")
 
         # Create overlay
-        # Use self.main_widget for consistency with _show_keymap/_show_settings
-        # (not self.loop.widget which might be a menu or other overlay)
+        # Main widget retrieval: Use self.main_widget for consistency with
+        # _show_keymap and _show_settings (not self.loop.widget which might be
+        # a menu or other overlay at this moment)
         overlay = urwid.Overlay(
             urwid.AttrMap(help_widget, 'body'),
             self.main_widget,
@@ -2335,8 +2341,10 @@ class CursesBackend(UIBackend):
             height=('relative', 90)
         )
 
-        # Help widget manages its own lifecycle - no need to store overlay
-        # It will close via ESC/Q keys which are handled in HelpWidget itself
+        # Help widget manages its own lifecycle - it doesn't support toggling
+        # like _show_keymap and _show_settings do, so we don't store the overlay
+        # or main widget. Help closes via ESC/Q handled internally by HelpWidget.
+        self.loop.widget = overlay
 
     def _show_keymap(self):
         """Show keyboard shortcuts reference.
@@ -3023,6 +3031,7 @@ class CursesBackend(UIBackend):
 
             if entry['type'] == 'GOSUB':
                 # Show statement-level precision for GOSUB return address
+                # Note: default of 0 if return_stmt is missing means first statement on line
                 return_stmt = entry.get('return_stmt', 0)
                 line = f"{indent}GOSUB from line {entry['from_line']}.{return_stmt}"
             elif entry['type'] == 'FOR':
@@ -3082,7 +3091,9 @@ class CursesBackend(UIBackend):
                 return False
 
         # Reset runtime with current program - RUN = CLEAR + GOTO first line (or start_line if specified)
-        # Note: Breakpoints are not preserved by reset_for_run - they must be re-applied below
+        # Note: reset_for_run() clears variables and resets PC. Breakpoints are stored in
+        # the editor (self.editor.breakpoints), NOT in runtime, so they persist across runs
+        # and are re-applied below via interpreter.set_breakpoint() calls.
         self.runtime.reset_for_run(self.program.line_asts, self.program.lines)
 
         # Clear any buffered output from previous run

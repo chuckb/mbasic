@@ -53,8 +53,8 @@ class InterpreterState:
     input_file_number: Optional[int] = None  # If reading from file
 
     # Debugging (breakpoints are stored in Runtime, not here)
-    skip_next_breakpoint_check: bool = False  # Set to True when halting AT a breakpoint (during the halt).
-                                               # On next execution, allows stepping past the breakpoint once (flag is checked),
+    skip_next_breakpoint_check: bool = False  # Set to True WHEN halting at a breakpoint (set during the halt).
+                                               # On next execution, if still True, allows stepping past the breakpoint once,
                                                # then clears itself to False. Prevents re-halting on same breakpoint.
     pause_requested: bool = False  # Set by pause() method
 
@@ -95,11 +95,13 @@ class InterpreterState:
         """Get current statement char_end from statement table (computed property)
 
         Uses max(char_end, next_char_start - 1) to handle string tokens correctly.
-        For the last statement on a line, uses line_text_map to get actual line length.
+        For the last statement on a line, uses line_text_map to get actual line length
+        (if available), otherwise falls back to stmt.char_end.
         This works because:
         - If there's a next statement, the colon is at next_char_start - 1
         - If char_end is correct (most tokens), it will be >= next_char_start - 1
         - If char_end is too short (string tokens), next_char_start - 1 is larger
+        - If no line_text_map entry exists, returns stmt.char_end as fallback
         """
         if self._interpreter:
             pc = self._interpreter.runtime.pc
@@ -1070,8 +1072,9 @@ class Interpreter:
 
         line_statements = self.runtime.statement_table.get_line_statements(return_line)
         # return_stmt is 0-indexed offset into statements array.
-        # Valid range: 0 to len(statements)-1 for existing statements.
-        # return_stmt == len(statements) is a special sentinel: GOSUB was last statement, continue at next line.
+        # Valid range: 0 to len(statements) (inclusive).
+        # - 0 to len(statements)-1: Normal statement positions
+        # - len(statements): Special sentinel meaning "GOSUB was last statement, continue at next line"
         # Values > len(statements) indicate the statement was deleted (validation error).
         if return_stmt > len(line_statements):  # Check for strictly greater than (== len is OK)
             raise RuntimeError(f"RETURN error: statement {return_stmt} in line {return_line} no longer exists")
@@ -1585,10 +1588,13 @@ class Interpreter:
     def execute_input(self, stmt):
         """Execute INPUT statement - read from keyboard or file
 
-        In tick-based execution mode, this may transition to 'waiting_for_input' state
-        instead of blocking. Sets: input_prompt (prompt text), input_variables (var list),
-        input_file_number (file # or None). When input is provided via provide_input(),
-        execution resumes and these state vars are read then cleared.
+        State machine for keyboard input (file input is synchronous):
+        1. If state.input_buffer has data: Use buffered input (from provide_input())
+        2. Otherwise: Set state.input_prompt, input_variables, and return (pauses execution)
+        3. UI calls provide_input() with user's input line
+        4. On next tick(), buffered input is used (step 1) and state vars are cleared
+
+        File input bypasses the state machine and reads synchronously.
         """
         # Check if reading from file
         if stmt.file_number is not None:
@@ -2295,7 +2301,7 @@ class Interpreter:
         Syntax: RESET
         """
         # Close all open files
-        # Note: Errors during file close are silently ignored (bare except: pass below)
+        # Note: Unlike CLEAR, RESET doesn't catch file close errors - they propagate to caller
         for file_num in list(self.runtime.files.keys()):
             self.runtime.files[file_num]['handle'].close()
             del self.runtime.files[file_num]
@@ -2518,8 +2524,8 @@ class Interpreter:
     def execute_midassignment(self, stmt):
         """Execute MID$ assignment statement - replace substring in-place
 
-        Syntax: MID$(string_var, start, length) = value
-        (length is required in our implementation; parser should enforce this)
+        Syntax: MID$(string_var, start[, length]) = value
+        - length is optional; if omitted, uses length of replacement value
 
         Replaces 'length' characters in string_var starting at position 'start' (1-based).
         - If value is shorter than length, only those characters are replaced
@@ -2534,8 +2540,9 @@ class Interpreter:
 
         # Evaluate the parameters
         start = int(self.evaluate_expression(stmt.start))
-        length = int(self.evaluate_expression(stmt.length))
         new_value = str(self.evaluate_expression(stmt.value))
+        # Length is optional - if not provided, use length of replacement string
+        length = int(self.evaluate_expression(stmt.length)) if stmt.length else len(new_value)
 
         # Convert to 0-based index
         start_idx = start - 1

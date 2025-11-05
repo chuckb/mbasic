@@ -18,7 +18,7 @@ How to navigate MBASIC help.
 
 ## Opening Help
 
-Press **{{kbd:help}}** anytime to open help.
+Press **^F** (Ctrl+F) anytime to open help.
 
 ## Navigation Keys
 
@@ -42,7 +42,7 @@ Links appear with text in square brackets followed by URL in parentheses.
 
 | Key | Action |
 |-----|--------|
-| **{{kbd:search}}** | Open search prompt |
+| **/** | Open search prompt |
 | Type query | Enter search terms |
 | **Enter** | Execute search |
 | **ESC** | Cancel search |
@@ -58,7 +58,7 @@ Links appear with text in square brackets followed by URL in parentheses.
 
 | Key | Action |
 |-----|--------|
-| **{{kbd:back}}** | Go back to previous topic |
+| **U** | Go back to previous topic |
 
 ### Browsing Topics
 
@@ -71,7 +71,7 @@ Links appear with text in square brackets followed by URL in parentheses.
 
 | Key | Action |
 |-----|--------|
-| **{{kbd:quit}}** | Exit help, return to editor |
+| **ESC** or **Q** | Exit help, return to editor |
 
 ## Help Organization
 
@@ -96,10 +96,10 @@ Sample programs to learn from.
 
 ## Tips
 
-- Press **{{kbd:help}}** anytime for help
+- Press **^F** (Ctrl+F) anytime for help
 - Links are highlighted
-- **{{kbd:back}}** goes back
-- **{{kbd:quit}}** exits help
+- **U** goes back
+- **ESC** or **Q** exits help
 - Status bar shows navigation keys
 
 ## See Also

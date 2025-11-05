@@ -122,7 +122,7 @@ Planned to control UI appearance:
 3. For spinboxes: click arrows or type value
 4. For dropdowns: click and select option
 
-### Setting Help
+### Setting Help (Planned)
 
 For settings with detailed help text:
 - Look for **?** button next to setting
@@ -131,33 +131,33 @@ For settings with detailed help text:
 For short settings:
 - Help text shown inline (gray text)
 
-## Button Actions
+## Button Actions (Planned)
 
-### OK
+### OK (Planned)
 - Apply all changes
 - Save to disk
 - Close dialog immediately
 
-### Cancel
+### Cancel (Planned)
 - Discard all changes
 - Restore previous values
 - Close dialog
 
-### Apply
+### Apply (Planned)
 - Apply all changes
 - Save to disk
 - **Keep dialog open** for more changes
 
-### Reset to Defaults
+### Reset to Defaults (Planned)
 - Reset all settings to default values
 - Does not save automatically
 - Must click OK or Apply to confirm
 
 **Use case:** Settings misconfigured? Click Reset to return to known-good defaults.
 
-## Common Tasks
+## Common Tasks (Planned)
 
-### Change Auto-Numbering
+### Change Auto-Numbering (Planned)
 
 **Quick Setup for Classic BASIC:**
 1. Open Settings → Editor tab
@@ -169,7 +169,7 @@ For short settings:
 1. Set "Auto Number Step" to 100
 2. This leaves room (110, 120, etc.) to insert lines
 
-### Force Uppercase Keywords
+### Force Uppercase Keywords (Planned)
 
 For classic BASIC appearance:
 1. Open Settings → Keywords tab
@@ -177,7 +177,7 @@ For classic BASIC appearance:
 3. Click Apply
 4. LIST your program to see UPPERCASE keywords
 
-### Enable Variable Typo Detection
+### Enable Variable Typo Detection (Planned)
 
 Catch mistyped variables:
 1. Open Settings → Variables tab
@@ -186,21 +186,21 @@ Catch mistyped variables:
 
 Now `TotalCount` vs `TotalCont` triggers error!
 
-### Enable Strict Mode
+### Enable Strict Mode (Planned)
 
 More error checking:
 1. Open Settings → Interpreter tab
 2. Check "Strict Mode"
 3. Click Apply
 
-### Change Theme
+### Change Theme (Planned)
 
 1. Open Settings → UI tab
 2. Select theme from dropdown
 3. Click Apply
 4. UI updates immediately
 
-## Settings Persistence
+## Settings Persistence (Planned Implementation)
 
 Settings are saved to disk automatically when you click OK or Apply.
 
@@ -210,7 +210,9 @@ Settings are saved to disk automatically when you click OK or Apply.
 
 Changes persist across sessions.
 
-## Validation
+**Note:** Settings storage is implemented, but the settings dialog itself is not yet available in the Tk UI.
+
+## Validation (Planned)
 
 All settings are validated:
 
@@ -220,7 +222,7 @@ All settings are validated:
 
 Invalid values show error dialog and revert to previous value.
 
-## Keyboard Navigation
+## Keyboard Navigation (Planned)
 
 You can navigate the dialog with keyboard:
 
@@ -235,7 +237,7 @@ You can navigate the dialog with keyboard:
 | `Alt+C` | Click Cancel |
 | `Alt+A` | Click Apply |
 
-## Tips
+## Tips (Planned)
 
 1. **Use Apply to experiment** - Apply settings, test them, then tweak and Apply again without closing
 
@@ -247,9 +249,9 @@ You can navigate the dialog with keyboard:
 
 5. **Document your setup** - Screenshot or note your preferred settings
 
-## Workflows
+## Workflows (Planned)
 
-### First-Time Setup
+### First-Time Setup (Planned)
 
 1. Open Settings
 2. Set auto-numbering preference (Editor tab)
@@ -258,7 +260,7 @@ You can navigate the dialog with keyboard:
 5. Adjust theme/font (UI tab)
 6. Click OK
 
-### Switching Between Projects
+### Switching Between Projects (Planned)
 
 Different projects may need different settings:
 
@@ -273,7 +275,7 @@ Different projects may need different settings:
 
 Use Apply to switch quickly without closing dialog.
 
-### Teaching Environment
+### Teaching Environment (Planned)
 
 For teaching BASIC to students:
 - Enable "error" mode for variables (catches typos)
@@ -281,7 +283,7 @@ For teaching BASIC to students:
 - Use large font size (easier to read)
 - Use classic theme (nostalgic BASIC feel)
 
-## Troubleshooting
+## Troubleshooting (Planned)
 
 ### Dialog won't open
 - Check File menu for Settings option

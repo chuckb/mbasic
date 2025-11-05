@@ -19,7 +19,13 @@ This guide helps you choose the right UI for your needs and understand the featu
 
 ## Feature Availability Matrix
 
-### ✅ Available | ⚠️ Partial | ❌ Not Available
+### Legend
+
+| Symbol | Meaning |
+|--------|---------|
+| ✅ | Fully implemented and available |
+| ⚠️ | Partially implemented or planned (see Notes column) |
+| ❌ | Not available or not applicable |
 
 ### Core Features
 
@@ -41,7 +47,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 | **Save (command)** | ✅ | ✅ | ✅ | ✅ | SAVE "filename" command |
 | **Recent files** | ❌ | ❌ | ✅ | ⚠️ | Tk: menu, Web: localStorage |
 | **Drag & drop** | ❌ | ❌ | ✅ | ✅ | GUI only |
-| **Auto-save** | ❌ | ❌ | ⚠️ | ✅ | Tk: optional, Web: automatic |
+| **Auto-save** | ❌ | ❌ | ⚠️ | ✅ | Tk: planned/optional, Web: automatic |
 
 ### Editing Features
 
@@ -51,7 +57,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 | **Full-screen editor** | ❌ | ✅ | ✅ | ✅ | CLI is line-based |
 | **Syntax highlighting** | ❌ | ⚠️ | ✅ | ✅ | Curses: basic |
 | **Cut/Copy/Paste** | ❌ | ❌ | ✅ | ✅ | GUI clipboard support |
-| **Find/Replace** | ❌ | ❌ | ✅ | ❌ | Tk only (new feature) |
+| **Find/Replace** | ❌ | ❌ | ✅ | ⚠️ | Tk: implemented, Web: planned |
 | **Auto-complete** | ❌ | ❌ | ❌ | ✅ | Web suggests keywords |
 | **Smart Insert** | ❌ | ❌ | ✅ | ❌ | Tk exclusive feature |
 

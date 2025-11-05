@@ -46,11 +46,11 @@ Quick-access buttons below the menu bar:
 - **Open** - Upload a .BAS file from your computer
 - **Save** - Download current program (triggers Save As if not yet named)
 - **Save As** - Download program with custom filename
-- **Run** - Parse and execute the program (▶️ green button)
-- **Stop** - Stop running program (⏹️ red button)
-- **Step Line** - Execute all statements on current line, then pause (⏭️ button)
-- **Step Stmt** - Execute one statement, then pause (↻ button)
-- **Continue** - Resume normal execution after stepping (▶️⏸️ button)
+- **Run** - Parse and execute the program (▶️ green button, Ctrl+R)
+- **Stop** - Stop running program (⏹️ red button, Ctrl+Q)
+- **Step Line** - Execute all statements on current line, then pause (⏭️ button, Ctrl+K)
+- **Step Stmt** - Execute one statement, then pause (↻ button, Ctrl+T)
+- **Continue** - Resume normal execution after stepping (▶️⏸️ button, Ctrl+G)
 
 ### 3. Program Editor
 
@@ -213,7 +213,7 @@ END
 3. Enter a filename (default: `program.bas`)
 4. File downloads to your Downloads folder
 
-**Note:** The Web UI uses browser localStorage for auto-save functionality and downloads for explicit saves to your computer.
+**Note:** The Web UI uses browser downloads for saving files to your computer. Auto-save to browser localStorage is planned for a future release.
 
 **Save As:**
 - Use **Save As** to download with a different filename
@@ -339,7 +339,7 @@ The Web UI works with modern browsers:
 1. **Auto-numbering:** Press Enter in Program Editor to get automatic line numbers
 2. **Quick test:** Use Command area to test expressions without changing your program
 3. **Clear output:** Run → Clear Output to empty the output area
-4. **Auto-save enabled:** Your work is automatically saved to browser localStorage every 30 seconds
+4. **Save often:** Use File → Save to download your program regularly (auto-save to localStorage is planned for a future release)
 5. **Check errors:** Red error messages in output show what went wrong
 
 ## Common Issues
@@ -360,7 +360,7 @@ The Web UI works with modern browsers:
 
 **Problem:** Refreshed browser and program is gone.
 
-**Solution:** The Web UI auto-saves to browser localStorage every 30 seconds. Your program should be restored automatically on refresh. If not, check File → Recent Files or ensure your browser allows localStorage for this site.
+**Solution:** Auto-save to localStorage is planned for a future release. Currently, you need to manually save your programs using File → Save. Make sure to save your work regularly to avoid losing changes.
 
 ### Input area not appearing
 

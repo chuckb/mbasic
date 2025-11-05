@@ -175,18 +175,13 @@ Press 'c' to let rest complete
 
 ## Examples
 
-See these files:
-- `test_continue.bas` - Simple continue demo
-- `demo_continue.bas` - Multi-phase demonstration
-- `test_continue_manual.sh` - Guided walkthrough
+See example programs in the `basic/` directory of the MBASIC installation.
 
 ## More Information
 
-- `DEBUGGER_COMMANDS.md` - Complete debugger reference
-- `CONTINUE_FEATURE.md` - Deep dive on continue feature
-- `BREAKPOINT_SUMMARY.md` - Breakpoint system overview
-- `HELP_SYSTEM_SUMMARY.md` - Help system details
-- `docs/help/` - Full help documentation
+- Press `Ctrl+P` (or `^F`) within the Curses UI to access the built-in help system
+- See `docs/help/` directory for full help documentation
+- Visit [CHOOSING_YOUR_UI.md](CHOOSING_YOUR_UI.md) for UI comparison and selection guide
 
 ---
 **Pro Tip**: Start every debugging session with strategic breakpoints, then use 'c' to jump between them. Only switch to 's' (step) when you find something interesting!

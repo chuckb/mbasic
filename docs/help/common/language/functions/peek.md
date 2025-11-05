@@ -11,16 +11,17 @@ type: function
 
 ## Implementation Note
 
-ℹ️ **Emulated with Random Values**: PEEK returns a random value between 0-255 (inclusive).
+ℹ️ **Emulated with Random Values**: PEEK does NOT read actual memory. Instead, it returns a random value between 0-255 (inclusive).
 
 **Behavior**: Each call to PEEK returns a new random integer in the range 0-255. This value is NOT related to any POKE operation.
 
 **Why**: Most legacy BASIC programs used PEEK to seed random number generators (e.g., `RANDOMIZE PEEK(0)`). Since we cannot read actual memory addresses in a Python interpreter, returning random values provides compatibility for this common use case.
 
-**Note**:
-- PEEK does NOT return values written by POKE (POKE is a no-op)
+**Important Limitations**:
+- **PEEK does NOT return values written by POKE** (POKE is a no-op that does nothing)
 - Memory-mapped I/O operations will not work
 - Each PEEK call returns a different random value
+- Cannot be used for actual memory inspection or hardware control
 
 **Recommendation**: Use [RANDOMIZE](../statements/randomize.md) and [RND](rnd.md) instead of PEEK for random number generation.
 

@@ -77,8 +77,9 @@ Access File, Edit, Run, and Help functions.
 
 - **New** - Clear the editor and start a new program
 - **Open** - Load a .bas file from your computer (via browser file picker)
-- **Load Example** - Choose from sample BASIC programs
 - **Clear Output** - Clear the output area
+
+**Note:** A "Load Example" feature to choose from sample BASIC programs is planned for a future release.
 
 ### Edit Menu
 
@@ -90,6 +91,11 @@ Access File, Edit, Run, and Help functions.
 
 - **Run Program** - Parse and execute the current program
 - **Stop** - Stop a running program
+- **Toggle Breakpoint** - Set or remove a breakpoint at a specific line number
+- **Clear All Breakpoints** - Remove all breakpoints
+- **Continue** - Resume execution after a breakpoint or step
+- **Step Line** - Execute all statements on the current line, then pause
+- **Step Statement** - Execute one statement, then pause
 
 ### Help Menu
 
@@ -128,8 +134,10 @@ File operations in the web UI work with an **in-memory filesystem**:
 
 - Files are stored in browser memory only
 - Each user has their own isolated filesystem
-- Files persist during your session
+- Files persist during your session (but are cleared when session ends)
 - No access to the server's real filesystem (security)
+
+**Important:** Programs and data created via BASIC file I/O commands (OPEN, PRINT #, etc.) exist only in memory during your browser session. To save your BASIC program source code permanently, use File → Save to download it to your computer.
 
 ### File Limits
 
@@ -149,6 +157,27 @@ File operations in the web UI work with an **in-memory filesystem**:
 80 PRINT "Read: "; A$
 90 CLOSE #1
 ```
+
+## Language Features
+
+The Web UI supports all MBASIC 5.21 language features, including:
+
+### Settings Commands
+
+You can configure interpreter behavior using BASIC commands in your program or the Command area:
+
+```basic
+REM Configure case handling for variables
+SET "variables.case_conflict" "error"
+
+REM Configure keyword capitalization
+SET "keywords.case_style" "force_capitalize"
+
+REM View all current settings
+SHOW SETTINGS
+```
+
+For complete details on case handling and other language settings, see the [Case Handling Guide](../../../user/CASE_HANDLING_GUIDE.md).
 
 ## Security & Privacy
 
