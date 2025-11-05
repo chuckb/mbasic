@@ -56,7 +56,7 @@ class EnhancedConsistencyAnalyzer:
             raise ValueError("ANTHROPIC_API_KEY environment variable not set")
 
         self.client = anthropic.Anthropic(api_key=self.api_key)
-        self.project_root = Path(__file__).parent.parent
+        self.project_root = Path(__file__).parent.parent.parent
         self.docs_dir = self.project_root / "docs"
         self.src_dir = self.project_root / "src"
         self.utils_dir = self.project_root / "utils"
