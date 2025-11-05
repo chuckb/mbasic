@@ -1394,7 +1394,8 @@ class Parser:
 
         # Check for LINE modifier (e.g., INPUT "prompt";LINE var$)
         # LINE allows input of entire line including commas
-        # Note: The lexer tokenizes LINE INPUT as LINE_INPUT regardless of position
+        # Note: The lexer tokenizes standalone LINE keyword as LINE_INPUT token.
+        # This is distinct from the LINE INPUT statement which is parsed separately.
         line_mode = False
         if self.match(TokenType.LINE_INPUT):
             line_mode = True

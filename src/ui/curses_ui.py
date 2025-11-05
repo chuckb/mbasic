@@ -129,9 +129,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
     - Field 3 (rest of line): Program text (BASIC code)
 
     Note: This is NOT a true columnar layout with fixed column boundaries.
-    Line numbers have variable width in both display (_format_line returns variable-width
-    numbers) and editing (keypress method uses _parse_line_number to find code boundaries
-    dynamically). The layout is a formatted string with three fields, not three columns.
+    Line numbers use variable width for display (_format_line returns variable-width numbers).
+    However, when reformatting pasted content, _parse_line_numbers uses fixed 5-character width
+    for alignment consistency. The keypress method uses _parse_line_number to find code boundaries
+    dynamically. The layout is a formatted string with three fields, not three columns.
     """
 
     def __init__(self):
