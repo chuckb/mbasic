@@ -8,9 +8,9 @@ TWO SEPARATE FILESYSTEM ABSTRACTIONS:
 1. FileIO (this file) - Program management operations (LOAD/SAVE/FILES/KILL)
    - Used by: Interactive mode, UI file browsers
    - Operations: FILES (list), LOAD/SAVE/MERGE (program files), KILL (delete)
-   - Purpose: Load .BAS programs into memory, save from memory to disk
+   - Purpose: Load .BAS programs into memory, save from memory to storage
    - Implementations:
-     * RealFileIO: Direct filesystem access (TK, Curses, CLI)
+     * RealFileIO: Direct filesystem access to disk (TK, Curses, CLI)
      * SandboxedFileIO: Python server memory virtual filesystem (Web UI)
 
 2. FileSystemProvider (src/filesystem/base.py) - Runtime file I/O (OPEN/CLOSE/INPUT#/PRINT#)

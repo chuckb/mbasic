@@ -1595,7 +1595,7 @@ class Interpreter:
 
         State machine for keyboard input (file input is synchronous):
         1. If state.input_buffer has data: Use buffered input (from provide_input())
-        2. Otherwise: Set state.input_prompt, input_variables, and return (pauses execution)
+        2. Otherwise: Set state.input_prompt, input_variables, input_file_number and return (pauses execution)
         3. UI calls provide_input() with user's input line
         4. On next tick(), buffered input is used (step 1) and state vars are cleared
 

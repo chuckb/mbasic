@@ -1011,8 +1011,7 @@ class InteractiveMode:
         - <CR>: End and save
 
         Note: Count prefixes ([n]D, [n]C) and search commands ([n]S, [n]K) are not yet implemented.
-        Digits are not recognized as command prefixes and will be processed as individual
-        characters (e.g., '5D' processes '5' as unknown, then 'D' deletes one character).
+        Digits are silently ignored (not recognized as command prefixes or processed as commands).
         """
         if not args or not args.strip():
             print("?Syntax error - specify line number")
