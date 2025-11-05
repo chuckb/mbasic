@@ -60,8 +60,8 @@ class LineNode:
     The AST is the single source of truth. Text is always regenerated from
     the AST using token positions and formatting information.
 
-    Note: Do not add a source_text field - it would create a duplicate copy
-    that gets out of sync with the AST.
+    Design note: This class intentionally does not have a source_text field to avoid
+    maintaining duplicate copies that could get out of sync with the AST during editing.
     """
     line_number: int
     statements: List['StatementNode']
@@ -261,7 +261,6 @@ class DimStatementNode:
     arrays: List['ArrayDeclNode']
     line_num: int = 0
     column: int = 0
-    token: Optional[Any] = None  # Reserved for future use (currently unused)
 
 
 @dataclass
