@@ -3733,53 +3733,46 @@ class CursesBackend(UIBackend):
         self.loop.widget = overlay
 
         # Variable to store result
-        result = {'value': None, 'cancelled': False}
-        done = {'flag': False}
-
-        def handle_input(key):
-            if key == 'enter':
-                result['value'] = edit.get_edit_text()
-                result['cancelled'] = False
-                done['flag'] = True
-                self.loop.widget = original_widget
-                return None  # Consume the key
-            elif key == 'esc':
-                result['value'] = None
-                result['cancelled'] = True
-                done['flag'] = True
-                self.loop.widget = original_widget
-                return None  # Consume the key to prevent main loop from seeing it
-            else:
-                # Let edit widget handle it
-                return key
+        result = [None]  # Use list so closure can modify
+        done = [False]
 
         # Store old handler
         old_handler = self.loop.unhandled_input
 
-        # Create wrapped handler that processes input and checks for completion
-        def wrapped_handler(key):
-            result_key = handle_input(key)
-            if done['flag']:
-                # Restore and exit
+        def handle_input(key):
+            if key == 'enter':
+                result[0] = edit.get_edit_text()
+                done[0] = True
+                self.loop.widget = original_widget
                 self.loop.unhandled_input = old_handler
-                raise urwid.ExitMainLoop()
-            return result_key
+                return None  # Consume key
+            elif key == 'esc':
+                result[0] = None
+                done[0] = True
+                self.loop.widget = original_widget
+                self.loop.unhandled_input = old_handler
+                return None  # Consume key
+            # Let other keys pass through to edit widget
+            return key
 
-        self.loop.unhandled_input = wrapped_handler
+        self.loop.unhandled_input = handle_input
 
-        # Run nested main loop for this dialog
-        try:
-            self.loop.run()
-        except urwid.ExitMainLoop:
-            pass  # Dialog closed
+        # Manually pump events until dialog is closed
+        # This avoids nested event loops which cause ExitMainLoop to exit entire app
+        while not done[0]:
+            try:
+                self.loop.draw_screen()
+                keys = self.loop.screen.get_input()
+                if keys:
+                    self.loop.process_input(keys)
+            except KeyboardInterrupt:
+                # Handle Ctrl+C
+                result[0] = None
+                done[0] = True
+                self.loop.widget = original_widget
+                self.loop.unhandled_input = old_handler
 
-        # Clear and redraw the screen
-        try:
-            self.loop.screen.clear()
-        except:
-            pass
-
-        return result['value']
+        return result[0]
 
     def _get_editor_text(self):
         """Get formatted editor text from line-numbered program."""
