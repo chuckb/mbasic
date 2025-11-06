@@ -110,5 +110,11 @@ packages = ["src", "src.ui", "src.ui.web", "src.editing", "src.filesystem", "src
 "" = "."  # Root is current directory
 
 [tool.setuptools.package-data]
-# Include additional data files if needed
-"*" = ["*.md", "*.txt"]
+# Include documentation and example files
+"mbasic" = [
+    "docs/**/*.md",
+    "docs/**/*.json",
+    "basic/**/*.bas",
+    "basic/**/*.BAS",
+    "basic/**/*.txt",
+]

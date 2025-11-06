@@ -2699,8 +2699,13 @@ class CursesBackend(UIBackend):
 
         Help widget closes via ESC/Q keys which call the on_close callback.
         """
-        # Get help root directory
-        help_root = Path(__file__).parent.parent.parent / "docs" / "help"
+        # Get help root directory (works in dev and installed environments)
+        from src.resource_locator import find_help_dir
+        try:
+            help_root = find_help_dir()
+        except FileNotFoundError as e:
+            self.status_bar.set_text(f"Error: Help files not found - {e}")
+            return
 
         def close_help():
             """Close help and restore main UI."""
