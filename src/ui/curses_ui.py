@@ -3767,6 +3767,11 @@ class CursesBackend(UIBackend):
                     # Check for ESC/Enter before processing (so widget doesn't consume them)
                     filtered_keys = []
                     for key in keys:
+                        # Debug: write key to stderr
+                        import sys
+                        sys.stderr.write(f"DEBUG: Got key: {repr(key)}\n")
+                        sys.stderr.flush()
+
                         if key == 'enter':
                             result[0] = edit.get_edit_text()
                             done[0] = True
