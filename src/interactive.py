@@ -142,7 +142,6 @@ class InteractiveMode:
             self.program_runtime.for_loops.clear()
             # Also clear STOP state since line edits invalidate the stop position
             self.program_runtime.stopped = False
-            self.program_runtime.stop_pc = None
 
     def _setup_readline(self):
         """Configure readline for better line editing"""
@@ -414,7 +413,7 @@ class InteractiveMode:
 
         State management:
         - Clears stopped/halted flags in runtime
-        - Restores PC from stop_pc (saved execution position)
+        - PC already contains the resume position (set by STOP or break handler)
         - Resumes tick-based execution loop
         - Handles input prompts and errors during execution
 
@@ -428,12 +427,9 @@ class InteractiveMode:
             return
 
         try:
-            # Clear stopped flag
+            # Clear stopped flag - PC already contains the resume position
             self.program_runtime.stopped = False
             self.program_runtime.halted = False
-
-            # Restore execution position from PC
-            self.program_runtime.pc = self.program_runtime.stop_pc
 
             # Resume execution using tick-based loop (same as run())
             state = self.program_interpreter.state

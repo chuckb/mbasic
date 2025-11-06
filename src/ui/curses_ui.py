@@ -3733,9 +3733,8 @@ class CursesBackend(UIBackend):
             """Called when user completes input or cancels."""
             # If user cancelled (ESC), stop program execution (like BASIC STOP statement)
             if result is None:
-                # Save current PC for CONT
+                # Stop execution - PC already contains the position for CONT to resume from
                 self.runtime.stopped = True
-                self.runtime.stop_pc = self.runtime.pc
                 self.running = False
                 self._append_to_output("Input cancelled - Program stopped")
                 self._update_immediate_status()
@@ -4687,11 +4686,8 @@ class CursesBackend(UIBackend):
             return
 
         try:
-            # Clear stopped flag
+            # Clear stopped flag - PC already contains the position to resume from
             self.runtime.stopped = False
-
-            # Restore execution position from saved PC
-            self.runtime.pc = self.runtime.stop_pc
             self.runtime.halted = False
             self.running = True
 

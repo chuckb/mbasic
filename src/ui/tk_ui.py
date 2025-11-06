@@ -3492,10 +3492,9 @@ class TkBackend(UIBackend):
 
         Invalid if program was edited after stopping.
 
-        The interpreter saves the execution position in runtime.stop_pc when STOP
-        is executed (see execute_stop() in interpreter.py). CONT simply clears the
-        stopped/halted flags and resumes tick-based execution, which automatically
-        continues from the saved stop_pc position.
+        The interpreter moves NPC to PC when STOP is executed (see execute_stop()
+        in interpreter.py). CONT simply clears the stopped/halted flags and resumes
+        tick-based execution, which continues from the PC position.
         """
         # Check if runtime exists and is in stopped state
         if not self.runtime or not self.runtime.stopped:
@@ -3507,9 +3506,9 @@ class TkBackend(UIBackend):
             self.runtime.stopped = False
             self.runtime.halted = False
 
-            # The interpreter maintains the execution position through stop_pc (set by STOP).
-            # When CONT is executed, tick() will continue from runtime.stop_pc, which was
-            # saved by execute_stop() to point to the next statement after STOP.
+            # The interpreter maintains the execution position in PC (moved by STOP).
+            # When CONT is executed, tick() will continue from runtime.pc, which was
+            # set by execute_stop() to point to the next statement after STOP.
             # No additional position restoration is needed here.
 
             # Resume tick-based execution from saved PC

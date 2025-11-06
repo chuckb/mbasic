@@ -123,7 +123,6 @@ class Runtime:
 
         # Breakpoints - persist across runs (not cleared by RUN/CLEAR)
         self.breakpoints = set()          # Set of PC objects for breakpoints
-        self.stop_pc = None               # PC where STOP occurred (for CONT)
 
         # Break handling (Ctrl+C)
         self.break_requested = False      # True when Ctrl+C pressed during execution
@@ -1513,7 +1512,6 @@ class Runtime:
 
         # Clear STOP/CONT state
         self.stopped = False
-        self.stop_pc = None
 
         # Reset break handling
         self.break_requested = False

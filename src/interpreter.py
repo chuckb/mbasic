@@ -2713,10 +2713,10 @@ class Interpreter:
         # We need to resume from the NEXT statement after STOP
         self.runtime.stopped = True
 
-        # Save PC position for CONT
+        # Move NPC to PC so CONT can resume from the next statement
         # runtime.npc (next program counter) is set by tick() to point to the next statement
         # to execute after the current one completes
-        self.runtime.stop_pc = self.runtime.npc
+        self.runtime.pc = self.runtime.npc
 
         # Print "Break in <line>" message
         if self.runtime.pc and self.runtime.pc.line_num:
@@ -2769,8 +2769,8 @@ class Interpreter:
         Behavior (MBASIC 5.21 compatibility):
         Both STOP and Break (Ctrl+C) set runtime.stopped=True and runtime.halted=True.
         The stopped flag allows CONT to resume from the saved position.
-        Note: execute_stop() saves stop_pc for resume, while BreakException handler
-        does not save a resume position, which affects whether CONT can resume properly.
+        Note: execute_stop() moves NPC to PC for resume, while BreakException handler
+        does not update PC, which affects whether CONT can resume properly.
         """
         if not hasattr(self, 'interactive_mode') or not self.interactive_mode:
             raise RuntimeError("CONT only available in interactive mode")
