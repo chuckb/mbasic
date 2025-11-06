@@ -2704,19 +2704,19 @@ class CursesBackend(UIBackend):
 
         def close_help():
             """Close help and restore main UI."""
-            self.loop.widget = self.main_widget
+            self.loop.widget = self.base_widget
 
         # Create help widget with close callback
         help_widget = HelpWidget(str(help_root), "index.md", on_close=close_help)
 
         # Create overlay
-        # Main widget retrieval: Use self.main_widget (stored at UI creation time in __init__)
+        # Main widget retrieval: Use self.base_widget (stored at UI creation time in __init__)
         # rather than self.loop.widget (which reflects the current widget and might be a menu
         # or other overlay). This approach is used consistently by _show_help, _show_keymap,
         # and _show_settings since they create overlays and don't need to unwrap existing ones.
         overlay = urwid.Overlay(
             urwid.AttrMap(help_widget, 'body'),
-            self.main_widget,
+            self.base_widget,
             align='center',
             width=('relative', 90),
             valign='middle',
@@ -2729,7 +2729,7 @@ class CursesBackend(UIBackend):
         """Show keyboard shortcuts reference.
 
         This method supports toggling - calling it when keymap is already open will close it.
-        Main widget storage: Uses self.main_widget (stored at UI creation time in __init__)
+        Main widget storage: Uses self.base_widget (stored at UI creation time in __init__)
         rather than self.loop.widget (which reflects the current widget and might be a menu
         or other overlay). Same approach as _show_help and _show_settings.
         """
@@ -2754,9 +2754,9 @@ class CursesBackend(UIBackend):
         # Create keymap widget
         keymap_widget = KeymapWidget(on_close=close_keymap)
 
-        # Main widget storage: Use self.main_widget (stored at UI creation)
+        # Main widget storage: Use self.base_widget (stored at UI creation)
         # not self.loop.widget (current widget which might be a menu or overlay)
-        main_widget = self.main_widget
+        main_widget = self.base_widget
         self._keymap_main_widget = main_widget
 
         # Create overlay
@@ -2783,7 +2783,7 @@ class CursesBackend(UIBackend):
         """Activate the interactive menu bar.
 
         Main widget storage: Unlike _show_help/_show_keymap/_show_settings which use
-        self.main_widget directly, this method extracts base_widget from self.loop.widget
+        self.base_widget directly, this method extracts base_widget from self.loop.widget
         to unwrap any existing overlay. This is necessary because menu activation can occur
         when other overlays are already open, and we need to preserve those existing overlays
         while adding the menu dropdown on top of them.
@@ -2792,7 +2792,7 @@ class CursesBackend(UIBackend):
         overlay = self.menu_bar.activate()
 
         # Extract base widget from current loop.widget to unwrap any existing overlay.
-        # This differs from _show_help/_show_keymap/_show_settings which use self.main_widget
+        # This differs from _show_help/_show_keymap/_show_settings which use self.base_widget
         # directly, since menu needs to work even when other overlays are already present.
         main_widget = self.loop.widget.base_widget if hasattr(self.loop.widget, 'base_widget') else self.loop.widget
 
@@ -2846,7 +2846,7 @@ class CursesBackend(UIBackend):
         """Toggle settings editor.
 
         This method supports toggling - calling it when settings is already open will close it.
-        Main widget storage: Uses self.main_widget (stored in __init__) rather than
+        Main widget storage: Uses self.base_widget (stored in __init__) rather than
         self.loop.widget (which might be a menu or other overlay).
         """
         from .curses_settings_widget import SettingsWidget
@@ -2863,9 +2863,9 @@ class CursesBackend(UIBackend):
         # Create settings widget
         settings_widget = SettingsWidget()
 
-        # Main widget storage: Use self.main_widget (stored at UI creation)
+        # Main widget storage: Use self.base_widget (stored at UI creation)
         # not self.loop.widget (current widget which might be a menu or overlay)
-        main_widget = self.main_widget
+        main_widget = self.base_widget
         self._settings_main_widget = main_widget
 
         # Create overlay
@@ -4253,8 +4253,8 @@ class CursesBackend(UIBackend):
         fill = urwid.Filler(text, valign='middle')
         box = urwid.LineBox(fill, title="Recent Files")
 
-        # Use main_widget as base (not current loop.widget which might be a menu)
-        main_widget = self.main_widget
+        # Use base_widget as base (not current loop.widget which might be a menu)
+        main_widget = self.base_widget
         overlay = urwid.Overlay(
             urwid.AttrMap(box, 'body'),
             main_widget,
