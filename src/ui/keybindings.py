@@ -120,13 +120,15 @@ MENU_DISPLAY = 'Ctrl+U'
 
 # Keymap window - accessible via menu only (no dedicated key to avoid conflicts with typing)
 
-# Quit - use Ctrl+Y (Ctrl+Q/Ctrl+S unavailable due to terminal flow control XON/XOFF, Ctrl+X used for STOP)
-_quit_key = _get_key('editor', 'quit') or 'Ctrl+Y'
-QUIT_KEY = _ctrl_key_to_urwid(_quit_key)
-QUIT_CHAR = _ctrl_key_to_char(_quit_key)
-QUIT_DISPLAY = _quit_key
+# Quit - No keyboard shortcut (most Ctrl keys intercepted by terminal or already assigned)
+# Use menu: Ctrl+U -> File -> Quit, or Ctrl+C (interrupt) will also quit
+# Previous attempts: Ctrl+Q (XON/XOFF), Ctrl+S (XON/XOFF), Ctrl+X (STOP), Ctrl+Y (DSUSP?)
+_quit_key = _get_key('editor', 'quit') or 'Ctrl+Q'  # Keep for JSON config compatibility
+QUIT_KEY = None  # No keyboard shortcut
+QUIT_CHAR = None
+QUIT_DISPLAY = '(menu only)'
 
-# Alternative quit (Ctrl+C)
+# Alternative quit (Ctrl+C - interrupt signal)
 _quit_alt_key = _get_key('editor', 'continue') or 'Ctrl+C'
 QUIT_ALT_KEY = _ctrl_key_to_urwid(_quit_alt_key)
 QUIT_ALT_CHAR = _ctrl_key_to_char(_quit_alt_key)
@@ -321,7 +323,8 @@ KEYBINDINGS_BY_CATEGORY = {
 # Quick reference for status bar - use compact ^X notation instead of Ctrl+X
 # Note: ^K is "step line" (execute all statements on current line)
 #       Stack window is menu-only (Ctrl+U -> Debug -> Execution Stack)
-STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu  ^W vars  ^K step line  Tab cycle  ^Y quit"
+#       Quit is menu-only (Ctrl+U -> File -> Quit) or Ctrl+C
+STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu  ^W vars  ^K step line  Tab cycle"
 EDITOR_STATUS = "Editor - ^F help  ^U menu  Tab cycle"
 OUTPUT_STATUS = "Output - Up/Down scroll  Tab cycle  ^U menu"
 

@@ -1958,8 +1958,8 @@ class CursesBackend(UIBackend):
 
     def _handle_input(self, key):
         """Handle global keyboard shortcuts."""
-        if key == QUIT_KEY or key == QUIT_ALT_KEY:
-            # Quit
+        if (QUIT_KEY and key == QUIT_KEY) or key == QUIT_ALT_KEY:
+            # Quit (QUIT_KEY is menu-only, but QUIT_ALT_KEY is Ctrl+C)
             raise urwid.ExitMainLoop()
 
         elif key == TAB_KEY:
