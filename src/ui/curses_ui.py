@@ -3773,9 +3773,11 @@ class CursesBackend(UIBackend):
         except urwid.ExitMainLoop:
             pass  # Dialog closed
 
-        # Force screen redraw after dialog closes
-        if hasattr(self.loop, 'draw_screen'):
-            self.loop.draw_screen()
+        # Clear and redraw the screen
+        try:
+            self.loop.screen.clear()
+        except:
+            pass
 
         return result['value']
 
