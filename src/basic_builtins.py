@@ -275,8 +275,8 @@ class UsingFormatter:
             rounded = round(value)
 
         # Determine sign - preserve negative sign for values that round to zero.
-        # original_negative was captured before rounding (line 269 above), allowing us to detect
-        # cases like -0.001 which round to 0 but should display as "-0" (not "0").
+        # original_negative was captured before rounding (line 269 above: original_negative = value < 0)
+        # This allows us to detect cases like -0.001 which round to 0 but should display as "-0" (not "0").
         # This matches BASIC behavior. Positive values that round to zero display as "0".
         if rounded == 0 and original_negative:
             is_negative = True
@@ -835,8 +835,9 @@ class BuiltinFunctions:
         Returns -1 if at EOF, 0 otherwise
 
         Note: For binary input files (mode 'I' from OPEN statement), respects ^Z (ASCII 26)
-        as EOF marker (CP/M style). Mode 'I' is set by the OPEN statement for binary input.
-        Text mode files and output files use standard Python EOF detection.
+        as EOF marker (CP/M style). Mode 'I' is set by the OPEN statement for binary input,
+        which opens the file in binary mode ('rb'). Text mode files and output files use
+        standard Python EOF detection.
         """
         file_num = int(file_num)
         if file_num not in self.runtime.files:
@@ -849,14 +850,15 @@ class BuiltinFunctions:
             return -1
 
         # For input files opened in binary mode, check for EOF or ^Z
-        # Mode 'I' = binary input mode where ^Z checking is appropriate
+        # Mode 'I' = binary input mode, where files are opened in binary mode ('rb')
+        # and ^Z checking is appropriate for CP/M-style EOF detection
         if file_info['mode'] == 'I':
             file_handle = file_info['handle']
             current_pos = file_handle.tell()
 
             # Peek at next byte to check for ^Z or EOF
-            # File opened in binary mode ('rb') per mode 'I' check above
-            # read(1) returns bytes object; next_byte[0] accesses the first byte value as integer
+            # Binary mode files ('rb'): read(1) returns bytes object
+            # next_byte[0] accesses the first byte value as integer (0-255)
             next_byte = file_handle.read(1)
             if not next_byte:
                 # Physical EOF

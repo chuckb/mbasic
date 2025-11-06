@@ -55,10 +55,11 @@ class HelpWidget(urwid.WidgetWrap):
         # Create frame with title and footer
         self.title = urwid.Text("")
         # Footer shows navigation keys for the help system specifically
-        # Note: Help navigation keys are hardcoded here and in keypress() method.
-        # While HelpMacros loads keybindings for {{kbd:action}} macro expansion in help content,
-        # the help widget's own navigation keys (U for back, / for search, etc.) are hardcoded
-        # separately and not loaded from keybindings. If these change, update here and keypress().
+        # Note: Help navigation keys are hardcoded here and in keypress() method, not loaded from
+        # keybindings. The help widget uses fixed keys (U for back, / for search, ESC/Q to exit)
+        # to avoid dependency on keybinding configuration. HelpMacros does load the full keybindings
+        # from JSON (for {{kbd:action}} macro expansion in help content), but the help widget itself
+        # doesn't use those loaded keybindings. If help navigation keys change, update here and keypress().
         self.footer = urwid.Text(" ↑/↓=Scroll Tab=Next Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
 
         frame = urwid.Frame(

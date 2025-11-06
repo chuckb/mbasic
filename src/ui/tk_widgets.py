@@ -54,7 +54,7 @@ class LineNumberedText(tk.Frame if tk else object):
         self.grid_columnconfigure(1, weight=1)
 
         # Create canvas for status symbols only
-        # Width: 20 (pixels in Tkinter) for one status character (●, ?, or space)
+        # Width: 20 pixels for one status character (●, ?, or space)
         self.canvas = tk.Canvas(
             self,
             width=20,

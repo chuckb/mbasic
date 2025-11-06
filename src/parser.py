@@ -12,8 +12,8 @@ Key differences from interpreter:
 
 Expression parsing notes:
 - Functions generally require parentheses: SIN(X), CHR$(65)
-- Exception: RND and INKEY$ can be called without parentheses (MBASIC 5.21 behavior)
-  Note: This is MBASIC-specific, not universal to all BASIC dialects
+- Exception: Only RND and INKEY$ can be called without parentheses in MBASIC 5.21
+  (this is specific to these two functions, not a general MBASIC feature)
 """
 
 from typing import List, Optional, Dict, Tuple
@@ -138,7 +138,7 @@ class Parser:
 
         Note: This method does NOT check for comment tokens (REM, REMARK, APOSTROPHE).
         Comments are handled separately in parse_line() where they are parsed as
-        statements and can be followed by more statements when separated by COLON.
+        statements. In practice, comments end the line regardless of COLON presence.
         """
         if self.at_end_of_tokens():
             return True
@@ -589,16 +589,16 @@ class Parser:
         # MID$ statement (substring assignment)
         # Detect MID$ used as statement: MID$(var, start, len) = value
         elif token.type == TokenType.MID:
-            # Look ahead to distinguish MID$ statement from MID$ function
+            # Look ahead to distinguish MID$ statement from MID$ function call
             # MID$ statement has pattern: MID$ ( ... ) =
-            # MID$ is tokenized as single MID token ($ is part of the keyword)
-            # Complex lookahead: scan past parentheses (tracking depth) to find = sign
+            # MID$ function has pattern: MID$ ( ... ) in expression context
+            # Note: The lexer tokenizes 'MID$' as a single MID token
+            # Lookahead strategy: scan past balanced parentheses, check for = sign
             saved_pos = self.position
             try:
-                self.advance()  # Skip MID
-                # MID$ is a single token, no need to check for DOLLAR separately
+                self.advance()  # Skip MID token
                 if self.match(TokenType.LPAREN):
-                    # Try to find matching RPAREN followed by EQUAL
+                    # Scan to find matching RPAREN, tracking nested parentheses
                     paren_depth = 1
                     self.advance()  # Skip opening (
                     while not self.at_end_of_line() and paren_depth > 0:
@@ -607,17 +607,18 @@ class Parser:
                         elif self.match(TokenType.RPAREN):
                             paren_depth -= 1
                         self.advance()
-                    # Now check if next token is EQUAL
+                    # Check if next token is EQUAL (indicates MID$ assignment statement)
                     if self.match(TokenType.EQUAL):
-                        # This is MID$ statement!
-                        self.position = saved_pos  # Restore position
+                        # This is MID$ statement, not function
+                        self.position = saved_pos  # Restore position to parse properly
                         return self.parse_mid_assignment()
             except:
                 pass
-            # Not a MID$ statement, restore and fall through to error
+            # Restore position - either not a statement or error in lookahead
             self.position = saved_pos
-            # If we get here, MID$ is being used in an unsupported way
-            raise ParseError(f"MID$ must be used as function or assignment statement", token)
+            # MID$ at statement level without assignment pattern is an error
+            # (MID$ function calls only valid in expression context)
+            raise ParseError(f"MID$ must be used as function (in expression) or assignment statement", token)
 
         # Assignment (implicit LET)
         elif token.type == TokenType.IDENTIFIER:
@@ -1354,7 +1355,15 @@ class Parser:
         Syntax:
             INPUT var1, var2           - Read from keyboard
             INPUT "prompt"; var1       - Read with prompt
+            INPUT "prompt", var1       - Read with prompt (comma suppresses ?)
+            INPUT; var1                - Read without ? prompt (semicolon variant)
+            INPUT; "prompt"; var1      - Read with prompt, no default ?
             INPUT #filenum, var1       - Read from file
+            INPUT "prompt";LINE var$   - Read entire line including commas
+
+        Note: The semicolon immediately after INPUT keyword (INPUT;) suppresses
+        the default '?' prompt. The LINE modifier allows reading an entire line
+        including commas without treating them as delimiters.
         """
         token = self.advance()
 
@@ -1597,7 +1606,7 @@ class Parser:
             pattern_expr = self.parse_expression()
 
         return ShowSettingsStatementNode(
-            pattern=pattern_expr,  # Field name: 'pattern' (optional filter string)
+            pattern=pattern_expr,
             line_num=token.line,
             column=token.column
         )

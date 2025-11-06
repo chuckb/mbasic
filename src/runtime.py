@@ -56,8 +56,8 @@ class Runtime:
         # Note: line -1 in last_write indicates non-program execution sources:
         #       1. System/internal variables (ERR%, ERL%) via set_variable_raw() with FakeToken(line=-1)
         #       2. Debugger/interactive prompt via set_variable() with debugger_set=True and token.line=-1
-        #       Both use line=-1, making them indistinguishable in last_write alone.
-        #       This distinguishes these special sources from normal program execution (line >= 0).
+        #       Both use line=-1, making them indistinguishable from each other in last_write alone.
+        #       However, line=-1 distinguishes these special sources from normal program execution (line >= 0).
         self._variables = {}
         self._arrays = {}             # name_with_suffix -> {'dims': [...], 'data': [...]}
 
@@ -352,16 +352,15 @@ class Runtime:
             name: Variable name (e.g., 'x', 'foo')
             type_suffix: Type suffix ($, %, !, #) or None
             def_type_map: Optional DEF type mapping
-            token: REQUIRED - Token object with line and position info for tracking.
-                   Must not be None (ValueError raised if None).
+            token: REQUIRED - Token object for tracking. Must not be None (ValueError raised if None).
 
-                   The token is expected to have 'line' and 'position' attributes.
-                   If these attributes are missing, getattr() fallbacks are used:
-                   - 'line' falls back to self.pc.line_num (or None if PC is halted)
-                   - 'position' falls back to None
+                   The token should have 'line' and 'position' attributes for tracking.
+                   If token is missing these attributes, fallback values are used:
+                   - Missing 'line' falls back to self.pc.line_num (or None if PC is halted)
+                   - Missing 'position' falls back to None
 
-                   This allows robust handling of tokens from various sources
-                   while still enforcing that a token object is provided.
+                   This allows robust handling of tokens from various sources (lexer, parser,
+                   fake tokens) while enforcing that a token object must be provided.
 
         Returns:
             Variable value (default 0 for numeric, "" for string)
@@ -540,9 +539,10 @@ class Runtime:
         Internally calls set_variable() with a FakeToken(line=-1) to mark this as
         a system/internal set (not from program execution).
 
-        The line=-1 marker in last_write distinguishes system variables from:
-        - Normal program execution (line >= 0)
-        - Debugger sets (also use line=-1, but via debugger_set=True)
+        The line=-1 marker in last_write indicates system/internal variables.
+        However, debugger sets also use line=-1 (via debugger_set=True),
+        making them indistinguishable from system variables in last_write alone.
+        Both are distinguished from normal program execution (line >= 0).
 
         For normal program variables, prefer set_variable() which accepts separate
         name and type_suffix parameters.
@@ -1315,14 +1315,15 @@ class Runtime:
                  For GOSUB calls:
                  {
                      'type': 'GOSUB',
-                     'from_line': 60,      # DEPRECATED: Same as return_line (kept for compatibility)
+                     'from_line': 60,      # Redundant with return_line (kept for backward compatibility)
                      'return_line': 60,    # Line to return to after RETURN
                      'return_stmt': 0      # Statement offset to return to
                  }
 
-                 Note: 'from_line' is misleading and redundant with 'return_line'.
-                       Both contain the line number to return to (not where GOSUB was called from).
-                       Use 'return_line' for clarity; 'from_line' exists for backward compatibility.
+                 Note: 'from_line' is redundant with 'return_line' - both contain the same value
+                       (the line number to return to after RETURN). The 'from_line' field exists
+                       for backward compatibility with code that expects it. Use 'return_line'
+                       for new code as it more clearly indicates the field's purpose.
 
                  For FOR loops:
                  {
@@ -1453,10 +1454,14 @@ class Runtime:
     def reset_for_run(self, ast_or_line_table, line_text_map=None):
         """Reset runtime for RUN command - like CLEAR + reload program.
 
-        This preserves breakpoints but resets everything else, equivalent to:
+        Equivalent to:
         - CLEAR (clear variables, arrays, files, DATA pointer, etc.)
         - Reload program and rebuild statement table
         - Reset PC to start
+
+        Preserves:
+        - Breakpoints (persist across runs)
+        - common_vars (preserved for CHAIN compatibility)
 
         Args:
             ast_or_line_table: New program AST or line table

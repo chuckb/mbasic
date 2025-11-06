@@ -1150,13 +1150,13 @@ def serialize_statement(stmt):
     elif stmt_type == 'WendStatementNode':
         return "WEND"
 
-    # For other statement types, use a generic approach
-    # This is a fallback - ideally all statement types should be handled explicitly
+    # For other statement types, raise an error - this indicates a missing serialization handler
+    # All statement types must be explicitly handled to prevent silent data corruption during RENUM
     else:
-        # Fallback for unhandled statement types: return a placeholder REM comment.
-        # WARNING: This could create invalid BASIC code during RENUM if new statement
-        # types are added but not handled here. Ensure all statement types are supported.
-        return f"REM {stmt_type}"
+        from src.debug_logger import debug_log
+        error_msg = f"Unhandled statement type '{stmt_type}' in serialize_statement() - cannot serialize during RENUM"
+        debug_log(f"ERROR: {error_msg}")
+        raise ValueError(error_msg)
 
 
 def serialize_variable(var):

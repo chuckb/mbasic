@@ -112,6 +112,8 @@ HELP_DISPLAY = '^F'
 # Menu system (not in JSON, hardcoded)
 # Ctrl+U activates the interactive menu bar at the top
 # Use arrow keys to navigate, Enter to select, ESC to close
+# Note: MENU_DISPLAY uses Ctrl+X notation for internal consistency with other DISPLAY constants.
+# The STATUS_BAR_SHORTCUTS below uses ^X notation for compact display in the status bar.
 MENU_KEY = 'ctrl u'
 MENU_CHAR = '\x15'
 MENU_DISPLAY = 'Ctrl+U'
@@ -154,10 +156,12 @@ RUN_CHAR = _ctrl_key_to_char(_run_key)
 RUN_DISPLAY = _run_key
 
 # Step Line - execute all statements on current line (debugger command)
-# Note: Variable named LIST_KEY for historical reasons (it was originally associated with
-# BASIC's LIST command). This variable now implements step_line debugger functionality,
-# which executes all statements on the current line before pausing again. The variable
-# name doesn't match its current purpose but is retained for backward compatibility.
+# Note: These constants are named LIST_KEY/LIST_CHAR/LIST_DISPLAY for historical reasons
+# (originally associated with BASIC's LIST command). They now implement step_line debugger
+# functionality, which executes all statements on the current line before pausing again.
+# The constants are retained with their original names for backward compatibility with
+# existing UI code that references them, but they implement 'step_line' action from the
+# JSON configuration, not LIST functionality.
 _list_key = _get_key('editor', 'step_line') or 'Ctrl+K'
 LIST_KEY = _ctrl_key_to_urwid(_list_key)
 LIST_CHAR = _ctrl_key_to_char(_list_key)
@@ -221,6 +225,8 @@ INSERT_LINE_DISPLAY = 'Ctrl+J'
 # Note: This key (typically Ctrl+G) is context-sensitive in the UI:
 #   - In debugger mode: Continue execution until next breakpoint or end
 #   - In editor mode: Go to line number (not yet implemented)
+# This module only defines the key constant. The actual context-sensitive behavior is
+# implemented in src/ui/curses_ui.py by checking the current program state.
 # Loaded from 'goto_line' action in JSON since both uses share the same key.
 _continue_key = _get_key('editor', 'goto_line') or 'Ctrl+G'
 CONTINUE_KEY = _ctrl_key_to_urwid(_continue_key)
@@ -280,7 +286,7 @@ KEYBINDINGS_BY_CATEGORY = {
         (HELP_DISPLAY, 'This help'),
         (SETTINGS_DISPLAY, 'Settings'),
         (VARIABLES_DISPLAY, 'Toggle variables watch window'),
-        (STACK_DISPLAY, 'Toggle execution stack window'),
+        (STACK_DISPLAY, 'Show/hide execution stack window (menu only)'),
     ],
     'Program Management': [
         (RUN_DISPLAY, 'Run program'),
@@ -303,7 +309,7 @@ KEYBINDINGS_BY_CATEGORY = {
         (STEP_DISPLAY, 'Step Statement - execute one statement at a time'),
         (STOP_DISPLAY, 'Stop execution (eXit)'),
         (VARIABLES_DISPLAY, 'Show/hide variables window'),
-        (STACK_DISPLAY, 'Show/hide execution stack window'),
+        (STACK_DISPLAY, 'Show/hide execution stack window (menu only)'),
     ],
     'Variables Window (when visible)': [
         ('s', 'Cycle sort mode (Name → Accessed → Written → Read → Type → Value)'),

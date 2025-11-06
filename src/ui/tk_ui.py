@@ -38,12 +38,11 @@ class TkBackend(UIBackend):
     Provides a graphical UI with:
     - Menu bar (File, Edit, Run, Help)
     - Toolbar with common actions
-    - 4-pane vertical layout:
+    - 3-pane vertical layout:
       * Editor with line numbers (top, ~50% - weight=3)
       * Output pane (middle, ~33% - weight=2)
-      * INPUT row (shown only for INPUT statements, hidden otherwise)
+        - Contains INPUT row (shown/hidden dynamically for INPUT statements)
       * Immediate mode input line (bottom, ~17% - weight=1)
-    - Syntax highlighting (optional)
     - File dialogs for Open/Save
 
     Usage:
@@ -90,7 +89,7 @@ class TkBackend(UIBackend):
         self.variables_window = None
         self.variables_tree = None
         self.variables_visible = False
-        self.variables_sort_column = 'accessed'  # Current sort column: 'accessed', 'written', 'read', 'name', 'type', or 'value'
+        self.variables_sort_column = 'accessed'  # Current sort column (default: 'accessed' for last-accessed timestamp)
         self.variables_sort_reverse = True  # Sort direction: False=ascending, True=descending (default descending for timestamps)
 
         # Execution stack window state
@@ -1008,7 +1007,7 @@ class TkBackend(UIBackend):
 
         # Create Treeview
         tree = ttk.Treeview(self.variables_window, columns=('Value', 'Type'), show='tree headings')
-        # Set initial heading text with arrows (matches self.variables_sort_column default: 'accessed')
+        # Set initial heading text with down arrow (matches self.variables_sort_column='accessed', descending)
         tree.heading('#0', text='↓ Variable (Last Accessed)')
         tree.heading('Value', text='  Value')
         tree.heading('Type', text='  Type')
@@ -1052,8 +1051,9 @@ class TkBackend(UIBackend):
     def _on_variable_heading_click(self, event):
         """Handle clicks on variable list column headings.
 
-        Arrow area (left ~20 pixels): Toggle sort direction
-        Rest of heading: Cycle sort column (for Variable) or set column (for Type/Value)
+        Only the Variable column (column #0) is sortable - clicking it cycles through
+        different sort modes (accessed, written, read, name, type, value).
+        Type and Value columns are not sortable.
         """
         # Identify which part of the tree was clicked
         region = self.variables_tree.identify_region(event.x, event.y)
@@ -1246,7 +1246,8 @@ class TkBackend(UIBackend):
             dimensions = self.runtime._arrays[full_name]['dims']
 
         # If no default subscripts, use first element based on array_base
-        # (OPTION BASE 0 uses zeros, OPTION BASE 1 uses ones, invalid values fallback to zeros)
+        # OPTION BASE only allows 0 or 1. The else clause is defensive programming
+        # to handle any unexpected values (should not occur in correct implementations).
         if not default_subscripts and dimensions:
             array_base = self.runtime.array_base
             if array_base == 0:
@@ -1256,7 +1257,7 @@ class TkBackend(UIBackend):
                 # OPTION BASE 1: use all ones
                 default_subscripts = ','.join(['1'] * len(dimensions))
             else:
-                # Invalid array_base (not 0 or 1) - fallback to 0
+                # Defensive fallback for invalid array_base (should not occur)
                 default_subscripts = ','.join(['0'] * len(dimensions))
 
         # Create custom dialog
@@ -3491,12 +3492,10 @@ class TkBackend(UIBackend):
 
         Invalid if program was edited after stopping.
 
-        NOTE: This is a simplified implementation. The runtime.stop_line and
-        runtime.stop_stmt_index attributes are optional extensions for better
-        state restoration. If not present, execution continues from the current
-        PC position maintained by the interpreter. Full CONT semantics require
-        the interpreter to save execution position when stopping (see STOP handler
-        in interpreter.py).
+        The interpreter saves the execution position in runtime.stop_pc when STOP
+        is executed (see execute_stop() in interpreter.py). CONT simply clears the
+        stopped/halted flags and resumes tick-based execution, which automatically
+        continues from the saved stop_pc position.
         """
         # Check if runtime exists and is in stopped state
         if not self.runtime or not self.runtime.stopped:
@@ -3508,14 +3507,12 @@ class TkBackend(UIBackend):
             self.runtime.stopped = False
             self.runtime.halted = False
 
-            # Restore execution position if available (optional extension)
-            # The interpreter maintains PC through stop_pc, so this is supplementary
-            if hasattr(self.runtime, 'stop_line') and hasattr(self.runtime, 'stop_stmt_index'):
-                self.runtime.current_line = self.runtime.stop_line
-                self.runtime.current_stmt_index = self.runtime.stop_stmt_index
+            # The interpreter maintains the execution position through stop_pc (set by STOP).
+            # When CONT is executed, tick() will continue from runtime.stop_pc, which was
+            # saved by execute_stop() to point to the next statement after STOP.
+            # No additional position restoration is needed here.
 
-            # Resume tick-based execution from current PC
-            # The interpreter will continue from the saved position (stop_pc)
+            # Resume tick-based execution from saved PC
             self.running = True
             self._set_status("Running")
             self._execute_tick()
@@ -3624,8 +3621,14 @@ class TkBackend(UIBackend):
                 self.interpreter.io = tk_io
 
                 # Initialize interpreter state for execution
-                # NOTE: Don't call interpreter.start() because it resets PC!
-                # RUN 120 already set PC to line 120, so just clear halted flag
+                # NOTE: Don't call interpreter.start() because it calls runtime.setup()
+                # which resets PC to the first statement. The RUN command has already
+                # set PC to the correct line (e.g., RUN 120 sets PC to line 120).
+                # We only need to clear the halted flag and mark this as first line.
+                # This avoids the full initialization that start() does:
+                #   - runtime.setup() (rebuilds tables, resets PC)
+                #   - Creates new InterpreterState
+                #   - Sets up Ctrl+C handler
                 self.runtime.halted = False  # Clear halted flag to start execution
                 self.interpreter.state.is_first_line = True
 

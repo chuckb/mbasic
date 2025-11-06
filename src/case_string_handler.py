@@ -64,8 +64,9 @@ class CaseStringHandler:
                 # identifiers (variable/function names) retain their case as typed.
                 # This matches MBASIC 5.21 behavior where identifiers are case-insensitive
                 # for matching but preserve display case.
-                # Note: We return original_text directly without using an identifier_table.
-                # A future enhancement could track identifiers for conflict detection.
+                # Note: We return original_text directly. An identifier_table infrastructure
+                # exists (see get_identifier_table) but is not currently used for identifiers,
+                # as they always preserve their original case without policy enforcement.
                 return original_text
             else:
                 # Unknown prefix, return original

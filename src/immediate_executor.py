@@ -160,7 +160,7 @@ class ImmediateExecutor:
         # - UI.program must have add_line() and delete_line() methods (validated, errors if missing)
         # - UI._refresh_editor() method to update the display (optional, checked with hasattr)
         # - UI._highlight_current_statement() for restoring execution highlighting (optional, checked with hasattr)
-        # If interactive_mode doesn't exist, line editing silently continues without UI update.
+        # If interactive_mode doesn't exist or is falsy, returns error: "Cannot edit program lines in this mode".
         # If interactive_mode exists but required program methods are missing, returns error message.
         import re
         line_match = re.match(r'^(\d+)\s*(.*)$', statement)

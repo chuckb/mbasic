@@ -125,7 +125,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
     Display format: "S<linenum> CODE" where:
     - Field 1 (1 char): Status (●=breakpoint, ?=error, space=normal)
-    - Field 2 (variable width): Line number (no fixed width, grows as needed)
+    - Field 2 (variable width): Line number (no padding for display)
     - Field 3 (rest of line): Program text (BASIC code)
 
     Note: This is NOT a true columnar layout with fixed column boundaries.
@@ -199,7 +199,9 @@ class ProgramEditorWidget(urwid.WidgetWrap):
     def _parse_line_number(self, line):
         """Extract line number from display line.
 
-        Format: "SNN CODE" where S=status, NN=line number (variable width)
+        Format: "SNNNNN CODE" where S=status (1 char), NNNNN=line number (fixed 5-char
+        width, right-justified), and CODE is the program text. This matches the format
+        used by _format_line() and _parse_line_numbers().
 
         Args:
             line: Display line string
@@ -225,11 +227,11 @@ class ProgramEditorWidget(urwid.WidgetWrap):
     def keypress(self, size, key):
         """Handle key presses for column-aware editing and auto-numbering.
 
-        Format: "S<linenum> CODE" (where <linenum> is variable width)
+        Format: "SNNNNN CODE" where S=status, NNNNN=line number (fixed 5-char width)
         - Column 0: Status (●, ?, space) - read-only
-        - Columns 1+: Line number (variable width) - editable
-        - After line number: Space
-        - After space: Code - editable
+        - Columns 1-5: Line number (fixed 5-char width, right-justified) - editable
+        - Column 6: Space
+        - Columns 7+: Code - editable
         """
         # FAST PATH: For normal printable characters, bypass all processing
         # This is critical for responsive typing
@@ -287,10 +289,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 else:
                     col_in_line = cursor_pos
 
-        # Variable-width line numbers - no need to right-justify
-
         # Mark that sorting is needed when editing line numbers
-        # With variable width, check if we're in line number area (before first space after status)
+        # Check if we're in line number area (columns 1-5, before the space at column 6)
         if line_num < len(lines):
             line = lines[line_num]
             line_num_parsed, code_start = self._parse_line_number(line)
@@ -481,7 +481,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         Returns:
             Formatted string or urwid markup: "S<num> CODE" where S is status (1 char),
-            <num> is the line number (variable width, not padded), and CODE is the program text.
+            <num> is the line number (variable width, no padding), and CODE is the program text.
             May include urwid markup tuples for statement highlighting.
         """
         # Status column (1 char)
@@ -492,7 +492,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         else:
             status = ' '
 
-        # Line number column (variable width)
+        # Line number column (variable width, no padding)
         line_num_str = f"{line_num}"
 
         # Prefix: status + line_num + space
@@ -2353,9 +2353,10 @@ class CursesBackend(UIBackend):
         help_widget = HelpWidget(str(help_root), "index.md")
 
         # Create overlay
-        # Main widget retrieval: Use self.main_widget for consistency with
-        # _show_keymap and _show_settings (not self.loop.widget which might be
-        # a menu or other overlay at this moment)
+        # Main widget retrieval: Use self.main_widget (stored at UI creation time in __init__)
+        # rather than self.loop.widget (which reflects the current widget and might be a menu
+        # or other overlay). This approach is used consistently by _show_help, _show_keymap,
+        # and _show_settings since they create overlays and don't need to unwrap existing ones.
         overlay = urwid.Overlay(
             urwid.AttrMap(help_widget, 'body'),
             self.main_widget,
@@ -2374,8 +2375,9 @@ class CursesBackend(UIBackend):
         """Show keyboard shortcuts reference.
 
         This method supports toggling - calling it when keymap is already open will close it.
-        Main widget storage: Uses self.main_widget (stored in __init__) rather than
-        self.loop.widget (which might be a menu or other overlay).
+        Main widget storage: Uses self.main_widget (stored at UI creation time in __init__)
+        rather than self.loop.widget (which reflects the current widget and might be a menu
+        or other overlay). Same approach as _show_help and _show_settings.
         """
         from .keymap_widget import KeymapWidget
 
@@ -2426,15 +2428,18 @@ class CursesBackend(UIBackend):
     def _activate_menu(self):
         """Activate the interactive menu bar.
 
-        Main widget storage: Extracts base_widget from self.loop.widget to handle
-        cases where current widget might already be an overlay. This is different from
-        _show_keymap/_show_settings which use self.main_widget directly.
+        Main widget storage: Unlike _show_help/_show_keymap/_show_settings which use
+        self.main_widget directly, this method extracts base_widget from self.loop.widget
+        to unwrap any existing overlay. This is necessary because menu activation can occur
+        when other overlays are already open, and we need to preserve those existing overlays
+        while adding the menu dropdown on top of them.
         """
         # Get the dropdown overlay from menu bar
         overlay = self.menu_bar.activate()
 
-        # Main widget storage: Extract base widget from current loop.widget
-        # This unwraps any existing overlay to get the actual main UI
+        # Extract base widget from current loop.widget to unwrap any existing overlay.
+        # This differs from _show_help/_show_keymap/_show_settings which use self.main_widget
+        # directly, since menu needs to work even when other overlays are already present.
         main_widget = self.loop.widget.base_widget if hasattr(self.loop.widget, 'base_widget') else self.loop.widget
 
         # Track current menu overlay (updated when refreshing)
@@ -3972,8 +3977,10 @@ class CursesBackend(UIBackend):
             line_text = f"{line_num} {self.editor_lines[line_num]}"
             self.program.add_line(line_num, line_text)
 
-        # Sync program to runtime (but don't reset PC - keep current execution state)
-        # This allows LIST to work, but doesn't start execution
+        # Sync program to runtime (updates statement table and line text map).
+        # If execution is running, _sync_program_to_runtime preserves current PC.
+        # If not running, it sets PC to halted. Either way, this doesn't start execution,
+        # but allows commands like LIST to see the current program.
         self._sync_program_to_runtime()
 
         # Log the command to output pane (not separate immediate history)
@@ -3997,8 +4004,9 @@ class CursesBackend(UIBackend):
         if len(self.output_walker) > 0:
             self.output.set_focus(len(self.output_walker) - 1)
 
-        # If statement set NPC (like RUN/GOTO), move it to PC
-        # This is what the tick loop does after executing a statement
+        # If immediate command set NPC (like RUN/GOTO), commit it to PC.
+        # Immediate commands that modify control flow set NPC to indicate where
+        # execution should start/continue. We commit this here (same as tick loop).
         if self.runtime.npc is not None:
             self.runtime.pc = self.runtime.npc
             self.runtime.npc = None
@@ -4051,12 +4059,11 @@ class CursesBackend(UIBackend):
                     self.io_handler = io_handler
 
                 # Initialize interpreter state for execution
-                # NOTE: Don't call interpreter.start() because it resets PC!
-                # If the immediate command was 'RUN 120', the immediate executor has already
-                # set PC to line 120 via interpreter.start(start_line=120), so we need to
-                # preserve that PC value and not reset it.
-                # We only create InterpreterState if it doesn't exist (first run of session),
-                # which initializes tracking state but doesn't modify PC/runtime state.
+                # NOTE: Don't call interpreter.start() here - the immediate executor already
+                # called it if needed (e.g., 'RUN 120' called interpreter.start(start_line=120)
+                # to set PC to line 120). Calling it again would reset PC to the beginning.
+                # We only initialize InterpreterState if it doesn't exist (first run of session),
+                # which sets up tracking state without modifying PC/runtime state.
                 from src.interpreter import InterpreterState
                 if not hasattr(self.interpreter, 'state') or self.interpreter.state is None:
                     self.interpreter.state = InterpreterState(_interpreter=self.interpreter)

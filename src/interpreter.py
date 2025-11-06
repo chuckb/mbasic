@@ -38,15 +38,19 @@ class InterpreterState:
     """Complete execution state of the interpreter at any point in time
 
     Primary execution states (check these to determine current status):
-    Note: The suggested checking order below is for UI code that examines state AFTER
-    execution completes. During execution (in tick_pc()), checks occur in this order:
-    1. pause_requested, 2. halted, 3. break_requested, 4. breakpoints,
-    5. statement execution (input_prompt set DURING execution, errors via exceptions).
 
-    For UI/callers checking completed state:
+    For UI/callers checking completed state (recommended order):
     - error_info: Non-None if an error occurred (highest priority for display)
     - input_prompt: Non-None if waiting for input (set during statement execution)
     - runtime.halted: True if stopped (paused/done/at breakpoint)
+
+    Internal execution order in tick_pc() (for developers understanding control flow):
+    1. pause_requested check - pauses if pause() was called
+    2. halted check - stops if already halted
+    3. break_requested check - handles Ctrl+C breaks
+    4. breakpoints check - pauses at breakpoints
+    5. statement execution - where input_prompt may be set
+    6. error handling - where error_info is set via exception handlers
 
     Also tracks: input buffering, debugging flags, performance metrics, and
     provides computed properties for current line/statement position.
@@ -100,14 +104,17 @@ class InterpreterState:
     def current_statement_char_end(self) -> int:
         """Get current statement char_end from statement table (computed property)
 
-        Uses max(char_end, next_char_start - 1) to handle string tokens correctly.
-        For the last statement on a line, uses line_text_map to get actual line length
-        (if available), otherwise falls back to stmt.char_end.
-        This works because:
-        - If there's a next statement, the colon is at next_char_start - 1
-        - If char_end is correct (most tokens), it will be >= next_char_start - 1
-        - If char_end is too short (string tokens), next_char_start - 1 is larger
-        - If no line_text_map entry exists, returns stmt.char_end as fallback
+        Three cases handled:
+        1. Next statement exists: Returns max(char_end, next_char_start - 1)
+           - Handles string tokens where char_end may be too short
+           - The colon separator is at next_char_start - 1
+           - Most tokens have correct char_end >= next_char_start - 1
+
+        2. Last statement on line AND line_text_map available: Returns len(line_text)
+           - Returns the full line length including any trailing spaces/comments
+           - This may be larger than char_end if trailing content exists
+
+        3. Last statement AND no line_text_map: Returns stmt.char_end as fallback
         """
         if self._interpreter:
             pc = self._interpreter.runtime.pc
@@ -642,8 +649,8 @@ class Interpreter:
 
     def _invoke_error_handler(self, error_code, error_pc):
         """Invoke the error handler"""
-        # Note: error_info is set by the exception handler in tick_pc() that caught
-        # the error before calling this method. We're now ready to invoke the error handler.
+        # Note: error_info is set in the exception handler in tick_pc() just before
+        # calling this method. We're now ready to invoke the error handler.
 
         # Set ERR%, ERL%, and ERS% system variables
         self.runtime.set_variable_raw('err%', error_code)
@@ -1507,7 +1514,7 @@ class Interpreter:
         self.runtime.clear_arrays()
 
         # Close all open files
-        # Note: Errors during file close are silently ignored (bare except: pass below)
+        # Note: Errors during file close are silently ignored (bare except: pass)
         for file_num in list(self.runtime.files.keys()):
             try:
                 file_obj = self.runtime.files[file_num]
@@ -2759,11 +2766,11 @@ class Interpreter:
         CONT resumes execution after a STOP statement.
         Only works in interactive mode.
 
-        Behavior distinction (MBASIC 5.21 compatibility):
-        - STOP statement: Sets both runtime.stopped=True AND runtime.halted=True
-          The stopped flag allows CONT to resume from the saved position
-        - Break (Ctrl+C): Sets runtime.halted=True but NOT stopped=True, so CONT fails
-        This is intentional: CONT only works after STOP, not after Break interruption.
+        Behavior (MBASIC 5.21 compatibility):
+        Both STOP and Break (Ctrl+C) set runtime.stopped=True and runtime.halted=True.
+        The stopped flag allows CONT to resume from the saved position.
+        Note: execute_stop() saves stop_pc for resume, while BreakException handler
+        does not save a resume position, which affects whether CONT can resume properly.
         """
         if not hasattr(self, 'interactive_mode') or not self.interactive_mode:
             raise RuntimeError("CONT only available in interactive mode")

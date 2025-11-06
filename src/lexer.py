@@ -17,7 +17,8 @@ def create_keyword_case_manager() -> SimpleKeywordCase:
     - force_upper: Convert all keywords to UPPERCASE
     - force_capitalize: Convert all keywords to Capitalized form
 
-    SimpleKeywordCase validates policy strings and defaults to force_lower for invalid values.
+    Note: SimpleKeywordCase is implemented in src/simple_keyword_case.py. It validates
+    policy strings in its __init__ method and defaults to force_lower for invalid values.
 
     Returns:
         SimpleKeywordCase with policy from settings (validated), or default (force_lower)
@@ -282,8 +283,9 @@ class Lexer:
         # Otherwise it's an identifier
         # Normalize to lowercase (BASIC is case-insensitive) but preserve original case
         token = Token(TokenType.IDENTIFIER, ident.lower(), start_line, start_column)
-        # Preserve original case for display (identifiers always use original_case field,
-        # unlike keywords which use original_case_keyword with policy-determined case)
+        # Preserve original case for display. Identifiers use the original_case field
+        # to store the exact case as typed. Keywords use original_case_keyword to store
+        # the case determined by the keyword case policy (see Token class in token_types.py).
         token.original_case = ident
         return token
 

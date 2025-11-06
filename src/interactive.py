@@ -418,6 +418,11 @@ class InteractiveMode:
         - Restores PC from stop_pc (saved execution position)
         - Resumes tick-based execution loop
         - Handles input prompts and errors during execution
+
+        IMPORTANT: CONT will fail with "?Can't continue" if the program has been edited
+        (lines added, deleted, or renumbered) because editing clears the GOSUB/RETURN and
+        FOR/NEXT stacks to prevent crashes from invalidated return addresses and loop contexts.
+        See clear_execution_state() for details.
         """
         if not self.program_runtime or not self.program_runtime.stopped:
             print("?Can't continue")
@@ -568,7 +573,8 @@ class InteractiveMode:
         - Lines with matching line numbers are replaced
         - New line numbers are added
         - Existing lines not in the file are kept
-        - If program_runtime exists, updates runtime's statement_table (for CONT support)
+        - If merge is successful AND program_runtime exists, updates runtime's statement_table
+          (for CONT support). Runtime update only happens after successful merge.
         """
         if not filename:
             print("?Syntax error")
@@ -617,6 +623,10 @@ class InteractiveMode:
         - start_line: Begin execution at specified line
         - all_flag: Pass all variables to chained program (ALL option)
         - delete_range: Delete line range after merge (DELETE option)
+
+        Raises ChainException when called during program execution to signal the interpreter's
+        run() loop to restart with the new program. This avoids recursive run() calls.
+        When called from command line (not during execution), runs the program directly.
         """
         if not filename:
             print("?Syntax error")
@@ -644,8 +654,8 @@ class InteractiveMode:
             #
             # COMMON variable handling: common_vars stores base names (e.g., "i"), but
             # actual variables may have type suffixes (e.g., "i%", "i$") based on DEF
-            # statements or explicit suffixes. We try all possible type suffixes
-            # (%, $, !, #, and no suffix) to find the actual variable in the runtime.
+            # statements or explicit suffixes. We check type suffixes (%, $, !, #, and
+            # no suffix) in order and save the FIRST matching variable found in the runtime.
             saved_variables = None
             if self.program_runtime:
                 if all_flag or merge:
@@ -831,10 +841,12 @@ class InteractiveMode:
         3. Walk AST and update all line number references (via _renum_statement callback)
         4. Serialize AST back to source
 
-        Conservative behavior: ERL expressions with ANY binary operators (ERL+100, ERL*2, ERL=100)
-        have all right-hand numbers conservatively renumbered, even for arithmetic operations.
+        ERL handling: ERL expressions with ANY binary operators (ERL+100, ERL*2, ERL=100)
+        have all right-hand numbers renumbered, even for arithmetic operations.
         This is intentionally broader than the MBASIC manual (which only specifies comparison
-        operators) to avoid missing line references. See _renum_erl_comparison() for details.
+        operators) to avoid missing line references. Known limitation: arithmetic expressions
+        like "IF ERL+100 THEN..." will incorrectly renumber the 100 if it happens to be an
+        old line number. This is rare in practice. See _renum_erl_comparison() for details.
 
         Args format: "new_start,old_start,increment"
         Examples:
@@ -1017,7 +1029,8 @@ class InteractiveMode:
         - <CR>: End and save
 
         Note: Count prefixes ([n]D, [n]C) and search commands ([n]S, [n]K) are not yet implemented.
-        Digits fall through the command handling logic and produce no action (no output, no cursor movement).
+        If digits are entered, they fall through all command handling logic without matching any
+        if/elif branches, resulting in no action (no output, no cursor movement, no error message).
         """
         if not args or not args.strip():
             print("?Syntax error - specify line number")
@@ -1346,14 +1359,13 @@ class InteractiveMode:
             if ast.lines and len(ast.lines) > 0:
                 line_node = ast.lines[0]
                 # Save old PC to preserve stopped program position for CONT.
-                # Note: GOTO/GOSUB in immediate mode are not recommended (see help text) because
-                # behavior may be confusing: they execute and jump during execute_statement(),
-                # but we restore the original PC afterward to preserve CONT functionality.
-                # This means:
+                # Note: GOTO/GOSUB in immediate mode work but have special semantics:
+                # They execute and jump during execute_statement(), but we restore the
+                # original PC afterward to preserve CONT functionality. This means:
                 # - The jump happens and target code runs during execute_statement()
-                # - But the final PC change is reverted, preserving stopped position
+                # - The final PC change is then reverted, preserving the stopped position
                 # - CONT will resume at the original stopped location, not the GOTO target
-                # - So GOTO/GOSUB are functionally working but their PC effects are undone
+                # This is the intended behavior but may be unexpected, hence "not recommended".
                 old_pc = runtime.pc
 
                 # Execute each statement on line 0

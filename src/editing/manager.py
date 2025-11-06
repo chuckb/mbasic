@@ -26,9 +26,10 @@ Why ProgramManager has its own file I/O methods:
   BASIC commands (LOAD/SAVE) go through FileIO abstraction first
 - Web UI uses FileIO abstraction exclusively (no direct ProgramManager file access)
 
-Note: ProgramManager.load_from_file() returns (success, lines) tuple for direct
-UI integration, while FileIO.load_file() returns raw file text. These serve
-different purposes: ProgramManager integrates with the editor, FileIO provides
+Note: ProgramManager.load_from_file() returns (success, errors) tuple where errors
+is a list of (line_number, error_message) tuples for direct UI error reporting,
+while FileIO.load_file() returns raw file text. These serve different purposes:
+ProgramManager integrates with the editor and provides error details, FileIO provides
 raw file content for the LOAD command to parse.
 """
 
