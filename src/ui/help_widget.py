@@ -267,7 +267,8 @@ class HelpWidget(urwid.WidgetWrap):
 
         for line_idx, line in enumerate(lines):
             # Find all [text] patterns (all visual links)
-            link_pattern = r'\[([^\]]+)\]'
+            # Match both [text] and [text](url) formats
+            link_pattern = r'\[([^\]]+)\](?:\([^)]+\))?'
 
             # Split the line by links and build markup
             last_end = 0
@@ -279,7 +280,8 @@ class HelpWidget(urwid.WidgetWrap):
                     line_markup.append(line[last_end:match.start()])
 
                 # Add the link with appropriate attribute
-                link_text = match.group(0)  # Keep the brackets
+                # Use just [text] part for display, not the (url) part
+                link_text = f'[{match.group(1)}]'  # group(1) is the text inside brackets
 
                 # Use 'focus' attribute for current link, 'link' for others
                 if link_counter == current_link_index:
@@ -325,7 +327,8 @@ class HelpWidget(urwid.WidgetWrap):
         visual_idx = 0
 
         for line_idx, line in enumerate(lines):
-            link_pattern = r'\[([^\]]+)\]'
+            # Match both [text] and [text](url) formats
+            link_pattern = r'\[([^\]]+)\](?:\([^)]+\))?'
             for match in re.finditer(link_pattern, line):
                 link_text = match.group(1)  # Text without brackets
                 key = (line_idx, link_text)
