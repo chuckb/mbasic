@@ -3742,11 +3742,13 @@ class CursesBackend(UIBackend):
                 result['cancelled'] = False
                 done['flag'] = True
                 self.loop.widget = original_widget
+                return None  # Consume the key
             elif key == 'esc':
                 result['value'] = None
                 result['cancelled'] = True
                 done['flag'] = True
                 self.loop.widget = original_widget
+                return None  # Consume the key to prevent main loop from seeing it
             else:
                 # Let edit widget handle it
                 return key
