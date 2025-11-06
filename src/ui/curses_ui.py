@@ -3746,7 +3746,8 @@ class CursesBackend(UIBackend):
                 done['flag'] = True
                 raise DialogExit()
             elif key == 'esc':
-                result['value'] = None
+                # ESC cancels - just treat empty string as cancel
+                result['value'] = ""  # Return empty string for cancel
                 done['flag'] = True
                 raise DialogExit()
             # Let other keys pass through
@@ -3757,23 +3758,20 @@ class CursesBackend(UIBackend):
         self.loop.unhandled_input = handle_input
 
         # Run nested event loop for dialog
+        # Note: This will STOP the current event loop
         try:
             self.loop.run()
         except DialogExit:
-            # Dialog closed normally - need to restart the main loop
-            # The nested loop has stopped, so start it again
+            # Dialog closed normally
             pass
         finally:
             # Always restore state
             self.loop.widget = original_widget
             self.loop.unhandled_input = old_handler
 
-        # Force a screen redraw
-        try:
-            if hasattr(self.loop.screen, 'clear'):
-                self.loop.screen.clear()
-        except:
-            pass
+        # The loop has stopped - we need to CONTINUE it by raising StopIteration
+        # which tells urwid to return from run() but keep the loop alive
+        # Actually, DialogExit already stopped the loop, so we're good
 
         return result['value']
 
