@@ -415,6 +415,20 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
             return None
 
+        # Handle Enter when auto-numbering is disabled OR during paste
+        # Clean up any double line numbers that may have been created
+        if key == 'enter':
+            current_text = self.edit_widget.get_edit_text()
+            cursor_pos = self.edit_widget.edit_pos
+            new_text = self._parse_line_numbers(current_text)
+            if new_text != current_text:
+                self.edit_widget.set_edit_text(new_text)
+                # Try to maintain cursor position
+                if cursor_pos <= len(new_text):
+                    self.edit_widget.set_edit_pos(cursor_pos)
+            # Let Enter be processed normally
+            return super().keypress(size, key)
+
         # Check if this is a control key we don't handle - pass to unhandled_input
         # Editor handles: arrows, backspace, delete, home, end, enter, tab
         # Pass through: All ctrl keys except those handled above
