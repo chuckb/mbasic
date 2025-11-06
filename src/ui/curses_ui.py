@@ -328,7 +328,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             return super().keypress(size, key)
 
         # Handle Enter key - commits line and moves to next with auto-numbering
-        if key == 'enter' and self.auto_number_enabled:
+        # Skip auto-numbering if we're in rapid input mode (paste operation)
+        if key == 'enter' and self.auto_number_enabled and not (self._needs_refresh or self._needs_sort):
             # Parse current line number (variable width)
             current_line_number = None
             if line_num < len(lines):
