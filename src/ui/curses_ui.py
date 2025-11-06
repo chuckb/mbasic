@@ -1369,6 +1369,9 @@ class CursesBackend(UIBackend):
         immediate_io = OutputCapturingIOHandler()
         self.interpreter = Interpreter(self.runtime, immediate_io, limits=create_unlimited_limits())
 
+        # Set interactive_mode so that line editing (e.g., "50 PRINT") works
+        self.interpreter.interactive_mode = self
+
         # ImmediateExecutor Lifecycle:
         # Created here with temporary IO handler (to ensure attribute exists),
         # then recreated in start() with a fresh OutputCapturingIOHandler.
