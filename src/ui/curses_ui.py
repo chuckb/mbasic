@@ -555,14 +555,17 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         # Handle Enter when auto-numbering is disabled OR during paste
         # Clean up any double line numbers that may have been created
         if key == 'enter':
-            current_text = self.edit_widget.get_edit_text()
-            cursor_pos = self.edit_widget.edit_pos
-            new_text = self._parse_line_numbers(current_text)
-            if new_text != current_text:
-                self.edit_widget.set_edit_text(new_text)
-                # Try to maintain cursor position
-                if cursor_pos <= len(new_text):
-                    self.edit_widget.set_edit_pos(cursor_pos)
+            # Skip _parse_line_numbers during rapid input (paste) to avoid reformatting partial lines
+            # It will be called once after paste completes in _perform_deferred_refresh
+            if not in_rapid_input:
+                current_text = self.edit_widget.get_edit_text()
+                cursor_pos = self.edit_widget.edit_pos
+                new_text = self._parse_line_numbers(current_text)
+                if new_text != current_text:
+                    self.edit_widget.set_edit_text(new_text)
+                    # Try to maintain cursor position
+                    if cursor_pos <= len(new_text):
+                        self.edit_widget.set_edit_pos(cursor_pos)
 
             # Mark that we skipped auto-numbering if it was enabled but we're in rapid input
             if self.auto_number_enabled and in_rapid_input:
