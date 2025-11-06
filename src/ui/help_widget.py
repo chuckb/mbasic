@@ -313,6 +313,9 @@ class HelpWidget(urwid.WidgetWrap):
 
         This allows us to show all [text] as clickable, but only follow the ones
         that have actual targets from the renderer.
+
+        For links in headings like [text](url), we parse the URL directly since
+        the renderer doesn't extract them.
         """
         import re
 
@@ -324,21 +327,27 @@ class HelpWidget(urwid.WidgetWrap):
 
         # Scan all visual links and build mapping
         self.visual_to_renderer_link = {}  # visual_idx -> renderer_idx or None
+        self.visual_link_urls = {}  # visual_idx -> url (for [text](url) format)
         visual_idx = 0
 
         for line_idx, line in enumerate(lines):
-            # Match both [text] and [text](url) formats
-            link_pattern = r'\[([^\]]+)\](?:\([^)]+\))?'
+            # Match both [text] and [text](url) formats, capturing the URL if present
+            link_pattern = r'\[([^\]]+)\](?:\(([^)]+)\))?'
             for match in re.finditer(link_pattern, line):
                 link_text = match.group(1)  # Text without brackets
+                link_url = match.group(2)   # URL if present (None otherwise)
                 key = (line_idx, link_text)
 
                 if key in renderer_links_map:
-                    # This visual link has a target
+                    # This visual link has a target from the renderer
                     self.visual_to_renderer_link[visual_idx] = renderer_links_map[key]
                 else:
-                    # This visual link has no target (decorative brackets)
+                    # This visual link has no renderer target
                     self.visual_to_renderer_link[visual_idx] = None
+
+                    # But if it has a URL in [text](url) format, save it
+                    if link_url:
+                        self.visual_link_urls[visual_idx] = link_url
 
                 visual_idx += 1
 
@@ -453,13 +462,18 @@ class HelpWidget(urwid.WidgetWrap):
 
                 # Check if this visual link has a target
                 if renderer_idx is None:
-                    # This is a decorative link with no target, ignore
-                    return None
-
-                if renderer_idx < len(self.current_links):
-                    _, _, target = self.current_links[renderer_idx]
+                    # No renderer target, but check if we have a direct URL from [text](url)
+                    if hasattr(self, 'visual_link_urls') and self.current_link_index in self.visual_link_urls:
+                        target = self.visual_link_urls[self.current_link_index]
+                    else:
+                        # Truly decorative link with no target, ignore
+                        return None
                 else:
-                    return None
+                    # Get target from renderer link
+                    if renderer_idx < len(self.current_links):
+                        _, _, target = self.current_links[renderer_idx]
+                    else:
+                        return None
             else:
                 # Fallback to old behavior if mapping not available
                 return None
