@@ -12,7 +12,7 @@ from .keybindings import (
     VARIABLES_KEY, STACK_KEY, RUN_KEY, LIST_KEY, NEW_KEY, SAVE_KEY, OPEN_KEY,
     BREAKPOINT_KEY, CLEAR_BREAKPOINTS_KEY,
     DELETE_LINE_KEY, INSERT_LINE_KEY, RENUMBER_KEY,
-    CONTINUE_KEY, STEP_KEY, STOP_KEY, CLEAR_OUTPUT_KEY, TAB_KEY, SETTINGS_KEY,
+    CONTINUE_KEY, STEP_KEY, STOP_KEY, TAB_KEY, SETTINGS_KEY,
     MAXIMIZE_OUTPUT_KEY,
     STATUS_BAR_SHORTCUTS, EDITOR_STATUS, OUTPUT_STATUS
 )
@@ -2083,9 +2083,8 @@ class CursesBackend(UIBackend):
             # Stop execution
             self._debug_stop()
 
-        elif key == CLEAR_OUTPUT_KEY:
-            # Clear output pane
-            self._clear_output()
+        # Note: Clear output removed from keyboard shortcuts (^Y now used for quit)
+        # Clear output still available via menu: Ctrl+U -> Output -> Clear Output
 
     def _clear_output(self):
         """Clear the output pane."""

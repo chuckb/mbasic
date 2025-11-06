@@ -71,7 +71,7 @@ class InteractiveMenuBar(urwid.WidgetWrap):
                 (f'Step Statement {fmt_key(kb.STEP_DISPLAY)}', '_debug_step_statement'),
                 (f'Stop           {fmt_key(kb.STOP_DISPLAY)}', '_debug_stop'),
                 ('---', None),
-                (f'Clear Output   {fmt_key(kb.CLEAR_OUTPUT_DISPLAY)}', '_clear_output'),
+                ('Clear Output   (menu only)', '_clear_output'),
             ],
             'Debug': [
                 (f'Variables Window {fmt_key(kb.VARIABLES_DISPLAY)}', '_toggle_variables_window'),
