@@ -246,12 +246,12 @@ class HelpWidget(urwid.WidgetWrap):
         Convert plain text lines to urwid markup with link highlighting.
 
         Links are marked with [text] in the rendered output. This method
-        converts them to use the 'link' attribute for highlighting, and
-        the 'focus' attribute for the currently selected link.
+        finds ALL [text] patterns for display/navigation, but uses the renderer's
+        links for target mapping when following links.
 
         Args:
             lines: List of plain text lines with links marked as [text]
-            links: List of (line_number, link_text, target) tuples from the renderer
+            links: List of (line_number, link_text, target) tuples from the renderer (for targets)
             current_link_index: Index of the currently selected link (for highlighting)
 
         Returns:
@@ -262,60 +262,82 @@ class HelpWidget(urwid.WidgetWrap):
         import re
 
         all_line_markups = []
-        link_positions = []  # Track which line each link is on
-
-        # Build a map of line -> list of (link_index, link_text) for links on that line
-        links_by_line = {}
-        for link_idx, (line_num, link_text, _) in enumerate(links):
-            if line_num not in links_by_line:
-                links_by_line[line_num] = []
-            links_by_line[line_num].append((link_idx, link_text))
-            link_positions.append(line_num)
+        link_positions = []  # Track which line each visual link is on
+        link_counter = 0  # Track ALL visual links (not just renderer's links)
 
         for line_idx, line in enumerate(lines):
+            # Find all [text] patterns (all visual links)
+            link_pattern = r'\[([^\]]+)\]'
+
+            # Split the line by links and build markup
+            last_end = 0
             line_markup = []
 
-            # Check if this line has any links
-            if line_idx in links_by_line:
-                # Process links on this line
-                last_end = 0
-                for link_idx, link_text in links_by_line[line_idx]:
-                    # Find this specific link text in the line (with brackets)
-                    link_pattern = re.escape(f'[{link_text}]')
-                    match = re.search(link_pattern, line[last_end:])
+            for match in re.finditer(link_pattern, line):
+                # Add text before the link
+                if match.start() > last_end:
+                    line_markup.append(line[last_end:match.start()])
 
-                    if match:
-                        # Adjust match position relative to full line
-                        match_start = last_end + match.start()
-                        match_end = last_end + match.end()
+                # Add the link with appropriate attribute
+                link_text = match.group(0)  # Keep the brackets
 
-                        # Add text before the link
-                        if match_start > last_end:
-                            line_markup.append(line[last_end:match_start])
+                # Use 'focus' attribute for current link, 'link' for others
+                if link_counter == current_link_index:
+                    line_markup.append(('focus', link_text))
+                else:
+                    line_markup.append(('link', link_text))
 
-                        # Add the link with appropriate attribute
-                        link_with_brackets = f'[{link_text}]'
-                        if link_idx == current_link_index:
-                            line_markup.append(('focus', link_with_brackets))
-                        else:
-                            line_markup.append(('link', link_with_brackets))
+                # Track which line this visual link is on
+                link_positions.append(line_idx)
+                link_counter += 1
+                last_end = match.end()
 
-                        last_end = match_end
+            # Add remaining text after last link
+            if last_end < len(line):
+                line_markup.append(line[last_end:])
 
-                # Add remaining text after last link
-                if last_end < len(line):
-                    line_markup.append(line[last_end:])
-            else:
-                # No links on this line, just add plain text
-                line_markup = [line]
-
-            # If line ended up empty, add empty string
+            # If line has no links, just add it as plain text
             if not line_markup:
-                line_markup = ['']
+                line_markup = [line]
 
             all_line_markups.append(line_markup)
 
         return (all_line_markups, link_positions)
+
+    def _build_link_mapping(self, lines: List[str], links: List[tuple]):
+        """
+        Build a mapping from visual link indices (all [text] patterns) to
+        renderer link indices (only links with targets).
+
+        This allows us to show all [text] as clickable, but only follow the ones
+        that have actual targets from the renderer.
+        """
+        import re
+
+        # Build map of (line_num, link_text) -> renderer_link_idx
+        renderer_links_map = {}
+        for renderer_idx, (line_num, link_text, _) in enumerate(links):
+            key = (line_num, link_text)
+            renderer_links_map[key] = renderer_idx
+
+        # Scan all visual links and build mapping
+        self.visual_to_renderer_link = {}  # visual_idx -> renderer_idx or None
+        visual_idx = 0
+
+        for line_idx, line in enumerate(lines):
+            link_pattern = r'\[([^\]]+)\]'
+            for match in re.finditer(link_pattern, line):
+                link_text = match.group(1)  # Text without brackets
+                key = (line_idx, link_text)
+
+                if key in renderer_links_map:
+                    # This visual link has a target
+                    self.visual_to_renderer_link[visual_idx] = renderer_links_map[key]
+                else:
+                    # This visual link has no target (decorative brackets)
+                    self.visual_to_renderer_link[visual_idx] = None
+
+                visual_idx += 1
 
     def _load_topic(self, relative_path: str) -> bool:
         """Load and render a help topic."""
@@ -358,6 +380,10 @@ class HelpWidget(urwid.WidgetWrap):
 
             # Store positions from markup creation
             self.link_positions = link_positions
+
+            # Build a mapping from visual link index to renderer link index
+            # This handles cases where some [text] patterns don't have targets
+            self._build_link_mapping(lines, links)
 
             # Scroll to top of the document
             if len(self.walker) > 0:
@@ -418,42 +444,55 @@ class HelpWidget(urwid.WidgetWrap):
             return None
 
         elif key == 'enter':
-            # Follow current link
-            if self.current_links and self.current_link_index < len(self.current_links):
-                _, _, target = self.current_links[self.current_link_index]
+            # Follow current link - map visual link index to renderer link index
+            if hasattr(self, 'visual_to_renderer_link') and self.current_link_index in self.visual_to_renderer_link:
+                renderer_idx = self.visual_to_renderer_link[self.current_link_index]
 
-                # Check if target is already an absolute path (from search results)
-                # Absolute paths start with common/ or ui/
-                if target.startswith('common/') or target.startswith('ui/'):
-                    # This is already a help-root-relative path (e.g., from search results)
-                    new_topic = target.replace('\\', '/')
+                # Check if this visual link has a target
+                if renderer_idx is None:
+                    # This is a decorative link with no target, ignore
+                    return None
+
+                if renderer_idx < len(self.current_links):
+                    _, _, target = self.current_links[renderer_idx]
                 else:
-                    # Resolve relative path from current topic
-                    current_dir = Path(self.current_topic).parent
-                    if str(current_dir) == '.':
-                        new_topic_path = Path(target)
-                    else:
-                        new_topic_path = current_dir / target
-
-                    # Normalize path (resolve .. and .)
-                    # Convert to absolute, resolve, then make relative to help_root
-                    abs_path = (self.help_root / new_topic_path).resolve()
-
-                    try:
-                        new_topic = str(abs_path.relative_to(self.help_root.resolve()))
-                    except ValueError:
-                        # Path is outside help_root, use as-is
-                        new_topic = str(new_topic_path)
-
-                    # Normalize path separators
-                    new_topic = new_topic.replace('\\', '/')
-
-                # Save current topic to history
-                self.history.append(self.current_topic)
-
-                # Load new topic
-                self._load_topic(new_topic)
+                    return None
+            else:
+                # Fallback to old behavior if mapping not available
                 return None
+
+            # Check if target is already an absolute path (from search results)
+            # Absolute paths start with common/ or ui/
+            if target.startswith('common/') or target.startswith('ui/'):
+                # This is already a help-root-relative path (e.g., from search results)
+                new_topic = target.replace('\\', '/')
+            else:
+                # Resolve relative path from current topic
+                current_dir = Path(self.current_topic).parent
+                if str(current_dir) == '.':
+                    new_topic_path = Path(target)
+                else:
+                    new_topic_path = current_dir / target
+
+                # Normalize path (resolve .. and .)
+                # Convert to absolute, resolve, then make relative to help_root
+                abs_path = (self.help_root / new_topic_path).resolve()
+
+                try:
+                    new_topic = str(abs_path.relative_to(self.help_root.resolve()))
+                except ValueError:
+                    # Path is outside help_root, use as-is
+                    new_topic = str(new_topic_path)
+
+                # Normalize path separators
+                new_topic = new_topic.replace('\\', '/')
+
+            # Save current topic to history
+            self.history.append(self.current_topic)
+
+            # Load new topic
+            self._load_topic(new_topic)
+            return None
 
         elif key == 'u' or key == 'U':
             # Go back in history
