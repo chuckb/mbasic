@@ -3760,12 +3760,20 @@ class CursesBackend(UIBackend):
         try:
             self.loop.run()
         except DialogExit:
-            # Dialog closed normally
+            # Dialog closed normally - need to restart the main loop
+            # The nested loop has stopped, so start it again
             pass
         finally:
             # Always restore state
             self.loop.widget = original_widget
             self.loop.unhandled_input = old_handler
+
+        # Force a screen redraw
+        try:
+            if hasattr(self.loop.screen, 'clear'):
+                self.loop.screen.clear()
+        except:
+            pass
 
         return result['value']
 
