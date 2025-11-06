@@ -336,23 +336,29 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             # Get text after cursor
             text_after_cursor = current_text[cursor_pos:].lstrip()
 
-            # Check if current line has user-pasted line number (to avoid double numbering)
-            # When pasting "10 PRINT", we might already have auto-number making it "?20 10 PRINT"
-            # OR the line might be " 10 PRINT" (no auto-number yet, just pasted content)
+            # Check if current line has DOUBLE line numbers (pasted content with auto-number)
+            # When pasting "10 PRINT", we might get "?20 10 PRINT" (double numbering)
+            # We need to detect and fix this specific case, not just any line starting with a digit
             if line_num < len(lines):
                 current_line = lines[line_num]
                 status_char = current_line[0] if current_line else ' '
-                # Get content after status character
-                content_after_status = current_line[1:].lstrip()
 
-                # Check if content starts with digit (user pasted a line number)
-                if content_after_status and content_after_status[0].isdigit():
-                    # Check if we ALSO have an auto-generated line number (double numbering)
-                    line_num_parsed, code_start = self._parse_line_number(current_line)
-                    if code_start is not None and code_start > 0:
-                        code_part = current_line[code_start:].strip()
-                        # If code part ALSO starts with digit, we have double numbering
-                        if code_part and code_part[0].isdigit():
+                # Parse the line to get the line number and code area
+                line_num_parsed, code_start = self._parse_line_number(current_line)
+                if line_num_parsed is not None and code_start is not None and code_start > 0:
+                    code_part = current_line[code_start:].strip()
+                    # Check if code part ALSO starts with digit (double numbering case)
+                    if code_part and code_part[0].isdigit():
+                        # Extract the number from code area
+                        pasted_num_str = ""
+                        for ch in code_part:
+                            if ch.isdigit():
+                                pasted_num_str += ch
+                            else:
+                                break
+
+                        # If we found a complete number in the code area, this is double numbering
+                        if pasted_num_str:
                             # Remove auto-number, keep only pasted content
                             fixed_line = f"{status_char}{code_part}"
 
@@ -364,13 +370,13 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                                 new_text = '\n'.join(lines_list)
                                 self.edit_widget.set_edit_text(new_text)
 
-                    # Insert newline with just status character
-                    current_text = self.edit_widget.get_edit_text()
-                    cursor_pos = self.edit_widget.edit_pos
-                    new_text = current_text[:cursor_pos] + "\n " + current_text[cursor_pos:]
-                    self.edit_widget.set_edit_text(new_text)
-                    self.edit_widget.set_edit_pos(cursor_pos + 2)
-                    return None
+                            # Insert newline with just status character (no auto-number for pasted content)
+                            current_text = self.edit_widget.get_edit_text()
+                            cursor_pos = self.edit_widget.edit_pos
+                            new_text = current_text[:cursor_pos] + "\n " + current_text[cursor_pos:]
+                            self.edit_widget.set_edit_text(new_text)
+                            self.edit_widget.set_edit_pos(cursor_pos + 2)
+                            return None
 
             # Parse current line number (variable width)
             current_line_number = None
