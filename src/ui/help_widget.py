@@ -205,57 +205,27 @@ class HelpWidget(urwid.WidgetWrap):
         self.footer.set_text(" ↑/↓=Scroll →/←=Next/Prev Link Enter=Follow /=Search U=Back ESC/Q=Exit ")
         self._load_topic(self.current_topic)
 
-    def _set_content(self, text_markup):
-        """Set content in the listbox, converting markup to line widgets."""
-        # Convert markup list into separate line widgets for proper scrolling
-        # text_markup is a list of strings and (attr, text) tuples
+    def _set_content(self, line_markups):
+        """Set content in the listbox, converting line markups to line widgets."""
+        # line_markups is a list of line markups (each line is a list of strings/tuples)
 
-        if not isinstance(text_markup, list):
-            text_markup = [text_markup]
+        if not isinstance(line_markups, list):
+            line_markups = [line_markups]
 
-        # Collect line data by processing markup
-        current_line = []
-        all_lines = []
-
-        for item in text_markup:
-            if isinstance(item, tuple):
-                # (attr, text) tuple
-                text = item[1]
-                # Check for newlines within the text
-                if '\n' in text:
-                    parts = text.split('\n')
-                    for i, part in enumerate(parts):
-                        if part:
-                            current_line.append((item[0], part))
-                        if i < len(parts) - 1:  # Not the last part
-                            all_lines.append(current_line if current_line else [('', '')])
-                            current_line = []
-                else:
-                    current_line.append(item)
-            else:
-                # Plain string
-                text = str(item)
-                if '\n' in text:
-                    parts = text.split('\n')
-                    for i, part in enumerate(parts):
-                        if part:
-                            current_line.append(part)
-                        if i < len(parts) - 1:
-                            all_lines.append(current_line if current_line else [''])
-                            current_line = []
-                else:
-                    if text:
-                        current_line.append(text)
-
-        # Add final line if non-empty
-        if current_line:
-            all_lines.append(current_line)
+        # If first element is not a list, it's old format (flat markup) - wrap it
+        if line_markups and not isinstance(line_markups[0], list):
+            # Old format: single flat markup, treat as one line
+            line_markups = [line_markups]
 
         # Create Text widgets for each line
         line_widgets = []
-        for line_markup in all_lines:
+        for i, line_markup in enumerate(line_markups):
             if not line_markup:
                 line_markup = ['']
+            # Debug first few lines
+            if i < 5 or (i >= 17 and i <= 19) or (i >= 33 and i <= 35):
+                with open('/tmp/help_debug.txt', 'a') as f:
+                    f.write(f"  _set_content line {i}: markup={line_markup}\n")
             text_widget = urwid.Text(line_markup)
             line_widgets.append(text_widget)
 
@@ -266,13 +236,24 @@ class HelpWidget(urwid.WidgetWrap):
         """Re-render the current display with updated link highlighting."""
         # Re-render using cached lines (preserves scroll position)
         if self.current_rendered_lines:
-            text_markup = self._create_text_markup_with_links(
+            text_markup, new_link_positions = self._create_text_markup_with_links(
                 self.current_rendered_lines,
                 self.current_link_index
             )
+            # Update link positions with the accurate positions from markup creation
+            self.link_positions = new_link_positions
+            # Debug: count focus attributes across all lines
+            with open('/tmp/help_debug.txt', 'a') as f:
+                focus_count = 0
+                for line_idx, line in enumerate(text_markup):
+                    for item in line:
+                        if isinstance(item, tuple) and item[0] == 'focus':
+                            focus_count += 1
+                            f.write(f"  FOCUS FOUND on line {line_idx}: {item}\n")
+                f.write(f"  _refresh_display: current_link_index={self.current_link_index}, focus_count={focus_count}\n")
             self._set_content(text_markup)
 
-    def _create_text_markup_with_links(self, lines: List[str], current_link_index: int = 0) -> List:
+    def _create_text_markup_with_links(self, lines: List[str], current_link_index: int = 0) -> tuple[List[List], List[int]]:
         """
         Convert plain text lines to urwid markup with link highlighting.
 
@@ -285,14 +266,17 @@ class HelpWidget(urwid.WidgetWrap):
             current_link_index: Index of the currently selected link (for highlighting)
 
         Returns:
-            Urwid text markup (list of tuples or strings)
+            Tuple of (line markups, link_positions):
+            - line markups: List of line markups (each line is a list of tuples/strings for urwid)
+            - link_positions: List of line numbers where each link appears
         """
         import re
 
-        markup = []
-        link_counter = 0  # Track which link we're on
+        all_line_markups = []
+        link_positions = []  # Track which line each link is on
+        link_counter = 0  # Track which link we're on globally
 
-        for line in lines:
+        for line_idx, line in enumerate(lines):
             # Find all [text] patterns (links)
             link_pattern = r'\[([^\]]+)\]'
 
@@ -314,6 +298,8 @@ class HelpWidget(urwid.WidgetWrap):
                 else:
                     line_markup.append(('link', link_text))
 
+                # Track which line this link is on
+                link_positions.append(line_idx)
                 link_counter += 1
                 last_end = match.end()
 
@@ -325,15 +311,9 @@ class HelpWidget(urwid.WidgetWrap):
             if not line_markup:
                 line_markup = [line]
 
-            # Add newline after each line (except the last)
-            markup.extend(line_markup)
-            markup.append('\n')
+            all_line_markups.append(line_markup)
 
-        # Remove trailing newline
-        if markup and markup[-1] == '\n':
-            markup.pop()
-
-        return markup
+        return (all_line_markups, link_positions)
 
     def _load_topic(self, relative_path: str) -> bool:
         """Load and render a help topic."""
@@ -474,6 +454,21 @@ class HelpWidget(urwid.WidgetWrap):
                 self._refresh_display()
                 # Scroll to make the link visible with padding
                 link_line = self.link_positions[self.current_link_index]
+                # Debug output
+                with open('/tmp/help_debug.txt', 'a') as f:
+                    f.write(f"Right arrow: link_index={self.current_link_index}, link_line={link_line}, walker_len={len(self.walker)}, num_links={len(self.link_positions)}\n")
+                    if link_line < len(self.walker):
+                        widget = self.walker[link_line]
+                        # Check the actual markup stored in the widget
+                        widget_text = widget.get_text()[0]
+                        # Get the internal markup - Text widget stores it in _text attribute
+                        has_focus = hasattr(widget, '_text') and any(
+                            isinstance(item, tuple) and item[0] == 'focus'
+                            for item in (widget._text if isinstance(widget._text, list) else [widget._text])
+                        )
+                        has_link = '[' in widget_text and ']' in widget_text
+                        f.write(f"  Line {link_line} text: {widget_text[:80]}, has_link={has_link}, has_focus={has_focus}\n")
+                        f.write(f"  Widget._text type: {type(widget._text)}, content: {str(widget._text)[:200]}\n")
                 if link_line < len(self.walker):
                     # Set alignment first, then focus to trigger scroll
                     self.listbox.set_focus_valign('middle')
