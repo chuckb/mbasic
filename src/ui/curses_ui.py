@@ -1043,8 +1043,12 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                         filtered_lines.append(line)
                     else:
                         changed = True  # We're removing an empty line
-                        continue
-            filtered_lines.append(line)
+                else:
+                    # No line number parsed, keep the line
+                    filtered_lines.append(line)
+            else:
+                # Short line (< 3 chars), keep it
+                filtered_lines.append(line)
 
         if changed:
             return '\n'.join(filtered_lines)
