@@ -23,22 +23,22 @@ class ImmediateExecutor:
     modifying the current program state.
 
     IMPORTANT: For tick-based execution (visual UIs), only execute immediate
-    mode when the interpreter is in a safe state:
-    - 'idle' - No program loaded
-    - 'paused' - User hit Ctrl+Q (stop)
-    - 'at_breakpoint' - Hit breakpoint
-    - 'done' - Program finished
-    - 'error' - Program encountered error
+    mode when the interpreter is in a safe state. The implementation checks:
+    - runtime.halted is True (program stopped)
+    - state.error_info is not None (program error)
+    - state.input_prompt is not None (waiting for INPUT)
 
-    DO NOT execute when status is:
-    - 'running' - Program is executing (tick() is running) and not halted
+    State names used in documentation (not actual enum values):
+    - 'idle' - No program loaded (halted=True)
+    - 'paused' - User hit Ctrl+Q/stop (halted=True)
+    - 'at_breakpoint' - Hit breakpoint (halted=True)
+    - 'done' - Program finished (halted=True)
+    - 'error' - Program encountered error (error_info is not None)
+    - 'waiting_for_input' - Waiting for INPUT (input_prompt is not None)
+    - 'running' - Program executing (halted=False) - DO NOT execute immediate mode
 
-    CAN execute when waiting for input:
-    - 'waiting_for_input' - Program is waiting for INPUT. Immediate mode is allowed
-      to inspect/modify variables while paused for input (e.g., PRINT X, X=100).
-      This state is detected by checking if state.input_prompt is not None.
-      Note: While allowed, users typically respond to INPUT prompts via normal input
-      rather than using immediate commands to set variable values.
+    Note: The actual implementation checks boolean flags (halted, error_info, input_prompt),
+    not string state values.
 
     Usage:
         executor = ImmediateExecutor(runtime, interpreter, io_handler)
@@ -398,7 +398,10 @@ class OutputCapturingIOHandler:
         self.output_buffer.append(str(text) + "\n")
 
     def input(self, prompt=""):
-        """Input not supported in immediate mode."""
+        """Input not supported in immediate mode.
+
+        Note: INPUT statements are parsed and executed normally, but fail
+        at runtime when the interpreter calls this input() method."""
         raise RuntimeError("INPUT not allowed in immediate mode")
 
     def write(self, text):

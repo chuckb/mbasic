@@ -70,17 +70,18 @@ Complete reference of features available and planned for the MBASIC Web UI.
 ### Local Storage
 
 **Currently Implemented:**
-- Programs stored in browser localStorage
+- Programs stored in Python server memory (session-only, lost on page refresh)
+- Recent files list stored in browser localStorage
 
 **Automatic Saving (Planned):**
-- Saves to browser storage
+- Saves programs to browser localStorage for persistence
 - Every 30 seconds
 - On significant changes
 - Before running
 
 **Session Recovery (Planned):**
-- Restores last program
-- Recovers after crash
+- Restores last program from browser storage
+- Recovers after crash or page refresh
 - Maintains breakpoints
 - Preserves variables
 

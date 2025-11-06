@@ -104,7 +104,7 @@ def _get_key(section, action):
 # Global Commands (loaded from JSON)
 # =============================================================================
 
-# Help system - use Ctrl+F (F for help/Find help)
+# Help system - use Ctrl+F (mnemonic: F for Find help)
 HELP_KEY = 'ctrl f'
 HELP_CHAR = '\x06'
 HELP_DISPLAY = '^F'

@@ -3,7 +3,8 @@ UI Helper Functions - Portable logic for all UIs
 
 This module contains UI-agnostic helper functions that can be used by
 any UI (CLI, Tk, Web, Curses). No UI-framework dependencies (Tk, curses, web)
-are allowed, though standard library modules (os, glob, re) are permitted.
+are allowed. Standard library modules (os, glob, re) and core interpreter
+modules (runtime, parser, AST nodes) are permitted.
 
 Functions for:
 - Line renumbering with GOTO/GOSUB reference updates

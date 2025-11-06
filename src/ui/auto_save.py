@@ -1,8 +1,9 @@
 """
 Auto-Save Manager for MBASIC IDE
 
-Provides Emacs-style auto-save functionality:
-- Saves to temp files (#filename#) automatically
+Provides auto-save functionality with Emacs-inspired naming (#filename#):
+- Saves to centralized temp directory (~/.mbasic/autosave/) automatically
+- Uses Emacs-style #filename# naming convention
 - Never overwrites user-saved files without permission
 - Offers recovery on startup if autosave is newer
 - Cleans up old autosaves
@@ -55,7 +56,7 @@ class AutoSaveManager:
         # Get just the filename
         filename = Path(filepath).name if filepath else 'untitled.bas'
 
-        # Emacs-style: #filename#
+        # Emacs-inspired naming: #filename#
         autosave_name = f"#{filename}#"
 
         return self.autosave_dir / autosave_name

@@ -48,7 +48,7 @@ class TkBackend(UIBackend):
 
     Usage:
         from src.iohandler.console import ConsoleIOHandler
-        from editing import ProgramManager
+        from src.editing.manager import ProgramManager
         from src.ui.tk_ui import TkBackend
 
         io = ConsoleIOHandler()
@@ -3644,7 +3644,7 @@ class TkBackend(UIBackend):
 
         This method name is historical - it simply forwards to _add_output().
         In the Tk UI, immediate mode output goes to the main output pane.
-        Note: self.immediate_history exists but is always None (see line ~291) -
+        Note: self.immediate_history exists but is always None (see __init__) -
         it's a dummy attribute for compatibility with code that references it.
         """
         self._add_output(text)
@@ -3734,7 +3734,7 @@ class TkBackend(UIBackend):
         """Setup right-click context menu for immediate history widget.
 
         NOTE: This method is currently unused - immediate_history is always None
-        in the Tk UI (see line ~291). This is dead code retained for potential
+        in the Tk UI (see __init__). This is dead code retained for potential
         future use if immediate mode gets its own output widget.
         """
         import tkinter as tk
@@ -3834,9 +3834,14 @@ class TkBackend(UIBackend):
 
 class TkIOHandler(IOHandler):
     """IOHandler that routes output to Tk output pane.
-    
+
     This handler captures program output and sends it to the Tk UI's
     output text widget via a callback function.
+
+    Input strategy:
+    - INPUT statement: Prefers inline input field (when backend available),
+      falls back to modal dialog
+    - LINE INPUT statement: Always uses modal dialog for consistent UX
     """
     
     def __init__(self, output_callback, root=None, backend=None):

@@ -1,5 +1,6 @@
 """
-MBASIC 5.21 Interactive Command Mode
+MBASIC-2025 Interactive Command Mode
+Modern implementation of MBASIC 5.21 interactive REPL
 
 Implements the interactive REPL with:
 - Line entry and editing
@@ -639,13 +640,12 @@ class InteractiveMode:
             # Save variables based on CHAIN options:
             # - MERGE (merge=True): overlay mode, preserves all variables
             # - ALL (all_flag=True): passes all variables to new program
-            # - Neither: only pass COMMON variables (with type suffix resolution below)
+            # - Neither: pass COMMON variables with type suffix resolution
             #
-            # Note for COMMON variables: common_vars stores base names (e.g., "i"), but
+            # COMMON variable handling: common_vars stores base names (e.g., "i"), but
             # actual variables may have type suffixes (e.g., "i%", "i$") based on DEF
-            # statements or explicit suffixes. We must try all possible type suffixes
+            # statements or explicit suffixes. We try all possible type suffixes
             # (%, $, !, #, and no suffix) to find the actual variable in the runtime.
-            # This type suffix resolution logic is implemented below for the COMMON case.
             saved_variables = None
             if self.program_runtime:
                 if all_flag or merge:
@@ -797,6 +797,7 @@ class InteractiveMode:
         - Parsing the delete range syntax
         - Removing lines from program manager
         - Updating runtime statement table if program is loaded
+        - Returns list of deleted line numbers (not used by this command)
 
         Error handling: ValueError is caught and displayed with "?" prefix,
         all other exceptions are converted to "?Syntax error".

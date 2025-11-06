@@ -39,7 +39,7 @@ class ResourceLimits:
                  # Memory limits
                  max_total_memory: int = 10*1024*1024,  # 10MB default
                  max_array_size: int = 1*1024*1024,      # 1MB per array
-                 max_string_length: int = 255,            # 255 bytes (MBASIC 5.21 compatibility - can be overridden)
+                 max_string_length: int = 255,            # 255 bytes (MBASIC 5.21 compatibility)
 
                  # File system limits
                  max_open_files: int = 10,

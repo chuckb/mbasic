@@ -73,7 +73,7 @@ class FileSystemProvider(ABC):
     Abstract filesystem provider.
 
     Different UIs can provide different implementations:
-    - RealFileSystemProvider: Direct filesystem access (CLI, Tk, Curses)
+    - LocalFileSystemProvider: Direct filesystem access (CLI, Tk, Curses)
     - SandboxedFileSystemProvider: In-memory or restricted access (Web)
     """
 

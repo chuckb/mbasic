@@ -10,8 +10,7 @@ from src.simple_keyword_case import SimpleKeywordCase
 
 
 def create_keyword_case_manager() -> SimpleKeywordCase:
-    """
-    Create a SimpleKeywordCase handler configured from settings.
+    """Create a SimpleKeywordCase handler configured from settings.
 
     The lexer uses SimpleKeywordCase which supports force-based case policies:
     - force_lower: Convert all keywords to lowercase (default)
@@ -19,13 +18,6 @@ def create_keyword_case_manager() -> SimpleKeywordCase:
     - force_capitalize: Convert all keywords to Capitalized form
 
     SimpleKeywordCase validates policy strings and defaults to force_lower for invalid values.
-
-    Note: A separate KeywordCaseManager class exists (src/keyword_case_manager.py)
-    that provides additional advanced policies (first_wins, preserve, error) using
-    CaseKeeperTable for tracking case conflicts across the codebase. That class is
-    used by the parser and position_serializer where conflict detection is needed.
-    The lexer only needs simple force-based case conversion, so it uses the simpler
-    SimpleKeywordCase class.
 
     Returns:
         SimpleKeywordCase with policy from settings (validated), or default (force_lower)
@@ -57,13 +49,7 @@ class Lexer:
         self.column = 1
         self.tokens: List[Token] = []
 
-        # Keyword case handler - uses SimpleKeywordCase for force-based policies:
-        # force_lower, force_upper, force_capitalize (simple case conversion)
-        #
-        # Note: The separate KeywordCaseManager class (src/keyword_case_manager.py) is used by
-        # parser/position_serializer for advanced policies (first_wins, preserve, error) that
-        # require tracking case conflicts via CaseKeeperTable. The lexer only needs simple
-        # force-based case conversion, so it uses SimpleKeywordCase.
+        # Keyword case handler - uses SimpleKeywordCase (see create_keyword_case_manager())
         self.keyword_case_manager = keyword_case_manager or SimpleKeywordCase(policy="force_lower")
 
     def current_char(self) -> Optional[str]:
@@ -233,9 +219,9 @@ class Lexer:
         Identifiers can contain letters, digits, and end with type suffix $ % ! #
         In MBASIC, $ % ! # are considered part of the identifier.
 
-        This lexer parses properly-formed MBASIC 5.21 which requires spaces
-        between keywords and identifiers. Old BASIC with NEXTI instead of NEXT I
-        should be preprocessed before parsing.
+        This lexer parses properly-formed MBASIC 5.21 which generally requires spaces
+        between keywords and identifiers. Exception: PRINT# and INPUT# where # is part
+        of the keyword. Old BASIC with NEXTI instead of NEXT I should be preprocessed.
         """
         start_line = self.line
         start_column = self.column

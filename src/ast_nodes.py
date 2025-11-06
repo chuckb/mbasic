@@ -142,11 +142,13 @@ class InputStatementNode:
         INPUT; var1                - Read without prompt (no "?")
         INPUT #filenum, var1       - Read from file
 
-    Note: The semicolon has different meanings depending on its position:
-    - After a prompt string: INPUT "prompt"; var  → shows "prompt? " (question mark still appears)
-    - Immediately after INPUT keyword: INPUT; var → suppresses "?" completely (no prompt at all)
-    The suppress_question field is True only for the second case (INPUT; without prompt),
-    not for the first case (prompt with semicolon still shows "?").
+    Note: The suppress_question field indicates whether to suppress the question mark prompt:
+    - suppress_question=False (default): INPUT var or INPUT "prompt", var → shows "? " or "prompt? "
+    - suppress_question=True: INPUT; var → suppresses "?" completely (no prompt at all)
+
+    Semicolon usage:
+    - After prompt string: INPUT "prompt"; var → semicolon is just a separator (shows "prompt? ")
+    - Immediately after INPUT: INPUT; var → semicolon signals suppress_question=True
     """
     prompt: Optional['ExpressionNode']
     variables: List['VariableNode']
@@ -531,7 +533,7 @@ class LimitsStatementNode:
 
 
 # NOTE: SetSettingStatementNode and ShowSettingsStatementNode are defined
-# in the "Settings Commands" section below (see line ~980+).
+# in the "Settings Commands" section later in this file.
 
 
 @dataclass
@@ -627,10 +629,12 @@ class RenumStatementNode:
     Parameters can be omitted using commas:
         RENUM 100,,20  - new_start=100, old_start=0 (default), increment=20
         RENUM ,50,20   - new_start=10 (default), old_start=50, increment=20
+
+    Note: None means use default value (handled by interpreter: 10, 0, 10 respectively)
     """
-    new_start: 'ExpressionNode' = None  # New starting line number (default 10)
-    old_start: 'ExpressionNode' = None  # First old line to renumber (default 0)
-    increment: 'ExpressionNode' = None  # Increment (default 10)
+    new_start: 'ExpressionNode' = None  # New starting line number (None → default 10)
+    old_start: 'ExpressionNode' = None  # First old line to renumber (None → default 0)
+    increment: 'ExpressionNode' = None  # Increment (None → default 10)
     line_num: int = 0
     column: int = 0
 
@@ -795,13 +799,13 @@ class CallStatementNode:
         CALL A                 - Call address in variable
         CALL DIO+1             - Call computed address
 
-    Note: The 'arguments' field exists for potential future compatibility with
-    other BASIC dialects (e.g., CALL ROUTINE(args)), but extended syntax is
-    not currently supported by the parser. Standard MBASIC 5.21 only accepts
-    a single address expression.
+    Note: The 'arguments' field is reserved for potential future compatibility with
+    other BASIC dialects (e.g., CALL ROUTINE(args)). The parser does not currently
+    populate this field (always empty list). Standard MBASIC 5.21 only accepts
+    a single address expression in the 'target' field.
     """
     target: 'ExpressionNode'  # Memory address expression
-    arguments: List['ExpressionNode']  # Reserved for future extended syntax (not currently parsed)
+    arguments: List['ExpressionNode']  # Reserved for future (parser always sets to empty list)
     line_num: int = 0
     column: int = 0
 
@@ -943,12 +947,11 @@ class VariableNode:
     """Variable reference
 
     Type suffix handling:
-    - type_suffix: The actual suffix ($, %, !, #) - may be explicit or inferred
-    - explicit_type_suffix: Whether type_suffix came from source code (True) or
-      was inferred from a DEF statement (False)
+    - type_suffix: The actual suffix character ($, %, !, #)
+    - explicit_type_suffix: True if suffix appeared in source code, False if inferred from DEF
 
-    Both fields work together: type_suffix stores the value, explicit_type_suffix
-    tracks its origin. This is needed to regenerate source code accurately.
+    Example: In "DEFINT A-Z: X=5", variable X has type_suffix='%' and explicit_type_suffix=False.
+    The suffix must be tracked but not regenerated in source code.
     """
     name: str  # Normalized lowercase name for lookups
     type_suffix: Optional[str] = None  # $, %, !, # - The actual suffix (see explicit_type_suffix for origin)

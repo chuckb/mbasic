@@ -107,7 +107,13 @@ class UsingFormatter:
             i += 1
 
     def parse_numeric_field(self, start_pos):
-        """Parse a numeric field starting at start_pos"""
+        """Parse a numeric field starting at start_pos
+
+        Sign behavior:
+        - leading_sign: + at start, adds + or - sign
+        - trailing_sign: + at end, adds + or - sign
+        - trailing_minus_only: - at end, adds - for negative or space for non-negative (always 1 char)
+        """
         spec = {
             'start_pos': start_pos,
             'end_pos': start_pos,
@@ -117,7 +123,7 @@ class UsingFormatter:
             'has_decimal': False,  # Whether format includes decimal point
             'leading_sign': False,  # + at start
             'trailing_sign': False,  # + or - at end
-            'trailing_minus_only': False,  # - at end only
+            'trailing_minus_only': False,  # - at end only (always adds 1 char: - or space)
             'dollar_sign': False,  # $$
             'asterisk_fill': False,  # **
             'comma': False,  # Thousand separator
@@ -269,7 +275,7 @@ class UsingFormatter:
             rounded = round(value)
 
         # Determine sign - preserve negative sign for values that round to zero.
-        # original_negative was captured before rounding (line 263 above), allowing us to detect
+        # original_negative was captured before rounding (line 269 above), allowing us to detect
         # cases like -0.001 which round to 0 but should display as "-0" (not "0").
         # This matches BASIC behavior. Positive values that round to zero display as "0".
         if rounded == 0 and original_negative:
@@ -827,7 +833,9 @@ class BuiltinFunctions:
         Test for end of file.
 
         Returns -1 if at EOF, 0 otherwise
-        Note: For binary input files (mode 'I'), respects ^Z (ASCII 26) as EOF marker (CP/M style).
+
+        Note: For binary input files (mode 'I' from OPEN statement), respects ^Z (ASCII 26)
+        as EOF marker (CP/M style). Mode 'I' is set by the OPEN statement for binary input.
         Text mode files and output files use standard Python EOF detection.
         """
         file_num = int(file_num)
@@ -847,7 +855,8 @@ class BuiltinFunctions:
             current_pos = file_handle.tell()
 
             # Peek at next byte to check for ^Z or EOF
-            # read(1) returns bytes in binary mode, so next_byte[0] gives the byte value
+            # File opened in binary mode ('rb'), so read(1) returns bytes object
+            # next_byte[0] accesses the first byte value as integer
             next_byte = file_handle.read(1)
             if not next_byte:
                 # Physical EOF
@@ -987,7 +996,9 @@ class BuiltinFunctions:
 
         Python call syntax (from interpreter):
             INPUT(n) - read n characters from keyboard
-            INPUT(n, filenum) - read n characters from file (no # prefix)
+            INPUT(n, filenum) - read n characters from file
+
+        Note: The # prefix in BASIC syntax is stripped by the parser before calling this method.
         """
         num = int(num)
 
@@ -1008,7 +1019,7 @@ class BuiltinFunctions:
 
             # self.runtime.files[file_num] returns a dict with 'handle', 'mode', 'eof' keys
             # Extract the file handle from the file_info dict to perform read operations
-            # (see EOF() method for the same access pattern)
+            # (this pattern is used by EOF(), LOC(), LOF(), and other file functions)
             file_info = self.runtime.files[file_num]
             file_handle = file_info['handle']
             return file_handle.read(num)

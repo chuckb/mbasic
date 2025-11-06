@@ -9,11 +9,11 @@ It supports only three force-based policies:
 
 For advanced policies (first_wins, preserve, error) via CaseKeeperTable,
 see KeywordCaseManager (src/keyword_case_manager.py) which is used by
-parser.py and position_serializer.py.
+src/parser.py and src/position_serializer.py.
 
-The lexer uses SimpleKeywordCase because keywords only need force-based
-policies in the tokenization phase. Advanced policies are handled later
-in the parsing/serialization phase.
+The lexer (src/lexer.py) uses SimpleKeywordCase because keywords only need
+force-based policies in the tokenization phase. Advanced policies are handled
+later in the parsing/serialization phase by KeywordCaseManager.
 """
 
 

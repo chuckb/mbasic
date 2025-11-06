@@ -1357,7 +1357,8 @@ class CursesBackend(UIBackend):
         # ImmediateExecutor Lifecycle:
         # Created here with temporary IO handler (to ensure attribute exists),
         # then recreated in start() with a fresh OutputCapturingIOHandler.
-        # The new executor in start() will reuse this same self.interpreter instance.
+        # Note: The interpreter (self.interpreter) is created once here and reused.
+        # Only the executor and its IO handler are recreated in start().
         self.immediate_executor = ImmediateExecutor(self.runtime, self.interpreter, immediate_io)
 
         # Immediate mode UI widgets
@@ -3962,7 +3963,7 @@ class CursesBackend(UIBackend):
             return
 
         # Parse editor content into program (in case user typed lines directly)
-        # This updates self.program but doesn't affect runtime yet
+        # This updates self.program, then syncs to runtime below
         self._parse_editor_content()
 
         # Load program lines into program manager

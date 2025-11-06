@@ -164,7 +164,7 @@ class StatementTable:
             pc: Current program counter
 
         Returns:
-            Next PC in sequence, or halted PC if at end
+            Next PC in sequence, or halted PC if at end or PC not found in table
         """
         # Build/rebuild keys cache if needed
         if self._keys_cache is None:

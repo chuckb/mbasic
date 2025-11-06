@@ -1232,8 +1232,8 @@ class Parser:
             expressions.append(expr)
 
         # Add newline if there's no trailing separator
-        # Trailing separator means len(separators) == len(expressions)
-        # (each expression has a separator except the last, which has a trailing separator)
+        # For N expressions: N-1 separators (between items) = no trailing separator
+        #                    N separators (between items + at end) = has trailing separator
         if len(separators) < len(expressions):
             separators.append('\n')
 
@@ -1335,8 +1335,8 @@ class Parser:
             expressions.append(expr)
 
         # Add newline if there's no trailing separator
-        # Trailing separator means len(separators) == len(expressions)
-        # (each expression has a separator except the last, which has a trailing separator)
+        # For N expressions: N-1 separators (between items) = no trailing separator
+        #                    N separators (between items + at end) = has trailing separator
         if len(separators) < len(expressions):
             separators.append('\n')
 
@@ -3374,7 +3374,7 @@ class Parser:
         - Quoted strings: DATA "HELLO", "WORLD"
         - Unquoted strings: DATA HELLO WORLD, FOO BAR
 
-        Unquoted strings extend until comma, colon, or end of line
+        Unquoted strings extend until comma, colon, end of line, or unrecognized token
         """
         token = self.advance()
 
@@ -3554,9 +3554,9 @@ class Parser:
         Parses a WIDTH statement that specifies output width for a device.
         Both the width and optional device parameters are parsed as expressions.
 
-        Args:
-            width: Column width expression (typically 40 or 80)
-            device: Optional device expression (typically screen or printer)
+        The parsed statement contains:
+        - width: Column width expression (typically 40 or 80)
+        - device: Optional device expression (typically screen or printer)
         """
         token = self.advance()
 

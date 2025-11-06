@@ -10,7 +10,7 @@ TWO SEPARATE FILESYSTEM ABSTRACTIONS:
    - Operations: FILES (list), LOAD/SAVE/MERGE (program files), KILL (delete)
    - Purpose: Load .BAS programs into memory, save from memory to storage
    - Implementations:
-     * RealFileIO: Direct filesystem access to disk (TK, Curses, CLI)
+     * RealFileIO: Direct filesystem access to disk (Tk, Curses, CLI)
      * SandboxedFileIO: Python server memory virtual filesystem (Web UI)
 
 2. FileSystemProvider (src/filesystem/base.py) - Runtime file I/O (OPEN/CLOSE/INPUT#/PRINT#)
@@ -19,7 +19,7 @@ TWO SEPARATE FILESYSTEM ABSTRACTIONS:
    - Also provides: list_files() and delete() for runtime use within programs
    - Purpose: File I/O from within running BASIC programs
    - Implementations:
-     * LocalFileSystemProvider: Direct filesystem access (TK, Curses, CLI)
+     * LocalFileSystemProvider: Direct filesystem access (Tk, Curses, CLI)
      * SandboxedFileSystemProvider: Python server memory (Web UI)
 
 Note: Both abstractions serve different purposes and are used at different times.
@@ -36,7 +36,7 @@ class FileIO(ABC):
     """Abstract interface for file operations.
 
     Different UIs provide different implementations:
-    - Local UIs (TK/Curses/CLI): RealFileIO (direct filesystem)
+    - Local UIs (Tk/Curses/CLI): RealFileIO (direct filesystem)
     - Web UI: SandboxedFileIO (delegates to backend.sandboxed_fs, an in-memory filesystem)
     """
 

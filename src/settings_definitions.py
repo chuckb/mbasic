@@ -158,10 +158,10 @@ SETTING_DEFINITIONS: Dict[str, SettingDefinition] = {
     ),
 
     # Note: Tab key is used for window switching in curses UI, not indentation
-    # Removed editor.tab_size setting as it's not relevant for BASIC
+    # editor.tab_size setting not included - not relevant for BASIC
 
     # Note: Line numbers are always shown - they're fundamental to BASIC!
-    # Removed editor.show_line_numbers setting as it makes no sense for BASIC
+    # editor.show_line_numbers setting not included - makes no sense for BASIC
 
     # Note: Additional settings may be added in future versions
 }

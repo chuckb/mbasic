@@ -59,7 +59,7 @@ class InterpreterState:
     input_file_number: Optional[int] = None  # If reading from file
 
     # Debugging (breakpoints are stored in Runtime, not here)
-    skip_next_breakpoint_check: bool = False  # Set to True WHEN halting at a breakpoint (set during the halt).
+    skip_next_breakpoint_check: bool = False  # Set to True AFTER halting at a breakpoint (set after returning state).
                                                # On next execution, if still True, allows stepping past the breakpoint once,
                                                # then clears itself to False. Prevents re-halting on same breakpoint.
     pause_requested: bool = False  # Set by pause() method
@@ -1348,9 +1348,8 @@ class Interpreter:
         # Determine where to resume
         if stmt.line_number is None or stmt.line_number == 0:
             # RESUME or RESUME 0 - retry the statement that caused the error
-            # Note: Parser creates different AST representations (None vs 0) to preserve
-            # the original source syntax for position_serializer round-trip accuracy.
-            # The interpreter treats both identically at runtime (both retry the error statement).
+            # Note: Parser preserves the distinction (None vs 0) for accurate source
+            # text regeneration, but the interpreter treats both identically at runtime.
             self.runtime.npc = error_pc
         elif stmt.line_number == -1:
             # RESUME NEXT - continue at statement after the error
@@ -2314,6 +2313,8 @@ class Interpreter:
             CLOSE #1        - Close file 1
             CLOSE #1, #2    - Close files 1 and 2
             CLOSE           - Close all files
+
+        Note: Silently ignores closing unopened files (MBASIC 5.21 compatibility)
         """
         if not stmt.file_numbers:
             # CLOSE with no arguments - close all files
@@ -2540,12 +2541,12 @@ class Interpreter:
             if var_name in buffer_info['fields']:
                 offset, width = buffer_info['fields'][var_name]
 
-                # Right-justify and pad/truncate to width
+                # Right-justify: pad on left if too short, truncate from left if too long
                 if len(value) < width:
-                    # Pad on left (right-justify)
+                    # Pad on left with spaces (right-justify)
                     value = ' ' * (width - len(value)) + value
                 else:
-                    # Truncate from LEFT (keep rightmost characters for right-justification)
+                    # Truncate from left (keep rightmost characters)
                     value = value[-width:]
 
                 # Update buffer
@@ -2842,8 +2843,8 @@ class Interpreter:
             # Enforce 255 character string limit for concatenation (MBASIC 5.21 compatibility)
             # Note: This check only applies to concatenation via PLUS operator.
             # Other string operations (MID$, LSET, RSET, INPUT) do not enforce this limit.
-            # Also note: len() counts characters, not bytes. For ASCII this is equivalent,
-            # but extended characters could differ if using latin-1 encoding.
+            # Also note: len() counts characters, not bytes. For ASCII this is equivalent.
+            # Field buffers (LSET/RSET) explicitly use latin-1 encoding where byte count matters.
             if isinstance(result, str) and len(result) > 255:
                 raise RuntimeError("String too long")
             return result

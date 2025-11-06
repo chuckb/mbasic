@@ -79,8 +79,9 @@ class HelpMacros:
         if name == 'kbd':
             return self._expand_kbd(arg)
         elif name == 'version':
-            # TODO: Import version from src.version module instead of hardcoding
-            return "5.21"  # MBASIC version (hardcoded)
+            # Hardcoded MBASIC version for documentation
+            # Note: Project has internal implementation version (src/version.py) separate from this
+            return "5.21"  # MBASIC 5.21 language version
         elif name == 'ui':
             return self.ui_name.capitalize()
         else:

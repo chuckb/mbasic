@@ -2279,12 +2279,14 @@ class NiceGUIBackend(UIBackend):
         try:
             from ..web_help_launcher import open_help_in_browser
             # Note: URL is constructed by web_help_launcher based on topic parameter
-            success = open_help_in_browser(topic="help/ui/web/", ui_type="web")
+            topic_path = "help/ui/web/"
+            success = open_help_in_browser(topic=topic_path, ui_type="web")
 
             if success:
                 self._notify('Opening help in browser...', type='positive', log_to_output=False)
             else:
-                # Show URL in both notification and output
+                # URL construction matches web_help_launcher logic
+                url = f'http://localhost:8000/docs/{topic_path}'
                 msg = f'Could not open browser automatically.\n\nPlease open this URL manually:\n{url}'
                 self._notify(msg, type='warning')
                 self._append_output(f'\n--- Help URL ---\n{url}\n')
@@ -2297,12 +2299,14 @@ class NiceGUIBackend(UIBackend):
         try:
             from ..web_help_launcher import open_help_in_browser
             # Note: URL is constructed by web_help_launcher based on topic parameter
-            success = open_help_in_browser(topic="library/", ui_type="web")
+            topic_path = "library/"
+            success = open_help_in_browser(topic=topic_path, ui_type="web")
 
             if success:
                 self._notify('Opening program library in browser...', type='positive', log_to_output=False)
             else:
-                # Show URL in both notification and output
+                # URL construction matches web_help_launcher logic
+                url = f'http://localhost:8000/docs/{topic_path}'
                 msg = f'Could not open browser automatically.\n\nPlease open this URL manually:\n{url}'
                 self._notify(msg, type='warning')
                 self._append_output(f'\n--- Library URL ---\n{url}\n')

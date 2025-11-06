@@ -36,7 +36,7 @@ class SettingsDialog(tk.Toplevel):
         # Create UI
         self._create_widgets()
 
-        # Make modal (grab input focus, but non-blocking - no wait_window())
+        # Make modal (prevents interaction with parent, but doesn't block code execution - no wait_window())
         self.transient(parent)
         self.grab_set()
 

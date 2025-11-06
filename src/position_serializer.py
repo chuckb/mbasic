@@ -44,8 +44,8 @@ def apply_keyword_case_policy(keyword: str, policy: str, keyword_tracker: Option
     Returns:
         Keyword with case policy applied
 
-    Note: The keyword argument is normalized to lowercase internally when needed (e.g., for
-    first_wins policy lookup). Callers may pass keywords in any case.
+    Note: The first_wins policy normalizes keywords to lowercase for lookup purposes.
+    Other policies transform the keyword directly. Callers may pass keywords in any case.
     """
     if policy == "force_lower":
         return keyword.lower()
@@ -109,12 +109,14 @@ class PositionSerializer:
         """Emit a keyword token with case from keyword case table.
 
         Args:
-            keyword: The keyword to emit (normalized lowercase)
+            keyword: The keyword to emit (should be normalized lowercase for proper lookup)
             expected_column: Column where keyword should appear
             node_type: Type of AST node for debugging
 
         Returns:
             String with appropriate spacing + keyword text (with case from table)
+
+        Note: Caller is responsible for normalizing keyword to lowercase before calling.
         """
         # Get display case from keyword case manager table
         if self.keyword_case_manager:
