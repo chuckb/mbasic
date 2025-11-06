@@ -1001,37 +1001,21 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                 continue
 
             # SECOND: Check lines with column structure
-            if len(line) >= 7:
-                # Extract status, line number column, and code area
+            if len(line) >= 3:
+                # Parse to get the actual line number (handles multiple numbers)
                 status = line[0]
                 linenum_int, code_start_col = self._parse_line_number(line)  # Variable width
-                code_area = line[code_start_col:] if code_start_col and code_start_col < len(line) else ""
 
-                # Check if code area starts with a number (after stripping leading spaces)
-                # (It's never legal for BASIC code to start with a digit)
-                code_stripped = code_area.lstrip()
-                if code_stripped and code_stripped[0].isdigit():
-                    # Found a number in code area - use it as the line number
+                if linenum_int is not None and code_start_col is not None:
+                    code_area = line[code_start_col:] if code_start_col < len(line) else ""
 
-                    # Extract the number from code area
-                    num_str = ""
-                    j = 0
-                    while j < len(code_stripped) and code_stripped[j].isdigit():
-                        num_str += code_stripped[j]
-                        j += 1
+                    # Reconstruct line cleanly from parsed components
+                    # This removes any extra line numbers that were found during parsing
+                    new_line = f"{status}{linenum_int} {code_area}"
 
-                    # Get rest of line (skip ALL spaces after number)
-                    while j < len(code_stripped) and code_stripped[j] == ' ':
-                        j += 1
-                    rest = code_stripped[j:]
-
-                    # ALWAYS use the number from code area (replaces auto-number or fills empty)
-                    # This preserves user's pasted line numbers like 210, 220, 230
-                    # Use variable width line numbers (no fixed padding)
-                    new_line = f"{status}{num_str} {rest}"
-
-                    lines[i] = new_line
-                    changed = True
+                    if new_line != line:
+                        lines[i] = new_line
+                        changed = True
 
         if changed:
             return '\n'.join(lines)
