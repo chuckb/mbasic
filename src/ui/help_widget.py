@@ -222,10 +222,6 @@ class HelpWidget(urwid.WidgetWrap):
         for i, line_markup in enumerate(line_markups):
             if not line_markup:
                 line_markup = ['']
-            # Debug first few lines
-            if i < 5 or (i >= 17 and i <= 19) or (i >= 33 and i <= 35):
-                with open('/tmp/help_debug.txt', 'a') as f:
-                    f.write(f"  _set_content line {i}: markup={line_markup}\n")
             text_widget = urwid.Text(line_markup)
             line_widgets.append(text_widget)
 
@@ -242,15 +238,6 @@ class HelpWidget(urwid.WidgetWrap):
             )
             # Update link positions with the accurate positions from markup creation
             self.link_positions = new_link_positions
-            # Debug: count focus attributes across all lines
-            with open('/tmp/help_debug.txt', 'a') as f:
-                focus_count = 0
-                for line_idx, line in enumerate(text_markup):
-                    for item in line:
-                        if isinstance(item, tuple) and item[0] == 'focus':
-                            focus_count += 1
-                            f.write(f"  FOCUS FOUND on line {line_idx}: {item}\n")
-                f.write(f"  _refresh_display: current_link_index={self.current_link_index}, focus_count={focus_count}\n")
             self._set_content(text_markup)
 
     def _create_text_markup_with_links(self, lines: List[str], current_link_index: int = 0) -> tuple[List[List], List[int]]:
@@ -341,14 +328,14 @@ class HelpWidget(urwid.WidgetWrap):
             self.current_rendered_lines = lines
 
             # Create text markup with link highlighting
-            text_markup = self._create_text_markup_with_links(lines, self.current_link_index)
+            text_markup, link_positions = self._create_text_markup_with_links(lines, self.current_link_index)
 
             # Set the content
             self._set_content(text_markup)
 
-            # Store links and positions
+            # Store links and positions (use accurate positions from markup creation)
             self.current_links = links
-            self.link_positions = [link[0] for link in links]
+            self.link_positions = link_positions
             self.current_link_index = 0
 
             # Update title
@@ -452,23 +439,8 @@ class HelpWidget(urwid.WidgetWrap):
                 self.current_link_index = (self.current_link_index + 1) % len(self.link_positions)
                 # Re-render to update highlighting
                 self._refresh_display()
-                # Scroll to make the link visible with padding
+                # Scroll to make the link visible and centered
                 link_line = self.link_positions[self.current_link_index]
-                # Debug output
-                with open('/tmp/help_debug.txt', 'a') as f:
-                    f.write(f"Right arrow: link_index={self.current_link_index}, link_line={link_line}, walker_len={len(self.walker)}, num_links={len(self.link_positions)}\n")
-                    if link_line < len(self.walker):
-                        widget = self.walker[link_line]
-                        # Check the actual markup stored in the widget
-                        widget_text = widget.get_text()[0]
-                        # Get the internal markup - Text widget stores it in _text attribute
-                        has_focus = hasattr(widget, '_text') and any(
-                            isinstance(item, tuple) and item[0] == 'focus'
-                            for item in (widget._text if isinstance(widget._text, list) else [widget._text])
-                        )
-                        has_link = '[' in widget_text and ']' in widget_text
-                        f.write(f"  Line {link_line} text: {widget_text[:80]}, has_link={has_link}, has_focus={has_focus}\n")
-                        f.write(f"  Widget._text type: {type(widget._text)}, content: {str(widget._text)[:200]}\n")
                 if link_line < len(self.walker):
                     # Set alignment first, then focus to trigger scroll
                     self.listbox.set_focus_valign('middle')
