@@ -18,6 +18,7 @@ from .settings_definitions import (
     get_definition,
     validate_value,
 )
+from .settings_backend import SettingsBackend, FileSettingsBackend
 
 
 class SettingsManager:
@@ -31,22 +32,28 @@ class SettingsManager:
     for future use.
     """
 
-    def __init__(self, project_dir: Optional[str] = None):
+    def __init__(self, project_dir: Optional[str] = None, backend: Optional[SettingsBackend] = None):
         """Initialize settings manager.
 
         Args:
             project_dir: Optional project directory for project-level settings
+            backend: Optional settings backend (defaults to FileSettingsBackend)
         """
         self.project_dir = project_dir
         self.global_settings: Dict[str, Any] = {}
         self.project_settings: Dict[str, Any] = {}
         self.file_settings: Dict[str, Any] = {}  # Not yet implemented: per-file settings
 
-        # Paths
-        self.global_settings_path = self._get_global_settings_path()
-        self.project_settings_path = self._get_project_settings_path()
+        # Settings backend (file or Redis)
+        if backend is None:
+            backend = FileSettingsBackend(project_dir)
+        self.backend = backend
 
-        # Load settings from disk
+        # Paths (for backward compatibility, may not be used with Redis backend)
+        self.global_settings_path = getattr(backend, 'global_settings_path', None)
+        self.project_settings_path = getattr(backend, 'project_settings_path', None)
+
+        # Load settings from backend
         self.load()
 
     def _get_global_settings_path(self) -> Path:
@@ -71,9 +78,9 @@ class SettingsManager:
         return settings_dir / 'settings.json'
 
     def load(self):
-        """Load settings from disk (global and project).
+        """Load settings from backend (file or Redis).
 
-        Implementation note: Settings are stored in flattened format on disk
+        Implementation note: Settings are stored in flattened format
         (e.g., {'editor.auto_number': True}) and save() uses _flatten_settings() to write them.
         However, load() intentionally does NOT call _unflatten_settings() - it keeps settings
         in flattened format after loading. This is by design because _get_from_dict() can handle
@@ -81,25 +88,9 @@ class SettingsManager:
         formats. Settings modified via set() will be in nested format, while loaded settings
         remain flat, but both work correctly in lookups.
         """
-        # Load global settings
-        if self.global_settings_path.exists():
-            try:
-                with open(self.global_settings_path, 'r') as f:
-                    data = json.load(f)
-                    self.global_settings = data.get('settings', {})
-            except (json.JSONDecodeError, IOError) as e:
-                print(f"Warning: Could not load global settings: {e}")
-                self.global_settings = {}
-
-        # Load project settings
-        if self.project_settings_path and self.project_settings_path.exists():
-            try:
-                with open(self.project_settings_path, 'r') as f:
-                    data = json.load(f)
-                    self.project_settings = data.get('settings', {})
-            except (json.JSONDecodeError, IOError) as e:
-                print(f"Warning: Could not load project settings: {e}")
-                self.project_settings = {}
+        # Load settings from backend
+        self.global_settings = self.backend.load_global()
+        self.project_settings = self.backend.load_project()
 
     def save(self, scope: SettingScope = SettingScope.GLOBAL):
         """Save settings to disk.
@@ -113,32 +104,14 @@ class SettingsManager:
             self._save_project()
 
     def _save_global(self):
-        """Save global settings to disk"""
-        data = {
-            'version': '1.0',
-            'settings': self._flatten_settings(self.global_settings)
-        }
-        try:
-            with open(self.global_settings_path, 'w') as f:
-                json.dump(data, f, indent=2)
-        except IOError as e:
-            print(f"Error: Could not save global settings: {e}")
+        """Save global settings via backend"""
+        flattened = self._flatten_settings(self.global_settings)
+        self.backend.save_global(flattened)
 
     def _save_project(self):
-        """Save project settings to disk"""
-        if not self.project_settings_path:
-            print("Warning: No project directory set, cannot save project settings")
-            return
-
-        data = {
-            'version': '1.0',
-            'settings': self._flatten_settings(self.project_settings)
-        }
-        try:
-            with open(self.project_settings_path, 'w') as f:
-                json.dump(data, f, indent=2)
-        except IOError as e:
-            print(f"Error: Could not save project settings: {e}")
+        """Save project settings via backend"""
+        flattened = self._flatten_settings(self.project_settings)
+        self.backend.save_project(flattened)
 
     def _flatten_settings(self, settings_dict: Dict[str, Any]) -> Dict[str, Any]:
         """Flatten nested settings dict for JSON storage.

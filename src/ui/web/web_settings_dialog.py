@@ -10,18 +10,18 @@ from src.settings_definitions import SETTING_DEFINITIONS, SettingType
 from src.settings import get_settings_manager
 
 
-class WebSettingsDialog:
+class WebSettingsDialog(ui.dialog):
     """Dialog for viewing and modifying MBASIC settings."""
 
-    def __init__(self, settings_manager, on_save_callback=None):
+    def __init__(self, backend):
         """Initialize settings dialog.
 
         Args:
-            settings_manager: SettingsManager instance
-            on_save_callback: Optional callback when settings saved
+            backend: NiceGUIBackend instance
         """
-        self.settings_manager = settings_manager
-        self.on_save_callback = on_save_callback
+        super().__init__()
+        self.backend = backend
+        self.settings_manager = backend.settings_manager
 
         # Store widgets for each setting
         self.widgets: Dict[str, Any] = {}
@@ -29,16 +29,16 @@ class WebSettingsDialog:
         # Store original values for cancel
         self.original_values: Dict[str, Any] = {}
 
-        # Dialog reference
-        self.dialog = None
-
     def show(self):
         """Show the settings dialog."""
         # Load current values
         self._load_current_values()
 
-        # Create dialog
-        with ui.dialog() as self.dialog, ui.card().classes('w-full max-w-2xl'):
+        # Clear any previous content
+        self.clear()
+
+        # Create dialog content
+        with self, ui.card().classes('w-full max-w-2xl'):
             # Title
             ui.label('Settings').classes('text-2xl font-bold mb-4')
 
@@ -61,7 +61,8 @@ class WebSettingsDialog:
                 ui.button('Cancel', on_click=self._on_cancel).props('outline')
                 ui.button('Save', on_click=self._on_save).props('color=primary')
 
-        self.dialog.open()
+        # Open the dialog
+        self.open()
 
     def _load_current_values(self):
         """Load current setting values."""
@@ -132,19 +133,15 @@ class WebSettingsDialog:
             from src.settings_definitions import SettingScope
             self.settings_manager.save(SettingScope.GLOBAL)
 
-            # Call callback if provided
-            if self.on_save_callback:
-                self.on_save_callback()
+            # Notify backend
+            self.backend._notify('Settings saved - will take effect on next auto-number', type='positive')
 
             # Close dialog
-            self.dialog.close()
-
-            # Show success notification
-            ui.notify('Settings saved successfully', type='positive')
+            self.close()
 
         except Exception as e:
             ui.notify(f'Error saving settings: {e}', type='negative')
 
     def _on_cancel(self):
         """Handle Cancel button click."""
-        self.dialog.close()
+        self.close()

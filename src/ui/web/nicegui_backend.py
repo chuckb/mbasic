@@ -8,6 +8,7 @@ import sys
 import asyncio
 import traceback
 import signal
+from typing import Dict
 from nicegui import ui, app
 from pathlib import Path
 from ..base import UIBackend
@@ -1001,9 +1002,27 @@ class NiceGUIBackend(UIBackend):
         """
         super().__init__(io_handler, program_manager)
 
-        # Settings manager
-        from src.settings import get_settings_manager
-        self.settings_manager = get_settings_manager()
+        # Per-client state (now instance variables instead of session storage)
+        from src.runtime import Runtime
+        from src.resource_limits import create_local_limits
+        from src.file_io import SandboxedFileIO
+        from src.filesystem import SandboxedFileSystemProvider
+
+        self.runtime = Runtime({}, {})
+
+        # Create session ID for this backend instance
+        # Used for sandboxed filesystem and settings isolation
+        session_id = str(id(self))  # Unique ID for this backend instance
+
+        # Create sandboxed filesystem for this session
+        self.sandboxed_fs = SandboxedFileSystemProvider(user_id=session_id)
+
+        # Settings manager with pluggable backend
+        # Uses Redis for per-session settings if NICEGUI_REDIS_URL is set
+        from src.settings import SettingsManager
+        from src.settings_backend import create_settings_backend
+        settings_backend = create_settings_backend(session_id=session_id)
+        self.settings_manager = SettingsManager(backend=settings_backend)
 
         # Configuration
         self.max_recent_files = 10
@@ -1025,19 +1044,6 @@ class NiceGUIBackend(UIBackend):
         self.input_label = None
         self.input_field = None
         self.input_submit_btn = None
-
-        # Per-client state (now instance variables instead of session storage)
-        from src.runtime import Runtime
-        from src.resource_limits import create_local_limits
-        from src.file_io import SandboxedFileIO
-        from src.filesystem import SandboxedFileSystemProvider
-
-        self.runtime = Runtime({}, {})
-
-        # Create sandboxed filesystem for this session
-        # Use session ID as user_id for isolation
-        session_id = str(id(self))  # Unique ID for this backend instance
-        self.sandboxed_fs = SandboxedFileSystemProvider(user_id=session_id)
 
         # Create one interpreter for the session - don't create multiple!
         # Create IO handler for immediate mode
@@ -1068,6 +1074,9 @@ class NiceGUIBackend(UIBackend):
         self.last_find_text = ''
         self.last_find_position = 0
         self.last_case_sensitive = False
+
+        # Pending editor content (for state restoration)
+        self._pending_editor_content = None
 
     def build_ui(self):
         """Build the NiceGUI interface.
@@ -1122,6 +1131,30 @@ class NiceGUIBackend(UIBackend):
         # Set page title
         ui.page_title('MBASIC 5.21 - Web IDE')
 
+        # Add global CSS to ensure full viewport height in both Firefox and Chrome
+        ui.add_head_html('''
+            <style>
+                html, body {
+                    height: 100%;
+                    margin: 0;
+                    padding: 0;
+                    overflow: hidden;
+                }
+                #app, .q-page {
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                }
+                /* Force Quasar textarea to fill flex container in Chrome */
+                .q-textarea, .q-field__control {
+                    height: 100% !important;
+                }
+                .q-field__control-container {
+                    height: 100% !important;
+                }
+            </style>
+        ''')
+
         # Create reusable dialog instances (NiceGUI best practice: create once, reuse)
         self.variables_dialog = VariablesDialog(self)
         self.stack_dialog = StackDialog(self)
@@ -1134,8 +1167,13 @@ class NiceGUIBackend(UIBackend):
         self.delete_lines_dialog = DeleteLinesDialog(self)
         self.renumber_dialog = RenumberDialog(self)
 
+        # Settings dialog
+        from .web_settings_dialog import WebSettingsDialog
+        self.settings_dialog = WebSettingsDialog(self)
+
         # Wrap top rows in column with zero gap to eliminate spacing between them
-        with ui.column().style('row-gap: 0; width: 100%;'):
+        # Use height: 100vh and display: flex to work in both Firefox and Chrome
+        with ui.column().style('row-gap: 0; width: 100%; height: 100vh; display: flex; flex-direction: column; overflow: hidden;'):
             # Menu bar
             self._create_menu()
 
@@ -1164,45 +1202,60 @@ class NiceGUIBackend(UIBackend):
                     self.resource_usage_label = ui.label('').classes('text-gray-600')
                     ui.label(f'v{VERSION}').classes('text-gray-600')
 
-            # Main content area - use flexbox to fill remaining space
-            with ui.element('div').style('width: 100%; flex: 1; display: flex; flex-direction: column; min-height: 0;'):
-                # Editor - using CodeMirror 5 (legacy, no ES6 modules) - fixed height
-                self.editor = CodeMirror5Editor(
-                    value='',
-                    on_change=self._on_editor_change
-                ).style('width: 100%; height: 300px; flex-shrink: 0; border: 1px solid #ccc;').mark('editor')
+            # Main content area - use splitter for resizable editor/output
+            # horizontal=True means top/bottom split with horizontal drag bar
+            with ui.splitter(value=40, horizontal=True).style('width: 100%; flex: 1; min-height: 0;') as splitter:
+                with splitter.before:
+                    # Editor panel
+                    with ui.column().style('width: 100%; height: 100%; display: flex; flex-direction: column; gap: 0;'):
+                        # Editor - using CodeMirror 5 (legacy, no ES6 modules)
+                        self.editor = CodeMirror5Editor(
+                            value='',
+                            on_change=self._on_editor_change
+                        ).style('width: 100%; flex: 1; min-height: 0; border: 1px solid #ccc;').mark('editor')
 
-                # Add auto-numbering handlers
-                # Track last edited line for auto-numbering
-                self.last_edited_line_index = None
-                self.last_edited_line_text = None
-                self.last_line_count = 0  # Track number of lines to detect Enter
-                self.auto_numbering_in_progress = False  # Prevent recursive calls
-                self.editor_has_been_used = False  # Track if user has typed anything
+                        # Restore editor content if restoring from saved state
+                        if self._pending_editor_content is not None:
+                            self.editor.set_value(self._pending_editor_content)
+                            self._pending_editor_content = None
 
-                # Content change handlers via CodeMirror's on_change callback
-                # The _on_editor_change method (defined at line ~2609) handles:
-                # - Removing blank lines
-                # - Auto-numbering
-                # - Placeholder clearing
+                        # Add auto-numbering handlers
+                        # Track last edited line for auto-numbering
+                        self.last_edited_line_index = None
+                        self.last_edited_line_text = None
+                        self.last_line_count = 0  # Track number of lines to detect Enter
+                        self.auto_numbering_in_progress = False  # Prevent recursive calls
+                        self.editor_has_been_used = False  # Track if user has typed anything
 
-                # Click and blur handlers registered separately
-                self.editor.on('click', self._on_editor_click, throttle=0.05)
-                self.editor.on('blur', self._on_editor_blur)
+                        # Content change handlers via CodeMirror's on_change callback
+                        # The _on_editor_change method (defined at line ~2609) handles:
+                        # - Removing blank lines
+                        # - Auto-numbering
+                        # - Placeholder clearing
 
-                # Current line indicator
-                self.current_line_label = ui.label('').classes('text-sm font-mono bg-yellow-100 p-1')
-                self.current_line_label.visible = False
+                        # Click and blur handlers registered separately
+                        self.editor.on('click', self._on_editor_click, throttle=0.05)
+                        self.editor.on('blur', self._on_editor_blur)
 
-                # Syntax error indicator
-                self.syntax_error_label = ui.label('').classes('text-sm font-mono bg-red-100 text-red-700 p-1')
-                self.syntax_error_label.visible = False
+                        # Current line indicator
+                        self.current_line_label = ui.label('').classes('text-sm font-mono bg-yellow-100 p-1')
+                        self.current_line_label.visible = False
 
-                # Output - flexible, takes remaining space
-                self.output = ui.textarea(
-                    value=f'MBASIC 5.21 Web IDE - {VERSION}\n',
-                    placeholder='Output'
-                ).style('width: 100%; flex: 1; min-height: 0;').props('readonly outlined dense spellcheck=false').mark('output')
+                        # Syntax error indicator
+                        self.syntax_error_label = ui.label('').classes('text-sm font-mono bg-red-100 text-red-700 p-1')
+                        self.syntax_error_label.visible = False
+
+                with splitter.after:
+                    # Output panel
+                    # Use important to override Quasar defaults in Chrome
+                    self.output = ui.textarea(
+                        value=f'MBASIC 5.21 Web IDE - {VERSION}\n',
+                        placeholder='Output'
+                    ).style('width: 100%; height: 100%; flex: 1 1 auto !important; min-height: 0 !important;').props('readonly outlined dense spellcheck=false').mark('output')
+
+                    # Restore output if restoring from saved state
+                    if hasattr(self, 'output_text') and self.output_text:
+                        self.output.value = self.output_text
 
         # INPUT handling: When INPUT statement executes, the immediate_entry input box
         # is focused for user input (see _execute_tick() lines ~1886-1888).
@@ -2297,14 +2350,7 @@ class NiceGUIBackend(UIBackend):
 
     async def _menu_settings(self):
         """Edit > Settings - Open settings dialog."""
-        from .web_settings_dialog import WebSettingsDialog
-
-        def on_save():
-            """Callback when settings saved - reload settings."""
-            self._notify('Settings saved - will take effect on next auto-number', type='positive')
-
-        dialog = WebSettingsDialog(self.settings_manager, on_save_callback=on_save)
-        dialog.show()
+        self.settings_dialog.show()
 
     def _menu_about(self):
         """Help > About."""
@@ -3207,6 +3253,280 @@ class NiceGUIBackend(UIBackend):
             log_web_error("_update_auto_line_indicator", ex)
 
     # =========================================================================
+    # Session State Serialization (for Redis storage support)
+    # =========================================================================
+
+    def serialize_state(self) -> dict:
+        """Serialize backend state for storage.
+
+        This enables session persistence in Redis for load-balanced deployments.
+        The state is stored in app.storage.client, which NiceGUI automatically
+        backs by Redis when NICEGUI_REDIS_URL is set.
+
+        Returns:
+            dict: Serializable state dictionary
+        """
+        from src.ui.web.session_state import SessionState
+
+        # Sync program manager from editor content before serializing
+        # This ensures we capture any edits that haven't been run yet
+        self._sync_program_from_editor()
+
+        # Close any open files before serialization
+        self._close_all_files()
+
+        state = SessionState(
+            session_id=self.sandboxed_fs.user_id,
+            program_lines=self._serialize_program(),
+            runtime_state=self._serialize_runtime(),
+            running=self.running,
+            paused=self.paused,
+            output_text=self.output_text,
+            current_file=self.current_file,
+            recent_files=self.recent_files.copy() if self.recent_files else [],
+            last_save_content=self.last_save_content,
+            max_recent_files=self.max_recent_files,
+            auto_save_enabled=self.auto_save_enabled,
+            auto_save_interval=self.auto_save_interval,
+            last_find_text=self.last_find_text,
+            last_find_position=self.last_find_position,
+            last_case_sensitive=self.last_case_sensitive,
+            editor_content=self.editor.value if self.editor else "",
+            last_edited_line_index=self.last_edited_line_index,
+            last_edited_line_text=self.last_edited_line_text,
+        )
+
+        return state.to_dict()
+
+    def restore_state(self, state_dict: dict) -> None:
+        """Restore backend state from storage.
+
+        Args:
+            state_dict: State dictionary from serialize_state()
+        """
+        from src.ui.web.session_state import SessionState
+
+        state = SessionState.from_dict(state_dict)
+
+        # Restore session ID (critical for Redis settings and filesystem)
+        # This ensures we reconnect to the same Redis keys after page refresh
+        if state.session_id:
+            # Update sandboxed filesystem to use restored session ID
+            self.sandboxed_fs.user_id = state.session_id
+
+            # Recreate settings backend with restored session ID
+            # This ensures we access the same settings in Redis
+            from src.settings import SettingsManager
+            from src.settings_backend import create_settings_backend
+            settings_backend = create_settings_backend(session_id=state.session_id)
+            self.settings_manager = SettingsManager(backend=settings_backend)
+
+        # Restore program
+        self._restore_program(state.program_lines)
+
+        # Restore runtime
+        if state.runtime_state:
+            self._restore_runtime(state.runtime_state)
+
+        # Recreate interpreter with restored runtime
+        self._recreate_interpreter()
+
+        # Restore execution state
+        self.running = state.running
+        self.paused = state.paused
+        self.output_text = state.output_text
+        self.current_file = state.current_file
+        self.recent_files = state.recent_files
+        self.last_save_content = state.last_save_content
+
+        # Restore configuration
+        self.max_recent_files = state.max_recent_files
+        self.auto_save_enabled = state.auto_save_enabled
+        self.auto_save_interval = state.auto_save_interval
+
+        # Restore find/replace
+        self.last_find_text = state.last_find_text
+        self.last_find_position = state.last_find_position
+        self.last_case_sensitive = state.last_case_sensitive
+
+        # Restore editor state (will be set after UI is built)
+        self._pending_editor_content = state.editor_content
+        self.last_edited_line_index = state.last_edited_line_index
+        self.last_edited_line_text = state.last_edited_line_text
+
+    def _sync_program_from_editor(self) -> None:
+        """Sync program manager from editor content.
+
+        This ensures the program manager reflects the current editor content,
+        even if the user hasn't run the program yet. Important for serialization.
+        """
+        if not self.editor:
+            return  # No editor yet
+
+        try:
+            # Get current editor content
+            editor_content = self.editor.value or ""
+
+            # Clear existing program
+            self.program.clear()
+
+            # Parse each line from editor
+            for line in editor_content.split('\n'):
+                line = line.strip()
+                if not line:
+                    continue  # Skip blank lines
+
+                # Try to parse as a numbered line (e.g., "10 PRINT")
+                # Match lines that start with a line number
+                import re
+                match = re.match(r'^(\d+)\s+(.*)$', line)
+                if match:
+                    line_num = int(match.group(1))
+                    rest = match.group(2).strip()
+                    if rest:  # Only add if there's content after line number
+                        self.program.add_line(line_num, line)
+        except Exception as e:
+            # If sync fails, log but don't crash - we'll serialize what we have
+            sys.stderr.write(f"Warning: Failed to sync program from editor: {e}\n")
+            sys.stderr.flush()
+
+    def _serialize_program(self) -> Dict[int, str]:
+        """Serialize program lines to dict.
+
+        Returns:
+            Dict[int, str]: Mapping of line_number -> source_text
+        """
+        result = {}
+        # get_lines() returns List[Tuple[int, str]]
+        for line_number, line_text in self.program.get_lines():
+            result[line_number] = line_text
+        return result
+
+    def _restore_program(self, program_lines: Dict[int, str]) -> None:
+        """Restore program from serialized lines.
+
+        Args:
+            program_lines: Dict of line_number -> source_text
+        """
+        # Clear existing program
+        self.program.clear()
+
+        # Add each line
+        for line_num in sorted(program_lines.keys()):
+            source_text = program_lines[line_num]
+            self.program.add_line(line_num, source_text)
+
+    def _serialize_runtime(self) -> dict:
+        """Serialize runtime state.
+
+        Handles complex objects like AST nodes using pickle.
+
+        Returns:
+            dict: Serialized runtime state
+        """
+        import pickle
+
+        # Close open files first
+        self._close_all_files()
+
+        return {
+            'variables': self.runtime._variables,
+            'arrays': self.runtime._arrays,
+            'variable_case_variants': self.runtime._variable_case_variants,
+            'array_element_tracking': self.runtime._array_element_tracking,
+            'common_vars': self.runtime.common_vars,
+            'array_base': self.runtime.array_base,
+            'option_base_executed': self.runtime.option_base_executed,
+            'pc': {'line': self.runtime.pc.line_num, 'stmt': self.runtime.pc.stmt_offset} if self.runtime.pc else None,
+            'npc': {'line': self.runtime.npc.line_num, 'stmt': self.runtime.npc.stmt_offset} if self.runtime.npc else None,
+            'statement_table': pickle.dumps(self.runtime.statement_table).hex(),
+            'halted': self.runtime.halted,
+            'execution_stack': self.runtime.execution_stack,
+            'for_loop_vars': self.runtime.for_loop_vars,
+            'line_text_map': self.runtime.line_text_map,
+            'data_items': self.runtime.data_items,
+            'data_pointer': self.runtime.data_pointer,
+            'data_line_map': self.runtime.data_line_map,
+            'user_functions': pickle.dumps(self.runtime.user_functions).hex(),
+            'field_buffers': self.runtime.field_buffers,
+            'error_handler': self.runtime.error_handler,
+            'error_handler_is_gosub': self.runtime.error_handler_is_gosub,
+            'rnd_last': self.runtime.rnd_last,
+            'stopped': self.runtime.stopped,
+            'breakpoints': [{'line': bp.line_num, 'stmt': bp.stmt_offset} for bp in self.runtime.breakpoints],
+            'break_requested': self.runtime.break_requested,
+            'trace_on': self.runtime.trace_on,
+            'trace_detail': self.runtime.trace_detail,
+        }
+
+    def _restore_runtime(self, state: dict) -> None:
+        """Restore runtime from serialized state.
+
+        Args:
+            state: Serialized runtime state from _serialize_runtime()
+        """
+        import pickle
+        from src.pc import PC
+
+        self.runtime._variables = state['variables']
+        self.runtime._arrays = state['arrays']
+        self.runtime._variable_case_variants = state['variable_case_variants']
+        self.runtime._array_element_tracking = state['array_element_tracking']
+        self.runtime.common_vars = state['common_vars']
+        self.runtime.array_base = state['array_base']
+        self.runtime.option_base_executed = state['option_base_executed']
+        self.runtime.pc = PC(state['pc']['line'], state['pc']['stmt']) if state['pc'] else PC.halted_pc()
+        self.runtime.npc = PC(state['npc']['line'], state['npc']['stmt']) if state['npc'] else None
+        self.runtime.statement_table = pickle.loads(bytes.fromhex(state['statement_table']))
+        self.runtime.halted = state['halted']
+        self.runtime.execution_stack = state['execution_stack']
+        self.runtime.for_loop_vars = state['for_loop_vars']
+        self.runtime.line_text_map = state['line_text_map']
+        self.runtime.data_items = state['data_items']
+        self.runtime.data_pointer = state['data_pointer']
+        self.runtime.data_line_map = state['data_line_map']
+        self.runtime.user_functions = pickle.loads(bytes.fromhex(state['user_functions']))
+        self.runtime.field_buffers = state['field_buffers']
+        self.runtime.error_handler = state['error_handler']
+        self.runtime.error_handler_is_gosub = state['error_handler_is_gosub']
+        self.runtime.rnd_last = state['rnd_last']
+        self.runtime.stopped = state['stopped']
+        self.runtime.breakpoints = {PC(bp['line'], bp['stmt']) for bp in state['breakpoints']}
+        self.runtime.break_requested = state['break_requested']
+        self.runtime.trace_on = state['trace_on']
+        self.runtime.trace_detail = state['trace_detail']
+
+    def _close_all_files(self) -> None:
+        """Close all open file handles before serialization."""
+        if hasattr(self.runtime, 'files'):
+            open_file_numbers = list(self.runtime.files.keys())
+            for file_num in open_file_numbers:
+                try:
+                    self.runtime.files[file_num].close()
+                except Exception:
+                    pass  # Ignore errors closing files
+            self.runtime.files.clear()
+
+    def _recreate_interpreter(self) -> None:
+        """Recreate interpreter instance with restored runtime."""
+        from src.interpreter import Interpreter
+        from src.resource_limits import create_local_limits
+        from src.file_io import SandboxedFileIO
+
+        # Create IO handler for immediate mode
+        immediate_io = SimpleWebIOHandler(self._append_output, self._get_input)
+        sandboxed_file_io = SandboxedFileIO(self)
+
+        # Recreate interpreter with restored runtime
+        self.interpreter = Interpreter(
+            self.runtime,
+            immediate_io,
+            limits=create_local_limits(),
+            file_io=sandboxed_file_io,
+            filesystem_provider=self.sandboxed_fs
+        )
+
+    # =========================================================================
     # UIBackend Interface
     # =========================================================================
 
@@ -3242,9 +3562,13 @@ def start_web_ui(port=8080):
 
     @ui.page('/', viewport='width=device-width, initial-scale=1.0')
     def main_page():
-        """Create a new backend instance for each client."""
+        """Create or restore backend instance for each client."""
+        import os
         from src.editing.manager import ProgramManager
         from src.ast_nodes import TypeInfo
+
+        # Try to restore existing session state
+        saved_state = app.storage.client.get('session_state')
 
         # Create default DEF type map (all SINGLE precision)
         def_type_map = {}
@@ -3254,21 +3578,58 @@ def start_web_ui(port=8080):
         # Create new program manager for this client
         program_manager = ProgramManager(def_type_map)
 
-        # Create new backend instance for this client
-        # Pass None for io_handler - it's not used in the web backend
+        # Create new backend instance
         backend = NiceGUIBackend(None, program_manager)
 
-        # Store backend in app.storage.client to keep it alive for this client's session
-        # This is the ONLY thing we store in app.storage - the backend instance itself
-        app.storage.client['backend'] = backend
+        # Restore state if available
+        if saved_state:
+            try:
+                backend.restore_state(saved_state)
+            except Exception as e:
+                sys.stderr.write(f"Warning: Failed to restore session state: {e}\n")
+                sys.stderr.flush()
+                # Continue with fresh state
 
         # Build the UI for this client
         backend.build_ui()
+
+        # Set up periodic state saving (every 5 seconds while connected)
+        def save_state_periodic():
+            try:
+                app.storage.client['session_state'] = backend.serialize_state()
+            except Exception as e:
+                sys.stderr.write(f"Warning: Failed to save session state: {e}\n")
+                sys.stderr.flush()
+
+        # Save state periodically
+        ui.timer(5.0, save_state_periodic)
+
+        # Save state on disconnect
+        def save_on_disconnect():
+            try:
+                app.storage.client['session_state'] = backend.serialize_state()
+            except Exception as e:
+                sys.stderr.write(f"Warning: Failed to save final session state: {e}\n")
+                sys.stderr.flush()
+
+        ui.context.client.on_disconnect(save_on_disconnect)
+
+    # Check if Redis is configured
+    import os
+    redis_url = os.environ.get('NICEGUI_REDIS_URL')
+    if redis_url:
+        sys.stderr.write(f"Redis storage enabled: {redis_url}\n")
+        sys.stderr.write("Session state will be shared across load-balanced instances\n\n")
+    else:
+        sys.stderr.write("In-memory storage (default): Session state per process only\n")
+        sys.stderr.write("Set NICEGUI_REDIS_URL to enable Redis storage for load balancing\n\n")
+    sys.stderr.flush()
 
     # Start NiceGUI server
     ui.run(
         title='MBASIC 5.21 - Web IDE',
         port=port,
+        storage_secret=os.environ.get('MBASIC_STORAGE_SECRET', 'dev-default-change-in-production'),
         reload=False,
         show=True
     )

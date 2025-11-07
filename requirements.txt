@@ -9,6 +9,7 @@
 # Optional UI dependencies
 urwid>=2.0.0        # For curses backend (full-screen terminal UI)
 nicegui>=3.2.0      # For web backend (browser-based UI)
+redis>=5.0.0        # For Redis-backed session storage (load-balanced web deployments)
 
 # Development/testing dependencies (optional)
 pexpect>=4.8.0         # For automated UI testing
