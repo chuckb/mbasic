@@ -3830,6 +3830,8 @@ class TkBackend(UIBackend):
 
     def _show_input_row(self, prompt: str = ''):
         """Show the INPUT row with prompt."""
+        import tkinter as tk
+
         if self.input_row and self.input_label and self.input_entry:
             # Set prompt text
             self.input_label.config(text=prompt)
@@ -3850,6 +3852,8 @@ class TkBackend(UIBackend):
 
     def _submit_input(self):
         """Submit INPUT value from inline input field."""
+        import tkinter as tk
+
         if not self.input_entry:
             return
 
