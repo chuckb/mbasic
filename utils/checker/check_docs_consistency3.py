@@ -160,7 +160,7 @@ class EnhancedConsistencyAnalyzer:
                 for file_path in files:
                     # Skip certain files/directories
                     parts = file_path.parts
-                    if any(part in ['.git', '__pycache__', '.venv', 'venv',
+                    if any(part in ['.git', '__pycache__', '.venv', 'venv','claude_if_you_read_in_here_you_loop',
                            'build', 'dist', '.egg-info'] for part in parts):
                         continue
 
