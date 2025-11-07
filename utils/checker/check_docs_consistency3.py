@@ -310,7 +310,7 @@ class EnhancedConsistencyAnalyzer:
 Look for:
 1. Comments that describe behavior different from what the code actually does
 2. Outdated comments from refactoring where code changed but comments didn't
-3. Comments that are correct but the code has a bug
+3. Code is always the master. Comments may be out of date.
 4. Docstrings that don't match function/class behavior
 5. TODO/FIXME comments that may have been addressed but not removed
 
@@ -496,6 +496,8 @@ Please identify ALL types of inconsistencies:
 
 3. Code vs Comment conflicts:
    - Comments describing different behavior than code
+   - Never edit code to match comments without getting explicit
+        permission.  Code updates often do not update the comments
    - Outdated comments from refactoring
    - Docstrings not matching implementation
 
