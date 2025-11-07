@@ -2987,8 +2987,15 @@ class TkBackend(UIBackend):
 
             # Output is routed to output pane via TkIOHandler
 
-            # Handle interpreter state (error, halted, or running)
-            if state.error_info:
+            # Handle interpreter state (input needed, error, halted, or running)
+            if state.input_prompt is not None:
+                # INPUT statement needs user input - pause execution and show input row
+                self.running = False
+                self._show_input_row(state.input_prompt)
+                # Don't schedule next tick - will resume when user provides input
+                return
+
+            elif state.error_info:
                 # Error state
                 self.running = False
                 self.paused_at_breakpoint = True  # Allow Continue to work after error
@@ -3843,10 +3850,27 @@ class TkBackend(UIBackend):
 
     def _submit_input(self):
         """Submit INPUT value from inline input field."""
-        if self.input_entry and self.input_queue:
-            value = self.input_entry.get()
+        if not self.input_entry:
+            return
+
+        value = self.input_entry.get()
+        self.input_entry.delete(0, tk.END)
+        self._hide_input_row()
+
+        # Check if interpreter is waiting for input during program execution
+        if self.interpreter and self.interpreter.state.input_prompt is not None:
+            # Echo input to output
+            self._add_output(value + '\n')
+
+            # Provide input to interpreter
+            self.interpreter.provide_input(value)
+
+            # Resume execution
+            self.running = True
+            self.tick_timer_id = self.root.after(10, self._execute_tick)
+        elif self.input_queue:
+            # Synchronous input() call - put in queue
             self.input_queue.put(value)
-            self.input_entry.delete(0, tk.END)
 
 
 class TkIOHandler(IOHandler):
