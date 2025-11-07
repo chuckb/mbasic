@@ -2,6 +2,7 @@
 
 import urwid
 from . import keybindings as kb
+from .keybindings import key_to_display
 
 
 class InteractiveMenuBar(urwid.WidgetWrap):
@@ -28,59 +29,41 @@ class InteractiveMenuBar(urwid.WidgetWrap):
 
         # Define menu structure: {menu_name: [(label, callback_name), ...]}
         # Use keybindings module to get actual shortcuts
-        def fmt_key(display):
-            """Convert keybinding display to compact ^X format for menu display.
-
-            This function converts 'Ctrl+X' format to '^X' format for menu labels.
-            Limitation: Only handles 'Ctrl+' prefix. Other formats like 'Alt+X',
-            'Shift+Ctrl+X', or 'F5' are returned unchanged. This is acceptable for
-            the curses menu which primarily uses Ctrl+ keybindings.
-
-            Args:
-                display: Keybinding display string (e.g., 'Ctrl+K', 'Ctrl+Shift+B')
-
-            Returns:
-                Compact format string (e.g., '^K' for 'Ctrl+K', unchanged otherwise)
-            """
-            if display.startswith('Ctrl+'):
-                return '^' + display[5:]
-            return display
-
         self.menus = {
             'File': [
-                (f'New            {fmt_key(kb.NEW_DISPLAY)}', '_new_program'),
-                (f'Open...        {fmt_key(kb.OPEN_DISPLAY)}', '_load_program'),
+                (f'New            {key_to_display(kb.NEW_KEY)}', '_new_program'),
+                (f'Open...        {key_to_display(kb.OPEN_KEY)}', '_load_program'),
                 ('Recent Files...', '_show_recent_files'),
-                (f'Save           {fmt_key(kb.SAVE_DISPLAY)}', '_save_program'),
+                (f'Save           {key_to_display(kb.SAVE_KEY)}', '_save_program'),
                 ('Save As...', '_save_as_program'),
                 ('---', None),  # Separator
-                (f'Quit           {fmt_key(kb.QUIT_DISPLAY)}', 'quit'),
+                ('Quit', 'quit'),  # QUIT_KEY is None (menu-only)
             ],
             'Edit': [
-                (f'Delete Line    {fmt_key(kb.DELETE_LINE_DISPLAY)}', '_delete_current_line'),
-                (f'Insert Line    {fmt_key(kb.INSERT_LINE_DISPLAY)}', '_insert_line'),
-                (f'Renumber...    {fmt_key(kb.RENUMBER_DISPLAY)}', '_renumber_program'),
+                (f'Delete Line    {key_to_display(kb.DELETE_LINE_KEY)}', '_delete_current_line'),
+                (f'Insert Line    {key_to_display(kb.INSERT_LINE_KEY)}', '_insert_line'),
+                (f'Renumber...    {key_to_display(kb.RENUMBER_KEY)}', '_renumber_program'),
                 ('---', None),
-                (f'Toggle Breakpoint {fmt_key(kb.BREAKPOINT_DISPLAY)}', '_toggle_breakpoint_current_line'),
+                (f'Toggle Breakpoint {key_to_display(kb.BREAKPOINT_KEY)}', '_toggle_breakpoint_current_line'),
                 ('Clear All Breakpoints', '_clear_all_breakpoints'),
             ],
             'Run': [
-                (f'Run Program    {fmt_key(kb.RUN_DISPLAY)}', '_run_program'),
-                (f'Continue       {fmt_key(kb.CONTINUE_DISPLAY)}', '_debug_continue'),
-                (f'Step Line      {fmt_key(kb.LIST_DISPLAY)}', '_debug_step_line'),
-                (f'Step Statement {fmt_key(kb.STEP_DISPLAY)}', '_debug_step_statement'),
-                (f'Stop           {fmt_key(kb.STOP_DISPLAY)}', '_debug_stop'),
+                (f'Run Program    {key_to_display(kb.RUN_KEY)}', '_run_program'),
+                (f'Continue       {key_to_display(kb.CONTINUE_KEY)}', '_debug_continue'),
+                (f'Step Line      {key_to_display(kb.LIST_KEY)}', '_debug_step_line'),
+                (f'Step Statement {key_to_display(kb.STEP_KEY)}', '_debug_step_statement'),
+                (f'Stop           {key_to_display(kb.STOP_KEY)}', '_debug_stop'),
                 ('---', None),
                 ('Clear Output', '_clear_output'),
             ],
             'Debug': [
-                (f'Variables Window {fmt_key(kb.VARIABLES_DISPLAY)}', '_toggle_variables_window'),
-                (f'Execution Stack  {fmt_key(kb.STACK_DISPLAY)}', '_toggle_stack_window'),
+                (f'Variables Window {key_to_display(kb.VARIABLES_KEY)}', '_toggle_variables_window'),
+                ('Execution Stack', '_toggle_stack_window'),  # STACK_KEY is '' (menu-only)
             ],
             'Help': [
-                (f'Help           {fmt_key(kb.HELP_DISPLAY)}', '_show_help'),
+                (f'Help           {key_to_display(kb.HELP_KEY)}', '_show_help'),
                 ('Keyboard Shortcuts', '_show_keymap'),
-                (f'Settings       {fmt_key(kb.SETTINGS_DISPLAY)}', '_show_settings'),
+                (f'Settings       {key_to_display(kb.SETTINGS_KEY)}', '_show_settings'),
             ],
         }
 

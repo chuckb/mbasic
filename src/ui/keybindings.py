@@ -93,6 +93,99 @@ def _ctrl_key_to_char(key_string):
     return key_string
 
 
+# Lookup tables for key conversions
+_KEY_TO_CHAR_TABLE = {
+    'tab': '\t',
+    'enter': '\n',
+    'backspace': '\x08',
+    'esc': '\x1b',
+}
+
+_KEY_TO_DISPLAY_TABLE = {
+    'enter': 'Enter',
+    'esc': 'ESC',
+    'tab': 'Tab',
+    'backspace': 'Backspace',
+    'up': 'Up',
+    'down': 'Down',
+    'left': 'Left',
+    'right': 'Right',
+}
+
+
+def key_to_char(urwid_key):
+    """
+    Convert urwid key name to character code.
+
+    This is the single source of truth for key character codes.
+    We NEVER want separate constants that could get out of sync.
+
+    Examples:
+        'ctrl a' -> '\x01'
+        'ctrl r' -> '\x12'
+        'tab' -> '\t'
+        'enter' -> '\n'
+        's' -> 's'
+
+    Returns:
+        Character code string, or empty string if no single character
+    """
+    # Check lookup table first
+    if urwid_key in _KEY_TO_CHAR_TABLE:
+        return _KEY_TO_CHAR_TABLE[urwid_key]
+
+    # Handle ctrl combinations
+    if urwid_key.startswith('ctrl '):
+        letter = urwid_key[5:].upper()
+        # Ctrl+A = 1, Ctrl+B = 2, etc.
+        code = ord(letter) - ord('A') + 1
+        return chr(code)
+
+    # Single character key
+    if len(urwid_key) == 1:
+        return urwid_key
+
+    # Multi-key combinations like 'shift ctrl b' don't have single char
+    return ''
+
+
+def key_to_display(urwid_key):
+    """
+    Convert urwid key name to user-friendly display string.
+
+    This is the single source of truth for how keys are displayed to users.
+    We NEVER want to lie about what key does what, so display strings are
+    automatically computed from the actual key binding.
+
+    Examples:
+        'ctrl a' -> '^A'
+        'ctrl r' -> '^R'
+        'shift ctrl b' -> '^Shift+B'
+        'enter' -> 'Enter'
+        'esc' -> 'ESC'
+        'tab' -> 'Tab'
+        's' -> 's'
+        'backspace' -> 'Backspace'
+    """
+    # Check lookup table first
+    if urwid_key in _KEY_TO_DISPLAY_TABLE:
+        return _KEY_TO_DISPLAY_TABLE[urwid_key]
+
+    # Handle ctrl combinations
+    if urwid_key.startswith('ctrl shift '):
+        letter = urwid_key[11:].upper()
+        return f'^Shift+{letter}'
+    elif urwid_key.startswith('shift ctrl '):
+        letter = urwid_key[11:].upper()
+        return f'^Shift+{letter}'
+    elif urwid_key.startswith('ctrl '):
+        letter = urwid_key[5:].upper()
+        return f'^{letter}'
+
+    # Single character keys display as-is
+    return urwid_key
+
+
 def _get_key(section, action):
     """Get keybinding from config."""
     if section in _config and action in _config[section]:
@@ -104,169 +197,133 @@ def _get_key(section, action):
 # Global Commands (loaded from JSON)
 # =============================================================================
 
-# Help system - use Ctrl+F (mnemonic: F for Find help)
+# Help system
 HELP_KEY = 'ctrl f'
-HELP_CHAR = '\x06'
-HELP_DISPLAY = '^F'
 
 # Menu system (not in JSON, hardcoded)
-# Ctrl+U activates the interactive menu bar at the top
-# Use arrow keys to navigate, Enter to select, ESC to close
-# Note: MENU_DISPLAY uses Ctrl+X notation for internal consistency with other DISPLAY constants.
-# The STATUS_BAR_SHORTCUTS below uses ^X notation for compact display in the status bar.
 MENU_KEY = 'ctrl u'
-MENU_CHAR = '\x15'
-MENU_DISPLAY = 'Ctrl+U'
-
-# Keymap window - accessible via menu only (no dedicated key to avoid conflicts with typing)
 
 # Quit - No keyboard shortcut (most Ctrl keys intercepted by terminal or already assigned)
 # Use menu: Ctrl+U -> File -> Quit, or Ctrl+C (interrupt) will also quit
-# Previous attempts: Ctrl+Q (XON/XOFF), Ctrl+S (XON/XOFF), Ctrl+X (STOP), Ctrl+Y (DSUSP?)
-_quit_key = _get_key('editor', 'quit') or 'Ctrl+Q'  # Keep for JSON config compatibility
 QUIT_KEY = None  # No keyboard shortcut
-QUIT_CHAR = None
-QUIT_DISPLAY = ''
 
-# Alternative quit (Ctrl+C - interrupt signal)
-_quit_alt_key = _get_key('editor', 'continue') or 'Ctrl+C'
-QUIT_ALT_KEY = _ctrl_key_to_urwid(_quit_alt_key)
-QUIT_ALT_CHAR = _ctrl_key_to_char(_quit_alt_key)
-QUIT_ALT_DISPLAY = _quit_alt_key
+# Alternative quit (interrupt signal)
+_quit_alt_from_json = _get_key('editor', 'continue')
+QUIT_ALT_KEY = _ctrl_key_to_urwid(_quit_alt_from_json) if _quit_alt_from_json else 'ctrl c'
 
 # Variables watch window
-_variables_key = _get_key('editor', 'variables') or 'Ctrl+W'
-VARIABLES_KEY = _ctrl_key_to_urwid(_variables_key)
-VARIABLES_CHAR = _ctrl_key_to_char(_variables_key)
-VARIABLES_DISPLAY = _variables_key
+_variables_from_json = _get_key('editor', 'variables')
+VARIABLES_KEY = _ctrl_key_to_urwid(_variables_from_json) if _variables_from_json else 'ctrl w'
 
 # Execution stack window (menu only - no dedicated key)
-# Note: No keyboard shortcut is assigned to avoid conflicts with editor typing.
-# The stack window is accessed via the menu system (Ctrl+U -> Debug -> Execution Stack).
 STACK_KEY = ''  # No keyboard shortcut
-STACK_CHAR = ''
-STACK_DISPLAY = ''
 
 # =============================================================================
 # Program Management (loaded from JSON)
 # =============================================================================
 
 # Run program
-_run_key = _get_key('editor', 'run') or 'Ctrl+R'
-RUN_KEY = _ctrl_key_to_urwid(_run_key)
-RUN_CHAR = _ctrl_key_to_char(_run_key)
-RUN_DISPLAY = _run_key
+_run_from_json = _get_key('editor', 'run')
+RUN_KEY = _ctrl_key_to_urwid(_run_from_json) if _run_from_json else 'ctrl r'
 
 # Step Line - execute all statements on current line (debugger command)
-# Note: These constants are named LIST_KEY/LIST_CHAR/LIST_DISPLAY for historical reasons
-# (originally associated with BASIC's LIST command). They now implement step_line debugger
-# functionality, which executes all statements on the current line before pausing again.
-# The constants are retained with their original names for backward compatibility with
-# existing UI code that references them, but they implement 'step_line' action from the
-# JSON configuration, not LIST functionality.
-_list_key = _get_key('editor', 'step_line') or 'Ctrl+K'
-LIST_KEY = _ctrl_key_to_urwid(_list_key)
-LIST_CHAR = _ctrl_key_to_char(_list_key)
-LIST_DISPLAY = _list_key
+_list_from_json = _get_key('editor', 'step_line')
+LIST_KEY = _ctrl_key_to_urwid(_list_from_json) if _list_from_json else 'ctrl k'
 
-# Open/Load program (Ctrl+O)
-_open_key = _get_key('editor', 'open') or 'Ctrl+O'
-OPEN_KEY = _ctrl_key_to_urwid(_open_key)
-OPEN_CHAR = _ctrl_key_to_char(_open_key)
-OPEN_DISPLAY = _open_key
+# Open/Load program
+_open_from_json = _get_key('editor', 'open')
+OPEN_KEY = _ctrl_key_to_urwid(_open_from_json) if _open_from_json else 'ctrl o'
 
 # New program
-_new_key = _get_key('editor', 'new') or 'Ctrl+N'
-NEW_KEY = _ctrl_key_to_urwid(_new_key)
-NEW_CHAR = _ctrl_key_to_char(_new_key)
-NEW_DISPLAY = _new_key
+_new_from_json = _get_key('editor', 'new')
+NEW_KEY = _ctrl_key_to_urwid(_new_from_json) if _new_from_json else 'ctrl n'
 
-# Save program (Ctrl+S unavailable - terminal flow control)
-# Use Ctrl+V instead (V for saVe)
-_save_key = _get_key('editor', 'save') or 'Ctrl+V'
-SAVE_KEY = _ctrl_key_to_urwid(_save_key)
-SAVE_CHAR = _ctrl_key_to_char(_save_key)
-SAVE_DISPLAY = _save_key
+# Save program
+_save_from_json = _get_key('editor', 'save')
+SAVE_KEY = _ctrl_key_to_urwid(_save_from_json) if _save_from_json else 'ctrl v'
 
 # =============================================================================
 # Editing Commands (loaded from JSON where available)
 # =============================================================================
 
 # Toggle breakpoint
-_breakpoint_key = _get_key('editor', 'toggle_breakpoint') or 'Ctrl+B'
-BREAKPOINT_KEY = _ctrl_key_to_urwid(_breakpoint_key)
-BREAKPOINT_CHAR = _ctrl_key_to_char(_breakpoint_key)
-BREAKPOINT_DISPLAY = _breakpoint_key
+_breakpoint_from_json = _get_key('editor', 'toggle_breakpoint')
+BREAKPOINT_KEY = _ctrl_key_to_urwid(_breakpoint_from_json) if _breakpoint_from_json else 'ctrl b'
 
-# Clear all breakpoints (hardcoded)
-# Note: urwid format is 'ctrl shift b', display format is 'Ctrl+Shift+B'
+# Clear all breakpoints
 CLEAR_BREAKPOINTS_KEY = 'ctrl shift b'
-CLEAR_BREAKPOINTS_DISPLAY = 'Ctrl+Shift+B'
 
-# Delete current line (not in JSON, hardcoded)
+# Delete current line
 DELETE_LINE_KEY = 'ctrl d'
-DELETE_LINE_CHAR = '\x04'
-DELETE_LINE_DISPLAY = 'Ctrl+D'
 
-# Renumber lines (not in JSON, hardcoded)
+# Renumber lines
 RENUMBER_KEY = 'ctrl e'
-RENUMBER_CHAR = '\x05'
-RENUMBER_DISPLAY = 'Ctrl+E'
 
-# Smart Insert Line (Ctrl+I unavailable - identical to Tab, Ctrl+J unavailable - identical to Enter, Ctrl+L intercepted by terminal for clear screen)
-# Use Ctrl+Y instead (Y for Yank/insert line)
+# Smart Insert Line
 INSERT_LINE_KEY = 'ctrl y'
-INSERT_LINE_CHAR = '\x19'
-INSERT_LINE_DISPLAY = 'Ctrl+Y'
 
 # =============================================================================
 # Debugger Commands (loaded from JSON where available)
 # =============================================================================
 
 # Continue execution (Go) / Go to line
-# Note: This key (typically Ctrl+G) is context-sensitive in the UI:
-#   - In debugger mode: Continue execution until next breakpoint or end
-#   - In editor mode: Go to line number (not yet implemented)
-# This module only defines the key constant. The actual context-sensitive behavior is
-# implemented in src/ui/curses_ui.py by checking the current program state.
-# Loaded from 'goto_line' action in JSON since both uses share the same key.
-_continue_key = _get_key('editor', 'goto_line') or 'Ctrl+G'
-CONTINUE_KEY = _ctrl_key_to_urwid(_continue_key)
-CONTINUE_CHAR = _ctrl_key_to_char(_continue_key)
-CONTINUE_DISPLAY = _continue_key
+_continue_from_json = _get_key('editor', 'goto_line')
+CONTINUE_KEY = _ctrl_key_to_urwid(_continue_from_json) if _continue_from_json else 'ctrl g'
 
-# Step (execute one line)
-_step_key = _get_key('editor', 'step') or 'Ctrl+T'
-STEP_KEY = _ctrl_key_to_urwid(_step_key)
-STEP_CHAR = _ctrl_key_to_char(_step_key)
-STEP_DISPLAY = _step_key
+# Step (execute one statement)
+_step_from_json = _get_key('editor', 'step')
+STEP_KEY = _ctrl_key_to_urwid(_step_from_json) if _step_from_json else 'ctrl t'
 
-# Stop execution (eXit) (not in JSON, hardcoded)
+# Stop execution
 STOP_KEY = 'ctrl x'
-STOP_CHAR = '\x18'
-STOP_DISPLAY = 'Ctrl+X'
-
-# Clear Output - removed (clear output rarely used, accessible via menu)
 
 # Settings
 SETTINGS_KEY = 'ctrl p'
-SETTINGS_CHAR = '\x10'  # Ctrl+P
-SETTINGS_DISPLAY = 'Ctrl+P'
 
-# Maximize output (for games/full-screen programs)
-# Note: Changed from Ctrl+O to Ctrl+Shift+M to avoid conflict with Open (Ctrl+O)
+# Maximize output
 MAXIMIZE_OUTPUT_KEY = 'ctrl shift m'
-MAXIMIZE_OUTPUT_CHAR = ''  # No single char for Shift+Ctrl+M
-MAXIMIZE_OUTPUT_DISPLAY = 'Ctrl+Shift+M'
 
 # =============================================================================
 # Navigation
 # =============================================================================
 
-# Tab key (switch between editor and output)
 TAB_KEY = 'tab'
-TAB_CHAR = '\t'
-TAB_DISPLAY = 'Tab'
+
+# =============================================================================
+# Generic UI Keys (standard across all dialogs and widgets)
+# =============================================================================
+
+ENTER_KEY = 'enter'
+ESC_KEY = 'esc'
+BACKSPACE_KEY = 'backspace'
+DOWN_KEY = 'down'
+UP_KEY = 'up'
+LEFT_KEY = 'left'
+RIGHT_KEY = 'right'
+
+# =============================================================================
+# Variables Window Keys
+# =============================================================================
+
+VARS_SORT_MODE_KEY = 's'
+VARS_SORT_DIR_KEY = 'd'
+VARS_EDIT_KEY = 'e'
+VARS_FILTER_KEY = 'f'
+VARS_CLEAR_KEY = 'c'
+
+# =============================================================================
+# Dialog Keys
+# =============================================================================
+
+DIALOG_YES_KEY = 'y'
+DIALOG_NO_KEY = 'n'
+
+# =============================================================================
+# Settings Window Keys
+# =============================================================================
+
+SETTINGS_APPLY_KEY = 'ctrl a'
+SETTINGS_RESET_KEY = 'ctrl r'
 
 # =============================================================================
 # Keybinding Documentation
@@ -275,50 +332,45 @@ TAB_DISPLAY = 'Tab'
 # All keybindings organized by category for help display
 KEYBINDINGS_BY_CATEGORY = {
     'Global Commands': [
-        (QUIT_ALT_DISPLAY, 'Quit'),
-        (MENU_DISPLAY, 'Activate menu bar (arrows navigate, Enter selects)'),
-        (HELP_DISPLAY, 'This help'),
-        (SETTINGS_DISPLAY, 'Settings'),
-        (VARIABLES_DISPLAY, 'Toggle variables watch window'),
-        (STACK_DISPLAY, 'Show/hide execution stack window'),
+        (key_to_display(QUIT_ALT_KEY), 'Quit'),
+        (key_to_display(MENU_KEY), 'Activate menu bar (arrows navigate, Enter selects)'),
+        (key_to_display(HELP_KEY), 'This help'),
+        (key_to_display(SETTINGS_KEY), 'Settings'),
+        (key_to_display(VARIABLES_KEY), 'Toggle variables watch window'),
     ],
     'Program Management': [
-        (RUN_DISPLAY, 'Run program'),
-        (NEW_DISPLAY, 'New program'),
-        (OPEN_DISPLAY, 'Open/Load program'),
-        (SAVE_DISPLAY, 'Save program'),
+        (key_to_display(RUN_KEY), 'Run program'),
+        (key_to_display(NEW_KEY), 'New program'),
+        (key_to_display(OPEN_KEY), 'Open/Load program'),
+        (key_to_display(SAVE_KEY), 'Save program'),
     ],
     'Editing': [
-        (BREAKPOINT_DISPLAY, 'Toggle breakpoint on current line'),
-        (DELETE_LINE_DISPLAY, 'Delete current line'),
-        (INSERT_LINE_DISPLAY, 'Insert line'),
-        (RENUMBER_DISPLAY, 'Renumber all lines (RENUM)'),
+        (key_to_display(BREAKPOINT_KEY), 'Toggle breakpoint on current line'),
+        (key_to_display(DELETE_LINE_KEY), 'Delete current line'),
+        (key_to_display(INSERT_LINE_KEY), 'Insert line'),
+        (key_to_display(RENUMBER_KEY), 'Renumber all lines (RENUM)'),
     ],
     'Debugger (when program running)': [
-        (CONTINUE_DISPLAY, 'Continue execution (Go)'),
-        (LIST_DISPLAY, 'Step Line - execute all statements on current line'),
-        (STEP_DISPLAY, 'Step Statement - execute one statement at a time'),
-        (STOP_DISPLAY, 'Stop execution (eXit)'),
-        (VARIABLES_DISPLAY, 'Show/hide variables window'),
-        (STACK_DISPLAY, 'Show/hide execution stack window'),
+        (key_to_display(CONTINUE_KEY), 'Continue execution (Go)'),
+        (key_to_display(LIST_KEY), 'Step Line - execute all statements on current line'),
+        (key_to_display(STEP_KEY), 'Step Statement - execute one statement at a time'),
+        (key_to_display(STOP_KEY), 'Stop execution (eXit)'),
+        (key_to_display(VARIABLES_KEY), 'Show/hide variables window'),
     ],
     'Variables Window (when visible)': [
-        ('s', 'Cycle sort mode (Name → Accessed → Written → Read → Type → Value)'),
-        ('d', 'Toggle sort direction (ascending ↑ / descending ↓)'),
+        (key_to_display(VARS_SORT_MODE_KEY), 'Cycle sort mode (Name → Accessed → Written → Read → Type → Value)'),
+        (key_to_display(VARS_SORT_DIR_KEY), 'Toggle sort direction (ascending ↑ / descending ↓)'),
     ],
     'Navigation': [
-        (TAB_DISPLAY, 'Switch between editor and output'),
-        ('ESC', 'Cancel dialogs and input prompts'),
+        (key_to_display(TAB_KEY), 'Switch between editor and output'),
+        (key_to_display(ESC_KEY), 'Cancel dialogs and input prompts'),
     ],
 }
 
-# Quick reference for status bar - use compact ^X notation instead of Ctrl+X
-# Note: ^K is "step line" (execute all statements on current line)
-#       Stack window is menu-only (Ctrl+U -> Debug -> Execution Stack)
-#       Quit is menu-only (Ctrl+U -> File -> Quit) or Ctrl+C
-STATUS_BAR_SHORTCUTS = "MBASIC - ^F help  ^U menu  ^W vars  ^K step line  Tab cycle  ↑↓ scroll"
-EDITOR_STATUS = "Editor - ^F help  ^U menu  Tab cycle"
-OUTPUT_STATUS = "Output - Up/Down scroll  Tab cycle  ^U menu"
+# Quick reference for status bar
+STATUS_BAR_SHORTCUTS = f"MBASIC - {key_to_display(HELP_KEY)} help  {key_to_display(MENU_KEY)} menu  {key_to_display(VARIABLES_KEY)} vars  {key_to_display(LIST_KEY)} step line  {key_to_display(TAB_KEY)} cycle  ↑↓ scroll"
+EDITOR_STATUS = f"Editor - {key_to_display(HELP_KEY)} help  {key_to_display(MENU_KEY)} menu  {key_to_display(TAB_KEY)} cycle"
+OUTPUT_STATUS = f"Output - {key_to_display(UP_KEY)}/{key_to_display(DOWN_KEY)} scroll  {key_to_display(TAB_KEY)} cycle  {key_to_display(MENU_KEY)} menu"
 
 
 def dump_keymap():
@@ -344,32 +396,9 @@ def dump_keymap():
 # Character Code Reference (for testing and documentation)
 # =============================================================================
 
-# All control character codes for reference
+# All control character codes - generated programmatically from Ctrl+A to Ctrl+Z
+# Ctrl+A = 1, Ctrl+B = 2, ..., Ctrl+Z = 26
 CONTROL_CHARS = {
-    'Ctrl+A': '\x01',
-    'Ctrl+B': '\x02',
-    'Ctrl+C': '\x03',
-    'Ctrl+D': '\x04',
-    'Ctrl+E': '\x05',
-    'Ctrl+F': '\x06',
-    'Ctrl+G': '\x07',
-    'Ctrl+H': '\x08',
-    'Ctrl+I': '\x09',  # Tab
-    'Ctrl+J': '\x0a',  # Newline/LF
-    'Ctrl+K': '\x0b',
-    'Ctrl+L': '\x0c',
-    'Ctrl+M': '\x0d',  # Return/Enter
-    'Ctrl+N': '\x0e',
-    'Ctrl+O': '\x0f',
-    'Ctrl+P': '\x10',
-    'Ctrl+Q': '\x11',
-    'Ctrl+R': '\x12',
-    'Ctrl+S': '\x13',
-    'Ctrl+T': '\x14',
-    'Ctrl+U': '\x15',
-    'Ctrl+V': '\x16',
-    'Ctrl+W': '\x17',
-    'Ctrl+X': '\x18',
-    'Ctrl+Y': '\x19',
-    'Ctrl+Z': '\x1a',
+    f'Ctrl+{chr(ord("A") + i)}': chr(i + 1)
+    for i in range(26)
 }

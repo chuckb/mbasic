@@ -10,6 +10,10 @@ import urwid
 from typing import Dict, Any, Optional
 from src.settings_definitions import SETTING_DEFINITIONS, SettingType, SettingScope
 from src.settings import get, set as set_setting
+from src.ui.keybindings import (
+    ENTER_KEY, ESC_KEY, SETTINGS_KEY, SETTINGS_APPLY_KEY, SETTINGS_RESET_KEY,
+    key_to_display
+)
 
 
 class SettingsWidget(urwid.WidgetWrap):
@@ -75,7 +79,13 @@ class SettingsWidget(urwid.WidgetWrap):
         listbox = urwid.ListBox(urwid.SimpleFocusListWalker(content))
 
         # Create footer with keyboard shortcuts (instead of button widgets)
-        footer_text = urwid.Text("Enter=OK  ESC/^P=Cancel  ^A=Apply  ^R=Reset", align='center')
+        footer_text = urwid.Text(
+            f"↑↓ {key_to_display(ENTER_KEY)}=OK  "
+            f"{key_to_display(ESC_KEY)}/{key_to_display(SETTINGS_KEY)}=Cancel  "
+            f"{key_to_display(SETTINGS_APPLY_KEY)}=Apply  "
+            f"{key_to_display(SETTINGS_RESET_KEY)}=Reset",
+            align='center'
+        )
         footer = urwid.AttrMap(footer_text, 'header')
 
         # Use Frame to keep footer pinned at bottom
@@ -252,23 +262,19 @@ class SettingsWidget(urwid.WidgetWrap):
             None if key was handled, otherwise the key
         """
         # Handle global shortcuts first (before widgets consume them)
-        # Note: Ctrl+P is used for Cancel in the settings widget context (overrides
-        # editor's Parse Program binding). When the settings widget is open, Ctrl+P
-        # closes the settings dialog. This is intentional - modal dialogs can override
-        # editor keybindings while they have focus.
-        if key == 'esc' or key == 'ctrl p':
+        if key == ESC_KEY or key == SETTINGS_KEY:
             self._on_cancel()
             return None
 
-        elif key == 'enter':
+        elif key == ENTER_KEY:
             self._on_ok()
             return None
 
-        elif key == 'ctrl a':
+        elif key == SETTINGS_APPLY_KEY:
             self._on_apply()
             return None
 
-        elif key == 'ctrl r':
+        elif key == SETTINGS_RESET_KEY:
             self._on_reset()
             return None
 

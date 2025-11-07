@@ -14,7 +14,11 @@ from .keybindings import (
     DELETE_LINE_KEY, INSERT_LINE_KEY, RENUMBER_KEY,
     CONTINUE_KEY, STEP_KEY, STOP_KEY, TAB_KEY, SETTINGS_KEY,
     MAXIMIZE_OUTPUT_KEY,
-    STATUS_BAR_SHORTCUTS
+    ENTER_KEY, ESC_KEY, BACKSPACE_KEY, DOWN_KEY, UP_KEY,
+    VARS_SORT_MODE_KEY, VARS_SORT_DIR_KEY, VARS_EDIT_KEY, VARS_FILTER_KEY, VARS_CLEAR_KEY,
+    DIALOG_YES_KEY, DIALOG_NO_KEY,
+    STATUS_BAR_SHORTCUTS,
+    key_to_display
 )
 from .markdown_renderer import MarkdownRenderer
 from .help_widget import HelpWidget
@@ -138,10 +142,10 @@ class InputDialog(urwid.WidgetWrap):
         super().__init__(urwid.AttrMap(box, 'body'))
 
     def keypress(self, size, key):
-        if key == 'enter':
+        if key == ENTER_KEY:
             urwid.emit_signal(self, 'close', self.edit.get_edit_text())
             return None
-        elif key == 'esc':
+        elif key == ESC_KEY:
             urwid.emit_signal(self, 'close', None)
             return None
         return super().keypress(size, key)
@@ -377,7 +381,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
 
         # Handle Tab specially - it switches focus between editor and output
         # We need to check line number changes before Tab takes effect
-        is_tab = (key == 'tab')
+        is_tab = (key == TAB_KEY)
 
         # Check syntax when leaving line or pressing control keys
         # (Not during normal typing - avoids annoying errors for incomplete lines)
@@ -424,7 +428,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
                         return super().keypress(size, key)
 
         # Handle backspace key to protect separator space and status column
-        if key == 'backspace':
+        if key == BACKSPACE_KEY:
             if line_num < len(lines):
                 line = lines[line_num]
                 line_num_parsed, code_start = self._parse_line_number(line)
@@ -528,7 +532,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             return None
 
         # Handle Enter when auto-numbering disabled
-        if key == 'enter':
+        if key == ENTER_KEY:
             # Set flag for deferred parsing (reformats pasted BASIC code)
             self._needs_parse = True
             # Let Enter be processed normally (insert newline)
@@ -542,7 +546,7 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             return key
 
         # Prevent down arrow from moving past last line (causes cursor to disappear)
-        if key == 'down':
+        if key == DOWN_KEY:
             current_text = self.edit_widget.get_edit_text()
             cursor_pos = self.edit_widget.edit_pos
             text_before_cursor = current_text[:cursor_pos]
@@ -1283,7 +1287,7 @@ class ImmediateInput(urwid.Edit):
 
     def keypress(self, size, key):
         """Handle key presses, especially Enter."""
-        if key == 'enter':
+        if key == ENTER_KEY:
             # Execute the command
             if self.on_execute_callback:
                 self.on_execute_callback()
@@ -1717,13 +1721,13 @@ class CursesBackend(UIBackend):
         # Create variables frame (initially hidden)
         self.variables_frame = TopLeftBox(
             self.variables_window,
-            title="Variables (Ctrl+W to toggle)"
+            title=f"Variables ({key_to_display(VARIABLES_KEY)} to toggle)"
         )
 
         # Create stack frame (initially hidden)
         self.stack_frame = TopLeftBox(
             self.stack_window,
-            title="Execution Stack (Ctrl+K to toggle)"
+            title=f"Execution Stack ({key_to_display(LIST_KEY)} to toggle)"
         )
 
         # Create output frame with top/left border only (no bottom/right space reserved)
@@ -1977,6 +1981,9 @@ class CursesBackend(UIBackend):
             else:
                 # Switch back to editor
                 self.pile.focus_position = 1
+            # Force screen redraw to ensure cursor appears in newly focused pane
+            if self.loop and self.loop_running:
+                self.loop.draw_screen()
             # Keep the startup status bar message (don't change it)
             return None
 
@@ -2032,15 +2039,15 @@ class CursesBackend(UIBackend):
             # Toggle execution stack window (only if STACK_KEY is defined)
             self._toggle_stack_window()
 
-        elif key == 's' and self.watch_window_visible:
+        elif key == VARS_SORT_MODE_KEY and self.watch_window_visible:
             # Cycle sort mode in variables window
             self._cycle_variables_sort_mode()
 
-        elif key == 'd' and self.watch_window_visible:
+        elif key == VARS_SORT_DIR_KEY and self.watch_window_visible:
             # Toggle sort direction in variables window
             self._toggle_variables_sort_direction()
 
-        elif key == 'e' and self.watch_window_visible:
+        elif key == VARS_EDIT_KEY and self.watch_window_visible:
             # Edit selected variable value
             self._edit_selected_variable()
 
@@ -2048,11 +2055,11 @@ class CursesBackend(UIBackend):
             # Edit selected variable value (Enter key)
             self._edit_selected_variable()
 
-        elif key == 'f' and self.watch_window_visible:
+        elif key == VARS_FILTER_KEY and self.watch_window_visible:
             # Set filter for variables window
             self._set_variables_filter()
 
-        elif key == 'c' and self.watch_window_visible:
+        elif key == VARS_CLEAR_KEY and self.watch_window_visible:
             # Clear filter for variables window
             self._clear_variables_filter()
 
@@ -2186,7 +2193,7 @@ class CursesBackend(UIBackend):
                 line_code = self.editor_lines.get(state.current_line, "")
                 self.output_buffer.append(f"→ Paused at {pc_display}: {line_code}")
                 self._update_output()
-                self.status_bar.set_text(f"Paused at {pc_display} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
+                self.status_bar.set_text(f"Paused at {pc_display} - {key_to_display(STEP_KEY)}=Step, {key_to_display(CONTINUE_KEY)}=Continue, {key_to_display(STOP_KEY)}=Stop")
                 self._update_immediate_status()
             elif state.error_info:
                 # Clear highlighting on error
@@ -2269,7 +2276,7 @@ class CursesBackend(UIBackend):
                 line_code = self.editor_lines.get(state.current_line, "")
                 self.output_buffer.append(f"→ Paused at {pc_display}: {line_code}")
                 self._update_output()
-                self.status_bar.set_text(f"Paused at {pc_display} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
+                self.status_bar.set_text(f"Paused at {pc_display} - {key_to_display(STEP_KEY)}=Step, {key_to_display(CONTINUE_KEY)}=Continue, {key_to_display(STOP_KEY)}=Stop")
                 self._update_immediate_status()
             elif state.error_info:
                 self.editor._update_display()
@@ -3027,9 +3034,9 @@ class CursesBackend(UIBackend):
         arrow = '↓' if self.variables_sort_reverse else '↑'
 
         if self.variables_filter_text:
-            title = f"Variables ({len(variables)}/{total_count} filtered: '{self.variables_filter_text}') Sort: {mode_label} {arrow} - s=mode d=dir f=filter e=edit Ctrl+W=toggle"
+            title = f"Variables ({len(variables)}/{total_count} filtered: '{self.variables_filter_text}') Sort: {mode_label} {arrow} - {key_to_display(VARS_SORT_MODE_KEY)}=mode {key_to_display(VARS_SORT_DIR_KEY)}=dir {key_to_display(VARS_FILTER_KEY)}=filter {key_to_display(VARS_EDIT_KEY)}=edit {key_to_display(VARIABLES_KEY)}=toggle"
         else:
-            title = f"Variables (Sort: {mode_label} {arrow}) - s=mode d=dir f=filter e=edit Ctrl+W=toggle"
+            title = f"Variables (Sort: {mode_label} {arrow}) - {key_to_display(VARS_SORT_MODE_KEY)}=mode {key_to_display(VARS_SORT_DIR_KEY)}=dir {key_to_display(VARS_FILTER_KEY)}=filter {key_to_display(VARS_EDIT_KEY)}=edit {key_to_display(VARIABLES_KEY)}=toggle"
 
         self.variables_frame.set_title(title)
 
@@ -3292,7 +3299,7 @@ class CursesBackend(UIBackend):
         edit = urwid.Edit(caption="Filter: ", edit_text=current_filter)
 
         def handle_key(key):
-            if key == 'enter':
+            if key == ENTER_KEY:
                 # Set filter
                 self.variables_filter_text = edit.get_edit_text()
                 self._update_variables_window()
@@ -3310,7 +3317,7 @@ class CursesBackend(UIBackend):
                 if self.loop_running:
                     self.loop.draw_screen()
                 return True
-            elif key == 'esc':
+            elif key == ESC_KEY:
                 # Cancel
                 self.loop.widget = self.loop.widget.bottom_w
                 self.status_bar.set_text("Filter cancelled")
@@ -3658,7 +3665,7 @@ class CursesBackend(UIBackend):
                     # Paused execution (breakpoint hit or stepping)
                     self.output_buffer.append(f"→ Paused at line {state.current_line}")
                     self._update_output()
-                    self.status_bar.set_text(f"Paused at line {state.current_line} - Ctrl+T=Step, Ctrl+G=Continue, Ctrl+X=Stop")
+                    self.status_bar.set_text(f"Paused at line {state.current_line} - {key_to_display(STEP_KEY)}=Step, {key_to_display(CONTINUE_KEY)}=Continue, {key_to_display(STOP_KEY)}=Stop")
                     self._update_immediate_status()
 
             else:
@@ -3943,11 +3950,11 @@ class CursesBackend(UIBackend):
         done = {'flag': False}
 
         def handle_input(key):
-            if key == 'y' or key == 'Y':
+            if key == DIALOG_YES_KEY or key == 'Y':
                 result['value'] = True
                 done['flag'] = True
                 self.loop.widget = original_widget
-            elif key == 'n' or key == 'N' or key == 'esc':
+            elif key == DIALOG_NO_KEY or key == 'N' or key == ESC_KEY:
                 result['value'] = False
                 done['flag'] = True
                 self.loop.widget = original_widget
@@ -3991,7 +3998,7 @@ class CursesBackend(UIBackend):
 
         # Create dialog
         fill = urwid.Filler(edit, valign='top')
-        box = urwid.LineBox(fill, title="Input Required - Press Enter to submit, ESC to cancel")
+        box = urwid.LineBox(fill, title="Input Required - Enter or ESC")
         overlay = urwid.Overlay(
             urwid.AttrMap(box, 'body'),
             self.loop.widget,
@@ -4007,7 +4014,7 @@ class CursesBackend(UIBackend):
 
         def handle_input(key):
             """Handle input for the dialog."""
-            if key == 'enter':
+            if key == ENTER_KEY:
                 # Get the result and restore state
                 result = edit.get_edit_text()
                 self.loop.widget = original_widget
@@ -4015,7 +4022,7 @@ class CursesBackend(UIBackend):
                 # Call callback with result
                 callback(result)
                 return None
-            elif key == 'esc':
+            elif key == ESC_KEY:
                 # Restore state
                 self.loop.widget = original_widget
                 self.loop.unhandled_input = old_handler
@@ -4040,7 +4047,7 @@ class CursesBackend(UIBackend):
 
         # Create dialog
         fill = urwid.Filler(edit, valign='top')
-        box = urwid.LineBox(fill, title="Input Required - Press Enter to submit, ESC to cancel")
+        box = urwid.LineBox(fill, title="Input Required - Enter or ESC")
         overlay = urwid.Overlay(
             urwid.AttrMap(box, 'body'),
             self.loop.widget,
@@ -4059,12 +4066,12 @@ class CursesBackend(UIBackend):
         done = {'flag': False}
 
         def handle_input(key):
-            if key == 'enter':
+            if key == ENTER_KEY:
                 result['value'] = edit.get_edit_text()
                 done['flag'] = True
                 # Exit the nested loop
                 raise urwid.ExitMainLoop()
-            elif key == 'esc':
+            elif key == ESC_KEY:
                 # ESC cancels - return None to indicate cancellation
                 result['value'] = None
                 done['flag'] = True
@@ -4521,6 +4528,10 @@ class CursesBackend(UIBackend):
         if self.stack_window_visible:
             self._update_stack_window()
 
+        # Force screen redraw to ensure cursor appears in immediate input
+        if self.loop and self.loop_running:
+            self.loop.draw_screen()
+
     def _update_immediate_status(self):
         """Update immediate mode panel status based on interpreter state."""
         if not self.immediate_executor or not self.immediate_status:
@@ -4696,3 +4707,9 @@ class CursesBackend(UIBackend):
 
         except Exception as e:
             self._append_to_output(f"?Error: {e}")
+
+    def cmd_system(self):
+        """Execute SYSTEM command - Exit to operating system."""
+        self._append_to_output("Goodbye")
+        # Exit the urwid main loop
+        raise urwid.ExitMainLoop()
