@@ -123,7 +123,7 @@ class UsingFormatter:
             'has_decimal': False,  # Whether format includes decimal point
             'leading_sign': False,  # + at start
             'trailing_sign': False,  # + or - at end
-            'trailing_minus_only': False,  # - at end only (always adds 1 char: - or space)
+            'trailing_minus_only': False,  # - at end only
             'dollar_sign': False,  # $$
             'asterisk_fill': False,  # **
             'comma': False,  # Thousand separator

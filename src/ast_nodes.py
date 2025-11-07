@@ -186,13 +186,15 @@ class InputStatementNode:
         INPUT; var1                - Read without prompt (no "?")
         INPUT #filenum, var1       - Read from file
 
-    Note: The suppress_question field indicates whether to suppress the question mark prompt:
-    - suppress_question=False (default): INPUT var or INPUT "prompt", var → shows "? " or "prompt? "
-    - suppress_question=True: INPUT; var → suppresses "?" completely (no prompt at all)
+    Note: The suppress_question field controls "?" display:
+    - suppress_question=False (default): Adds "?" after prompt
+      Examples: INPUT var → "? ", INPUT "Name", var → "Name? "
+    - suppress_question=True: No "?" added (but custom prompt string still displays if present)
+      Examples: INPUT; var → "" (no prompt), INPUT "Name"; var → "Name" (prompt without "?")
 
-    Semicolon usage:
-    - After prompt string: INPUT "prompt"; var → semicolon is just a separator (shows "prompt? ")
-    - Immediately after INPUT: INPUT; var → semicolon signals suppress_question=True
+    Semicolon position determines suppress_question value:
+    - INPUT "prompt"; var → semicolon after prompt is just separator (suppress_question=False, shows "?")
+    - INPUT; var → semicolon immediately after INPUT (suppress_question=True, no "?")
     """
     prompt: Optional['ExpressionNode']
     variables: List['VariableNode']
@@ -545,7 +547,7 @@ class ChainStatementNode:
     start_line: 'ExpressionNode' = None  # Optional starting line number
     merge: bool = False  # True if MERGE option specified
     all_flag: bool = False  # True if ALL option specified (pass all variables)
-    delete_range: tuple = None  # (start, end) for DELETE option, or None
+    delete_range: Optional[Tuple[int, int]] = None  # (start_line, end_line) for DELETE option
     line_num: int = 0
     column: int = 0
 
@@ -877,9 +879,13 @@ class RemarkStatementNode:
         REM text
         REMARK text
         ' text
+
+    Note: comment_type preserves the original comment syntax used in source code.
+    The parser sets this to "REM", "REMARK", or "APOSTROPHE" based on input.
+    Default value "REM" is used only when creating nodes programmatically.
     """
     text: str
-    comment_type: str = "REM"  # "REM", "REMARK", or "APOSTROPHE" - preserves original syntax
+    comment_type: str = "REM"  # Tracks original syntax: "REM", "REMARK", or "APOSTROPHE"
     line_num: int = 0
     column: int = 0
 
@@ -979,10 +985,11 @@ class CallStatementNode:
         CALL A                 - Call address in variable
         CALL DIO+1             - Call computed address
 
-    Note: The 'arguments' field is reserved for potential future compatibility with
-    other BASIC dialects (e.g., CALL ROUTINE(args)). The parser does not currently
-    populate this field (always empty list). Standard MBASIC 5.21 only accepts
-    a single address expression in the 'target' field.
+    Implementation Note: The 'arguments' field is currently unused (always empty list).
+    It exists for potential future support of BASIC dialects that allow CALL with
+    arguments (e.g., CALL ROUTINE(args)). Standard MBASIC 5.21 only accepts a single
+    address expression in the 'target' field. Code traversing the AST can safely ignore
+    the 'arguments' field for MBASIC 5.21 programs.
     """
     target: 'ExpressionNode'  # Memory address expression
     arguments: List['ExpressionNode']  # Reserved for future (parser always sets to empty list)
@@ -1313,11 +1320,11 @@ class TypeInfo:
     Provides convenience methods for working with VarType enum and converting
     between type suffixes, DEF statement tokens, and VarType enum values.
 
-    This class provides a facade over VarType with two purposes:
+    This class serves two purposes:
     1. Static helper methods for type conversions
-    2. Class attributes (INTEGER, SINGLE, etc.) that expose VarType enum values
-       for backward compatibility with code that uses TypeInfo.INTEGER instead
-       of VarType.INTEGER
+    2. Compatibility layer: Class attributes (INTEGER, SINGLE, etc.) alias VarType
+       enum values to support legacy code using TypeInfo.INTEGER instead of
+       VarType.INTEGER
     """
     # Expose enum values as class attributes for compatibility
     INTEGER = VarType.INTEGER
