@@ -70,11 +70,11 @@ This guide helps you choose the right UI for your needs and understand the featu
 |---------|-----|--------|----|-----|-------|
 | **Breakpoints** | ✅ | ✅ | ✅ | ✅ | CLI: BREAK command |
 | **Step execution** | ✅ | ✅ | ✅ | ✅ | CLI: STEP command |
-| **Variable inspector** | ✅ | ✅ | ✅ | ✅ | CLI: WATCH command |
+| **Variable inspector** | ✅ | ✅ | ✅ | ✅ | CLI: immediate mode print |
 | **Edit variables** | ❌ | ⚠️ | ✅ | ✅ | CLI: immediate mode only |
 | **Call stack view** | ✅ | ✅ | ✅ | ✅ | CLI: STACK command |
 | **Visual breakpoints** | ❌ | ✅ | ✅ | ✅ | Click line numbers |
-| **Conditional breaks** | ❌ | ❌ | ❌ | ✅ | Web only |
+| **Conditional breaks** | ❌ | ❌ | ❌ | ❌ | Not implemented |
 | **Execution trace** | ❌ | ✅ | ✅ | ✅ | Show execution path |
 
 ### Help System
@@ -190,7 +190,6 @@ This guide helps you choose the right UI for your needs and understand the featu
 
 **Unique Features:**
 - Browser-based IDE
-- Conditional breakpoints
 - Auto-completion
 - Theme support
 - Touch device support
@@ -198,7 +197,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 ## Feature Implementation Status
 
 ### Recently Added (2025-10-29)
-- ✅ CLI: Debugging commands (BREAK, STEP, WATCH, STACK)
+- ✅ CLI: Debugging commands (BREAK, STEP, STACK)
 - ✅ Tk: Find/Replace functionality
 - ✅ Curses: Save As support
 - ✅ Tk: Web browser help launcher

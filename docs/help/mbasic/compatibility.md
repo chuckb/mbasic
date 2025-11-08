@@ -332,7 +332,7 @@ QuickBASIC is significantly more advanced:
 
 **MBASIC-2025** includes optional modern features that are **NOT in MBASIC 5.21**:
 
-- **Debugging Commands**: BREAK, STEP, WATCH, STACK (CLI only)
+- **Debugging Commands**: BREAK, STEP, STACK (CLI only)
 - **GUI Interfaces**: Curses, Tk, Web UIs
 - **Visual Debugging**: Breakpoints, variable inspection, step visualization
 - **Editor Features**: Syntax highlighting, find/replace, undo/redo

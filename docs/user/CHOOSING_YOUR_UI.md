@@ -65,7 +65,7 @@ python3 mbasic --debug program.bas
 - Fastest startup time
 - Lowest memory usage
 - Best for scripting
-- Command-line debugging (BREAK, STEP, WATCH commands)
+- Command-line debugging (BREAK, STEP, STACK commands)
 - True to original MBASIC
 
 **Limitations:**
@@ -74,7 +74,7 @@ python3 mbasic --debug program.bas
 - No mouse support
 - No Save without filename
 
-> **Note:** CLI has full debugging capabilities through commands (BREAK, STEP, WATCH, STACK), but lacks the visual debugging interface (Variables Window, clickable breakpoints, etc.) found in Curses, Tk, and Web UIs.
+> **Note:** CLI has full debugging capabilities through commands (BREAK, STEP, STACK), but lacks the visual debugging interface (Variables Window, clickable breakpoints, etc.) found in Curses, Tk, and Web UIs.
 
 ### 📟 Curses (Terminal UI)
 
@@ -376,7 +376,7 @@ If you know Tk/Web but need CLI:
 1. **Learn commands**: LOAD, SAVE, RUN, LIST
 2. **Master line editing**: Edit by number
 3. **Use HELP often**: Built-in documentation
-4. **Practice debugging**: BREAK, STEP, WATCH
+4. **Practice debugging**: BREAK, STEP, STACK
 
 ### Your Programs Work Everywhere
 

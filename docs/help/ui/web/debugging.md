@@ -31,7 +31,7 @@ The Web UI debugger currently offers:
 - Clear all breakpoints via Run menu
 - Breakpoints persist within the current session
 
-**Note:** Advanced features like clicking line numbers to set breakpoints, conditional breakpoints, and a dedicated breakpoint panel are planned for future releases but not yet implemented.
+**Note:** Advanced features like clicking line numbers to set breakpoints and a dedicated breakpoint panel are planned for future releases but not yet implemented.
 
 ## Starting Debug Session
 
@@ -175,13 +175,6 @@ Enable trace mode to see:
 ## Advanced Debugging (Planned Features)
 
 **Note:** The following features are planned for future releases but not yet implemented:
-
-### Conditional Breakpoints (Future)
-
-Will allow setting conditions for breakpoints:
-- Break when variable reaches specific value
-- Break on expression evaluation
-- Break after N hits
 
 ### Logpoints (Future)
 

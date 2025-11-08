@@ -49,11 +49,6 @@
       "keys": ["CONT"],
       "primary": "CONT",
       "description": "Continue execution"
-    },
-    "watch": {
-      "keys": ["WATCH"],
-      "primary": "WATCH",
-      "description": "Watch variables"
     }
   }
 }
