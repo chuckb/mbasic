@@ -39,7 +39,15 @@ except ImportError:
 
 def print_error(e, runtime=None):
     """Print error with optional traceback in MBASIC_DEBUG mode"""
-    # Gather context for debug logging
+    from src.parser import ParseError
+
+    # For ParseError (user input mistakes), just print simple message
+    # Don't log verbose debug info since these are expected user errors, not bugs
+    if isinstance(e, ParseError):
+        print(f"?{e}")
+        return
+
+    # For runtime errors, gather context for debug logging
     context = {}
     if runtime:
         if runtime.pc and runtime.pc.line_num:
