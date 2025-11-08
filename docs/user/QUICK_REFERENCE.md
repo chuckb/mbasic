@@ -9,11 +9,11 @@ python3 mbasic --ui curses [filename.bas]
 
 | Key | Command | Description |
 |-----|---------|-------------|
-| `Ctrl+N` | New | Clear program, start fresh |
-| `Ctrl+L` | Load | Load program from file |
-| `Ctrl+S` | Save | Save program to file |
-| `Ctrl+Q` | Quit | Exit IDE |
-| `Ctrl+P` | Help | Open help browser |
+| `{{kbd:new}}` | New | Clear program, start fresh |
+| `{{kbd:open}}` | Load | Load program from file |
+| `{{kbd:save}}` | Save | Save program to file |
+| `{{kbd:quit}}` | Quit | Exit IDE |
+| `{{kbd:help}}` | Help | Open help browser |
 | `ESC` | Menu | Open/close menu bar |
 | Arrow Keys | Navigate | Move cursor in editor |
 
@@ -21,7 +21,7 @@ python3 mbasic --ui curses [filename.bas]
 
 | Key | Command | Description |
 |-----|---------|-------------|
-| `Ctrl+R` | Run | Execute current program |
+| `{{kbd:run}}` | Run | Execute current program |
 
 ## Breakpoint Debugging
 
@@ -69,14 +69,14 @@ Status shows: `BREAKPOINT at line XX - Press 'c' continue, 's' step, 'e' end`
 ### 1. Write and Run
 ```
 1. Type program in editor
-2. Ctrl+R to run
+2. {{kbd:run}} to run
 3. Check output window
 ```
 
 ### 2. Debug with Breakpoints
 ```
 1. Set breakpoints on key lines (press 'b')
-2. Ctrl+R to run
+2. {{kbd:run}} to run
 3. At each breakpoint:
    - Press 'c' to continue to next breakpoint
    - Press 's' to step through line-by-line
@@ -85,17 +85,17 @@ Status shows: `BREAKPOINT at line XX - Press 'c' continue, 's' step, 'e' end`
 
 ### 3. Load, Edit, Save
 ```
-1. Ctrl+L to load existing .bas file
+1. {{kbd:open}} to load existing .bas file
 2. Edit in editor window
-3. Ctrl+R to test
-4. Ctrl+S to save changes
+3. {{kbd:run}} to test
+4. {{kbd:save}} to save changes
 ```
 
 ## Help System
 
 | Key | Where | What |
 |-----|-------|------|
-| `Ctrl+P` | Anywhere | Open help browser |
+| `{{kbd:help}}` | Anywhere | Open help browser |
 | Arrow Keys | In help | Scroll up/down |
 | `Space` | In help | Page down |
 | `B` | In help | Page up |
@@ -112,14 +112,14 @@ Status shows: `BREAKPOINT at line XX - Press 'c' continue, 's' step, 'e' end`
 
 ### Quick Testing (No Breakpoints)
 ```
-Ctrl+R → Watch output → Done
+{{kbd:run}} → Watch output → Done
 ```
 
 ### Checkpoint Debugging
 ```
 Set breakpoints at phase boundaries
 ↓
-Ctrl+R to start
+{{kbd:run}} to start
 ↓
 Press 'c' at each breakpoint to jump to next phase
 ↓
@@ -130,7 +130,7 @@ Verify output at each checkpoint
 ```
 Set breakpoint before problem area
 ↓
-Ctrl+R to start
+{{kbd:run}} to start
 ↓
 Press 'c' to get to breakpoint
 ↓
@@ -143,7 +143,7 @@ Press 'e' when done
 ```
 Set breakpoint at loop start
 ↓
-Ctrl+R to start
+{{kbd:run}} to start
 ↓
 Press 's' to watch first few iterations
 ↓
@@ -157,7 +157,7 @@ Press 'c' to let rest complete
 ✓ **Continue is your friend**: Use 'c' to skip over working code
 ✓ **Step when uncertain**: Use 's' only in problem areas
 ✓ **Watch the output**: Output window updates as program runs
-✓ **Use help**: Press Ctrl+P anytime for full documentation
+✓ **Use help**: Press {{kbd:help}} anytime for full documentation
 
 ## Common Issues
 
@@ -179,7 +179,7 @@ See example programs in the `basic/` directory of the MBASIC installation.
 
 ## More Information
 
-- Press `^P` (or `^F`) within the Curses UI to access the built-in help system
+- Press {{kbd:help}} within the Curses UI to access the built-in help system
 - See `docs/help/` directory for full help documentation
 - Visit [CHOOSING_YOUR_UI.md](CHOOSING_YOUR_UI.md) for UI comparison and selection guide
 

@@ -1,0 +1,59 @@
+{
+  "editor": {
+    "run": {
+      "keys": ["RUN"],
+      "primary": "RUN",
+      "description": "Run program"
+    },
+    "stop": {
+      "keys": ["Ctrl+C"],
+      "primary": "Ctrl+C",
+      "description": "Stop program execution"
+    },
+    "save": {
+      "keys": ["SAVE \"file\""],
+      "primary": "SAVE \"file\"",
+      "description": "Save program to file"
+    },
+    "new": {
+      "keys": ["NEW"],
+      "primary": "NEW",
+      "description": "Clear program, start fresh"
+    },
+    "open": {
+      "keys": ["LOAD \"file\""],
+      "primary": "LOAD \"file\"",
+      "description": "Load program from file"
+    },
+    "help": {
+      "keys": ["HELP"],
+      "primary": "HELP",
+      "description": "Show help"
+    },
+    "quit": {
+      "keys": ["SYSTEM"],
+      "primary": "SYSTEM",
+      "description": "Exit to system"
+    },
+    "toggle_breakpoint": {
+      "keys": ["BREAK line"],
+      "primary": "BREAK line",
+      "description": "Set breakpoint at line"
+    },
+    "step": {
+      "keys": ["STEP"],
+      "primary": "STEP",
+      "description": "Step to next statement"
+    },
+    "continue": {
+      "keys": ["CONT"],
+      "primary": "CONT",
+      "description": "Continue execution"
+    },
+    "watch": {
+      "keys": ["WATCH"],
+      "primary": "WATCH",
+      "description": "Watch variables"
+    }
+  }
+}

@@ -500,7 +500,7 @@ Prevents accidental case variations across team members.
 Least surprising behavior, lets you code freely.
 
 ### 3. Check Variable Window
-The Variables & Resources window (Ctrl+W in TK UI) shows the canonical case being used.
+The Variables & Resources window ({{kbd:toggle_variables}} in TK UI) shows the canonical case being used.
 
 ### 4. Document Your Choice
 Add a comment at the top of programs:

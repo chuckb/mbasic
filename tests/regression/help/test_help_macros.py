@@ -28,7 +28,7 @@ def test_curses_macros():
 
     test_cases = [
         ("{{kbd:help}}", "Ctrl+H"),
-        ("{{kbd:save}}", "Ctrl+S"),
+        ("{{kbd:save}}", "Ctrl+V"),  # Curses uses Ctrl+V (Ctrl+S is terminal flow control)
         ("{{kbd:run}}", "Ctrl+R"),
         ("{{kbd:new}}", "Ctrl+N"),
         ("{{kbd:quit}}", "Ctrl+Q"),
@@ -98,7 +98,7 @@ Version {{version}} of {{ui}}.
 
     expected = """
 Press **Ctrl+H** to open help.
-Use **Ctrl+S** to save your program.
+Use **Ctrl+V** to save your program.
 Version 5.21 of Curses.
 """
 
@@ -117,6 +117,57 @@ Version 5.21 of Curses.
     print()
     return passed
 
+def test_cross_ui_macros():
+    """Test cross-UI macro expansion."""
+    print("Cross-UI Macro Test")
+    print("=" * 60)
+    print()
+
+    help_root = Path(__file__).parent.parent / "docs" / "help"
+    # Use any UI, doesn't matter since we're specifying UIs in macros
+    macros = HelpMacros('curses', str(help_root))
+
+    test_cases = [
+        # Cross-UI lookups - use correct action names for each UI
+        ("{{kbd:save:curses}}", "Ctrl+V"),  # Curses uses 'save'
+        ("{{kbd:file_save:tk}}", "Ctrl+S"),  # Tk uses 'file_save'
+        ("{{kbd:run:curses}}", "Ctrl+R"),  # Curses uses 'run'
+        ("{{kbd:run_program:tk}}", "Ctrl+R"),  # Tk uses 'run_program'
+        ("{{kbd:help:curses}}", "Ctrl+H"),  # Curses uses 'help'
+        ("{{kbd:help_topics:tk}}", "Ctrl+?"),  # Tk uses 'help_topics'
+        ("{{kbd:new:curses}}", "Ctrl+N"),  # Curses uses 'new'
+        ("{{kbd:file_new:tk}}", "Ctrl+N"),  # Tk uses 'file_new'
+        ("{{kbd:toggle_variables:tk}}", "Ctrl+W"),  # Tk-specific
+        ("{{kbd:toggle_breakpoint:curses}}", "Ctrl+B"),  # Both have this
+        ("{{kbd:toggle_breakpoint:tk}}", "Ctrl+B"),  # Both have this
+        # CLI lookups
+        ("{{kbd:run:cli}}", "RUN"),  # CLI uses commands
+        ("{{kbd:save:cli}}", "SAVE \"file\""),
+        ("{{kbd:new:cli}}", "NEW"),
+        ("{{kbd:help:cli}}", "HELP"),
+        ("{{kbd:stop:cli}}", "Ctrl+C"),
+        ("{{kbd:step:cli}}", "STEP"),
+        # Web lookups
+        ("{{kbd:run:web}}", "Ctrl+R/F5"),  # Web uses keyboard shortcuts
+        ("{{kbd:save:web}}", "Ctrl+S"),
+        ("{{kbd:new:web}}", "Ctrl+N"),
+        ("{{kbd:help:web}}", "F1"),
+        ("{{kbd:stop:web}}", "Esc"),
+        ("{{kbd:toggle_breakpoint:web}}", "F9"),
+        ("{{kbd:step:web}}", "F10"),
+    ]
+
+    all_passed = True
+    for input_text, expected in test_cases:
+        result = macros.expand(input_text)
+        status = "✓" if result == expected else "✗"
+        if result != expected:
+            all_passed = False
+        print(f"{status} {input_text:30} → {result:15} (expected: {expected})")
+
+    print()
+    return all_passed
+
 if __name__ == '__main__':
     print("MBASIC Help Macro Test")
     print()
@@ -133,6 +184,10 @@ if __name__ == '__main__':
 
     # Test 3: Markdown context
     if not test_markdown_context():
+        success = False
+
+    # Test 4: Cross-UI macros
+    if not test_cross_ui_macros():
         success = False
 
     if success:

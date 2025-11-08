@@ -99,26 +99,57 @@ class HelpMacros:
         Expand keyboard shortcut macro by searching for action name across all sections.
 
         Args:
-            key_name: Name of key action (e.g., 'help', 'save', 'run').
-                     This is searched across all keybinding sections (editor, help_browser, etc.)
+            key_name: Name of key action, optionally with UI specifier.
+                     Formats:
+                     - 'action' - searches current UI (e.g., 'help', 'save', 'run')
+                     - 'action:ui' - searches specific UI (e.g., 'save:curses', 'run:tk')
 
         Returns:
             Primary key combination or original macro if not found
 
         Example:
-            _expand_kbd('help') searches all sections for an action named 'help'
-            and returns its primary keybinding (e.g., '^H')
+            _expand_kbd('help') searches current UI for action 'help'
+            _expand_kbd('save:curses') searches Curses UI for action 'save'
         """
         if not key_name:
             return "{{kbd}}"
 
+        # Check if UI is specified (e.g., 'save:curses')
+        if ':' in key_name:
+            action, ui = key_name.split(':', 1)
+            keybindings = self._load_keybindings_for_ui(ui)
+        else:
+            action = key_name
+            keybindings = self.keybindings
+
         # Search in all sections of keybindings
-        for section_name, section in self.keybindings.items():
-            if key_name in section:
-                return section[key_name]['primary']
+        for section_name, section in keybindings.items():
+            if action in section:
+                return section[action]['primary']
 
         # Not found, return placeholder
         return f"{{{{kbd:{key_name}}}}}"
+
+    def _load_keybindings_for_ui(self, ui_name: str) -> Dict:
+        """
+        Load keybindings configuration for a specific UI.
+
+        Args:
+            ui_name: Name of UI ('curses', 'tk', 'web', etc.)
+
+        Returns:
+            Dict of keybindings for that UI, or empty dict if not found
+        """
+        keybindings_path = Path(__file__).parent / f"{ui_name}_keybindings.json"
+
+        if keybindings_path.exists():
+            try:
+                with open(keybindings_path, 'r') as f:
+                    return json.load(f)
+            except Exception:
+                pass
+
+        return {}
 
     def get_all_keys(self, section: Optional[str] = None) -> Dict[str, str]:
         """

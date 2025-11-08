@@ -46,7 +46,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 |---------|-----|--------|----|-----|-------|
 | **New program** | ✅ | ✅ | ✅ | ✅ | NEW command |
 | **Open file** | ✅ | ✅ | ✅ | ✅ | LOAD "filename" command or File → Open |
-| **Save (interactive)** | ❌ | ✅ | ✅ | ✅ | Ctrl+S prompts for filename |
+| **Save (interactive)** | ❌ | ✅ | ✅ | ✅ | Keyboard shortcut prompts for filename |
 | **Save (command)** | ✅ | ✅ | ✅ | ✅ | SAVE "filename" command |
 | **Recent files** | ❌ | ❌ | ✅ | ⚠️ | Tk: menu, Web: localStorage |
 | **Drag & drop** | ❌ | ❌ | ✅ | ✅ | GUI only |
@@ -164,7 +164,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 - Heavier resource usage
 
 **Unique Features:**
-- Find/Replace (Ctrl+F/H)
+- Find/Replace ({{kbd:find:tk}}/{{kbd:replace:tk}})
 - Smart Insert mode
 - Most UI polish
 - Native file dialogs
@@ -221,22 +221,22 @@ This guide helps you choose the right UI for your needs and understand the featu
 
 | Action | CLI | Curses | Tk | Web |
 |--------|-----|--------|----|----|
-| **Run** | RUN | Ctrl+R | Ctrl+R | Ctrl+R/F5 |
-| **Stop** | Ctrl+C | Ctrl+C/Esc | Esc | Esc |
-| **Save** | SAVE "file" | Ctrl+S | Ctrl+S | Ctrl+S |
-| **New** | NEW | Ctrl+N | Ctrl+N | Ctrl+N |
-| **Open** | LOAD "file" | Ctrl+O | Ctrl+O | Ctrl+O |
-| **Help** | HELP | Ctrl+H/F1 | Ctrl+? | F1 |
-| **Quit** | SYSTEM | Ctrl+Q | Ctrl+Q | N/A |
+| **Run** | {{kbd:run:cli}} | {{kbd:run:curses}} | {{kbd:run_program:tk}} | {{kbd:run:web}} |
+| **Stop** | {{kbd:stop:cli}} | {{kbd:stop:curses}}/Esc | Esc | {{kbd:stop:web}} |
+| **Save** | {{kbd:save:cli}} | {{kbd:save:curses}} | {{kbd:file_save:tk}} | {{kbd:save:web}} |
+| **New** | {{kbd:new:cli}} | {{kbd:new:curses}} | {{kbd:file_new:tk}} | {{kbd:new:web}} |
+| **Open** | {{kbd:open:cli}} | {{kbd:open:curses}} | {{kbd:file_open:tk}} | {{kbd:open:web}} |
+| **Help** | {{kbd:help:cli}} | {{kbd:help:curses}} | {{kbd:help_topics:tk}} | {{kbd:help:web}} |
+| **Quit** | {{kbd:quit:cli}} | {{kbd:quit:curses}} | {{kbd:file_quit:tk}} | N/A |
 
 ### Debugging Shortcuts
 
 | Action | CLI | Curses | Tk | Web |
 |--------|-----|--------|----|----|
-| **Toggle Breakpoint** | BREAK line | F9 | Ctrl+B | F9 |
-| **Step** | STEP | F10 | Menu/Toolbar | F10 |
-| **Continue** | CONT | F5 | Menu/Toolbar | F5 |
-| **Variables** | WATCH | Ctrl+W | Ctrl+W | Ctrl+Alt+V |
+| **Toggle Breakpoint** | {{kbd:toggle_breakpoint:cli}} | {{kbd:toggle_breakpoint:curses}} | {{kbd:toggle_breakpoint:tk}} | {{kbd:toggle_breakpoint:web}} |
+| **Step** | {{kbd:step:cli}} | {{kbd:step:curses}} | Menu/Toolbar | {{kbd:step:web}} |
+| **Continue** | {{kbd:continue:cli}} | {{kbd:continue:curses}} | Menu/Toolbar | {{kbd:continue:web}} |
+| **Variables** | {{kbd:watch:cli}} | (none) | {{kbd:toggle_variables:tk}} | {{kbd:toggle_variables:web}} |
 
 ## Performance Comparison
 
@@ -299,10 +299,10 @@ This guide helps you choose the right UI for your needs and understand the featu
 
 ## Getting Help
 
-- **CLI:** Type `HELP` or `HELP <topic>`
-- **Curses:** Press F1 or Ctrl+H
-- **Tk:** Press Ctrl+? or use Help menu
-- **Web:** Press F1 or click Help
+- **CLI:** Type {{kbd:help:cli}} or `HELP <topic>`
+- **Curses:** Press {{kbd:help:curses}} to open help browser
+- **Tk:** Press {{kbd:help_topics:tk}} or use Help menu
+- **Web:** Press {{kbd:help:web}} or click Help
 
 ## Reporting Issues
 

@@ -21,23 +21,23 @@ The Tk UI is the default graphical interface for MBASIC.
    10 PRINT "HELLO, WORLD!"
    20 END
    ```
-3. Press **Ctrl+R** to run
+3. Press **{{kbd:run_program}}** to run
 4. See output in the lower pane
 
 ## Essential Keyboard Shortcuts
 
 | Shortcut | Action |
 |----------|--------|
-| **Ctrl+R** | Run program |
-| **Ctrl+S** | Save file |
-| **Ctrl+O** | Open file |
-| **Ctrl+N** | New program |
-| **Ctrl+I** | Smart insert blank line |
-| **Ctrl+E** | Renumber program |
-| **Ctrl+W** | Show/hide Variables Window |
-| **Ctrl+K** | Show/hide Execution Stack Window |
-| **Ctrl+B** | Toggle breakpoint |
-| **Ctrl+H** | Find and replace (Tk UI only) |
+| **{{kbd:run_program}}** | Run program |
+| **{{kbd:file_save}}** | Save file |
+| **{{kbd:file_open}}** | Open file |
+| **{{kbd:file_new}}** | New program |
+| **{{kbd:smart_insert}}** | Smart insert blank line |
+| **{{kbd:renumber}}** | Renumber program |
+| **{{kbd:toggle_variables}}** | Show/hide Variables Window |
+| **{{kbd:toggle_stack}}** | Show/hide Execution Stack Window |
+| **{{kbd:toggle_breakpoint}}** | Toggle breakpoint |
+| **{{kbd:replace}}** | Find and replace (Tk UI only) |
 
 **Note:** Step, Continue, and Stop are available via toolbar buttons or the Run menu (no keyboard shortcuts).
 
@@ -64,7 +64,7 @@ The Tk UI is the default graphical interface for MBASIC.
 
 ## Smart Insert Workflow
 
-**Smart Insert (Ctrl+I)** is the fastest way to add code between existing lines. No more mental math to figure out line numbers!
+**Smart Insert ({{kbd:smart_insert}})** is the fastest way to add code between existing lines. No more mental math to figure out line numbers!
 
 ### Example 1: Basic Usage
 
@@ -77,7 +77,7 @@ You have this program:
 Want to add a line between them?
 
 1. Click on line 10 (or position cursor anywhere on that line)
-2. Press **Ctrl+I**
+2. Press **{{kbd:smart_insert}}**
 3. A blank line 15 is automatically inserted!
 
 Result:
@@ -98,7 +98,7 @@ You have consecutive lines:
 12 PRINT "THREE"
 ```
 
-Position cursor on line 10, press **Ctrl+I**:
+Position cursor on line 10, press **{{kbd:smart_insert}}**:
 
 A dialog appears: "No room between lines 10 and 11. Would you like to renumber the program to make room?"
 
@@ -121,7 +121,7 @@ You have:
 30 PRINT "END"
 ```
 
-Cursor on line 30, press **Ctrl+I**:
+Cursor on line 30, press **{{kbd:smart_insert}}**:
 
 A blank line 40 is inserted (using standard increment of 10).
 
@@ -145,7 +145,7 @@ Result:
 **New way (Smart Insert):**
 ```
 1. Position on line 10
-2. Press Ctrl+I
+2. Press {{kbd:smart_insert}}
 3. Start typing your code
 ```
 
@@ -156,13 +156,13 @@ Result:
 ### 1. Write New Program
 
 ```
-1. Press Ctrl+N for new program
+1. Press {{kbd:file_new}} for new program
 2. Type first line: 10 PRINT "START"
 3. Press Enter
 4. Type next line: 20 END
-5. Press Ctrl+R to run
+5. Press {{kbd:run_program}} to run
 6. Check output in lower pane
-7. Press Ctrl+S to save
+7. Press {{kbd:file_save}} to save
 ```
 
 ### 2. Expand Existing Program
@@ -171,10 +171,10 @@ You have a working program and need to add functionality:
 
 ```
 1. Find the spot where new code goes
-2. Press Ctrl+I to insert blank line
+2. Press {{kbd:smart_insert}} to insert blank line
 3. Type your new code
-4. Press Ctrl+R to test
-5. Press Ctrl+S to save
+4. Press {{kbd:run_program}} to test
+5. Press {{kbd:file_save}} to save
 ```
 
 **Example:**
@@ -184,7 +184,7 @@ Before:
 20 PRINT "You entered"; N
 30 END
 
-After (cursor on 10, Ctrl+I twice):
+After (cursor on 10, {{kbd:smart_insert}} twice):
 10 INPUT "Enter number"; N
 15 IF N < 0 THEN PRINT "Must be positive" : GOTO 10
 17 ' Validate input
@@ -197,7 +197,7 @@ After (cursor on 10, Ctrl+I twice):
 Your program has grown and line numbers are a mess:
 
 ```
-1. Press Ctrl+E (Renumber dialog opens)
+1. Press {{kbd:renumber}} (Renumber dialog opens)
 2. Set "Start at": 100
 3. Set "Increment": 10
 4. Click "Renumber"
@@ -226,8 +226,8 @@ Notice: GOTO 10 automatically became GOTO 100!
 
 ```
 1. Click line number gutter to set breakpoint (● appears)
-2. Press Ctrl+W to open Variables Window
-3. Press Ctrl+R to run
+2. Press {{kbd:toggle_variables}} to open Variables Window
+3. Press {{kbd:run_program}} to run
 4. Program stops at breakpoint
 5. Check variable values in Variables Window
 6. Click "Step" toolbar button to step through code one statement at a time
@@ -248,7 +248,7 @@ Notice: GOTO 10 automatically became GOTO 100!
 Large program with repeated code?
 
 ```
-1. Press Ctrl+H (Find and Replace)
+1. Press {{kbd:replace}} (Find and Replace)
 2. Enter find text: "OLDVAR"
 3. Enter replace text: "NEWVAR"
 4. Click "Replace All"
@@ -264,11 +264,11 @@ Large program with repeated code?
 python3 mbasic --ui tk myprogram.bas
 
 # Or load from menu
-1. Press Ctrl+O
+1. Press {{kbd:file_open}}
 2. Browse to file
 3. Click Open
 4. Edit in editor
-5. Press Ctrl+S to save
+5. Press {{kbd:file_save}} to save
 ```
 
 ### Create Program Template
@@ -288,7 +288,7 @@ python3 mbasic --ui tk myprogram.bas
 1000 END
 ```
 
-Use **Ctrl+I** to fill in sections!
+Use **{{kbd:smart_insert}}** to fill in sections!
 
 ### Fix Syntax Errors
 
@@ -299,7 +299,7 @@ Red **?** markers appear in line number gutter for syntax errors:
 2. Read error in output pane
 3. Fix the syntax
 4. ? disappears automatically (100ms delay)
-5. Press Ctrl+R to run
+5. Press {{kbd:run_program}} to run
 ```
 
 **Common errors:**
@@ -318,7 +318,7 @@ Red **?** markers appear in line number gutter for syntax errors:
 60 END
 ```
 
-Run with **Ctrl+R**, then check Variables Window (**Ctrl+W**) to see array contents!
+Run with **{{kbd:run_program}}**, then check Variables Window (**{{kbd:toggle_variables}}**) to see array contents!
 
 ## Variable Case Preservation
 
@@ -433,7 +433,7 @@ Click the **Step** toolbar button (step line) to execute the entire line at once
 
 ### Execution Stack Window
 
-Press **Ctrl+K** to see the Execution Stack Window showing active loops and subroutine calls:
+Press **{{kbd:toggle_stack}}** to see the Execution Stack Window showing active loops and subroutine calls:
 
 ```basic
 10 FOR I = 1 TO 3
@@ -473,7 +473,7 @@ Perfect for understanding:
 300 END
 ```
 
-Use Smart Insert (Ctrl+I) to add details under each section header without worrying about line numbers!
+Use Smart Insert ({{kbd:smart_insert}}) to add details under each section header without worrying about line numbers!
 
 ### 2. Renumber Before Sharing
 
@@ -487,7 +487,7 @@ Your development version might have messy line numbers:
 ```
 
 Before sharing, make it clean:
-1. Press **Ctrl+E**
+1. Press **{{kbd:renumber}}**
 2. Start=10, Increment=10
 3. Result:
 ```basic
@@ -509,7 +509,7 @@ MBASIC supports two comment styles:
 Add comments while developing with Smart Insert:
 ```basic
 10 X = 5
-' Ctrl+I here creates line 15
+' {{kbd:smart_insert}} here creates line 15
 15 ' Calculate result
 20 Y = X * 10
 ```
@@ -525,11 +525,11 @@ When working with arrays, keep Variables Window open:
 40 NEXT I
 ```
 
-Run this with **Ctrl+W** window open - you'll see each array element as it's filled!
+Run this with **{{kbd:toggle_variables}}** window open - you'll see each array element as it's filled!
 
 ### 5. Execution Stack Window for Loops
 
-Press **Ctrl+K** to see Execution Stack Window while stepping through nested loops:
+Press **{{kbd:toggle_stack}}** to see Execution Stack Window while stepping through nested loops:
 
 ```basic
 10 FOR I = 1 TO 3
@@ -552,15 +552,15 @@ Perfect for debugging complex loop logic!
 Fastest workflow for iterative development:
 
 ```
-Type → Ctrl+R → Check → Edit → Ctrl+R → Check → ...
+Type → {{kbd:run_program}} → Check → Edit → {{kbd:run_program}} → Check → ...
 ```
 
-No need to save between test runs! Save with **Ctrl+S** only when you're happy with results.
+No need to save between test runs! Save with **{{kbd:file_save}}** only when you're happy with results.
 
 ### 7. Breakpoint Shortcuts
 
 **Mouse:** Click line number to toggle breakpoint
-**Keyboard:** Position cursor, press **Ctrl+B**
+**Keyboard:** Position cursor, press **{{kbd:toggle_breakpoint}}**
 
 Try both and use whichever feels faster!
 
@@ -587,24 +587,24 @@ python3 mbasic --ui tk basic/arrays.bas
 
 In order of importance:
 
-1. **Smart Insert (Ctrl+I)** - Essential for efficient editing
-2. **Run (Ctrl+R)** and toolbar buttons (Step/Stmt/Cont) - Core debugging workflow
-3. **Variables Window (Ctrl+W)** - See what your program is doing
-4. **Renumber (Ctrl+E)** - Keep code organized
-5. **Breakpoints (Ctrl+B)** - Stop at critical points
-6. **Save Often (Ctrl+S)** - Protect your work
+1. **Smart Insert ({{kbd:smart_insert}})** - Essential for efficient editing
+2. **Run ({{kbd:run_program}})** and toolbar buttons (Step/Stmt/Cont) - Core debugging workflow
+3. **Variables Window ({{kbd:toggle_variables}})** - See what your program is doing
+4. **Renumber ({{kbd:renumber}})** - Keep code organized
+5. **Breakpoints ({{kbd:toggle_breakpoint}})** - Stop at critical points
+6. **Save Often ({{kbd:file_save}})** - Protect your work
 
 ### Common Mistakes to Avoid
 
 ❌ **Manually calculating line numbers** → Use Smart Insert instead
-❌ **Running without saving** → Save first with Ctrl+S
+❌ **Running without saving** → Save first with {{kbd:file_save}}
 ❌ **Ignoring ? markers** → Fix syntax errors before running
 ❌ **Not using Variables Window** → You're debugging blind!
 ❌ **Stepping through entire program** → Set breakpoints, use Continue
 
 ## Getting Help
 
-- **In-app help**: Press **Ctrl+?** or use Help menu
+- **In-app help**: Press **{{kbd:help_topics}}** or use Help menu
 - **Online docs**: See `docs/` directory
 - **Examples**: Check `basic/` directory
 - **Issues**: Report at GitHub repository
