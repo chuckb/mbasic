@@ -19,8 +19,8 @@ Key responsibilities:
 from typing import Dict, List, Set, Optional, Tuple, Any, Union
 from dataclasses import dataclass, field
 from enum import Enum
-from src.ast_nodes import *
-from src.tokens import TokenType
+from ast_nodes import *
+from tokens import TokenType
 
 
 class VarType(Enum):

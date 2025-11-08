@@ -2550,8 +2550,7 @@ class Parser:
         return DimStatementNode(
             arrays=arrays,
             line_num=token.line,
-            column=token.column,
-            token=token
+            column=token.column
         )
 
     def parse_erase(self) -> EraseStatementNode:

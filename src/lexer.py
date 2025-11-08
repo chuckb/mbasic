@@ -7,8 +7,8 @@ features (e.g., periods in identifiers like "RECORD.FIELD") as they are part of 
 There is no option to disable them.
 """
 from typing import List, Optional
-from src.tokens import Token, TokenType, KEYWORDS
-from src.simple_keyword_case import SimpleKeywordCase
+from tokens import Token, TokenType, KEYWORDS
+from simple_keyword_case import SimpleKeywordCase
 
 
 def create_keyword_case_manager() -> SimpleKeywordCase:
