@@ -232,7 +232,7 @@ class InteractiveMode:
         if not READLINE_AVAILABLE:
             print("(Note: readline not available - line editing limited)")
         else:
-            print("(Tip: Press Ctrl+A to edit last line, or Ctrl+A followed by line number)")
+            print("(Tip: Press ^A to edit last line, or ^A followed by line number)")
         print("Ready")
 
         while True:
@@ -288,7 +288,7 @@ class InteractiveMode:
                     break
                 elif self.ctrl_c_count == 2:
                     # Two Ctrl+C in a row - show hint
-                    print("Press Ctrl+C again to exit, or type SYSTEM to return to OS")
+                    print("Press ^C again to exit, or type SYSTEM to return to OS")
                 else:
                     # First Ctrl+C - just show "Break"
                     print("Break")
