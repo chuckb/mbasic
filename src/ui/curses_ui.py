@@ -3841,15 +3841,15 @@ class CursesBackend(UIBackend):
                 self.runtime.statement_table.add(pc, stmt)
 
         # Restore PC only if execution is running AND not paused at breakpoint
-        # When paused_at_breakpoint=True, we let PC reset to halted (below) so that
-        # continuing execution will properly resume from the breakpoint location.
-        # Otherwise ensure halted (don't accidentally start execution)
+        # When paused_at_breakpoint=True, we reset PC to halted because the breakpoint PC
+        # is stored separately and will be restored when continuing from the breakpoint.
+        # When not running at all, ensure halted (don't accidentally start execution)
         if self.running and not self.paused_at_breakpoint:
             # Execution is running - preserve execution state
             self.runtime.pc = old_pc
             self.runtime.halted = old_halted
         else:
-            # No execution in progress - ensure halted
+            # No execution in progress or paused at breakpoint - ensure halted
             self.runtime.pc = PC.halted_pc()
             self.runtime.halted = True
 

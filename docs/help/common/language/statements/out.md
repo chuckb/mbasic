@@ -17,6 +17,8 @@ type: statement
 
 **Why**: Cannot access hardware I/O ports from a Python interpreter. OUT was used to control hardware devices through port-based I/O.
 
+**Alternative**: There is no modern equivalent for hardware port I/O. For memory writes, use [POKE](poke.md), though note it also performs no actual operation.
+
 **Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.
 
 ---

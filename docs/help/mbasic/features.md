@@ -57,7 +57,7 @@ This document lists all features implemented in MBASIC-2025 (this implementation
 - **PRINT USING** - Formatted output with format strings
 - **INPUT** - Interactive input with prompts
 - **LINE INPUT** - Full line input
-- **LPRINT** - Line printer output (Note: LPRINT statement is supported, but WIDTH LPRINT syntax is not)
+- **LPRINT** - Line printer output (Note: Statement is parsed but produces no output - see [LPRINT](../common/language/statements/lprint-lprint-using.md) for details)
 
 **File I/O:**
 - **Sequential files:** OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#
@@ -128,10 +128,12 @@ This document lists all features implemented in MBASIC-2025 (this implementation
 ### Debugging
 
 - **TRON/TROFF** - Line tracing
-- **Breakpoints** - Set/clear breakpoints (UI-dependent)
-- **Step execution** - Execute one line at a time (UI-dependent)
-- **Variable watch** - Monitor variables (UI-dependent)
-- **Stack viewer** - View call stack (UI-dependent)
+- **Breakpoints** - Set/clear breakpoints (available in all UIs; access method varies)
+- **Step execution** - Execute one line at a time (available in all UIs; access method varies)
+- **Variable watch** - Monitor variables (available in all UIs; access method varies)
+- **Stack viewer** - View call stack (available in all UIs; access method varies)
+
+See UI-specific documentation for details: [CLI Debugging](../ui/cli/debugging.md), [Curses UI](../ui/curses/feature-reference.md), [Tk UI](../ui/tk/feature-reference.md)
 
 ## User Interface Features
 

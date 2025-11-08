@@ -40,7 +40,7 @@ To read data items from a sequential disk file and assign them to program variab
 - [OPEN](open.md) - Open a file for input/output
 - [CLOSE](close.md) - Close an open file
 - [PRINT#](printi-printi-using.md) - Write data to a sequential file
-- [LINE INPUT#](line-input.md) - Read an entire line from a file
+- [LINE INPUT#](inputi.md) - Read an entire line from a file
 - [INPUT](input.md) - Read input from keyboard
 - [EOF](../functions/eof.md) - Test for end of file
 - [LOC](../functions/loc.md) - Get current file position

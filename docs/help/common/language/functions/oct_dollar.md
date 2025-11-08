@@ -29,7 +29,7 @@ The returned string contains only the digits 0-7, representing the octal (base-8
 ```basic
 10 INPUT X
 20 A$ = OCT$(X)
-30 PRINT X "DECIMAL IS " A$ " OCTAL"
+30 PRINT X; "DECIMAL IS "; A$; " OCTAL"
 RUN
 ? 64
 64 DECIMAL IS 100 OCTAL

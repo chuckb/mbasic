@@ -1,5 +1,7 @@
 # BASIC Language Reference
 
+**Note:** This is a quick reference guide. For a beginner-friendly tutorial, see [Getting Started](getting-started.md). For complete statement and function documentation, see [Statements](language/statements/index.md) and [Functions](language/functions/index.md).
+
 ## Program Structure
 
 BASIC programs consist of numbered lines:

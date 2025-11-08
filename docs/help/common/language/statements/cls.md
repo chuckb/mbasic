@@ -17,6 +17,8 @@ CLS
 
 **Versions:** Extended, Disk
 
+**Note:** CLS is implemented in MBASIC and works in all UI backends.
+
 ## Purpose
 
 To clear the screen and move the cursor to the home position (upper left corner).

@@ -74,16 +74,18 @@ This is useful when:
 
 ### Example 1: Renumber Entire Program
 
+Before:
 ```basic
 10 PRINT "START"
-20 GOTO 40
-30 PRINT "SKIP THIS"
-40 PRINT "END"
+25 GOTO 60
+40 PRINT "SKIP THIS"
+60 PRINT "END"
+```
 
-RENUM
-
+After `RENUM` (default: start at 10, increment 10):
+```basic
 10 PRINT "START"
-20 GOTO 40
+20 GOTO 40  ' Automatically updated from GOTO 60
 30 PRINT "SKIP THIS"
 40 PRINT "END"
 ```

@@ -1,4 +1,6 @@
-# Sequential File Handling
+# Sequential File Format Compatibility
+
+This document covers line ending handling and CP/M file format compatibility (^Z EOF markers) for sequential file I/O. For general sequential file operations, see the [OPEN](../help/common/language/statements/open.md), [INPUT#](../help/common/language/statements/input_hash.md), [LINE INPUT#](../help/common/language/statements/inputi.md), and [PRINT#](../help/common/language/statements/printi-printi-using.md) statement documentation.
 
 ## Line Ending Differences
 
@@ -259,6 +261,6 @@ Both should produce identical output.
 
 - [OPEN Statement](../help/common/language/statements/open.md) - Opening files for input/output
 - [INPUT# Statement](../help/common/language/statements/input_hash.md) - Reading from sequential files
-- [LINE INPUT# Statement](../help/common/language/statements/line-input.md) - Reading lines from sequential files
+- [LINE INPUT# Statement](../help/common/language/statements/inputi.md) - Reading lines from sequential files
 - [EOF Function](../help/common/language/functions/eof.md) - Checking for end of file
 - [File Format Compatibility](FILE_FORMAT_COMPATIBILITY.md) - Line endings and file format compatibility

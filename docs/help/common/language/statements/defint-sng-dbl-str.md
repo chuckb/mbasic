@@ -40,11 +40,16 @@ If no type declaration statements are encountered, BASIC-80 assumes all variable
 ' All variables beginning with the letters I, J, K, L, M, N, W, X, Y, Z
 ' will be integer variables.
 
-40 DATA# = 12.5     ' Double precision (starts with D)
-50 AMOUNT$ = "100"  ' String (has $ suffix, overrides DEFSTR)
-60 INDEX = 42       ' Integer (starts with I)
-70 A1 = "TEST"      ' String (starts with A, DEFSTR applies)
+40 DATA# = 12.5     ' Double precision (starts with D, has # suffix)
+50 INDEX% = 42      ' Integer (starts with I, has % suffix)
+60 NAME1$ = "TEST"  ' String (starts with N, but $ suffix overrides DEFINT)
+70 AMOUNT = "100"   ' String (starts with A, DEFSTR applies)
 ```
+
+**Type Declaration Precedence:**
+- **Type suffix always wins:** `NAME1$` is string even though N→Z are declared integer
+- **DEF declaration applies when no suffix:** `AMOUNT` is string because of DEFSTR A
+- **Default is single precision:** Variables not covered by DEF declarations are single precision
 
 **Note:** When ranges overlap, the last declaration takes precedence. For example, if you declare both `DEFDBL L-P` and `DEFINT I-N`, variables starting with L, M, and N would be affected by both declarations, with the later declaration taking effect.
 

@@ -19,6 +19,8 @@ type: statement
 
 **Limitations**: The "WIDTH LPRINT" syntax is NOT supported and will cause a parse error. Only the simple "WIDTH <number>" form is accepted as a no-op.
 
+**Alternative**: Terminal width is automatically handled by the UI. For custom formatting, use PRINT statements with TAB() and SPC() functions to control output positioning.
+
 **Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.
 
 ---

@@ -46,7 +46,7 @@ This example defines USR routine 0 to start at memory location 24000, then calls
 
 **Why**: Cannot execute machine code from a Python interpreter. DEF USR was used to specify memory addresses where hand-written assembly language routines were loaded for performance-critical operations or hardware access.
 
-**See Also**: [USR](../functions/usr.md) function (also not implemented), [CALL](call.md) statement (also not implemented)
+**Alternative**: Use [DEF FN](def-fn.md) to define custom functions in BASIC instead of assembly language subroutines.
 
 **Historical Reference**: The documentation above is preserved from the original MBASIC 5.21 manual for historical reference.
 

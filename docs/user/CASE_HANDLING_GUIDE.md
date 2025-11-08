@@ -27,13 +27,13 @@ Imagine you're writing a program:
 ```basic
 10 TotalCount = 0
 20 FOR I = 1 TO 10
-30   TotalCont = TotalCont + I   ← Typo! Missing 'u'
+30   TotalCont = TotalCount + I   ← Typo! Missing 'u' in assignment target
 40 NEXT I
 50 PRINT TotalCount
 ```
 
 **What happens?**
-- Without case conflict detection: Prints `0` (the loop updated a different variable!)
+- Without case conflict detection: Prints `0` (the loop creates a new variable `TotalCont` but never updates `TotalCount`!)
 - With case conflict detection: Error at line 30 - catches the typo immediately
 
 This is a **real bug** that's hard to spot. Case handling can catch it.

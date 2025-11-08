@@ -26,11 +26,15 @@ Breakpoints pause program execution at specific lines, allowing you to inspect t
 
 ### Setting Breakpoints
 
-| UI | Method | Indicator |
-|----|--------|-----------|
-| **Tk UI** | Click line number gutter, or **Ctrl+B** on line | **●** indicator |
-| **Curses UI** | Position cursor on line and press **b** | **●** indicator |
-| **Web UI** | Click line number or use toolbar "Breakpoint" button | **●** indicator + pink background |
+Each UI provides methods to set breakpoints:
+
+- **Tk UI:** Click line number gutter or use keyboard shortcut
+- **Curses UI:** Position cursor on line and use keyboard shortcut
+- **Web UI:** Click line number or use toolbar "Breakpoint" button
+
+**Indicator:** **●** symbol appears on lines with breakpoints
+
+*See your UI-specific help for keyboard shortcuts (shortcuts vary by UI)*
 
 ### Removing Breakpoints
 
@@ -132,9 +136,11 @@ After pausing at a breakpoint:
 
 ### Opening Variables Window
 
-**Tk UI:** Debug → Variables or **Ctrl+V**
-**Curses UI:** **Ctrl+V** during execution
-**Web UI:** Debug → Variables Window or Variables button
+- **Tk UI:** Debug → Variables menu or keyboard shortcut
+- **Curses UI:** Use keyboard shortcut during execution
+- **Web UI:** Debug → Variables Window or Variables button
+
+*See your UI-specific help for keyboard shortcuts (shortcuts vary by UI)*
 
 ### What It Shows
 
@@ -300,46 +306,21 @@ Lines with syntax errors show with a **?** marker:
 **Web UI:** Validates when you load files, sort, or renumber
 **Curses UI:** Validates when you save or run
 
-## Keyboard Shortcuts Summary
+## Keyboard Shortcuts
 
-### All UIs
+Debugging keyboard shortcuts vary by UI. See your UI-specific help for complete keyboard shortcut reference:
 
-| Action | Shortcut | Notes |
-|--------|----------|-------|
-| Run program | **Ctrl+R** | Start from beginning |
-| Step | **Ctrl+T** | One statement at a time |
-| Continue | **Ctrl+G** | Run to next breakpoint |
-| Stop | **Ctrl+Q** | Halt execution |
+- **Tk UI:** See Tk UI help for keyboard shortcuts
+- **Curses UI:** See Curses UI help for keyboard shortcuts
+- **Web UI:** See Web UI help for keyboard shortcuts
 
-### Tk UI Only
+Each UI provides shortcuts for:
+- Running and stopping programs
+- Setting breakpoints
+- Stepping through code
+- Opening Variables and Execution Stack windows
 
-| Action | Shortcut | Notes |
-|--------|----------|-------|
-| Toggle breakpoint | **Ctrl+B** | On current line |
-| Variables window | **Ctrl+V** | Show/hide variables |
-| Stack window | **Ctrl+K** | Show/hide stack |
-
-### Curses UI Only
-
-| Action | Shortcut | Notes |
-|--------|----------|-------|
-| Toggle breakpoint | **b** | On current line |
-| Variables window | **Ctrl+V** | During execution |
-| Stack window | **Ctrl+K** | During execution |
-| Edit variable | **e** or **Enter** | In variables window |
-
-### Web UI Only
-
-| Action | Shortcut | Notes |
-|--------|----------|-------|
-| Run program | **Ctrl+R** | Start from beginning |
-| Step | **Ctrl+T** | One statement at a time |
-| Continue | **Ctrl+G** | Run to next breakpoint |
-| Stop | **Ctrl+Q** | Halt execution |
-| Variables window | **Ctrl+V** | Show/hide variables |
-| Stack window | **Ctrl+K** | Show/hide stack |
-
-Note: Web UI also supports mouse interaction via toolbar buttons and menus for all debugging operations.
+The Web UI also supports mouse interaction via toolbar buttons and menus for all debugging operations.
 
 ## See Also
 

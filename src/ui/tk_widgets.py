@@ -320,11 +320,11 @@ class LineNumberedText(tk.Frame if tk else object):
         return None
 
     def _on_status_click(self, event):
-        """Handle click on status column (show error details for ?, breakpoint info for ●).
+        """Handle click on status column (show error details for ?, confirmation message for ●).
 
         Displays informational messages about line status:
         - For error markers (?): Shows error message in a message box
-        - For breakpoint markers (●): Shows informational message about breakpoint
+        - For breakpoint markers (●): Shows confirmation message that breakpoint is set
 
         Note: This displays information messages only. It does NOT toggle breakpoints -
         that's handled by the UI backend's breakpoint toggle command

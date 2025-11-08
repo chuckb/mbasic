@@ -41,27 +41,24 @@ Arrays show:
 - Element count
 - Cannot expand to show individual elements (limitation)
 
-## Variable Editing (Limited)
+## Modifying Variables
 
-### Current Status
-⚠️ **Partial Implementation**: Variable editing in Curses UI is limited.
+### Direct Editing Not Available
+⚠️ **Not Implemented**: You cannot edit variable values directly in the variables window.
 
-### What Works
+### What the Window Provides
 - View all variables
 - See current values
 - Monitor during execution
 - Update display in real-time
 
-### What Doesn't Work Yet
-- Cannot edit values directly in window
-- No inline editing
-- Must use immediate mode to modify
+### How to Modify Variables
+Use immediate mode commands instead:
 
-### Workaround for Editing
 1. Note the variable you want to change
 2. Close variables window (Esc)
 3. Stop program if running (Ctrl+C)
-4. Use immediate mode:
+4. Use immediate mode to modify variables:
    ```
    A = 100
    B$ = "New Value"

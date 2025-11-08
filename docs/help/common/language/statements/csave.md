@@ -2,13 +2,15 @@
 category: file-io
 description: To save the program or an array currently in memory on cassette tape
 keywords: ['array', 'command', 'csave', 'dec', 'dim', 'execute', 'file', 'for', 'if', 'included']
-title: CSAVE - THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION
+title: CSAVE
 type: statement
 ---
 
-# CSAVE - THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION
+# CSAVE
 
 **Versions:** 8K (cassette), Extended (cassette)
+
+**Note:** This command is not included in the DEC VT180 version or modern disk-based systems.
 
 ## Purpose
 
@@ -27,7 +29,7 @@ CSAVE "TIMER"
 ```
 
 ## See Also
-- [CLOAD THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](cload.md) - To load a program or an array from cassette tape into memory
+- [CLOAD](cload.md) - To load a program or an array from cassette tape into memory
 - [CVI, CVS, CVD](../functions/cvi-cvs-cvd.md) - Convert string values to numeric values
 - [DEFINT/SNG/DBL/STR](defint-sng-dbl-str.md) - To declare variable types as integer, single precision, double precision, or string
 - [ERR AND ERL VARIABLES](err-erl-variables.md) - Error code and error line number variables used in error handling

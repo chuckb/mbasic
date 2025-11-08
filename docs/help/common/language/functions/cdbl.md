@@ -20,7 +20,7 @@ CDBL(X)
 
 ## Description
 
-Converts X to a double-precision floating-point number. Double-precision numbers have approximately 16 digits of precision and range from 2.938735877055719 x 10^-39 to 1.701411834604692 x 10^38.
+Converts X to a double-precision floating-point number. Double-precision numbers have approximately 16 digits of precision and range from approximately ±2.938736×10^-308 to ±1.797693×10^308.
 
 If X is a single-precision number or integer, it is converted to double-precision format. If X is a string representation of a number, it is converted to double-precision format.
 

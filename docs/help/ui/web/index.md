@@ -12,9 +12,9 @@ Welcome to the MBASIC web-based IDE. This help system integrates documentation f
 
 ## 🎮 Games Library
 
-Browse and run classic BASIC games:
+Browse and download classic BASIC games:
 
-- **[Games Library](../../../library/games/index.md)** - 113 classic CP/M era games ready to run!
+- **[Games Library](../../../library/games/index.md)** - 113 classic CP/M era games to download and load!
 
 ## 📘 Web IDE Guide
 

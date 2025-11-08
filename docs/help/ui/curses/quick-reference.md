@@ -46,6 +46,8 @@ Quick reference for the curses text UI.
 | **^D** | Delete current line |
 | **^E** | Renumber all lines (RENUM) |
 
+**Note:** Cut/Copy/Paste (^X/^C/^V) are not available - use your terminal's native clipboard (typically Shift+^C/V or mouse selection).
+
 **Note:** Find/Replace is not yet available in Curses UI. See [Find/Replace](find-replace.md) for workarounds.
 
 ## Debugger (when program running)

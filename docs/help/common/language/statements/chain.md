@@ -72,5 +72,5 @@ Value of C(1): 42
 - [END](end.md) - To terminate program execution, close all files and return to command level
 - [NEW](new.md) - To delete the program currently in memory and clear all variables
 - [RUN](run.md) - Executes the current program or loads and runs a program from disk
-- [STOP](stop.md) - To terminate program execution and return to command level
+- [STOP](stop.md) - To terminate program execution and return to command level (does not close files)
 - [SYSTEM](system.md) - Exits MBASIC and returns to the operating system

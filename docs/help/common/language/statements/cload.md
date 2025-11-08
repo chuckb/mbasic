@@ -2,13 +2,15 @@
 category: file-io
 description: To load a program or an array from cassette tape into memory
 keywords: ['array', 'cload', 'command', 'data', 'dec', 'dim', 'execute', 'file', 'for', 'if']
-title: CLOAD - THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION
+title: CLOAD
 type: statement
 ---
 
-# CLOAD - THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION
+# CLOAD
 
 **Versions:** 8K (cassette), Extended (cassette)
+
+**Note:** This command is not included in the DEC VT180 version or modern disk-based systems.
 
 ## Purpose
 
@@ -26,7 +28,7 @@ CLOAD "MAX2"
 ```
 
 ## See Also
-- [CSAVE THIS COMMAND IS NOT INCLUDED IN THE DEC VT180 VERSION](csave.md) - To save the program or an array currently in memory on cassette tape
+- [CSAVE](csave.md) - To save the program or an array currently in memory on cassette tape
 - [CVI, CVS, CVD](../functions/cvi-cvs-cvd.md) - Convert string values to numeric values
 - [DEFINT/SNG/DBL/STR](defint-sng-dbl-str.md) - To declare variable types as integer, single precision, double precision, or string
 - [ERR AND ERL VARIABLES](err-erl-variables.md) - Error code and error line number variables used in error handling

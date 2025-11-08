@@ -61,3 +61,5 @@ RSET is typically used with field variables defined by the FIELD statement to pr
 - [MKI$, MKS$, MKD$](../functions/mki_dollar-mks_dollar-mkd_dollar.md) - Convert numbers to strings for random files
 - [CVI, CVS, CVD](../functions/cvi-cvs-cvd.md) - Convert strings to numbers from random files
 - [CLOSE](close.md) - Close file when done
+
+**Note:** Do not confuse RSET with [RESET](reset.md), which closes all open files.

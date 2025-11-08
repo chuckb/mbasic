@@ -19,6 +19,8 @@ type: statement
 
 **Note**: Programs using POKE will run without errors, but the memory writes are silently ignored. This allows legacy programs to execute without modification.
 
+**Alternative**: There is no modern equivalent for direct memory writes. Use arrays or file I/O for data storage instead of memory manipulation.
+
 **Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.
 
 ---

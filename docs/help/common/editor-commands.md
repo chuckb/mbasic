@@ -1,64 +1,57 @@
 # Editor Commands
 
-## Program Commands
+MBASIC provides a full-featured editor with commands for managing programs, debugging, and editing code.
 
-| Key | Alternative | Action |
-|-----|-------------|--------|
-| **F2** | **Ctrl+R** | Run program |
-| **F3** | **Ctrl+L** | List program to output |
-| **F5** | **Ctrl+S** | Save program |
-| **b** | **Ctrl+O** | Load program |
-| | **Ctrl+N** | New program (clear all) |
-| **F1** or **H** | | Open help |
-| **ESC** | | Clear error message |
-| **Q** | | Quit IDE |
+## Command Categories
 
-## Debugging Commands
+Each UI provides keyboard shortcuts and commands for:
 
-| Key | Alternative | Action |
-|-----|-------------|--------|
-| **Ctrl+R** | | Run program from beginning |
-| **Ctrl+T** | | Step (execute one statement) |
-| **Ctrl+G** | | Continue (run to next breakpoint) |
-| **Ctrl+Q** | | Stop execution |
-| **Ctrl+V** | | Open Variables window (Curses/Tk/Web) |
-| **Ctrl+K** | | Open Execution Stack window (Curses/Tk/Web) |
-| **b** | **Ctrl+B** | Toggle breakpoint (Curses: **b**, Tk: **Ctrl+B**) |
+### Program Management
+- Run program
+- Save/Load programs
+- Create new program
+- List program to output
+- Open help system
+- Quit IDE
 
-## Editing Commands
+### Debugging
+- Run program
+- Step through code (statement or line)
+- Set/remove breakpoints
+- Continue execution
+- Stop execution
+- View variables
+- View execution stack
 
-| Key | Alternative | Action |
-|-----|-------------|--------|
-| **Up/Down** | | Navigate between lines |
-| **Left/Right** | | Move cursor within line |
-| **Home** | **Ctrl+A** | Move to start of line |
-| **End** | **Ctrl+E** | Move to end of line |
-| **Enter** | | Save line and advance |
-| **Backspace** | | Delete character before cursor |
-| **Delete** | | Delete character at cursor |
+### Editing
+- Navigate between lines
+- Move cursor within lines
+- Save and advance
+- Delete characters
+- Standard text editing operations
 
-## Help Navigation
+### Help Navigation
+- Scroll through help
+- Follow links
+- Navigate topics
+- Exit help
 
-When in help mode:
+## UI-Specific Keyboard Shortcuts
 
-| Key | Action |
-|-----|--------|
-| **Up/Down** | Scroll through help |
-| **Space** | Page down |
-| **Enter** | Follow a link |
-| **U** | Go up to parent topic |
-| **N** | Next topic |
-| **P** | Previous topic |
-| **Q** or **ESC** | Exit help |
+**Important:** Keyboard shortcuts vary by UI. See your UI-specific help for the exact keybindings:
 
-## Tips
+- **Tk UI:** See Tk UI help for complete keyboard shortcuts
+- **Curses UI:** See Curses UI help for complete keyboard shortcuts
+- **Web UI:** See Web UI help for complete keyboard shortcuts
 
-- If you don't have function keys, use the Ctrl alternatives
-- Press **F1** with cursor on a BASIC keyword for context help
-- Press **ESC** anytime to clear error messages
-- The cursor shows where you're typing
+Each UI uses different keys due to platform constraints (e.g., Curses can't use Ctrl+S for save as it's used for terminal flow control).
 
-For more detailed information about debugging features and workflows, see [Debugging Features](debugging.md).
+## General Tips
+
+- Each UI provides help within the application - use the help command to access it
+- Context-sensitive help is available for BASIC keywords
+- Error messages can typically be cleared with ESC or similar key
+- Mouse support varies by UI (Tk and Web have full mouse support)
 
 ## See Also
 

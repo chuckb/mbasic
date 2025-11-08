@@ -31,6 +31,11 @@ RUN
 ? 32
 32 DECIMAL IS 20 HEXADECIMAL
 Ok
+
+10 PRINT HEX$(255)
+RUN
+FF
+Ok
 ```
 
 ## See Also

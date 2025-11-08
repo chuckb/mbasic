@@ -17,6 +17,8 @@ type: statement
 
 **Why**: Cannot access hardware I/O ports from a Python interpreter. WAIT was used to synchronize with hardware devices by polling I/O ports.
 
+**Alternative**: For delays, use a busy loop or timer logic in BASIC. For event synchronization, restructure the program to use sequential logic instead of hardware polling.
+
 **Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.
 
 ---

@@ -17,7 +17,7 @@ type: statement
 
 **Why**: Cannot execute machine code from a Python interpreter. CALL was used to invoke hand-written assembly language routines for performance-critical operations or hardware access.
 
-**See Also**: [USR](../functions/usr.md) function (also not implemented)
+**Alternative**: Use [GOSUB](gosub-return.md) to call BASIC subroutines, or [DEF FN](def-fn.md) to define custom functions in BASIC. For related functionality, see [USR](../functions/usr.md) (also not implemented).
 
 **Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.
 

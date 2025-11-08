@@ -6,6 +6,8 @@ title: "Getting Started with BASIC Programming"
 
 Learn the basics of BASIC programming!
 
+**Note:** This is a tutorial-style introduction for beginners. For detailed reference documentation, see [BASIC Language Reference](language.md).
+
 ## What is BASIC?
 
 BASIC (Beginner's All-purpose Symbolic Instruction Code) is an easy-to-learn programming language. MBASIC 5.21 is compatible with MBASIC from the 1980s.

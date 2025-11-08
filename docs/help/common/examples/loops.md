@@ -197,7 +197,9 @@ Loops are perfect for working with arrays.
 
 ## Breaking Out of Loops
 
-Use GOTO to exit early.
+Use GOTO to exit early from a loop.
+
+**Note:** MBASIC 5.21 does not have EXIT FOR or EXIT WHILE statements (those were added in later BASIC versions). GOTO is the standard way to exit loops early in BASIC-80.
 
 ### Find First Match
 

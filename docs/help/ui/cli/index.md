@@ -81,10 +81,12 @@ HELP SEARCH file
 
 ## Quick Start
 
-**Run MBASIC:**
+**Run MBASIC in CLI mode:**
 ```bash
-mbasic
+mbasic --ui cli
 ```
+
+**Note:** MBASIC supports multiple interfaces (CLI, Curses, Tk, Web). See [Features](../../mbasic/features.md) for details on all available UIs.
 
 **Load and run a program:**
 ```

@@ -50,6 +50,6 @@ Note: LINE INPUT accepts the entire line including commas and quotes without req
 
 ## See Also
 - [INPUT](input.md) - Read input from keyboard with delimiters
-- [LINE INPUT#](input_hash.md) - Read an entire line from a file
+- [LINE INPUT#](inputi.md) - Read an entire line from a file
 - [INPUT$](../functions/input_dollar.md) - Read a specified number of characters
 - [INKEY$](../functions/inkey_dollar.md) - Read a single character without waiting

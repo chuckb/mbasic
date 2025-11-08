@@ -20,7 +20,7 @@ CSNG(X)
 
 ## Description
 
-Converts X to a single-precision floating-point number. Single-precision numbers have approximately 7 digits of precision and range from 2.938736 x 10^-39 to 1.701412 x 10^38.
+Converts X to a single-precision floating-point number. Single-precision numbers have approximately 7 digits of precision and range from ±2.938736×10^-39 to ±1.701412×10^38.
 
 If X is a double-precision number, CSNG rounds it to single precision. If X is an integer or string representation of a number, it is converted to single-precision format.
 

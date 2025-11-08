@@ -62,3 +62,5 @@ RESET is useful for:
 - [CLOSE](close.md) - Close specific file(s)
 - [OPEN](open.md) - Open a file for I/O
 - [FILES](files.md) - Display directory of files
+
+**Note:** Do not confuse RESET with [RSET](rset.md), which right-justifies strings in random file fields.

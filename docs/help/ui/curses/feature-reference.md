@@ -1,6 +1,6 @@
 # Curses UI - Complete Feature Reference
 
-This document covers all 37 features available in the Curses UI.
+This document covers all features available in the Curses UI, organized by category.
 
 ## File Operations (7 features)
 

@@ -119,7 +119,8 @@ The following functions are NOT built-in but can be calculated using the intrins
 
 ```basic
 ' PI can be computed with ATN(1) * 4
-' (Note: ATN is evaluated in single precision, ~7 digits)
+' Note: ATN(1) * 4 gives single precision (~7 digits)
+' For double precision, use ATN(CDBL(1)) * 4
 PI = 3.1415927          ' Single-precision approximation
 PI# = 3.141592653589793 ' Double-precision value
 

@@ -34,11 +34,13 @@ Intrinsic functions provided by BASIC-80. These functions may be called from any
 - [OCT$](oct_dollar.md) - Number to octal
 - [RIGHT$](right_dollar.md) - Right substring
 - [SPACE$](space_dollar.md) - Returns a string of spaces
-- [SPC](spc.md) - Skip spaces in PRINT
 - [STR$](str_dollar.md) - Number to string
 - [STRING$](string_dollar.md) - Repeated character
-- [TAB](tab.md) - Tab to position in PRINT
 - [VAL](val.md) - String to number
+
+### Output Formatting Functions
+- [SPC](spc.md) - Skip spaces in PRINT
+- [TAB](tab.md) - Tab to position in PRINT
 
 ### Type Conversion Functions
 - [CDBL](cdbl.md) - To double precision

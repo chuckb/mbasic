@@ -16,6 +16,8 @@ type: function
 
 **Why**: Cannot execute machine code from a Python interpreter. USR was designed to call hand-written assembly language subroutines for performance-critical operations or hardware access.
 
+**Alternative**: Use [DEF FN](../statements/def-fn.md) to define custom functions in BASIC, or implement performance-critical operations using BASIC's built-in functions.
+
 **Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.
 
 ---

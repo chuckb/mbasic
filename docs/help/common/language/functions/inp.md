@@ -17,6 +17,8 @@ type: function
 
 **Why**: Cannot access hardware I/O ports from a Python interpreter. This function is specific to systems with memory-mapped I/O or port-based hardware interfaces.
 
+**Alternative**: There is no modern equivalent for hardware port I/O. For memory access, use [PEEK](peek.md), though note it also returns emulated values.
+
 **Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.
 
 ---

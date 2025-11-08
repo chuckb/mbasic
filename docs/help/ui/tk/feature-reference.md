@@ -1,6 +1,6 @@
 # Tk UI - Complete Feature Reference
 
-This document covers all 37 features available in the Tkinter (Tk) UI.
+This document covers all features available in the Tkinter (Tk) UI, organized by category.
 
 ## File Operations (8 features)
 
