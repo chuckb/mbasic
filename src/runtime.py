@@ -1393,7 +1393,11 @@ class Runtime:
 
     # Backward compatibility alias
     def get_loop_stack(self):
-        """Deprecated: Use get_execution_stack() instead."""
+        """Deprecated: Use get_execution_stack() instead.
+
+        This is a compatibility alias. get_execution_stack() provides the same
+        functionality with a clearer name (execution stack vs loop stack).
+        """
         return self.get_execution_stack()
 
     # ========================================================================

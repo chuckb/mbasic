@@ -157,8 +157,8 @@ SETTING_DEFINITIONS: Dict[str, SettingDefinition] = {
         scope=SettingScope.PROJECT,
     ),
 
-    # Note: Tab key is used for window switching in curses UI, not indentation
-    # editor.tab_size setting not included - not relevant for BASIC
+    # Note: editor.tab_size setting not included - BASIC uses line numbers for structure,
+    # not indentation, so tab size is not relevant for BASIC programs
 
     # Note: Line numbers are always shown - they're fundamental to BASIC!
     # editor.show_line_numbers setting not included - makes no sense for BASIC

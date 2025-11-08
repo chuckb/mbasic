@@ -26,10 +26,10 @@ class SettingsManager:
 
     Precedence: project > global > default
 
-    Note: File-level settings infrastructure exists (file_settings dict, FILE scope),
-    but there are currently no settings defined with FILE scope in settings_definitions.py,
-    and there is no UI or command to manage per-file settings yet. This is reserved
-    for future use.
+    Note: File-level settings infrastructure is fully implemented (file_settings dict,
+    FILE scope support in get/set/reset methods), but currently unused. No settings are
+    defined with FILE scope in settings_definitions.py, and there is no UI or command
+    to manage per-file settings. This infrastructure is reserved for future use.
     """
 
     def __init__(self, project_dir: Optional[str] = None, backend: Optional[SettingsBackend] = None):
@@ -150,9 +150,9 @@ class SettingsManager:
 
         Precedence: file > project > global > definition default > provided default
 
-        Note: File-level settings infrastructure exists but is not yet fully implemented.
-        The file_settings dict can be set programmatically and is checked first in precedence,
-        but there is no UI or command to manage per-file settings. In normal usage,
+        Note: File-level settings infrastructure is fully implemented and functional.
+        The file_settings dict can be set programmatically and is checked first in precedence.
+        However, no UI or command exists to manage per-file settings. In normal usage,
         file_settings is empty and precedence falls through to project/global settings.
 
         Args:

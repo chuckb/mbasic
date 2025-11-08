@@ -227,7 +227,10 @@ class Token:
     (identifiers use original_case, keywords use original_case_keyword):
     - original_case: For identifiers (user variables) - preserves what user typed
     - original_case_keyword: For keywords - stores policy-determined display case
-    The dataclass doesn't enforce this exclusivity, but code should maintain it.
+
+    The dataclass doesn't enforce exclusivity (both can be set) for implementation flexibility,
+    but the lexer/parser maintain this convention: only one field is populated per token.
+    If both are set, serialization uses original_case_keyword for keywords, original_case for identifiers.
     """
     type: TokenType
     value: Any  # Normalized value (lowercase for identifiers and keywords)
