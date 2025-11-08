@@ -67,7 +67,7 @@ Type your program:
 20 END
 ```
 
-Press **Ctrl+R** to run.
+Press **{{kbd:run:curses}}** to run.
 
 ### Method 2: File Mode
 
@@ -162,11 +162,11 @@ mbasic                # Interactive mode
 ```
 
 **Common keyboard shortcuts (Curses UI):**
-- `Ctrl+R` - Run program
-- `Ctrl+S` - Save program
-- `Ctrl+O` - Open program
-- `Ctrl+H` - Help
-- `Ctrl+Q` - Quit
+- `{{kbd:run:curses}}` - Run program
+- `{{kbd:save:curses}}` - Save program
+- `{{kbd:open:curses}}` - Open program
+- `{{kbd:help:curses}}` - Help
+- `{{kbd:quit:curses}}` - Quit
 
 **Common commands (CLI mode):**
 - `RUN` - Execute program
@@ -178,6 +178,6 @@ mbasic                # Interactive mode
 
 ## Getting Help
 
-- Press **Ctrl+H** in any UI for built-in help
+- Press **{{kbd:help:curses}}** in any UI for built-in help
 - See [Language Reference](../common/language/statements/index.md) for statement syntax
 - Visit [UI-specific guides](../ui/curses/index.md) for interface help

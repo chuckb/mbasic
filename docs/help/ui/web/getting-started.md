@@ -48,7 +48,7 @@ Quick-access buttons below the menu bar:
 - **Save As** - Download program with custom filename
 - **Run** - Parse and execute the program (▶️ green button, {{kbd:run:web}})
 - **Stop** - Stop running program (⏹️ red button, {{kbd:stop:web}})
-- **Step Line** - Execute all statements on current line, then pause (⏭️ button, Ctrl+K)
+- **Step Line** - Execute all statements on current line, then pause (⏭️ button, {{kbd:step_line:web}})
 - **Step Stmt** - Execute one statement, then pause (↻ button, {{kbd:step:web}})
 - **Continue** - Resume normal execution after stepping (▶️⏸️ button, {{kbd:continue:web}})
 

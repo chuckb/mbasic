@@ -105,8 +105,8 @@ python3 mbasic --ui tk
 ```
 
 Tk UI provides:
-- Ctrl+F for Find dialog
-- Ctrl+H for Replace dialog
+- {{kbd:find:tk}} for Find dialog
+- {{kbd:replace:tk}} for Replace dialog
 - F3 for Find Next
 - Visual highlighting
 

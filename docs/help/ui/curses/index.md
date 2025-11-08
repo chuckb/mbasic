@@ -77,7 +77,7 @@ Press **/** to search across all help content. Results are grouped by section (U
 
 ## Tips
 
-- **Context-sensitive help**: Press Ctrl+A with cursor on a BASIC keyword for direct help
+- **Context-sensitive help**: Press {{kbd:home:curses}} with cursor on a BASIC keyword for direct help
 - **Quick access**: Bookmark frequently used topics with your browser's history (U key)
 - **Cross-references**: Follow "See Also" links to explore related topics
 - **Categories**: Browse statements and functions by category in the language reference

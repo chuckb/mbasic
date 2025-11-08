@@ -128,7 +128,7 @@ Complete reference of features available and planned for the MBASIC Web UI.
 
 **Debug Mode (Partially Implemented):**
 - Basic breakpoint support (via Run menu)
-- Step execution ({{kbd:step:web}}, Ctrl+K)
+- Step execution ({{kbd:step:web}}, {{kbd:step_line:web}})
 - Basic variable inspection (via Debug menu)
 - Call stack (planned)
 
@@ -209,7 +209,7 @@ Complete reference of features available and planned for the MBASIC Web UI.
 - Run ({{kbd:run:web}})
 - Continue ({{kbd:continue:web}})
 - Step statement ({{kbd:step:web}})
-- Step line (Ctrl+K)
+- Step line ({{kbd:step_line:web}})
 - Stop ({{kbd:stop:web}})
 
 **Advanced Controls (Planned):**

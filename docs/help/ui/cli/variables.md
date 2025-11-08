@@ -99,7 +99,7 @@ PRINT ARR(1), ARR(2), ARR(3)
 ## Variables Window (GUI UIs Only)
 
 The CLI does not have a Variables Window feature. For visual variable inspection, use:
-- **Curses UI** - Full-screen terminal with Variables Window (Ctrl+W)
+- **Curses UI** - Full-screen terminal with Variables Window ({{kbd:toggle_variables:curses}})
 - **Tk UI** - Desktop GUI with Variables Window
 - **Web UI** - Browser-based with Variables Window
 

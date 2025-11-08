@@ -40,7 +40,7 @@ Resume execution after hitting a breakpoint or stepping.
 ### List Program (Menu only)
 Display the program listing in the editor. Access through the menu bar.
 
-### Renumber (Ctrl+E)
+### Renumber ({{kbd:renumber:curses}})
 Renumber all program lines with consistent increments. Opens a dialog to specify start line and increment.
 
 ### Auto Line Numbers
@@ -120,7 +120,7 @@ Edit BASIC code line-by-line with full cursor navigation.
 ### Multi-Line Edit
 Edit multiple lines at once in the full-screen editor.
 
-### Delete Lines (Ctrl+D)
+### Delete Lines ({{kbd:delete:curses}})
 Delete the current line in the editor.
 
 ### Cut/Copy/Paste (Not implemented)
@@ -129,14 +129,14 @@ Standard clipboard operations are not available in the Curses UI due to keyboard
 - **{{kbd:continue:curses}}** - Terminal signal to exit program (cannot be used for Copy)
 - **{{kbd:save:curses}}** - Used for Save File (cannot be used for Paste; {{kbd:save:curses}} is reserved by terminal for flow control)
 
-**Workaround:** Use your terminal's native copy/paste functions instead (typically Shift+{{kbd:continue:curses}}/V or mouse selection).
+**Workaround:** Use your terminal's native copy/paste functions instead (typically Shift+Ctrl+C/V or mouse selection).
 
 ### Find/Replace (Not yet implemented)
 Find and Replace functionality is not yet available in Curses UI via keyboard shortcuts.
 
 **Workaround:** Use text editor commands in your terminal (if available) or load/edit/save files externally.
 
-### Smart Insert (Ctrl+I)
+### Smart Insert ({{kbd:smart_insert:curses}})
 Insert a new line number at the midpoint between the current line and the next line.
 Example: Between lines 10 and 20, inserts line 15.
 
@@ -182,7 +182,7 @@ Press ? with cursor on a BASIC keyword to get help for that specific command.
 | {{kbd:step:curses}} | Step Statement |
 | {{kbd:step_line:curses}} | Step Line |
 | {{kbd:goto_line:curses}} | Continue |
-| Ctrl+W | Variables Window |
+| {{kbd:toggle_variables:curses}} | Variables Window |
 | Menu only | Execution Stack |
 | ? | Help |
 

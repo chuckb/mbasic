@@ -5,7 +5,7 @@ The Curses UI provides a visual variable inspector window for viewing and managi
 ## Opening the Variables Window
 
 ### Keyboard Shortcut
-Press `Ctrl+W` to open the variables window.
+Press `{{kbd:toggle_variables:curses}}` to open the variables window.
 
 ### Window Layout
 ```
@@ -181,7 +181,7 @@ Large arrays:
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+W` | Open/focus variables window |
+| `{{kbd:toggle_variables:curses}}` | Open/focus variables window |
 | `Esc` | Close window |
 | `Tab` | Switch between windows |
 | `↑↓` | Navigate variables |

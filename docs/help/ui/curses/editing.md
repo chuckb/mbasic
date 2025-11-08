@@ -54,9 +54,9 @@ Press Enter
 
 To delete a line, use one of these methods:
 
-### Quick Delete (Ctrl+D)
+### Quick Delete (^D)
 1. Navigate to the line
-2. Press **Ctrl+D**
+2. Press **^D**
 3. Line is deleted immediately
 
 ### Manual Delete
@@ -96,8 +96,8 @@ This leaves room to insert lines later.
 |-----|--------|
 | **Left/Right** | Move within line |
 | **Up/Down** | Move between lines |
-| **Home** or **Ctrl+A** | Start of line |
-| **End** or **Ctrl+E** | End of line |
+| **Home** or **^A** | Start of line |
+| **End** or **^E** | End of line |
 
 ## Editing Keys
 
@@ -107,14 +107,14 @@ This leaves room to insert lines later.
 | **Delete** | Delete at cursor |
 | **Enter** | Save line |
 
-**Note:** Cut/Copy/Paste operations ({{kbd:stop:curses}}/C/V) are not available in the Curses UI due to keyboard shortcut conflicts. Use your terminal's native clipboard functions instead (typically Shift+{{kbd:continue:curses}}/V or mouse selection).
+**Note:** Cut/Copy/Paste operations are not available in the Curses UI due to keyboard shortcut conflicts. Use your terminal's native clipboard functions instead (typically Shift+Ctrl+C/V or mouse selection).
 
 ## Tips
 
 - Line numbers can be any value 1-65535
 - Common practice: increment by 10
 - This leaves room for insertions
-- Use **Ctrl+A/E** if no Home/End keys
+- Use **^A/^E** if no Home/End keys
 
 ## See Also
 

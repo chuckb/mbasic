@@ -57,7 +57,7 @@ If a line has both an error and a breakpoint, the **?** error indicator is shown
 **Step Line** - Execute one entire line, then pause
 - Even if the line has multiple statements (separated by `:`), all statements execute
 - Useful for quick navigation through code
-- Shortcuts: Tk/Curses/Web: **Ctrl+T** or Step button
+- Shortcuts: Tk/Curses/Web: **{{kbd:step:curses}}** or Step button
 
 **Step Statement** - Execute one statement, then pause
 - If a line has multiple statements (e.g., `A=1 : B=2 : C=3`), each statement executes separately
@@ -69,9 +69,9 @@ If a line has both an error and a breakpoint, the **?** error indicator is shown
 
 1. **Set a breakpoint** or start execution
 2. When paused at a breakpoint:
-   - Press **Ctrl+T** or click **Step** to advance one statement
-   - Press **Ctrl+G** or click **Continue** to run to next breakpoint
-   - Press **Ctrl+Q** or click **Stop** to halt execution
+   - Press **{{kbd:step:curses}}** or click **Step** to advance one statement
+   - Press **{{kbd:continue:curses}}** or click **Continue** to run to next breakpoint
+   - Press **{{kbd:quit:curses}}** or click **Stop** to halt execution
 
 ## Statement Highlighting
 
@@ -126,7 +126,7 @@ When you step through line 20:
 ## Continue Execution
 
 After pausing at a breakpoint:
-- Press **Ctrl+G** or click **Continue**
+- Press **{{kbd:continue:curses}}** or click **Continue**
 - Program runs until:
   - Next breakpoint is hit
   - Program ends
@@ -196,8 +196,8 @@ Click column headers to sort by:
 
 ### Opening Stack Window
 
-**Tk UI:** Debug → Execution Stack or **Ctrl+K**
-**Curses UI:** **Ctrl+K** during execution
+**Tk UI:** Debug → Execution Stack or **{{kbd:toggle_stack:tk}}**
+**Curses UI:** **{{kbd:step_line:curses}}** during execution
 **Web UI:** Debug → Stack Window or Stack button
 
 ### What It Shows

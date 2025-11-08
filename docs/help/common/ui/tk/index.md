@@ -60,12 +60,12 @@ The Tk UI has three main sections:
 - **Cut** ({{kbd:cut:tk}}) - Cut selected text
 - **Copy** ({{kbd:copy:tk}}) - Copy selected text
 - **Paste** ({{kbd:paste:tk}}) - Paste clipboard
-- **Select All** (Ctrl+A) - Select all text
+- **Select All** ({{kbd:select_all:tk}}) - Select all text
 - **Find** ({{kbd:find:tk}}) - Search in program
 
 ### Run Menu
 - **Run** ({{kbd:run_program:tk}}) - Execute program
-- **Stop** ({{kbd:toggle_breakpoint:tk}}reak) - Interrupt execution
+- **Stop** ({{kbd:stop:tk}}) - Interrupt execution
 - **Clear Output** - Clear output pane
 
 ### Help Menu
@@ -193,7 +193,7 @@ Click on line 20 in the editor to fix it.
 - Type your response and press OK
 
 **Program won't stop:**
-- Press {{kbd:toggle_breakpoint:tk}}reak or use Run → Stop
+- Press {{kbd:stop:tk}} or use Run → Stop
 - Add END statement to your program
 
 ## Advantages of Tk UI

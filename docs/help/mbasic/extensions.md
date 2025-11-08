@@ -20,7 +20,7 @@ BREAK CLEAR            ' Clear all breakpoints
 BREAK CLEAR 100        ' Clear specific breakpoint
 ```
 **Status:** ⚠️ MBASIC-2025 Extension (Not in MBASIC 5.21)
-**Availability:** CLI (command form), Curses (Ctrl+B), Tk (UI controls)
+**Availability:** CLI (command form), Curses ({{kbd:toggle_breakpoint:curses}}), Tk (UI controls)
 
 #### STEP - Single-Step Execution
 ```basic
@@ -30,7 +30,7 @@ STEP INTO              ' Step into subroutines (planned)
 STEP OVER              ' Step over subroutines (planned)
 ```
 **Status:** ⚠️ MBASIC-2025 Extension (Not in MBASIC 5.21)
-**Availability:** CLI (command form), Curses (Ctrl+T/Ctrl+K), Tk (UI controls)
+**Availability:** CLI (command form), Curses ({{kbd:step:curses}}/{{kbd:step_line:curses}}), Tk (UI controls)
 
 #### STACK - Call Stack Display
 ```basic

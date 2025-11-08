@@ -84,7 +84,7 @@ Access File, Edit, Run, and Help functions.
 ### Edit Menu
 
 - **Copy** - Copy selected text to clipboard
-- **Paste** - Paste from clipboard (Ctrl+V)
+- **Paste** - Paste from clipboard ({{kbd:paste:web}})
 - **Select All** - Select all editor text
 - **Sort Lines** - Sort selected lines numerically by line number
 - **Smart Insert** - Insert lines intelligently between existing line numbers
@@ -197,9 +197,9 @@ The web UI is designed for safe multi-user access:
 
 ## Keyboard Shortcuts
 
-- **Ctrl+V** - Paste into editor
-- **Ctrl+A** - Select all
-- **Ctrl+C** - Copy selection
+- **{{kbd:paste:web}}** - Paste into editor
+- **{{kbd:select_all:web}}** - Select all
+- **{{kbd:copy:web}}** - Copy selection
 
 ## Browser Compatibility
 
@@ -231,7 +231,7 @@ Compared to desktop UIs, the web UI:
 
 ### Can't Paste Code
 
-- Use Ctrl+V (not right-click menu in some browsers)
+- Use {{kbd:paste:web}} (not right-click menu in some browsers)
 - Try Edit → Paste from menu
 
 ## About MBASIC 5.21

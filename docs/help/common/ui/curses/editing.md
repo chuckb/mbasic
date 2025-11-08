@@ -116,7 +116,7 @@ Common shortcuts:
 - **{{kbd:run:curses}}** - Run program
 - **{{kbd:new:curses}}** - New program (clear)
 - **{{kbd:save:curses}}** - Save program
-- **Ctrl+L** - Load program
+- **{{kbd:open:curses}}** - Load program
 - **{{kbd:parse:curses}}** - Help
 
 ## Renumbering Lines

@@ -64,7 +64,7 @@ Learn how to use the interface you're currently in.
 ## Tips
 
 - Use the **Search** box above to find specific topics
-- Press **Ctrl+F** to search within the current page
+- Press **{{kbd:find:curses}}** to search within the current page
 - Click **⌂ Home** button to return to this page
 - Click **← Back** to go to the previous page
 

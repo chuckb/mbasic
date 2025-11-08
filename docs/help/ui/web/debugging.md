@@ -50,7 +50,7 @@ The Web UI debugger currently offers:
 - **Run ({{kbd:run:web}})** - Start program from beginning
 - **Continue ({{kbd:continue:web}})** - Run to next breakpoint
 - **Step Statement ({{kbd:step:web}})** - Execute one statement
-- **Step Line (Ctrl+K)** - Execute one line (all statements on line)
+- **Step Line ({{kbd:step_line:web}})** - Execute one line (all statements on line)
 - **Stop ({{kbd:stop:web}})** - End execution
 
 **Note:** Function key shortcuts ({{kbd:continue:web}}, {{kbd:step:web}}, {{kbd:help:web}}1, etc.) are not implemented in the Web UI.
@@ -289,7 +289,7 @@ Will provide timing and performance data:
 - `{{kbd:run:web}}` - Run program
 - `{{kbd:continue:web}}` - Continue (run to next breakpoint)
 - `{{kbd:step:web}}` - Step statement
-- `Ctrl+K` - Step line
+- `{{kbd:step_line:web}}` - Step line
 - `{{kbd:stop:web}}` - Stop execution
 
 **Planned for Future Releases:**

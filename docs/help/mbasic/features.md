@@ -145,9 +145,9 @@ See UI-specific documentation for details: [CLI Debugging](../ui/cli/debugging.m
 - **Breakpoint indicators** - Visual markers
 - **Auto-numbering** - Smart line numbering
 - **Line sorting** - Automatic or on-demand
-- **Variables window** - View variable values (Ctrl+W)
-- **Stack window** - View execution stack (Ctrl+K)
-- **Help system** - Built-in documentation (Ctrl+H)
+- **Variables window** - View variable values (^W)
+- **Stack window** - View execution stack ({{kbd:step_line:curses}})
+- **Help system** - Built-in documentation ({{kbd:help:curses}})
 - **Fast paste** - Optimized for large programs
 
 ### CLI Mode
@@ -162,7 +162,7 @@ See UI-specific documentation for details: [CLI Debugging](../ui/cli/debugging.m
 
 - **Graphical interface** - Windows, menus, toolbars
 - **Syntax highlighting** - Color-coded keywords, strings, numbers
-- **Find and Replace** - Search and replace text (Ctrl+F/Ctrl+H)
+- **Find and Replace** - Search and replace text ({{kbd:find:tk}}/{{kbd:replace:tk}})
 - **Menu bar** - File, Edit, Run operations
 - **Toolbar** - Quick access buttons
 - **Status bar** - Program state display
