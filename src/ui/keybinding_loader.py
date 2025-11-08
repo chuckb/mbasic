@@ -205,3 +205,58 @@ class KeybindingLoader:
         """
         for binding in self.get_tk_bindings(section, action):
             widget.bind(binding, handler)
+
+
+def dump_keymap(ui_name: str) -> None:
+    """
+    Dump keyboard shortcuts for a specified UI in a formatted table.
+
+    This is used by `mbasic --ui <ui> --dump-keymap` to display keybindings.
+
+    Args:
+        ui_name: Name of UI ('curses', 'tk', 'web', 'cli')
+    """
+    # Load keybindings for the specified UI
+    config_path = Path(__file__).parent / f"{ui_name}_keybindings.json"
+
+    if not config_path.exists():
+        print(f"Error: No keybindings found for UI '{ui_name}'")
+        print(f"Expected file: {config_path}")
+        return
+
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+    except Exception as e:
+        print(f"Error loading keybindings: {e}")
+        return
+
+    # Display header
+    ui_display_name = {
+        'curses': 'Curses',
+        'tk': 'Tk',
+        'web': 'Web',
+        'cli': 'CLI'
+    }.get(ui_name, ui_name.title())
+
+    print(f"# MBASIC {ui_display_name} UI Keyboard Shortcuts\n")
+
+    # Organize by context/section
+    for context, bindings in config.items():
+        # Format context name
+        context_display = context.replace('_', ' ').title()
+        print(f"## {context_display}\n")
+        print("| Key | Action |")
+        print("|-----|--------|")
+
+        # Sort actions alphabetically for consistency
+        for action in sorted(bindings.keys()):
+            binding = bindings[action]
+            primary_key = binding.get('primary', binding.get('keys', [''])[0])
+            description = binding.get('description', action.replace('_', ' ').title())
+
+            # Escape pipe characters in descriptions
+            description = description.replace('|', '\\|')
+            print(f"| `{primary_key}` | {description} |")
+
+        print()  # Blank line between sections

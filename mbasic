@@ -252,7 +252,7 @@ Examples:
     parser.add_argument(
         '--dump-keymap',
         action='store_true',
-        help='Print curses UI keyboard shortcuts in markdown format and exit'
+        help='Print keyboard shortcuts for the selected UI and exit'
     )
 
     parser.add_argument(
@@ -271,8 +271,8 @@ Examples:
 
     # Handle --dump-keymap (exit after showing)
     if args.dump_keymap:
-        from src.ui.keybindings import dump_keymap
-        dump_keymap()
+        from src.ui.keybinding_loader import dump_keymap
+        dump_keymap(args.backend)
         sys.exit(0)
 
     # Create I/O handler based on backend choice
