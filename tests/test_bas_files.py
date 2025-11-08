@@ -6,10 +6,10 @@ import os
 import sys
 from pathlib import Path
 
-# Add src directory to path so we can import compiler modules
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+# Add project root to path so we can import src modules
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from lexer import tokenize, LexerError
+from src.lexer import tokenize, LexerError
 
 
 def is_tokenized_basic(filepath):

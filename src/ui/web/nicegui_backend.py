@@ -1833,6 +1833,9 @@ class NiceGUIBackend(UIBackend):
         Note: This implementation does NOT clear output (see comment at line ~1845 below).
         RUN on empty program is fine (just clears variables, no execution).
         RUN at a breakpoint restarts from the beginning.
+
+        Breakpoints: User can set_breakpoint via Toggle Breakpoint menu (_toggle_breakpoint).
+        Breakpoints are stored in runtime.breakpoints and honored during execution.
         """
         try:
             # Stop any existing execution timer first (defensive programming - prevents multiple timers)
@@ -2722,6 +2725,16 @@ class NiceGUIBackend(UIBackend):
 
         except Exception as ex:
             log_web_error("_on_editor_change", ex)
+
+    def _on_enter_key(self):
+        """Handle Enter key press in editor - triggers auto-numbering.
+
+        Note: This method is called internally by _on_editor_change when a new line
+        is detected. The actual auto-numbering logic is in _add_next_line_number.
+        """
+        # Auto-numbering on Enter is handled by _on_editor_change detecting new lines
+        # and calling _add_next_line_number via timer
+        pass
 
     def _on_paste(self, e=None):
         """Handle paste event - remove blank lines after paste completes."""

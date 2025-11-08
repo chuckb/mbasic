@@ -5,12 +5,12 @@ Comprehensive test of all .bas files with detailed reporting
 import sys
 from pathlib import Path
 
-# Add src directory to path so we can import compiler modules
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+# Add project root to path so we can import src modules
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from lexer import tokenize, LexerError
-from parser import parse, ParseError
-from ast_nodes import *
+from src.lexer import tokenize, LexerError
+from src.parser import parse, ParseError
+from src.ast_nodes import *
 
 
 def test_file(filepath):

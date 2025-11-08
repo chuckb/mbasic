@@ -42,7 +42,7 @@ def test_settings_manager_basic():
             ("editor.auto_number", True),
             ("editor.auto_number_step", 100),
             ("keywords.case_style", "force_upper"),
-            ("ui.theme", "dark"),
+            ("variables.case_conflict", "error"),
         ]
 
         all_passed = True
@@ -75,22 +75,22 @@ def test_settings_persistence():
         # Create manager and set values
         manager1 = SettingsManager(project_dir=tmpdir)
         manager1.set("editor.auto_number_step", 100, SettingScope.GLOBAL)
-        manager1.set("ui.theme", "dark", SettingScope.GLOBAL)
+        manager1.set("editor.auto_number", True, SettingScope.GLOBAL)
         manager1.save(SettingScope.GLOBAL)
 
         # Create new manager and verify values persisted
         manager2 = SettingsManager(project_dir=tmpdir)
         step = manager2.get("editor.auto_number_step")
-        theme = manager2.get("ui.theme")
+        auto_num = manager2.get("editor.auto_number")
 
         step_ok = step == 100
-        theme_ok = theme == "dark"
+        auto_num_ok = auto_num == True
 
         print(f"{'✓' if step_ok else '✗'} editor.auto_number_step persisted: {step}")
-        print(f"{'✓' if theme_ok else '✗'} ui.theme persisted: {theme}")
+        print(f"{'✓' if auto_num_ok else '✗'} editor.auto_number persisted: {auto_num}")
 
     print()
-    return step_ok and theme_ok
+    return step_ok and auto_num_ok
 
 
 def test_settings_validation():
@@ -108,8 +108,8 @@ def test_settings_validation():
         ("editor.auto_number_step", 2000, False),
         ("keywords.case_style", "force_upper", True),
         ("keywords.case_style", "invalid", False),
-        ("ui.theme", "dark", True),
-        ("ui.theme", "rainbow", False),
+        ("variables.case_conflict", "error", True),
+        ("variables.case_conflict", "invalid_value", False),
     ]
 
     all_passed = True
@@ -170,7 +170,7 @@ def test_settings_definitions():
         "editor.auto_number_step",
         "keywords.case_style",
         "variables.case_conflict",
-        "ui.theme",
+        "variables.show_types_in_window",
     ]
 
     all_passed = True
@@ -341,7 +341,7 @@ def test_json_serialization():
 
         # Set some values
         manager.set("editor.auto_number_step", 100)
-        manager.set("ui.theme", "dark")
+        manager.set("editor.auto_number", False)
         manager.save(SettingScope.GLOBAL)
 
         # Check JSON file was created

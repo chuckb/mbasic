@@ -2129,7 +2129,25 @@ class Interpreter:
         DELETE -50       - Delete lines from beginning to 50
         DELETE           - Delete all lines (same as NEW but keeps variables)
         """
-        # Evaluate start and end expressions
+        # Delegate to interactive mode if available
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            # Convert stmt to string args for cmd_delete
+            args = ""
+            if stmt.start and stmt.end:
+                start = int(self.evaluate_expression(stmt.start))
+                end = int(self.evaluate_expression(stmt.end))
+                args = f"{start}-{end}"
+            elif stmt.start:
+                start = int(self.evaluate_expression(stmt.start))
+                args = f"{start}-"
+            elif stmt.end:
+                end = int(self.evaluate_expression(stmt.end))
+                args = f"-{end}"
+
+            self.interactive_mode.cmd_delete(args)
+            return
+
+        # Fallback: Evaluate start and end expressions
         start_line = None
         end_line = None
 
@@ -2178,8 +2196,36 @@ class Interpreter:
         3. Update GOTO/GOSUB/ON GOTO target line numbers in AST nodes
         4. Update RESTORE line number references
 
-        For now, raise an error.
+        For now, delegate to interactive_mode.cmd_renum if available.
         """
+        # Delegate to interactive mode if available
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            # Convert stmt to string args for cmd_renum
+            args = ""
+            new_start = None
+            old_start = None
+            increment = None
+
+            if stmt.new_start:
+                new_start = int(self.evaluate_expression(stmt.new_start))
+            if stmt.old_start:
+                old_start = int(self.evaluate_expression(stmt.old_start))
+            if stmt.increment:
+                increment = int(self.evaluate_expression(stmt.increment))
+
+            # Format: RENUM [new_start][,[old_start][,increment]]
+            if new_start is not None:
+                args = str(new_start)
+                if old_start is not None:
+                    args += f",{old_start}"
+                    if increment is not None:
+                        args += f",{increment}"
+                elif increment is not None:
+                    args += f",,{increment}"
+
+            self.interactive_mode.cmd_renum(args)
+            return
+
         raise RuntimeError("RENUM not yet implemented - TODO")
 
     def execute_files(self, stmt):
@@ -2665,7 +2711,28 @@ class Interpreter:
         and should be kept in sync with the AST during program modifications (add_line, delete_line, RENUM, MERGE).
         If ProgramManager fails to maintain this sync, LIST output may show stale or incorrect line text.
         """
-        # Evaluate start and end expressions
+        # Delegate to interactive mode if available
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            # Convert stmt to string args for cmd_list
+            args = ""
+            if stmt.start and stmt.end:
+                start = int(self.evaluate_expression(stmt.start))
+                end = int(self.evaluate_expression(stmt.end))
+                args = f"{start}-{end}"
+            elif stmt.start:
+                start = int(self.evaluate_expression(stmt.start))
+                if stmt.single_line:
+                    args = f"{start}"
+                else:
+                    args = f"{start}-"
+            elif stmt.end:
+                end = int(self.evaluate_expression(stmt.end))
+                args = f"-{end}"
+
+            self.interactive_mode.cmd_list(args)
+            return
+
+        # Fallback: Evaluate start and end expressions
         start_line = None
         end_line = None
 

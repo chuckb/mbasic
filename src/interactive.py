@@ -328,13 +328,15 @@ class InteractiveMode:
         args = parts[1] if len(parts) > 1 else ""
 
         # Special commands that require direct handling
-        # AUTO and EDIT cannot be parsed as BASIC statements (no corresponding AST nodes),
+        # AUTO, EDIT, and HELP cannot be parsed as BASIC statements (no corresponding AST nodes),
         # so they're handled directly here before attempting to parse.
         # Everything else goes through the parser as immediate mode statements.
         if command == "AUTO":
             self.cmd_auto(args)
         elif command == "EDIT":
             self.cmd_edit(args)
+        elif command == "HELP":
+            self.cmd_help(args)
         elif command == "":
             pass  # Empty command
         else:
@@ -1273,6 +1275,29 @@ class InteractiveMode:
             # Ctrl+C exits AUTO mode
             print()
             return
+
+    def cmd_help(self, args=""):
+        """HELP - Show help information about commands"""
+        print()
+        print("MBASIC-2025 Debugging Commands:")
+        print()
+        print("  BREAK line         - Set breakpoint at line")
+        print("  STEP               - Execute one statement")
+        print("  CONT               - Continue execution")
+        print("  STACK              - Show execution stack")
+        print("  LIST [range]       - List program lines")
+        print("  DELETE range       - Delete lines")
+        print("  RENUM [params]     - Renumber lines")
+        print("  NEW                - Clear program")
+        print("  RUN [line]         - Run program")
+        print("  LOAD \"file\"        - Load program")
+        print("  SAVE \"file\"        - Save program")
+        print("  MERGE \"file\"       - Merge program")
+        print("  FILES [pattern]    - List files")
+        print("  AUTO [start][,inc] - Auto line numbering")
+        print("  EDIT line          - Edit line")
+        print("  SYSTEM             - Exit")
+        print()
 
     def cmd_system(self):
         """SYSTEM - Exit to operating system"""

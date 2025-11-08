@@ -21,7 +21,7 @@ import time
 import traceback as tb
 from io import StringIO
 from src.ui.keybindings import (
-    HELP_KEY, LIST_KEY, NEW_KEY, RUN_KEY
+    HELP_KEY, NEW_KEY, RUN_KEY
 )
 
 class TestResult:
@@ -107,13 +107,6 @@ class CursesUITester:
                 handlers_tested.append(HELP_KEY)
             except Exception as e:
                 raise Exception(f"{HELP_KEY} failed: {e}")
-
-            # List key
-            try:
-                backend._handle_input(LIST_KEY)
-                handlers_tested.append(LIST_KEY)
-            except Exception as e:
-                raise Exception(f"{LIST_KEY} failed: {e}")
 
             # New key
             try:

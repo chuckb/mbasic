@@ -700,7 +700,7 @@ class CursesFeatureTests(UIFeatureTest):
             from src.ui.curses_ui import CursesBackend
             import inspect
             source = inspect.getsource(CursesBackend)
-            return 'Ctrl+Shift+B' in source or 'Clear Breaks' in source
+            return 'CLEAR_BREAKPOINTS_KEY' in source or '_clear_all_breakpoints' in source
         except:
             return False
 
@@ -792,7 +792,7 @@ class CursesFeatureTests(UIFeatureTest):
             from src.ui.curses_ui import CursesBackend
             import inspect
             source = inspect.getsource(CursesBackend)
-            return 'Ctrl+I' in source or 'Insert Line' in source
+            return 'INSERT_LINE_KEY' in source
         except:
             return False
 
