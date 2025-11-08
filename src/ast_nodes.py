@@ -79,7 +79,7 @@ class ProgramNode:
 
 @dataclass
 class LineNode:
-    """A single line in a BASIC program (line_number + statements)
+    """A single line in a BASIC program (line number + statements)
 
     Example:
         20 FOR I=1 TO 10: PRINT I: NEXT I
@@ -229,7 +229,7 @@ class IfStatementNode:
     """
     condition: 'ExpressionNode'
     then_statements: List['StatementNode']
-    then_line_number: Optional[int]  # For IF...THEN line_number GOTO style
+    then_line_number: Optional[int]  # For IF...THEN line number GOTO style
     else_statements: Optional[List['StatementNode']]
     else_line_number: Optional[int]
     line_num: int = 0

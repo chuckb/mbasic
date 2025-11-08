@@ -1,7 +1,10 @@
 """
-Built-in functions for MBASIC 5.21.
+Built-in functions for MBASIC 5.21 (CP/M era MBASIC-80).
 
 BASIC built-in functions (SIN, CHR$, INT, etc.) and formatting utilities (TAB, SPC, USING).
+
+Note: Version 5.21 refers to BASIC-80 Reference Manual Version 5.21. See tokens.py for
+complete MBASIC 5.21 specification reference.
 """
 
 import math

@@ -72,7 +72,8 @@ class ImmediateExecutor:
         """
         Check if immediate mode execution is safe.
 
-        For tick-based interpreters, we must check the interpreter state.
+        For tick-based interpreters, we check the interpreter's boolean state flags
+        (halted, error_info, input_prompt) as documented in the class docstring.
 
         Returns:
             bool: True if safe to execute immediate mode, False otherwise
@@ -115,8 +116,8 @@ class ImmediateExecutor:
         Execute an immediate mode statement.
 
         IMPORTANT: For tick-based interpreters, this should only be called when
-        can_execute_immediate() returns True. Calling during 'running' state
-        may corrupt the interpreter state.
+        can_execute_immediate() returns True. Calling while the program is actively
+        running (halted=False) may corrupt the interpreter state.
 
         Args:
             statement: BASIC statement without line number (e.g., "PRINT X", "X=5")
