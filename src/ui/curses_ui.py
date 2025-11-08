@@ -2091,7 +2091,7 @@ class CursesBackend(UIBackend):
             plural = "s" if error_count > 1 else ""
             self.status_bar.set_text(f"{base_message} - {error_count} syntax error{plural} in program")
         else:
-            self.status_bar.set_text(f"{base_message} - ^F help  ^U menu")
+            self.status_bar.set_text(f"{base_message} - {key_to_display(HELP_KEY)} help  {key_to_display(MENU_KEY)} menu")
 
     def _debug_continue(self):
         """Continue execution from paused/breakpoint state."""
@@ -3359,7 +3359,7 @@ class CursesBackend(UIBackend):
                     self.pile.contents[i] = (widget, ('weight', 0))
                 elif widget is self.output_frame:
                     self.pile.contents[i] = (widget, ('weight', 1))
-            self.status_bar.set_text("Output maximized - ^O to restore")
+            self.status_bar.set_text(f"Output maximized - {key_to_display(MAXIMIZE_OUTPUT_KEY)} to restore")
         else:
             # Restore normal layout
             for i, (widget, options) in enumerate(self.pile.contents):
