@@ -136,9 +136,10 @@ class Parser:
     def at_end_of_line(self) -> bool:
         """Check if at end of logical line (NEWLINE or EOF)
 
-        Note: This method does NOT check for comment tokens (REM, REMARK, APOSTROPHE).
-        Comments are handled separately in parse_line() where they are parsed as
-        statements. In practice, comments end the line regardless of COLON presence.
+        Note: This method does NOT check for comment tokens (REM, REMARK, APOSTROPHE)
+        or statement separators (COLON). Use at_end_of_statement() when parsing statements
+        that should stop at comments/colons. Use at_end_of_line() for line-level parsing
+        where colons separate multiple statements on the same line.
         """
         if self.at_end_of_tokens():
             return True
@@ -1261,6 +1262,8 @@ class Parser:
         - String literals: PRINT USING "###.##"; X
         - String variables: PRINT USING F$; X
         - Any expression that evaluates to a string
+
+        Note: Semicolon after format string is required (separates format from value list).
         """
         # Advance past USING keyword
         self.advance()
@@ -3679,7 +3682,10 @@ class Parser:
         )
 
     def parse_resume(self) -> ResumeStatementNode:
-        """Parse RESUME statement - Syntax: RESUME [NEXT | line_number]"""
+        """Parse RESUME statement - Syntax: RESUME [NEXT | 0 | line_number]
+
+        Note: RESUME and RESUME 0 both retry the statement that caused the error.
+        """
         token = self.advance()
 
         line_number = None
