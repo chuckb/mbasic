@@ -2122,7 +2122,7 @@ class CursesBackend(UIBackend):
                 line_code = self.editor_lines.get(state.current_line, "")
                 self.output_buffer.append(f"→ Paused at {pc_display}: {line_code}")
                 self._update_output()
-                self.status_bar.set_text(f"Paused at {pc_display} - {key_to_display(STEP_KEY)}=Step, {key_to_display(CONTINUE_KEY)}=Continue, {key_to_display(STOP_KEY)}=Stop")
+                self.status_bar.set_text(f"Paused at {pc_display} - {key_to_display(STEP_KEY)}=Step Stmt, {key_to_display(STEP_LINE_KEY)}=Step Line, {key_to_display(CONTINUE_KEY)}=Continue")
                 self._update_immediate_status()
             elif state.error_info:
                 # Clear highlighting on error
@@ -2205,7 +2205,7 @@ class CursesBackend(UIBackend):
                 line_code = self.editor_lines.get(state.current_line, "")
                 self.output_buffer.append(f"→ Paused at {pc_display}: {line_code}")
                 self._update_output()
-                self.status_bar.set_text(f"Paused at {pc_display} - {key_to_display(STEP_KEY)}=Step, {key_to_display(CONTINUE_KEY)}=Continue, {key_to_display(STOP_KEY)}=Stop")
+                self.status_bar.set_text(f"Paused at {pc_display} - {key_to_display(STEP_KEY)}=Step Stmt, {key_to_display(STEP_LINE_KEY)}=Step Line, {key_to_display(CONTINUE_KEY)}=Continue")
                 self._update_immediate_status()
             elif state.error_info:
                 self.editor._update_display()
@@ -3604,7 +3604,7 @@ class CursesBackend(UIBackend):
                     # Paused execution (breakpoint hit or stepping)
                     self.output_buffer.append(f"→ Paused at line {state.current_line}")
                     self._update_output()
-                    self.status_bar.set_text(f"Paused at line {state.current_line} - {key_to_display(STEP_KEY)}=Step, {key_to_display(CONTINUE_KEY)}=Continue, {key_to_display(STOP_KEY)}=Stop")
+                    self.status_bar.set_text(f"Paused at line {state.current_line} - {key_to_display(STEP_KEY)}=Step Stmt, {key_to_display(STEP_LINE_KEY)}=Step Line, {key_to_display(CONTINUE_KEY)}=Continue")
                     self._update_immediate_status()
 
             else:
