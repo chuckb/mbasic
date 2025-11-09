@@ -54,6 +54,16 @@
       "keys": ["CONT"],
       "primary": "CONT",
       "description": "Continue execution"
+    },
+    "show_settings": {
+      "keys": ["SHOW SETTINGS"],
+      "primary": "SHOW SETTINGS",
+      "description": "View all settings or filter by pattern (e.g., SHOW SETTINGS \"auto\")"
+    },
+    "set_setting": {
+      "keys": ["SET \"setting\" value"],
+      "primary": "SET \"setting\" value",
+      "description": "Change a setting (e.g., SET \"editor.auto_number_start\" 100)"
     }
   }
 }

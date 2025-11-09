@@ -1247,13 +1247,15 @@ class InteractiveMode:
     def cmd_auto(self, args):
         """AUTO [start][,increment] - Automatic line numbering mode
 
-        AUTO - Start at 10, increment by 10
-        AUTO 100 - Start at 100, increment by 10
+        AUTO - Use default start/increment from settings
+        AUTO 100 - Start at 100, use default increment
         AUTO 100,5 - Start at 100, increment by 5
-        AUTO ,5 - Start at 10, increment by 5
+        AUTO ,5 - Use default start, increment by 5
         """
-        start = 10
-        increment = 10
+        # Load defaults from settings
+        from src.settings import get
+        start = get('editor.auto_number_start')
+        increment = get('editor.auto_number_step')
 
         if args:
             parts = args.split(',')
@@ -1324,23 +1326,32 @@ class InteractiveMode:
     def cmd_help(self, args=""):
         """HELP - Show help information about commands"""
         print()
-        print("MBASIC-2025 Debugging Commands:")
+        print("MBASIC-2025 Commands:")
         print()
-        print("  BREAK line         - Set breakpoint at line")
-        print("  STEP               - Execute one statement")
-        print("  CONT               - Continue execution")
-        print("  STACK              - Show execution stack")
-        print("  LIST [range]       - List program lines")
-        print("  DELETE range       - Delete lines")
-        print("  RENUM [params]     - Renumber lines")
+        print("Program Management:")
         print("  NEW                - Clear program")
         print("  RUN [line]         - Run program")
         print("  LOAD \"file\"        - Load program")
         print("  SAVE \"file\"        - Save program")
         print("  MERGE \"file\"       - Merge program")
-        print("  FILES [\"pattern\"]  - List files")
+        print("  LIST [range]       - List program lines")
+        print("  DELETE range       - Delete lines")
+        print("  RENUM [params]     - Renumber lines")
         print("  AUTO [start][,inc] - Auto line numbering")
         print("  EDIT line          - Edit line")
+        print()
+        print("Debugging:")
+        print("  BREAK line         - Set breakpoint at line")
+        print("  STEP               - Execute one statement")
+        print("  CONT               - Continue execution")
+        print("  STACK              - Show execution stack")
+        print()
+        print("Settings:")
+        print("  SHOW SETTINGS [\"pattern\"] - View settings")
+        print("  SET \"setting\" value       - Change setting")
+        print()
+        print("File System:")
+        print("  FILES [\"pattern\"]  - List files")
         print("  SYSTEM             - Exit")
         print()
 

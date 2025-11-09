@@ -112,10 +112,11 @@ class TkBackend(UIBackend):
         self.last_edited_line_index = None  # Last editor line index (1-based)
         self.last_edited_line_text = None   # Content of last edited line
 
-        # Editor auto-numbering configuration
-        self.auto_number_enabled = True      # Enable auto-numbering
-        self.auto_number_start = 10          # Starting line number
-        self.auto_number_increment = 10      # Increment between lines
+        # Editor auto-numbering configuration (load from settings system)
+        from src.settings import get
+        self.auto_number_enabled = get('editor.auto_number')
+        self.auto_number_start = get('editor.auto_number_start')
+        self.auto_number_increment = get('editor.auto_number_step')
 
         # Tkinter widgets (created in start())
         self.root = None
