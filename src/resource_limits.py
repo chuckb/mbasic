@@ -61,7 +61,7 @@ class ResourceLimits:
             max_while_depth: Maximum WHILE loop nesting depth
             max_total_memory: Maximum total memory for all variables/arrays (bytes)
             max_array_size: Maximum size for a single array (bytes)
-            max_string_length: Maximum length for a string variable (bytes). MBASIC 5.21 limit is 255.
+            max_string_length: Maximum byte length for a string variable (UTF-8 encoded). MBASIC 5.21 limit is 255 bytes.
             max_open_files: Maximum number of simultaneously open files
             max_file_size: Maximum size for a single file (bytes)
             max_total_files: Maximum number of files that can be created
@@ -282,13 +282,17 @@ class ResourceLimits:
         self.current_while_depth = 0
 
     def check_string_length(self, string_value: str) -> None:
-        """Check if string exceeds maximum length.
+        """Check if string exceeds maximum byte length.
 
         Args:
             string_value: The string to check
 
         Raises:
-            RuntimeError: If string exceeds limit
+            RuntimeError: If string exceeds byte length limit
+
+        Note:
+            String limits are measured in bytes (UTF-8 encoded), not character count.
+            This matches MBASIC 5.21 behavior which limits string storage size.
         """
         if isinstance(string_value, str):
             byte_length = len(string_value.encode('utf-8'))

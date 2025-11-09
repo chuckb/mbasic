@@ -17,8 +17,8 @@ Note: Uses {{kbd:save:curses}} because {{kbd:save:curses}} is reserved for termi
 ### Save As (Shift+{{kbd:save:curses}})
 Save the current program with a new filename.
 
-### Recent Files ({{kbd:save:curses}}hift+O)
-View and load from a list of recently opened files.
+### Recent Files (Menu only)
+View and load from a list of recently opened files. Access through File menu.
 
 ### Auto-Save
 The Curses UI automatically saves your work periodically to prevent data loss.
@@ -59,8 +59,8 @@ Execute one BASIC statement and pause. Useful for debugging complex lines with m
 ### Step Line ({{kbd:step_line:curses}})
 Execute the next line of code and pause. Advances one line number at a time.
 
-### Clear All Breakpoints ({{kbd:save:curses}}hift+B)
-Remove all breakpoints from the program at once.
+### Clear All Breakpoints (Shift+^B)
+Remove all breakpoints from the program at once. Use Shift+Ctrl+B keyboard shortcut.
 
 ### Multi-Statement Debug
 When stepping, the debugger highlights individual statements on lines with multiple statements (separated by :).

@@ -1098,8 +1098,10 @@ class ProgramEditorWidget(urwid.WidgetWrap):
             if not line:
                 continue
 
-            # FIRST: Check if line starts with a digit (raw pasted BASIC)
-            # Since BASIC code can never legally start with a digit, this must be a line number
+            # FIRST: Check if line starts with a digit (raw pasted BASIC with line numbers)
+            # In this context, we assume lines starting with digits are numbered program lines (e.g., "10 PRINT").
+            # Note: While BASIC statements can start with digits (numeric expressions), when pasting
+            # program code, lines starting with digits are conventionally numbered program lines.
             if line[0].isdigit():
                 # Raw pasted line like "10 PRINT" - reformat it
                 # Extract number

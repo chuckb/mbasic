@@ -23,6 +23,10 @@ To list all or part of the program currently in memory at the terminal.
 
 ## Remarks
 
+- In 8K BASIC, LIST followed by a line number lists from that line to the end of the program
+- In Extended and Disk BASIC, LIST supports range syntax (line1-line2)
+- LIST without arguments displays the entire program
+- Output is sent to the terminal (console). For printer output, use LLIST
 
 ## Example
 
