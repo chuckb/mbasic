@@ -32,6 +32,16 @@ test_results_*.txt
 test_output*.txt
 test_latest*.txt
 
+# Compiled outputs from test_compile/
+# Note: z88dk generates both .com and files without extension
+# We keep .com files but exclude intermediate files
+test_compile/*.c
+test_compile/*
+!test_compile/*.bas
+!test_compile/*.py
+!test_compile/*.com
+!test_compile/*.md
+
 # OS
 .DS_Store
 Thumbs.db

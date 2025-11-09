@@ -6289,8 +6289,9 @@ class SemanticAnalyzer:
             self.errors.append(f"Compiler invocation failed: {e}")
             return False
 
-        # z88dk creates UPPERCASE.COM files, rename to lowercase
+        # z88dk creates both OUTPUT.COM and output files, clean up and rename
         if backend_name == 'z88dk':
+            # z88dk creates UPPERCASE.COM, rename to lowercase
             uppercase_com = output_file.upper() + '.COM'
             lowercase_com = output_file.lower() + '.com'
             if os.path.exists(uppercase_com):
@@ -6299,6 +6300,10 @@ class SemanticAnalyzer:
                 print(f"Created: {lowercase_com}")
             else:
                 self.warnings.append(f"Expected output {uppercase_com} not found")
+
+            # z88dk also creates a file without extension, remove it
+            if os.path.exists(output_file):
+                os.remove(output_file)
 
         # Report backend warnings
         if backend.warnings:
