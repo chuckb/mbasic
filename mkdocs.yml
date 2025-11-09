@@ -88,14 +88,224 @@ markdown_extensions:
       toc_depth: 3
 
 # Documentation structure
-# Using awesome-pages plugin to auto-discover pages
-# This avoids hard-coding non-existent files
 nav:
   - Home: index.md
   - Getting Started:
     - help/mbasic/getting-started.md
     - help/mbasic/features.md
     - help/mbasic/compatibility.md
+  - User Guides:
+    - user/QUICK_REFERENCE.md
+    - user/INSTALL.md
+    - user/INSTALLATION.md
+    - Choosing Your UI: user/CHOOSING_YOUR_UI.md
+    - UI Features: user/UI_FEATURE_COMPARISON.md
+    - Settings: user/SETTINGS_AND_CONFIGURATION.md
+    - Case Handling: user/CASE_HANDLING_GUIDE.md
+    - File Formats: user/FILE_FORMAT_COMPATIBILITY.md
+    - Sequential Files: user/sequential-files.md
+    - Keyboard Shortcuts: user/keyboard-shortcuts.md
+    - Tk Quick Start: user/TK_UI_QUICK_START.md
+  - Help System:
+    - help/index.md
+    - MBASIC:
+      - help/mbasic/index.md
+      - help/mbasic/architecture.md
+      - help/mbasic/extensions.md
+      - help/mbasic/not-implemented.md
+      - Implementation:
+        - help/mbasic/implementation/string-allocation-and-garbage-collection.md
+    - Common:
+      - help/common/index.md
+      - help/common/getting-started.md
+      - help/common/debugging.md
+      - help/common/editor-commands.md
+      - help/common/settings.md
+      - help/common/shortcuts.md
+      - Examples:
+        - help/common/examples.md
+        - help/common/examples/hello-world.md
+        - help/common/examples/loops.md
+      - Compiler:
+        - help/common/compiler/index.md
+        - help/common/compiler/optimizations.md
+    - Language Reference:
+      - help/common/language.md
+      - help/common/language/index.md
+      - help/common/language/character-set.md
+      - help/common/language/data-types.md
+      - help/common/language/operators.md
+      - help/common/language/variables.md
+      - Statements:
+        - help/common/language/statements/index.md
+        - help/common/language/statements/auto.md
+        - help/common/language/statements/call.md
+        - help/common/language/statements/chain.md
+        - help/common/language/statements/clear.md
+        - help/common/language/statements/cload.md
+        - help/common/language/statements/close.md
+        - help/common/language/statements/cls.md
+        - help/common/language/statements/common.md
+        - help/common/language/statements/cont.md
+        - help/common/language/statements/csave.md
+        - help/common/language/statements/data.md
+        - help/common/language/statements/def-fn.md
+        - help/common/language/statements/def-usr.md
+        - help/common/language/statements/defint-sng-dbl-str.md
+        - help/common/language/statements/delete.md
+        - help/common/language/statements/dim.md
+        - help/common/language/statements/edit.md
+        - help/common/language/statements/end.md
+        - help/common/language/statements/erase.md
+        - help/common/language/statements/err-erl-variables.md
+        - help/common/language/statements/error.md
+        - help/common/language/statements/field.md
+        - help/common/language/statements/files.md
+        - help/common/language/statements/for-next.md
+        - help/common/language/statements/get.md
+        - help/common/language/statements/gosub-return.md
+        - help/common/language/statements/goto.md
+        - help/common/language/statements/helpsetting.md
+        - help/common/language/statements/if-then-else-if-goto.md
+        - help/common/language/statements/input.md
+        - help/common/language/statements/input_hash.md
+        - help/common/language/statements/inputi.md
+        - help/common/language/statements/kill.md
+        - help/common/language/statements/let.md
+        - help/common/language/statements/limits.md
+        - help/common/language/statements/line-input.md
+        - help/common/language/statements/list.md
+        - help/common/language/statements/llist.md
+        - help/common/language/statements/load.md
+        - help/common/language/statements/lprint-lprint-using.md
+        - help/common/language/statements/lset.md
+        - help/common/language/statements/merge.md
+        - help/common/language/statements/mid-assignment.md
+        - help/common/language/statements/name.md
+        - help/common/language/statements/new.md
+        - help/common/language/statements/null.md
+        - help/common/language/statements/on-error-goto.md
+        - help/common/language/statements/on-gosub-on-goto.md
+        - help/common/language/statements/open.md
+        - help/common/language/statements/option-base.md
+        - help/common/language/statements/out.md
+        - help/common/language/statements/poke.md
+        - help/common/language/statements/print.md
+        - help/common/language/statements/printi-printi-using.md
+        - help/common/language/statements/put.md
+        - help/common/language/statements/randomize.md
+        - help/common/language/statements/read.md
+        - help/common/language/statements/rem.md
+        - help/common/language/statements/renum.md
+        - help/common/language/statements/reset.md
+        - help/common/language/statements/restore.md
+        - help/common/language/statements/resume.md
+        - help/common/language/statements/rset.md
+        - help/common/language/statements/run.md
+        - help/common/language/statements/save.md
+        - help/common/language/statements/setsetting.md
+        - help/common/language/statements/showsettings.md
+        - help/common/language/statements/stop.md
+        - help/common/language/statements/swap.md
+        - help/common/language/statements/system.md
+        - help/common/language/statements/tron-troff.md
+        - help/common/language/statements/wait.md
+        - help/common/language/statements/while-wend.md
+        - help/common/language/statements/width.md
+        - help/common/language/statements/write.md
+        - help/common/language/statements/writei.md
+      - Functions:
+        - help/common/language/functions/index.md
+        - help/common/language/functions/abs.md
+        - help/common/language/functions/asc.md
+        - help/common/language/functions/atn.md
+        - help/common/language/functions/cdbl.md
+        - help/common/language/functions/chr_dollar.md
+        - help/common/language/functions/cint.md
+        - help/common/language/functions/cos.md
+        - help/common/language/functions/csng.md
+        - help/common/language/functions/cvi-cvs-cvd.md
+        - help/common/language/functions/eof.md
+        - help/common/language/functions/exp.md
+        - help/common/language/functions/fix.md
+        - help/common/language/functions/fre.md
+        - help/common/language/functions/hex_dollar.md
+        - help/common/language/functions/inkey_dollar.md
+        - help/common/language/functions/inp.md
+        - help/common/language/functions/input_dollar.md
+        - help/common/language/functions/instr.md
+        - help/common/language/functions/int.md
+        - help/common/language/functions/left_dollar.md
+        - help/common/language/functions/len.md
+        - help/common/language/functions/loc.md
+        - help/common/language/functions/lof.md
+        - help/common/language/functions/log.md
+        - help/common/language/functions/lpos.md
+        - help/common/language/functions/mid_dollar.md
+        - help/common/language/functions/mki_dollar-mks_dollar-mkd_dollar.md
+        - help/common/language/functions/oct_dollar.md
+        - help/common/language/functions/peek.md
+        - help/common/language/functions/pos.md
+        - help/common/language/functions/right_dollar.md
+        - help/common/language/functions/rnd.md
+        - help/common/language/functions/sgn.md
+        - help/common/language/functions/sin.md
+        - help/common/language/functions/space_dollar.md
+        - help/common/language/functions/spc.md
+        - help/common/language/functions/sqr.md
+        - help/common/language/functions/str_dollar.md
+        - help/common/language/functions/string_dollar.md
+        - help/common/language/functions/tab.md
+        - help/common/language/functions/tan.md
+        - help/common/language/functions/usr.md
+        - help/common/language/functions/val.md
+        - help/common/language/functions/varptr.md
+      - Appendices:
+        - help/common/language/appendices/index.md
+        - help/common/language/appendices/ascii-codes.md
+        - help/common/language/appendices/error-codes.md
+        - help/common/language/appendices/math-functions.md
+    - UI Guides:
+      - help/ui/index.md
+      - CLI:
+        - help/ui/cli/index.md
+        - help/common/ui/cli/index.md
+        - help/ui/cli/debugging.md
+        - help/ui/cli/find-replace.md
+        - help/ui/cli/settings.md
+        - help/ui/cli/variables.md
+      - Curses:
+        - help/ui/curses/index.md
+        - help/common/ui/curses/editing.md
+        - help/ui/curses/editing.md
+        - help/ui/curses/feature-reference.md
+        - help/ui/curses/files.md
+        - help/ui/curses/find-replace.md
+        - help/ui/curses/getting-started.md
+        - help/ui/curses/help-navigation.md
+        - help/ui/curses/quick-reference.md
+        - help/ui/curses/running.md
+        - help/ui/curses/settings.md
+        - help/ui/curses/variables.md
+      - Tk:
+        - help/ui/tk/index.md
+        - help/common/ui/tk/index.md
+        - help/ui/tk/feature-reference.md
+        - help/ui/tk/features.md
+        - help/ui/tk/getting-started.md
+        - help/ui/tk/settings.md
+        - help/ui/tk/tips.md
+        - help/ui/tk/workflows.md
+      - Web:
+        - help/ui/web/index.md
+        - help/ui/web/debugging.md
+        - help/ui/web/features.md
+        - help/ui/web/getting-started.md
+        - help/ui/web/settings.md
+        - help/ui/web/web-interface.md
+      - Common:
+        - help/ui/common/errors.md
+        - help/ui/common/running.md
   - Library:
     - library/index.md
     - Games: library/games/index.md
@@ -107,6 +317,7 @@ nav:
     - Data Management: library/data_management/index.md
     - Telecommunications: library/telecommunications/index.md
     - Demos: library/demos/index.md
+  - Project Status: PROJECT_STATUS.md
 
 extra:
   social:
