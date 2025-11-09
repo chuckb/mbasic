@@ -1,18 +1,19 @@
 # Documentation Consistency Checker
 
-Tools for analyzing consistency between code and documentation in the MBASIC project.
+This directory contains tools for checking consistency between documentation and code.
 
-## Files
+## Main Scripts
 
-### check_docs_consistency3.py (Latest)
-The primary consistency checker that analyzes both source code and documentation.
+### check_docs_consistency3.py
+Enhanced consistency checker that analyzes both code and documentation.
 
 **Features:**
-- Analyzes Python source files (.py) for code vs comment conflicts
-- Checks JSON configuration files (.json)
+- Analyzes Python source files (.py) and JSON config files (.json)
 - Scans documentation files (.md) from docs/help, docs/library, docs/stylesheets, docs/user
-- Auto-generates versioned output filenames (docs_inconsistencies_report-v{N}.md)
-- Saves reports to `../../docs/history/`
+- Detects code vs comment conflicts
+- Cross-references documentation vs implementation
+- **Auto-filters previously reviewed/ignored issues**
+- Auto-generates versioned output filenames
 
 **Usage:**
 ```bash
@@ -21,82 +22,71 @@ python3 check_docs_consistency3.py
 ```
 
 **Requirements:**
-- ANTHROPIC_API_KEY environment variable must be set
-- `pip install anthropic`
+- pip install anthropic
+- ANTHROPIC_API_KEY environment variable
 
-**Runtime:** Over 1 hour (due to comprehensive analysis)
+**Output:**
+- Saves report to docs/history/docs_inconsistencies_report-vN.md
+- Shows how many issues were filtered out as already ignored
 
-**Output:** `../../docs/history/docs_inconsistencies_report-v{N}.md`
-
-### get_next_report_filename.py
-Utility module for determining the next available version number for report files.
-
-**Features:**
-- Scans `../../docs/history/` for existing report files
-- Parses version numbers from filenames matching pattern: `docs_inconsistencies_report-v[0-9]*.md`
-- Ignores zero-sized files (incomplete runs)
-- Returns next available version number
-
-**Usage:**
-```python
-from get_next_report_filename import get_next_report_filename
-filename = get_next_report_filename()  # Returns: "docs_inconsistencies_report-v11.md"
-```
-
-**Test:**
-```bash
-python3 get_next_report_filename.py
-```
-
-### test_filename_picker.py
-Test jig for validating the filename picker functionality.
+### mark_ignored.py
+Interactive tool to mark issues as reviewed/ignored.
 
 **Usage:**
 ```bash
-python3 test_filename_picker.py
+# Mark issues interactively from a report
+python3 mark_ignored.py docs/history/code-v14.md
+
+# List all ignored issues
+python3 mark_ignored.py --list
+
+# Mark specific issue by hash
+python3 mark_ignored.py --hash abc123 --reason "Working as designed"
 ```
 
-**Tests:**
-1. Getting next report filename
-2. Validating filename format
-3. Checking if output file already exists
-4. Listing existing report files
+### rebuild_ignore_hashes.py
+Utility to rebuild the ignore file with correct hashes.
 
-### json_extractor.py
-Helper module for robust JSON parsing from Claude API responses.
+**When to use:**
+- After manually editing .consistency_ignore.json
+- If hashes were corrupted or manually created
 
-Handles various JSON formats including:
-- Pure JSON arrays
-- JSON wrapped in markdown code blocks
-- Mixed text and JSON responses
+**Usage:**
+```bash
+python3 rebuild_ignore_hashes.py
+```
 
-### check_docs_consistency2.py (Previous version)
-Original version that outputs to hardcoded `consistency_report2.md` filename.
+Creates backup before rebuilding.
 
-**Note:** Version 3 supersedes this with auto-versioned filenames.
+## How the Ignore System Works
 
-## Report Output
+1. **Hash Computation**: Each issue gets a unique hash based on:
+   - Issue description (normalized to lowercase)
+   - Affected file paths (sorted)
+   - Format: md5(description.lower() + "||" + "||".join(sorted(files)))[:12]
 
-Reports are saved to `../../docs/history/docs_inconsistencies_report-v{N}.md` with sections:
+2. **Filtering**: check_docs_consistency3.py:
+   - Loads ignore file at startup
+   - Computes hash for each detected issue
+   - Filters out issues whose hash matches ignore file
+   - Reports how many were filtered
 
-1. **Code vs Comment Conflicts**
-   - Code bugs (comment appears correct)
-   - Outdated comments (code appears correct)
-   - Unclear cases needing investigation
+## Troubleshooting
 
-2. **General Inconsistencies**
-   - High severity issues
-   - Medium severity issues
-   - Low severity issues
+### Problem: Ignore file has 400+ entries but nothing is filtered
 
-Each issue includes:
-- Affected files
-- Description and details
-- Severity level
-- Suggested fixes
+**Cause**: The ignore file was created with random/manual hashes instead of computed hashes.
 
-## Version History
+**Solution:**
+```bash
+python3 rebuild_ignore_hashes.py
+```
 
-- **v3** (check_docs_consistency3.py): Auto-versioned output filenames
-- **v2** (check_docs_consistency2.py): Enhanced with code/comment conflict analysis
-- **v1** (check_docs_consistency.py): Initial documentation-only checker
+This happened in v14 - the file had 423 entries, but only 21 were valid (402 had missing data).
+
+### Problem: Verify hash computation is working
+
+**Solution:**
+```bash
+python3 test_ignore.py
+```

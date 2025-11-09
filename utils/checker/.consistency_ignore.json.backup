@@ -1,0 +1,2971 @@
+{
+  "_comment": "Issues marked as reviewed/ignored. Auto-generated from code-v14.md review on 2025-11-09.",
+  "ignored_issues": {
+    "5c8f7a9b2e1d": {
+      "description": "SandboxedFileIO methods documented as STUB but list_files() is IMPLEMENTED",
+      "files": [
+        "src/file_io.py"
+      ],
+      "reason": "Already verified - implementation is correct"
+    },
+    "a3b9c4d7e2f6": {
+      "description": "The auto_save.py module is fully implemented with comprehensive autosave functionality, but there is no evidence in the other UI files (cli.py, curses_settings_widget.py, base.py) that this autosave functionality is actually integrated or used by any UI backend.",
+      "files": [
+        "src/ui/auto_save.py"
+      ],
+      "reason": "Already verified - implementation is correct"
+    },
+    "9e8d7c6b5a4f": {
+      "description": "Comment about flush() behavior may be misleading about when content is saved",
+      "files": [
+        "src/filesystem/sandboxed_fs.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "2f3e4d5c6b7a": {
+      "description": "base.py documents input_char() with blocking parameter behavior, but web_io.py ignores the blocking parameter entirely",
+      "files": [
+        "src/iohandler/base.py",
+        "src/iohandler/web_io.py"
+      ],
+      "reason": "Platform limitation - cannot be fixed without major architectural changes"
+    },
+    "8d9e0f1a2b3c": {
+      "description": "ConsoleIOHandler.input_char() has complex fallback logic for Windows without msvcrt that calls input(), but this defeats the purpose of single-character input",
+      "files": [
+        "src/iohandler/console.py"
+      ],
+      "reason": "Platform limitation - cannot be fixed without major architectural changes"
+    },
+    "7c8d9e0f1a2b": {
+      "description": "Inconsistent key display format between keybindings.py and keymap_widget.py for Shift+Ctrl combinations.",
+      "files": [
+        "src/ui/keybindings.py",
+        "src/ui/keymap_widget.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "6b7c8d9e0f1a": {
+      "description": "get_variables() docstring claims to return array tracking info but implementation may return None for uninitialized fields",
+      "files": [
+        "src/runtime.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "f1e2d3c4b5a6": {
+      "description": "CLI STEP command documentation claims it implements statement-level stepping like curses 'Step Statement' (Ctrl+T), but curses also has a separate 'Step Line' command (Ctrl+K) that is not available in CLI. The documentation acknowledges this but creates confusion about feature parity.",
+      "files": [
+        "src/ui/cli_debug.py",
+        "src/ui/curses_keybindings.json"
+      ],
+      "reason": "Feature request, not a bug - would require new implementation"
+    },
+    "5a6b7c8d9e0f": {
+      "description": "The _execute_single_step() method's docstring claims it executes one statement and describes statement-level granularity, but includes a disclaimer that actual behavior depends on interpreter implementation. The comment admits the method might behave as line-level stepping if the interpreter doesn't support statement-level execution.",
+      "files": [
+        "src/ui/cli_debug.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "4b5c6d7e8f9a": {
+      "description": "The 'continue' command has different key bindings between CLI and curses: CLI uses 'CONT' command while curses uses 'Ctrl+C'. Additionally, curses uses 'Ctrl+C' for continue but 'Ctrl+X' for stop, which is inconsistent with typical terminal conventions where Ctrl+C stops execution.",
+      "files": [
+        "src/ui/cli_keybindings.json",
+        "src/ui/curses_keybindings.json"
+      ],
+      "reason": "Intentional design choice - CLI vs curses have different terminal capabilities"
+    },
+    "e0f1a2b3c4d5": {
+      "description": "The base.py UIBackend class defines execute_immediate() as an optional method with a docstring showing examples, but cli.py's CLIBackend implements it by delegating to interactive.execute_statement() without any validation or error handling, and there's no documentation about whether execute_statement() actually exists or what it does.",
+      "files": [
+        "src/ui/cli.py",
+        "src/ui/base.py"
+      ],
+      "reason": "Feature request, not a bug - would require new implementation"
+    },
+    "3c4d5e6f7a8b": {
+      "description": "Inconsistent handling of program source of truth between methods",
+      "files": [
+        "src/ui/curses_ui.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "d5e6f7a8b9c0": {
+      "description": "CONTINUE_KEY is documented with dual purpose (Go to line / Continue execution) but the JSON key name 'goto_line' only reflects one purpose, creating confusion.",
+      "files": [
+        "src/ui/keybindings.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "c6d7e8f9a0b1": {
+      "description": "Inconsistent error handling between save_state_periodic and save_on_disconnect callbacks",
+      "files": [
+        "src/ui/web/nicegui_backend.py"
+      ],
+      "reason": "Intentional distinction for debugging - different messages for periodic vs final save"
+    },
+    "b7c8d9e0f1a2": {
+      "description": "get_screen_size() method exists in web_io.py but is not part of IOHandler base interface, creating API inconsistency",
+      "files": [
+        "src/iohandler/web_io.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "a8b9c0d1e2f3": {
+      "description": "ConsoleIOHandler.input_char() non-blocking mode uses select on Unix but warns about msvcrt unavailability on Windows, creating asymmetric error handling",
+      "files": [
+        "src/iohandler/console.py"
+      ],
+      "reason": "Platform limitation - cannot be fixed without major architectural changes"
+    },
+    "9a0b1c2d3e4f": {
+      "description": "Comment in _create_setting_widget() claims both removeprefix() and fallback [6:] 'only strip from the beginning', but this is redundant since slicing [6:] by definition only operates on the beginning of the string. The comment seems to over-explain obvious behavior.",
+      "files": [
+        "src/ui/curses_settings_widget.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "8b9c0d1e2f3a": {
+      "description": "The cmd_break() docstring states 'Breakpoints can be set at any time (before or during execution)' and 'Use RUN to start the program', but there's no clear documentation about what happens if you set breakpoints during execution or how the breakpoint system integrates with the running program.",
+      "files": [
+        "src/ui/cli_debug.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "6d7e8f9a0b1c": {
+      "description": "Comment about modal behavior is misleading",
+      "files": [
+        "src/ui/tk_settings_dialog.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "5e6f7a8b9c0d": {
+      "description": "cycle_sort_mode() docstring mentions 'Tk UI implementation' but this is supposed to be UI-agnostic code",
+      "files": [
+        "src/ui/variable_sorting.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "4f5a6b7c8d9e": {
+      "description": "The cmd_delete() and cmd_renum() docstrings reference 'curses_ui.py or tk_ui.py' as example implementations, but these files are not present in the provided source code, making the references unhelpful.",
+      "files": [
+        "src/ui/visual.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "a41fb4d2d795": {
+      "description": "Manual entry (a41fb4d2d795)",
+      "reason": "Comment accurately describes design choice - context preservation would require significant refactoring",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "1b3567f460b3": {
+      "description": "Manual entry (1b3567f460b3)",
+      "reason": "Comment is accurate - breakpoints ARE cleared from interpreter during reset and preserved in editor state",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "42e9d83b6db3": {
+      "description": "Manual entry (42e9d83b6db3)",
+      "reason": "Comment accurately describes the timing - wording is clear enough",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "5b0c337ebfd2": {
+      "description": "Manual entry (5b0c337ebfd2)",
+      "reason": "Comment correctly acknowledges semantic differences - no change needed",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "44f34a409d8b": {
+      "description": "Manual entry (44f34a409d8b)",
+      "reason": "Comment describes typical case - edge case handling is present in code",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "45ab57b27ebd": {
+      "description": "Manual entry (45ab57b27ebd)",
+      "reason": "Comment correctly notes that unlimited mode breaks MBASIC compatibility - intentional for testing",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "b44c61a69033": {
+      "description": "Manual entry (b44c61a69033)",
+      "reason": "Path is correct - file exists at docs/user/keyboard-shortcuts.md",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "e111e7ec28c2": {
+      "description": "Manual entry (e111e7ec28c2)",
+      "reason": "Comment already clarified - CLEAR silently ignores errors, RESET allows them to propagate",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "e5a12a6aa739": {
+      "description": "Manual entry (e5a12a6aa739)",
+      "reason": "Docstring describes expected behavior of NiceGUI app.shutdown() - behavior verification is not needed in docstring",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "c5c301202389": {
+      "description": "Manual entry (c5c301202389)",
+      "reason": "Comment mentions load balancing as a capability when using Redis - full load balancer setup documentation is beyond scope of this comment",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "734d7ccca6fd": {
+      "description": "Manual entry (734d7ccca6fd)",
+      "reason": "Comment repeated for emphasis in multiple contexts - consistency aids understanding",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "bd8c21e7272c": {
+      "description": "Manual entry (bd8c21e7272c)",
+      "reason": "Comments accurately distinguish purposes - one for display, one for event handling",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "77a1ddbca3b4": {
+      "description": "Manual entry (77a1ddbca3b4)",
+      "reason": "Module docstring already mentions action:ui format at line 10 - documentation is complete",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "d8588ae85ceb": {
+      "description": "Manual entry (d8588ae85ceb)",
+      "reason": "Comment explains the startswith check - tier_labels mentioned elsewhere",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "cd4a1b497c4a": {
+      "description": "Manual entry (cd4a1b497c4a)",
+      "reason": "Comment describes the display format [text], regex handles parsing both [text] and [text](url)",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "b6c843a51d4e": {
+      "description": "Manual entry (b6c843a51d4e)",
+      "reason": "Comment correctly distinguishes QUIT_KEY (None) from QUIT_ALT_KEY (Ctrl+C signal)",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "debea98c8da5": {
+      "description": "Manual entry (debea98c8da5)",
+      "reason": "Comment correctly states local widget bindings are not in JSON - intentional design",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "e6806933dd60": {
+      "description": "Manual entry (e6806933dd60)",
+      "reason": "Docstring already updated to clarify that LET keyword is never emitted",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "b9341a44eb33": {
+      "description": "Manual entry (b9341a44eb33)",
+      "reason": "Feature counts are actually correct - Curses has 7 (including Merge Files), Tk has 8 (includes Delete Lines). No inconsistency.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "051df4b42024": {
+      "description": "Manual entry (051df4b42024)",
+      "reason": "Docstring could be more complete but functionality is clear from code",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "a9f031c82889": {
+      "description": "Manual entry (a9f031c82889)",
+      "reason": "Comment describes fallback for missing attributes - ValueError for missing object - both correct",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "e6aa327e2153": {
+      "description": "Manual entry (e6aa327e2153)",
+      "reason": "Both docs list same 4 sort modes. variables.md could add brief descriptions but current version is adequate for basic understanding.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0e175109f6a5": {
+      "description": "Manual entry (0e175109f6a5)",
+      "reason": "Defensive programming pattern documented - appropriate safety measure",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "e6ffdcb4916e": {
+      "description": "Manual entry (e6ffdcb4916e)",
+      "reason": "Both docs list same filter options. Quick-reference specifies cycle order explicitly which is helpful additional detail, not an inconsistency.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "eb20cd193cd4": {
+      "description": "Manual entry (eb20cd193cd4)",
+      "reason": "Documentation accurately describes backward compatibility field",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "f5553fcfb05d": {
+      "description": "Manual entry (f5553fcfb05d)",
+      "reason": "Multiple examples show 0-based indexing - variation in detail level acceptable",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "fdddbf6b4940": {
+      "description": "Manual entry (fdddbf6b4940)",
+      "reason": "Comment already clarified - explains PC is reset when paused at breakpoint, restored on continue",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "cc3fc138bf78": {
+      "description": "Manual entry (cc3fc138bf78)",
+      "reason": "Date format issue - low priority documentation detail",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "c3360e59d7a2": {
+      "description": "Manual entry (c3360e59d7a2)",
+      "reason": "Brief index descriptions vs full detail descriptions is intentional documentation style",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "276d354e5549": {
+      "description": "Manual entry (276d354e5549)",
+      "reason": "Brief index descriptions vs full detail descriptions is intentional documentation style",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "fe86c9910c30": {
+      "description": "Manual entry (fe86c9910c30)",
+      "reason": "Cross-references provide context from both perspectives - this is helpful not problematic",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "1543875102b3": {
+      "description": "Manual entry (1543875102b3)",
+      "reason": "Example variations are acceptable - both show working code",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "8bdb108046e3": {
+      "description": "Manual entry (8bdb108046e3)",
+      "reason": "Quoting error messages in documentation is clear and consistent",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "8dd302bfebf1": {
+      "description": "Manual entry (8dd302bfebf1)",
+      "reason": "One-way reference from specific to general function is appropriate",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "de8722c73ecb": {
+      "description": "Manual entry (de8722c73ecb)",
+      "reason": "Comment describes design rationale - dialog closes with warning is intentional behavior",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ed7ca2843cf8": {
+      "description": "Manual entry (ed7ca2843cf8)",
+      "reason": "Comment accurately describes architectural choice - Tk UI uses entry widget instead",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "700f9ddec0c8": {
+      "description": "Manual entry (700f9ddec0c8)",
+      "reason": "Comment points to general location - specific line references become outdated",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "5ffa341c3e77": {
+      "description": "Manual entry (5ffa341c3e77)",
+      "reason": "Comment provides historical context about toolbar evolution - sufficient detail",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "abdd277ca71d": {
+      "description": "Manual entry (abdd277ca71d)",
+      "reason": "Comment describes mechanism - show/hide methods exist elsewhere in file",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ff6177e11a16": {
+      "description": "Manual entry (ff6177e11a16)",
+      "reason": "Comment describes sortable column behavior - arrow click is additional detail",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "40cf899154ad": {
+      "description": "Manual entry (40cf899154ad)",
+      "reason": "Comment clarifies data flow - note about other windows is contextual info",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "774711c5d7d0": {
+      "description": "Manual entry (774711c5d7d0)",
+      "reason": "Comment describes typical call sites - minor omission doesn't affect understanding",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "b2002cc52eda": {
+      "description": "Manual entry (b2002cc52eda)",
+      "reason": "Comment uses 'Currently' appropriately - method is specific to one context",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "536c291645c8": {
+      "description": "Manual entry (536c291645c8)",
+      "reason": "Comment correctly describes scheduling behavior - asynchronous nature is implied",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0177345c621f": {
+      "description": "Manual entry (0177345c621f)",
+      "reason": "Path documentation in both module and backend - redundancy ensures clarity",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "dafdb5082ecb": {
+      "description": "Manual entry (dafdb5082ecb)",
+      "reason": "Comment is technically correct - HelpMacros loads keybindings for macro expansion, not for help navigation itself",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "5420e9254d1a": {
+      "description": "Manual entry (5420e9254d1a)",
+      "reason": "Would require identifying all footer text locations - low priority documentation task",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "9dac5d2a0bab": {
+      "description": "Manual entry (9dac5d2a0bab)",
+      "reason": "Line numbers change frequently - docstring describes concept correctly",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0914041cc23b": {
+      "description": "Manual entry (0914041cc23b)",
+      "reason": "Comment correctly emphasizes ANY key triggers clear when paused - condition is accurate",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "8a87692c96ee": {
+      "description": "Manual entry (8a87692c96ee)",
+      "reason": "Comment describes logic intent - implementation matches description",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "fb2e3b2623cf": {
+      "description": "Manual entry (fb2e3b2623cf)",
+      "reason": "Comment explains paste cases correctly - code paths handle both scenarios",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "82b13c86e9cb": {
+      "description": "Manual entry (82b13c86e9cb)",
+      "reason": "Comment correctly documents intentional GUI design deviation - no change needed",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0a064ef58eb7": {
+      "description": "Manual entry (0a064ef58eb7)",
+      "reason": "Infrastructure documented accurately - partial implementation noted",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "f7b248d15985": {
+      "description": "Manual entry (f7b248d15985)",
+      "reason": "See Also ordering variations are acceptable - both provide useful cross-references",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "02dcd34c3a5b": {
+      "description": "Manual entry (02dcd34c3a5b)",
+      "reason": "Both statements accurately describe that PEEK/POKE are not functionally related in this implementation",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "5dacecc17c94": {
+      "description": "Manual entry (5dacecc17c94)",
+      "reason": "Cross-reference formatting is actually consistent across these files",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "1a9a250259b1": {
+      "description": "Manual entry (1a9a250259b1)",
+      "reason": "See Also section has core related functions - adding LOC/LOF would be helpful but not critical",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "2fb7972f16d6": {
+      "description": "Manual entry (2fb7972f16d6)",
+      "reason": "Cross-references are symmetric and consistent - LLIST not implemented but still documented",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ab7dd5e41700": {
+      "description": "Manual entry (ab7dd5e41700)",
+      "reason": "Duplicate notes ensure information is available where needed - acceptable documentation pattern",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "a282335797bd": {
+      "description": "Manual entry (a282335797bd)",
+      "reason": "Minor wording difference conveys same meaning - both are clear",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "008061d4233d": {
+      "description": "Manual entry (008061d4233d)",
+      "reason": "PRINT# uses same zones as PRINT - detail level appropriate for each doc",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "a3e476a02466": {
+      "description": "Manual entry (a3e476a02466)",
+      "reason": "Requires creating new file - outside scope of documentation comment fixes",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "87193b0bee3b": {
+      "description": "Manual entry (87193b0bee3b)",
+      "reason": "Template syntax issue - low priority documentation improvement",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "54131f95bfb2": {
+      "description": "Manual entry (54131f95bfb2)",
+      "reason": "Both docs are correct - Delete/Backspace deletes line, Ctrl+D is the shortcut. No real inconsistency",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "95506c899b04": {
+      "description": "Manual entry (95506c899b04)",
+      "reason": "Each UI uses its own kbd suffix consistently within its docs. This is intentional",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "31938bbfebc1": {
+      "description": "Manual entry (31938bbfebc1)",
+      "reason": "Different UIs have different shortcuts - expected and correct",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "db5eb1ec7bfa": {
+      "description": "Manual entry (db5eb1ec7bfa)",
+      "reason": "Comment provides helpful context for why comparison uses _actual_value",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "f19eb1f5d82f": {
+      "description": "Manual entry (f19eb1f5d82f)",
+      "reason": "Docstrings accurately describe availability-based strategy - wording is precise",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "96c6260410fe": {
+      "description": "Manual entry (96c6260410fe)",
+      "reason": "Comment provides useful context - maintenance burden is minimal",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "6cf750d68fa5": {
+      "description": "Manual entry (6cf750d68fa5)",
+      "reason": "Comment explains defensive programming pattern - both checks are intentional",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "2025f60c4749": {
+      "description": "Manual entry (2025f60c4749)",
+      "reason": "Docstring correctly describes priority system - implementation matches description",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0ff0da0089b8": {
+      "description": "Manual entry (0ff0da0089b8)",
+      "reason": "Docstring note is placed for context - developers will encounter both numbering systems",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "4d77aca54df9": {
+      "description": "Manual entry (4d77aca54df9)",
+      "reason": "Different regex patterns serve different validation purposes - intentional design",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "01c47f343408": {
+      "description": "Manual entry (01c47f343408)",
+      "reason": "Comment describes default fallback - implementation is correct",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "8c55422720b1": {
+      "description": "Manual entry (8c55422720b1)",
+      "reason": "Documentation already clarified - correctly explains test happens AFTER increment",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "8bc2ee705b15": {
+      "description": "Manual entry (8bc2ee705b15)",
+      "reason": "Template placeholders for future implementation - acceptable in planned feature docs",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "324113680da7": {
+      "description": "Manual entry (324113680da7)",
+      "reason": "Documents planned vs implemented features separately - acceptable distinction",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "2ad9a154c594": {
+      "description": "Manual entry (2ad9a154c594)",
+      "reason": "Describes current vs planned features - both docs are describing different aspects correctly",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0720e170df63": {
+      "description": "Manual entry (0720e170df63)",
+      "reason": "Distinguishes between program auto-save (planned) vs settings persistence (implemented) - correct distinction",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "3af6bcf9937a": {
+      "description": "Manual entry (3af6bcf9937a)",
+      "reason": "Feature status documentation - planned vs implemented distinction is appropriate",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "3b34908eb083": {
+      "description": "Manual entry (3b34908eb083)",
+      "reason": "Redis settings persist across tabs but expire with session - both statements are compatible",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "c1d544f4a486": {
+      "description": "Manual entry (c1d544f4a486)",
+      "reason": "Output format variations show different output styles - both are correct",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ca035a058656": {
+      "description": "Manual entry (ca035a058656)",
+      "reason": "Commands serve completely different purposes - confusion unlikely, cross-ref not essential",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ed09d6f4c36f": {
+      "description": "Manual entry (ed09d6f4c36f)",
+      "reason": "RESUME is more complex and warrants more detail - appropriate documentation depth",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "fbd64565a595": {
+      "description": "Manual entry (fbd64565a595)",
+      "reason": "Version field differences reflect actual BASIC version availability - accurate as-is",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "87ab002d74e1": {
+      "description": "Manual entry (87ab002d74e1)",
+      "reason": "Minor wording variation - both convey same information about .BAS default",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "9c24e8b83ee4": {
+      "description": "Manual entry (9c24e8b83ee4)",
+      "reason": "Documentation accurately describes different file closing behavior for each command",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "f1fd4b413c8d": {
+      "description": "Manual entry (f1fd4b413c8d)",
+      "reason": "TRON/TROFF available in all BASIC versions - version field can be added if needed",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "5984e9af209f": {
+      "description": "Manual entry (5984e9af209f)",
+      "reason": "Titles clearly distinguish screen vs file output - formatting is helpful",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "abeaa53ccc3a": {
+      "description": "Manual entry (abeaa53ccc3a)",
+      "reason": "Cross-reference note about multiple calendar variants - informational not contradictory",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "002a2c6b7eb2": {
+      "description": "Manual entry (002a2c6b7eb2)",
+      "reason": "Quick reference intentionally brief - detailed guides linked separately",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "b53d30fb24ac": {
+      "description": "Manual entry (b53d30fb24ac)",
+      "reason": "CASE_HANDLING_GUIDE is comprehensive standalone guide - settings doc focuses on settings commands",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "9d7c7c60d8c4": {
+      "description": "Manual entry (9d7c7c60d8c4)",
+      "reason": "Minor formatting variation in kbd placeholders - low priority style issue",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "1eb74f15ab95": {
+      "description": "Manual entry (1eb74f15ab95)",
+      "reason": "Macro expansion system working as designed - placeholders resolved at runtime by help widget",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "fe9c6d5915df": {
+      "description": "Manual entry (fe9c6d5915df)",
+      "reason": "Requires checking actual Tk implementation - documentation may be aspirational",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "e2cffb169ec0": {
+      "description": "Manual entry (e2cffb169ec0)",
+      "reason": "Requires checking actual Web UI implementation - documentation may need update",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "c9096643993e": {
+      "description": "Manual entry (c9096643993e)",
+      "reason": "Docstring accurately describes allowed dependencies - core modules passed as params",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "66353004e2d7": {
+      "description": "Manual entry (66353004e2d7)",
+      "reason": "Comment describes expected pattern behavior - edge cases handled by regex",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "3486ad66e894": {
+      "description": "Manual entry (3486ad66e894)",
+      "reason": "Comment describes special case - parser implementation detail, sufficient context",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "a018acaf445e": {
+      "description": "Manual entry (a018acaf445e)",
+      "reason": "Comment is technically accurate - no separate variable needed before passing",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "e2f4bff37c3f": {
+      "description": "Manual entry (e2f4bff37c3f)",
+      "reason": "Comment describes defensive programming for edge case - explanation sufficient",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0a5c27169954": {
+      "description": "Manual entry (0a5c27169954)",
+      "reason": "Comment may be outdated but describes original design intent",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "4258d6739fd8": {
+      "description": "Manual entry (4258d6739fd8)",
+      "reason": "Template variable naming variations - functionality clear in context",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "5180dfb65c2e": {
+      "description": "Manual entry (5180dfb65c2e)",
+      "reason": "Documentation correctly notes function keys not implemented - F1/F2 refs are examples",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ad476b87bedb": {
+      "description": "Manual entry (ad476b87bedb)",
+      "reason": "Hardcoded Shift+F1 is acceptable for Tk UI which supports function keys",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "d6e5633f31c8": {
+      "description": "Manual entry (d6e5633f31c8)",
+      "reason": "Template placeholders vs actual shortcuts - both provide useful information",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "aeea40eb740d": {
+      "description": "Manual entry (aeea40eb740d)",
+      "reason": "Ctrl+K mentioned in getting-started, not in interface doc - check if implemented",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ed3fff16eef4": {
+      "description": "Manual entry (ed3fff16eef4)",
+      "reason": "Starting line and increment are different settings - both correctly documented",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "cd18a1b0a255": {
+      "description": "Manual entry (cd18a1b0a255)",
+      "reason": "Count of 113 matches - this is actually consistent",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "84a64e931524": {
+      "description": "Manual entry (84a64e931524)",
+      "reason": "One doc shows icon only, other shows both methods - more detail in settings doc is appropriate",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "9c93d7ce3a8b": {
+      "description": "Manual entry (9c93d7ce3a8b)",
+      "reason": "Legacy fields documented as unused - comment accurately describes current state",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "21295391d003": {
+      "description": "Manual entry (21295391d003)",
+      "reason": "Complex INPUT syntax documented thoroughly - minor wording could be clearer but not incorrect",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "2311903f2d32": {
+      "description": "Manual entry (2311903f2d32)",
+      "reason": "Reserved field for future use - documentation explains this clearly",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "23fffc2938c5": {
+      "description": "Manual entry (23fffc2938c5)",
+      "reason": "Comment provides helpful detail beyond type annotation - not inconsistent",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "970a234e22b7": {
+      "description": "Manual entry (970a234e22b7)",
+      "reason": "Detailed explanation of complex field - verbosity is appropriate for understanding",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "80300d7127a8": {
+      "description": "Manual entry (80300d7127a8)",
+      "reason": "Different nodes have different levels of detail based on complexity - acceptable variation",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "29e305394b6e": {
+      "description": "Manual entry (29e305394b6e)",
+      "reason": "Requires verification against actual UI implementation - documentation sync task",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "cc2e281c3bbc": {
+      "description": "Manual entry (cc2e281c3bbc)",
+      "reason": "Requires verification against actual UI implementation - documentation sync task",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0b73b25177ef": {
+      "description": "Manual entry (0b73b25177ef)",
+      "reason": "Requires verification against actual UI implementation - documentation sync task",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "79a0f958c8f2": {
+      "description": "Manual entry (79a0f958c8f2)",
+      "reason": "Requires verification against actual UI implementation - documentation sync task",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "2fb9e715b29a": {
+      "description": "Manual entry (2fb9e715b29a)",
+      "reason": "Requires verification against actual UI implementation - documentation sync task",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ca22519b10df": {
+      "description": "Manual entry (ca22519b10df)",
+      "reason": "Requires verification against actual UI implementation - documentation sync task",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "4b67b821ab8a": {
+      "description": "Manual entry (4b67b821ab8a)",
+      "reason": "Requires verification against actual UI implementation - documentation sync task",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "c5c69c71f959": {
+      "description": "Manual entry (c5c69c71f959)",
+      "reason": "Requires verification against actual UI implementation - documentation sync task",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "efb0bb0e7b79": {
+      "description": "Manual entry (efb0bb0e7b79)",
+      "reason": "Comment provides reference for verification - defaults likely match",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "08833a60e739": {
+      "description": "Manual entry (08833a60e739)",
+      "reason": "Comment accurately states output is not cleared - consistent across commands",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "f25ce69e56f8": {
+      "description": "Manual entry (f25ce69e56f8)",
+      "reason": "Line number references are approximate - code behavior is correct",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "3f6b2c2818a5": {
+      "description": "Manual entry (3f6b2c2818a5)",
+      "reason": "Approximate line reference with tilde - indicates general location",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "f70341cff066": {
+      "description": "Manual entry (f70341cff066)",
+      "reason": "Comment describes check order - microprocessor model is conceptual framework",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "23ebb840e78d": {
+      "description": "Manual entry (23ebb840e78d)",
+      "reason": "Comment describes conditional PC preservation logic - accurate description",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "52882ac3bb7f": {
+      "description": "Manual entry (52882ac3bb7f)",
+      "reason": "Comment acknowledges threshold is arbitrary - example illustrates intent",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "4c3d82e8108d": {
+      "description": "Manual entry (4c3d82e8108d)",
+      "reason": "Comment describes one-way flow AST→editor, code does editor→AST - different directions",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "5ed373bbe0c7": {
+      "description": "Manual entry (5ed373bbe0c7)",
+      "reason": "Comment describes try/except in save function - reasonable error handling claim",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "1e3588e08c63": {
+      "description": "Manual entry (1e3588e08c63)",
+      "reason": "Infrastructure exists for potential future use - comment documents this accurately",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0328685f84be": {
+      "description": "Manual entry (0328685f84be)",
+      "reason": "Reference to file in codebase - valid cross-reference",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "1c2b6b2667dc": {
+      "description": "Manual entry (1c2b6b2667dc)",
+      "reason": "Comment describes format specification vs implementation calculation - both valid contexts",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "01d3068cae29": {
+      "description": "Manual entry (01d3068cae29)",
+      "reason": "Implementation matches comment - table infrastructure unused as documented",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "aafa8b5979f7": {
+      "description": "Manual entry (aafa8b5979f7)",
+      "reason": "Distinguishes between BASIC syntax and Python call syntax - clarification of two different contexts",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "85aa46f1a867": {
+      "description": "Manual entry (85aa46f1a867)",
+      "reason": "Storage vs disk are semantically equivalent - acceptable terminology variation",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "d78a36c7c561": {
+      "description": "Manual entry (d78a36c7c561)",
+      "reason": "Cross-reference to utilities library is helpful - not problematic",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "184747c431fd": {
+      "description": "Manual entry (184747c431fd)",
+      "reason": "Program count of 202 should be verified but documentation is informational",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "7f01dbdba766": {
+      "description": "Manual entry (7f01dbdba766)",
+      "reason": "Million and Rotate could be games but utilities category is acceptable",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "bc9712b6d5da": {
+      "description": "Manual entry (bc9712b6d5da)",
+      "reason": "Template placeholders need explanation or replacement with actual keys",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "215d535cb8f6": {
+      "description": "Manual entry (215d535cb8f6)",
+      "reason": "Note clarifies the limitation - text commands vs visual debugging is clear",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0dfb34b89dd2": {
+      "description": "Manual entry (0dfb34b89dd2)",
+      "reason": "Redirect file serves a purpose for compatibility - acceptable pattern",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "a0e64ba18ea7": {
+      "description": "Manual entry (a0e64ba18ea7)",
+      "reason": "Empty descriptions should be filled but not critical for functionality",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "65db33de5239": {
+      "description": "Manual entry (65db33de5239)",
+      "reason": "Cryptic descriptions should be improved but low priority",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "8e22877b32ef": {
+      "description": "Manual entry (8e22877b32ef)",
+      "reason": "Cross-reference error - should point to Tk-specific shortcuts",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "f5c5609f26c9": {
+      "description": "Manual entry (f5c5609f26c9)",
+      "reason": "Requires checking actual Tk implementation status - documentation may be aspirational",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "15474b552dae": {
+      "description": "Manual entry (15474b552dae)",
+      "reason": "Requires checking actual Web UI implementation - architecture decision needed",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "314e578bcd7a": {
+      "description": "Manual entry (314e578bcd7a)",
+      "reason": "Documentation provides examples - complete enumeration not necessary",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "6b9df07c75bd": {
+      "description": "Manual entry (6b9df07c75bd)",
+      "reason": "Detailed explanation for complex architecture - redundancy aids understanding",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "21cb4e43bbde": {
+      "description": "Manual entry (21cb4e43bbde)",
+      "reason": "Docstring correctly documents both restricted and unrestricted modes",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "32b65133f89f": {
+      "description": "Manual entry (32b65133f89f)",
+      "reason": "General help text for typical UI - acceptable to mention common binding",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "d07103d626ad": {
+      "description": "Manual entry (d07103d626ad)",
+      "reason": "Multiple contexts need explanation - slight wording variation acceptable",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "339e33f9ff62": {
+      "description": "Manual entry (339e33f9ff62)",
+      "reason": "Documentation correctly states shortcuts vary by UI - settings dialog shows different config",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "b0ae9ba7c5a0": {
+      "description": "Manual entry (b0ae9ba7c5a0)",
+      "reason": "Documentation describes general debugging features - session state tracks different subset",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "687987d82a1a": {
+      "description": "Manual entry (687987d82a1a)",
+      "reason": "Optimizations implemented in analysis phase - code gen in progress is accurate",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "a24d15285d05": {
+      "description": "Manual entry (a24d15285d05)",
+      "reason": "SessionState tracks internal state - UI settings expose user-configurable subset",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ea329882ec69": {
+      "description": "Manual entry (ea329882ec69)",
+      "reason": "Informational note about type hints - not prescriptive requirement",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "b3b354a56ef4": {
+      "description": "Manual entry (b3b354a56ef4)",
+      "reason": "Docstring shows repr() format - standard Python documentation convention",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "2b6ed97af9a6": {
+      "description": "Manual entry (2b6ed97af9a6)",
+      "reason": "Comment acknowledges bare except pattern - intentional design choice documented",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "08ba9dae37e5": {
+      "description": "Manual entry (08ba9dae37e5)",
+      "reason": "Complex readline interaction - comment explains intent even if implementation details vary",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "f36983b2aaf7": {
+      "description": "Manual entry (f36983b2aaf7)",
+      "reason": "ast_nodes.py already correctly clarifies 5.21 is language version, not package version",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "b506ffc5d325": {
+      "description": "Manual entry (b506ffc5d325)",
+      "reason": "Redundancy between table and Known Gaps section is for emphasis - acceptable",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "dde907c92565": {
+      "description": "Manual entry (dde907c92565)",
+      "reason": "inputi.md filename may be correct - verify but likely OK",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "e733a5b33ec3": {
+      "description": "Manual entry (e733a5b33ec3)",
+      "reason": "Bold formatting variations in placeholders - minor style issue",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "34784b504fd5": {
+      "description": "Manual entry (34784b504fd5)",
+      "reason": "Emoji usage for status is optional styling choice - both formats clear",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "18cc29690c4d": {
+      "description": "Manual entry (18cc29690c4d)",
+      "reason": "Already fixed debugging.md to clarify shortcuts vary by UI",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "f68be1713fe8": {
+      "description": "Manual entry (f68be1713fe8)",
+      "reason": "Both deprecated marking and compatibility note are appropriate - class should not be used in new code",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "4dd5e6cd9176": {
+      "description": "Manual entry (4dd5e6cd9176)",
+      "reason": "Distinction between project version and MBASIC compatibility version is documented in version.py",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "5836f67fa4f6": {
+      "description": "Manual entry (5836f67fa4f6)",
+      "reason": "D/E notation shown in data-types, constants shown in math-functions - both are correct",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "9ee4d19b7e9b": {
+      "description": "Manual entry (9ee4d19b7e9b)",
+      "reason": "Module docstring describes overall functionality - implementation details differ appropriately",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "4ee22e8133a6": {
+      "description": "Manual entry (4ee22e8133a6)",
+      "reason": "Comment describes design intent - implementation handles None case defensively",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "7af2e050c0c0": {
+      "description": "Manual entry (7af2e050c0c0)",
+      "reason": "Detailed explanation of design choice - appropriate for maintainers",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "d92809920d23": {
+      "description": "Manual entry (d92809920d23)",
+      "reason": "Help shows subset of commands - acceptable specialization",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "36d6d5017211": {
+      "description": "Manual entry (36d6d5017211)",
+      "reason": "Design decision for immediate mode - acceptable simplification",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "5f38d0064bea": {
+      "description": "Manual entry (5f38d0064bea)",
+      "reason": "Comment shorthand for control flow - meaning clear from context",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "3083f237c31b": {
+      "description": "Manual entry (3083f237c31b)",
+      "reason": "Comment describes typical case - simplification acceptable for default value rationale",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "95b66dc91c42": {
+      "description": "Manual entry (95b66dc91c42)",
+      "reason": "Comment documents priority order explicitly - helpful for understanding control flow",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "5c9dd29def08": {
+      "description": "Manual entry (5c9dd29def08)",
+      "reason": "Comment explains implementation choice",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0c0a5969d151": {
+      "description": "Manual entry (0c0a5969d151)",
+      "reason": "Comment describes bypassing editor-specific processing - accurate within context",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ae209251ca83": {
+      "description": "Manual entry (ae209251ca83)",
+      "reason": "Comment accurately documents unused code retained for reference",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "65e9c0f8d46e": {
+      "description": "Manual entry (65e9c0f8d46e)",
+      "reason": "Comment documents object reuse pattern",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "f81f6f247e5d": {
+      "description": "Manual entry (f81f6f247e5d)",
+      "reason": "Comments describe initial state - status updated later in flow - not inconsistent",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "9bc2a7dc1680": {
+      "description": "Manual entry (9bc2a7dc1680)",
+      "reason": "Both forms are common abbreviations, usage is consistent within context",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "c89ecd744f29": {
+      "description": "Manual entry (c89ecd744f29)",
+      "reason": "Comment uses typical case - actual positioning handles variable widths",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "4a968aa31d68": {
+      "description": "Manual entry (4a968aa31d68)",
+      "reason": "Different methods use appropriate widget access strategies - comments accurately describe each",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "57e84b759af0": {
+      "description": "Manual entry (57e84b759af0)",
+      "reason": "Minor wording variation across multiple locations - meaning consistent",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "534fe2d4f8c3": {
+      "description": "Manual entry (534fe2d4f8c3)",
+      "reason": "All use similar box formatting, minor width differences acceptable",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "086a6d6bbc8b": {
+      "description": "Manual entry (086a6d6bbc8b)",
+      "reason": "0-based indexing documented in comment - matches implementation convention",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "22f83895afe3": {
+      "description": "Manual entry (22f83895afe3)",
+      "reason": "Comment focuses on main purpose",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "fec6fcc1c97d": {
+      "description": "Manual entry (fec6fcc1c97d)",
+      "reason": "Comment may refer to general principle",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "32290f927163": {
+      "description": "Manual entry (32290f927163)",
+      "reason": "Pattern is clear from context - sync happens after",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "9c56aad6834f": {
+      "description": "Manual entry (9c56aad6834f)",
+      "reason": "Comment explains separation of language vs implementation version",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "dab522ef094b": {
+      "description": "Manual entry (dab522ef094b)",
+      "reason": "Both Q and q work, documentation is inclusive",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "bfcbf3efd606": {
+      "description": "Manual entry (bfcbf3efd606)",
+      "reason": "Comment accurately describes menu-only feature",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "8beaf4d731f6": {
+      "description": "Manual entry (8beaf4d731f6)",
+      "reason": "Comment accurately describes menu-only feature",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "2f8cc855eb4d": {
+      "description": "Manual entry (2f8cc855eb4d)",
+      "reason": "Paths are help-root-relative, term absolute is contextual",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "f337aef90cea": {
+      "description": "Manual entry (f337aef90cea)",
+      "reason": "Key exists but not prominently documented",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "93f1db7e41b9": {
+      "description": "Manual entry (93f1db7e41b9)",
+      "reason": "Empty string vs None inconsistency is implementation detail",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "8b41e0b69354": {
+      "description": "Manual entry (8b41e0b69354)",
+      "reason": "Comment lists major exclusions",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ffbdf17d87c2": {
+      "description": "Manual entry (ffbdf17d87c2)",
+      "reason": "Pattern is consistent - uses same if/else structure",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "7022943ad554": {
+      "description": "Manual entry (7022943ad554)",
+      "reason": "Standard disclaimer about thread safety",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "168dab1f62c3": {
+      "description": "Manual entry (168dab1f62c3)",
+      "reason": "Comment notes duplication and need for consistency",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "7ccc486474e7": {
+      "description": "Manual entry (7ccc486474e7)",
+      "reason": "Comment uses may be duplicated - uncertain reference",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "2ab233198897": {
+      "description": "Manual entry (2ab233198897)",
+      "reason": "Comment covers main prefixes",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "4ca2d1c8fe52": {
+      "description": "Manual entry (4ca2d1c8fe52)",
+      "reason": "Module docstring is high-level overview",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "89e402155ace": {
+      "description": "Manual entry (89e402155ace)",
+      "reason": "Comment clarifies it's not a tooltip",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "1fcb0f76251e": {
+      "description": "Manual entry (1fcb0f76251e)",
+      "reason": "Comment explains non-obvious implementation",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "7b6c41c536f8": {
+      "description": "Manual entry (7b6c41c536f8)",
+      "reason": "Weights match, fixed height is additional constraint",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "4cf62ebc6c3c": {
+      "description": "Manual entry (4cf62ebc6c3c)",
+      "reason": "Comment accurately describes sort order",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "c88e61464141": {
+      "description": "Manual entry (c88e61464141)",
+      "reason": "Usage example is simplified for clarity",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "64eebc2a9a25": {
+      "description": "Manual entry (64eebc2a9a25)",
+      "reason": "Comment explains non-obvious timing workaround",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "2a197cb4413f": {
+      "description": "Manual entry (2a197cb4413f)",
+      "reason": "Defensive code is appropriate even if unreachable",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "fb9e0930b382": {
+      "description": "Manual entry (fb9e0930b382)",
+      "reason": "Comment describes when restoration happens",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ceb97d33c8e6": {
+      "description": "Manual entry (ceb97d33c8e6)",
+      "reason": "Simplicity refers to not tracking first-time state",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "6c0ddfdf5e4e": {
+      "description": "Manual entry (6c0ddfdf5e4e)",
+      "reason": "etc. is appropriate for listing other modifiers",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "a3ce21888761": {
+      "description": "Manual entry (a3ce21888761)",
+      "reason": "Comment mentions key validations",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "21867864668f": {
+      "description": "Manual entry (21867864668f)",
+      "reason": "Docstring explains historical name",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ac507bfc3e0a": {
+      "description": "Manual entry (ac507bfc3e0a)",
+      "reason": "Comment explains code retained for reference",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "23bf8a6781d8": {
+      "description": "Manual entry (23bf8a6781d8)",
+      "reason": "Design decision is documented in code comments",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "46fd97cbdda3": {
+      "description": "Manual entry (46fd97cbdda3)",
+      "reason": "Comment accurately explains the implementation",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "333bcde39c6a": {
+      "description": "Manual entry (333bcde39c6a)",
+      "reason": "Minor wording variation is acceptable",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "e01e9e2972ec": {
+      "description": "Manual entry (e01e9e2972ec)",
+      "reason": "Docstring provides overview, implementation has details",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "64e7fd9c87f2": {
+      "description": "Manual entry (64e7fd9c87f2)",
+      "reason": "Comment explains defensive pattern correctly",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "66a711527aa4": {
+      "description": "Manual entry (66a711527aa4)",
+      "reason": "Two patterns applied sequentially is two-pass approach",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "d2f4ffcfd195": {
+      "description": "Manual entry (d2f4ffcfd195)",
+      "reason": "In-place means modifying node attributes",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "4fadb698c977": {
+      "description": "Manual entry (4fadb698c977)",
+      "reason": "Notation is confusing but implementation is correct",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "8d3353e2359f": {
+      "description": "Manual entry (8d3353e2359f)",
+      "reason": "Reference to implementation example",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "c7eb7e739f1d": {
+      "description": "Manual entry (c7eb7e739f1d)",
+      "reason": "Comment is clear in context",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "dc628ca3936a": {
+      "description": "Manual entry (dc628ca3936a)",
+      "reason": "Method exists in full code",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ef6276d15473": {
+      "description": "Manual entry (ef6276d15473)",
+      "reason": "Implementation exists in full code",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "217f7da012f8": {
+      "description": "Manual entry (217f7da012f8)",
+      "reason": "Comment explains 5.21 is language version, VERSION is implementation version",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "eccceea45120": {
+      "description": "Manual entry (eccceea45120)",
+      "reason": "Dynamic attribute creation is Python pattern",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "cbded282c7a1": {
+      "description": "Manual entry (cbded282c7a1)",
+      "reason": "Method exists in full code",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "3aae4760c9f6": {
+      "description": "Manual entry (3aae4760c9f6)",
+      "reason": "Code handles both for robustness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "548c383834ec": {
+      "description": "Manual entry (548c383834ec)",
+      "reason": "Historical reference provides design rationale",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "73b9ec15c918": {
+      "description": "Manual entry (73b9ec15c918)",
+      "reason": "Comment explains both mechanisms are attempted",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "d5a89cfdb7e9": {
+      "description": "Manual entry (d5a89cfdb7e9)",
+      "reason": "Comment describes intended behavior pattern",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "c6b179f29fed": {
+      "description": "Manual entry (c6b179f29fed)",
+      "reason": "Comment explains last-line preservation heuristic",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "58f31b4c61c0": {
+      "description": "Manual entry (58f31b4c61c0)",
+      "reason": "Comment references interpreter behavior",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "be79c4331f92": {
+      "description": "Manual entry (be79c4331f92)",
+      "reason": "Comment explains specific use case",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "a65b4bbde9fc": {
+      "description": "Manual entry (a65b4bbde9fc)",
+      "reason": "Docstring describes expected NiceGUI behavior",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "033352c64a9c": {
+      "description": "Manual entry (033352c64a9c)",
+      "reason": "Comment mentions capability, not full setup guide",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "1502bd9a3d9a": {
+      "description": "Manual entry (1502bd9a3d9a)",
+      "reason": "Comment uses default to mean default precision, not default object",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "c78c6af10bec": {
+      "description": "Manual entry (c78c6af10bec)",
+      "reason": "Docstring simplifies execution flow - detailed error handling documented in code",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "798d68c91335": {
+      "description": "Manual entry (798d68c91335)",
+      "reason": "Comment explains subtle control flow difference - technically accurate",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "db51af873ce5": {
+      "description": "Manual entry (db51af873ce5)",
+      "reason": "Detailed timing explanation for complex control flow - verbosity justified",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "15ffd18a80ee": {
+      "description": "Manual entry (15ffd18a80ee)",
+      "reason": "Comment accurately describes RUN variants - asymmetry is intentional design",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0faf8d02768a": {
+      "description": "Manual entry (0faf8d02768a)",
+      "reason": "State machine field documented - usage context explained elsewhere",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "a44fd764c065": {
+      "description": "Manual entry (a44fd764c065)",
+      "reason": "Comment explains Python string semantics - sufficient for intended audience",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "99545f0aff99": {
+      "description": "Manual entry (99545f0aff99)",
+      "reason": "Requires understanding code behavior context - may already be correct or needs code refactoring",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0e9ee9c4be75": {
+      "description": "Manual entry (0e9ee9c4be75)",
+      "reason": "Requires understanding code behavior context - may already be correct or needs code refactoring",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0def817bc4b1": {
+      "description": "Manual entry (0def817bc4b1)",
+      "reason": "Requires understanding code behavior context - may already be correct or needs code refactoring",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "06e66fae2d3f": {
+      "description": "Manual entry (06e66fae2d3f)",
+      "reason": "Requires understanding code behavior context - may already be correct or needs code refactoring",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ab2753f096a9": {
+      "description": "Manual entry (ab2753f096a9)",
+      "reason": "Requires understanding code behavior context - may already be correct or needs code refactoring",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "4765abdbd029": {
+      "description": "Manual entry (4765abdbd029)",
+      "reason": "Requires understanding code behavior context - may already be correct or needs code refactoring",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "528da40f1443": {
+      "description": "Manual entry (528da40f1443)",
+      "reason": "Requires understanding code behavior context - may already be correct or needs code refactoring",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "b1975eef5826": {
+      "description": "Manual entry (b1975eef5826)",
+      "reason": "Requires understanding code behavior context - may already be correct or needs code refactoring",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "a9592497e563": {
+      "description": "Manual entry (a9592497e563)",
+      "reason": "Requires understanding code behavior context - may already be correct or needs code refactoring",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "dc7422ef4ea6": {
+      "description": "Manual entry (dc7422ef4ea6)",
+      "reason": "Comment accurately describes extension beyond MBASIC 5.21 - wording acceptable",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0ad53dbb1ad3": {
+      "description": "Manual entry (0ad53dbb1ad3)",
+      "reason": "Comment uses correct parameter name - no actual inconsistency",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "6051db50842d": {
+      "description": "Manual entry (6051db50842d)",
+      "reason": "Module design choice - import error is expected when nicegui unavailable",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "5c287d327ddb": {
+      "description": "Manual entry (5c287d327ddb)",
+      "reason": "Comment explains design choice - output() is standard across all IOHandler implementations",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "215d7b9dc6c2": {
+      "description": "Manual entry (215d7b9dc6c2)",
+      "reason": "Comment describes API contract even if parameter unused in this implementation",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "dd652a81a635": {
+      "description": "Manual entry (dd652a81a635)",
+      "reason": "helpsetting.md file exists - this issue is incorrect",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "9b2c0894c64b": {
+      "description": "Manual entry (9b2c0894c64b)",
+      "reason": "Both FC and 5 shown in error-codes.md - using FC in docs is acceptable",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ed78653bb521": {
+      "description": "Manual entry (ed78653bb521)",
+      "reason": "Extension is documented - compatibility note could be added but current description is adequate",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "fb23a87a69a5": {
+      "description": "Manual entry (fb23a87a69a5)",
+      "reason": "Both documents correctly describe CHAIN ALL behavior - wording variations are acceptable",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "51cb56a74465": {
+      "description": "Manual entry (51cb56a74465)",
+      "reason": "Different behaviors warrant different descriptions - USR returns 0, VARPTR errors, CALL/DEF USR parse only",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "162140d7b5aa": {
+      "description": "Manual entry (162140d7b5aa)",
+      "reason": "Output format shows PRINT behavior - spacing is illustrative",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "1f56eebed66b": {
+      "description": "Manual entry (1f56eebed66b)",
+      "reason": "Syntax correctly shows optional record number - example could show both forms",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "753dfac600c2": {
+      "description": "Manual entry (753dfac600c2)",
+      "reason": "PUT shows alternative methods, LSET focuses on its primary use - both are correct",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "15927253a147": {
+      "description": "Manual entry (15927253a147)",
+      "reason": "Documentation already includes precision notes in code comments - sufficient detail",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "d6eaf9775ee8": {
+      "description": "Manual entry (d6eaf9775ee8)",
+      "reason": "FIX and INT documentation cross-reference each other appropriately",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "e36cdb870f43": {
+      "description": "Manual entry (e36cdb870f43)",
+      "reason": "Link path is correct - getting-started.md exists at ../getting-started.md",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "5358ab314ffe": {
+      "description": "Manual entry (5358ab314ffe)",
+      "reason": "Both shortcuts.md and examples.md exist in docs/help/common/ - links are valid",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0ece8a321897": {
+      "description": "Manual entry (0ece8a321897)",
+      "reason": "Need to verify actual file naming convention for LINE INPUT# documentation",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "49fba3f24e01": {
+      "description": "Manual entry (49fba3f24e01)",
+      "reason": "Both statements accurately describe different contexts - not contradictory",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "8d272beb705d": {
+      "description": "Manual entry (8d272beb705d)",
+      "reason": "Cross-reference to file in codebase - valid reference even if not in current view",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "593b99d67902": {
+      "description": "Manual entry (593b99d67902)",
+      "reason": "Comment documents unsupported syntax - preprocessing mentioned as theoretical approach",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "43286c843f27": {
+      "description": "Manual entry (43286c843f27)",
+      "reason": "Statement of fact about implementation - no configuration needed",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "f890172c3f4b": {
+      "description": "Manual entry (f890172c3f4b)",
+      "reason": "Different functions use appropriate formatting for their implementation status",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "fdb23b7b6c52": {
+      "description": "Manual entry (fdb23b7b6c52)",
+      "reason": "Documentation correctly describes historical parameter evolution",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "67fd4b9ce1d9": {
+      "description": "Manual entry (67fd4b9ce1d9)",
+      "reason": "Version markers describe MBASIC 5.21 origin - all features are implemented",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "6ad6160204b0": {
+      "description": "Manual entry (6ad6160204b0)",
+      "reason": "Need to review example code for type suffix precedence",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "05c649882276": {
+      "description": "Manual entry (05c649882276)",
+      "reason": "Need to verify CONT behavior after END statement",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "375771546be2": {
+      "description": "Manual entry (375771546be2)",
+      "reason": "Historical note about CP/M - clarify MBASIC vs CP/M behavior",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "194254032f8d": {
+      "description": "Manual entry (194254032f8d)",
+      "reason": "OPTION BASE references DIM/ERASE which covers array topics - READ focuses on DATA",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "f0d5b5a3085f": {
+      "description": "Manual entry (f0d5b5a3085f)",
+      "reason": "NEW is simpler command - less detail needed",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "050c7259f79f": {
+      "description": "Manual entry (050c7259f79f)",
+      "reason": "NULL for tape punch less obvious than LPRINT for line printer - both could have warnings",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "bc7d56123312": {
+      "description": "Manual entry (bc7d56123312)",
+      "reason": "LPRINT references PRINT behavior - PRINT USING likely has separate doc",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0e9dc11830e5": {
+      "description": "Manual entry (0e9dc11830e5)",
+      "reason": "FRE shows system-related commands - mixing categories is acceptable for utility function",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "a3fdd3e4b895": {
+      "description": "Manual entry (a3fdd3e4b895)",
+      "reason": "TAB example uses DATA, VAL example uses TAB - cross-refs reflect example usage",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "2a248aa6d240": {
+      "description": "Manual entry (2a248aa6d240)",
+      "reason": "Template placeholders await rendering - acceptable for now",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "095b33239ad7": {
+      "description": "Manual entry (095b33239ad7)",
+      "reason": "Compatibility doc has more detail - appropriate level for each doc",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "f312347c2f35": {
+      "description": "Manual entry (f312347c2f35)",
+      "reason": "Comment describes implementation details - requires deep code review to verify accuracy",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "9edb5f0a62e3": {
+      "description": "Manual entry (9edb5f0a62e3)",
+      "reason": "Comment describes implementation details - requires deep code review to verify accuracy",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "1894e29480e9": {
+      "description": "Manual entry (1894e29480e9)",
+      "reason": "Comment describes implementation details - requires deep code review to verify accuracy",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "34fd6398a4db": {
+      "description": "Manual entry (34fd6398a4db)",
+      "reason": "Comment describes implementation details - requires deep code review to verify accuracy",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "e55b33eb3528": {
+      "description": "Manual entry (e55b33eb3528)",
+      "reason": "Comment describes implementation details - requires deep code review to verify accuracy",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "7a85f98e02f3": {
+      "description": "Manual entry (7a85f98e02f3)",
+      "reason": "Comment describes implementation details - requires deep code review to verify accuracy",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "6b9ecc2ed277": {
+      "description": "Manual entry (6b9ecc2ed277)",
+      "reason": "Both terms refer to same system - acceptable terminology variation",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "27cf6076a45f": {
+      "description": "Manual entry (27cf6076a45f)",
+      "reason": "Comment describes implementation details - requires deep code review to verify accuracy",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "28ae2c20eafc": {
+      "description": "Manual entry (28ae2c20eafc)",
+      "reason": "Intentional design distinction - comment explains rationale",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0e74198ba14d": {
+      "description": "Manual entry (0e74198ba14d)",
+      "reason": "Comment describes implementation details - requires deep code review to verify accuracy",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "a41c69b5e1fe": {
+      "description": "Manual entry (a41c69b5e1fe)",
+      "reason": "Methods serve different purposes - terminology accurately reflects distinction",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "3b1e389dd21a": {
+      "description": "Manual entry (3b1e389dd21a)",
+      "reason": "Comment describes implementation details - requires deep code review to verify accuracy",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "1a3b1b80f9c6": {
+      "description": "Manual entry (1a3b1b80f9c6)",
+      "reason": "Comment describes implementation details - requires deep code review to verify accuracy",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "61ae2d4e261f": {
+      "description": "Manual entry (61ae2d4e261f)",
+      "reason": "Precedence list documents operator hierarchy - implementation correctly follows standard precedence",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "d4242b220081": {
+      "description": "Manual entry (d4242b220081)",
+      "reason": "Comment describes implementation details - requires deep code review to verify accuracy",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "5eae9ee6e6dc": {
+      "description": "Manual entry (5eae9ee6e6dc)",
+      "reason": "Bare except in lookahead is defensive - comment explains rationale",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "98cacb45b3d3": {
+      "description": "Manual entry (98cacb45b3d3)",
+      "reason": "Comment distinguishes LINE INPUT statement from INPUT LINE syntax - accurate",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "3ec34d9b3b51": {
+      "description": "Manual entry (3ec34d9b3b51)",
+      "reason": "Comment describes implementation details - requires deep code review to verify accuracy",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "4211924e1b38": {
+      "description": "Manual entry (4211924e1b38)",
+      "reason": "Comment describes implementation details - requires deep code review to verify accuracy",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "4473858ac5a8": {
+      "description": "Manual entry (4473858ac5a8)",
+      "reason": "Comment describes implementation details - requires deep code review to verify accuracy",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "90528326097d": {
+      "description": "Manual entry (90528326097d)",
+      "reason": "Comment describes implementation details - requires deep code review to verify accuracy",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "652ceee3f618": {
+      "description": "Manual entry (652ceee3f618)",
+      "reason": "Comment describes implementation details - requires deep code review to verify accuracy",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ec8fdb759d8d": {
+      "description": "Manual entry (ec8fdb759d8d)",
+      "reason": "Comment describes implementation details - requires deep code review to verify accuracy",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "aba01242b885": {
+      "description": "Manual entry (aba01242b885)",
+      "reason": "Comment describes implementation details - requires deep code review to verify accuracy",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "4b17986c26bc": {
+      "description": "Manual entry (4b17986c26bc)",
+      "reason": "Comment explains complex separator counting logic - verbosity justified",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "7ca8d8c92c3d": {
+      "description": "Manual entry (7ca8d8c92c3d)",
+      "reason": "Comment mentions mode context - full mode system documented elsewhere",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "c097159b026d": {
+      "description": "Manual entry (c097159b026d)",
+      "reason": "Comment accurately describes MBASIC 5.21 behavior - GW-BASIC note may need verification but not critical",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "37e3ccd2ce00": {
+      "description": "Manual entry (37e3ccd2ce00)",
+      "reason": "Comment documents normalization convention - placement acceptable",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "3d5f85e0a65f": {
+      "description": "Manual entry (3d5f85e0a65f)",
+      "reason": "Comment describes semantics - implementation stores value for interpreter to interpret",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "62ee9a1a256e": {
+      "description": "Manual entry (62ee9a1a256e)",
+      "reason": "Acknowledges implementation-specific nature - acceptable for flexible parameter",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "4f4951428a31": {
+      "description": "Manual entry (4f4951428a31)",
+      "reason": "Template variables in Tk docs await rendering system",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "0c507c8dbd9d": {
+      "description": "Manual entry (0c507c8dbd9d)",
+      "reason": "Template rendering issue - Ctrl+A shown while others use placeholders",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "5adf48feccec": {
+      "description": "Manual entry (5adf48feccec)",
+      "reason": "LPRINT listed in Console I/O but is no-op - note clarifies this",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "a21d6adb8022": {
+      "description": "Manual entry (a21d6adb8022)",
+      "reason": "Ok prompt shown consistently - formatting variations acceptable",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "55159dea6683": {
+      "description": "Manual entry (55159dea6683)",
+      "reason": "Clarification about LINE graphics vs LINE INPUT is helpful not contradictory",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "043dd9b64ad8": {
+      "description": "Manual entry (043dd9b64ad8)",
+      "reason": "Historical documentation about CP/M implementation - relevance note could be added",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "1ff37c129e40": {
+      "description": "Manual entry (1ff37c129e40)",
+      "reason": "Placeholder doc - should be completed or removed",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "058d11d536fd": {
+      "description": "Manual entry (058d11d536fd)",
+      "reason": "References to requirements.txt and mbasic command - verify files exist",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "c3f7f89e9639": {
+      "description": "Manual entry (c3f7f89e9639)",
+      "reason": "Template concatenation error - Shift merged with placeholder",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "a9ad68f6c273": {
+      "description": "Manual entry (a9ad68f6c273)",
+      "reason": "INPUT semicolon behavior is complex - documentation describes main cases",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "1a8215646df7": {
+      "description": "Manual entry (1a8215646df7)",
+      "reason": "DEF statement scope is global in BASIC - documentation is correct",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "9f83adeca5d9": {
+      "description": "Manual entry (9f83adeca5d9)",
+      "reason": "LOAD and MERGE documentation correctly describe different file closing behaviors",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "85fed4a55587": {
+      "description": "Manual entry (85fed4a55587)",
+      "reason": "LSET assigns, MID$ modifies - terminology is accurate for different operations",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "9c5cf9671428": {
+      "description": "Manual entry (9c5cf9671428)",
+      "reason": "Need to check if mode A is documented in OPEN",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ac55409a8198": {
+      "description": "Manual entry (ac55409a8198)",
+      "reason": "RESET should be added to OPEN See Also section",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "dac326f8b0a8": {
+      "description": "Manual entry (dac326f8b0a8)",
+      "reason": "Version field format varies historically - acceptable inconsistency",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "20b690e1597b": {
+      "description": "Manual entry (20b690e1597b)",
+      "reason": "WIDTH LPRINT unsupported - documentation states this clearly",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "5dbf9803cb62": {
+      "description": "Manual entry (5dbf9803cb62)",
+      "reason": "Variable documentation correctly distinguishes name length from case sensitivity",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "874c554c85b0": {
+      "description": "Manual entry (874c554c85b0)",
+      "reason": "Error handling shown in implementation - docstring describes behavior",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "2ef00f1c1eab": {
+      "description": "Manual entry (2ef00f1c1eab)",
+      "reason": "Comment explains two tokenization paths - both valid",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "cbfcb2328921": {
+      "description": "Manual entry (cbfcb2328921)",
+      "reason": "Different functions have different requirements - comments accurately reflect each function's contract",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "6f517bdea822": {
+      "description": "Manual entry (6f517bdea822)",
+      "reason": "Describes benefit of current design - historical context not required",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "fd6de8203209": {
+      "description": "Manual entry (fd6de8203209)",
+      "reason": "Defensive programming pattern - fallback protects against misuse",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "2126fd5623b7": {
+      "description": "Manual entry (2126fd5623b7)",
+      "reason": "Template placeholders for curses save shortcut - rendering issue",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "3502d1aefd70": {
+      "description": "Manual entry (3502d1aefd70)",
+      "reason": "Web UI Limited debugger support is documented - table is informational",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "da99ef327947": {
+      "description": "Manual entry (da99ef327947)",
+      "reason": "Cross-references describe each module's purpose accurately - asymmetry acceptable",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "98b426c2b4c8": {
+      "description": "Manual entry (98b426c2b4c8)",
+      "reason": "Consistently uses bytes throughout - 'length' term is standard in MBASIC context",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "93979f226e0b": {
+      "description": "Manual entry (93979f226e0b)",
+      "reason": "Backward compatibility documented - explanation sufficient",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "3d52a01d68d6": {
+      "description": "Manual entry (3d52a01d68d6)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "fc3fae025745": {
+      "description": "Manual entry (fc3fae025745)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ac99ee85b80f": {
+      "description": "Manual entry (ac99ee85b80f)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "9f1e53e09d0f": {
+      "description": "Manual entry (9f1e53e09d0f)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "d0655b0d2afd": {
+      "description": "Manual entry (d0655b0d2afd)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "3123c7e69f14": {
+      "description": "Manual entry (3123c7e69f14)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "c88027375c40": {
+      "description": "Manual entry (c88027375c40)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ddd198bdeeb6": {
+      "description": "Manual entry (ddd198bdeeb6)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ab5d76f3aa7e": {
+      "description": "Manual entry (ab5d76f3aa7e)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "6a698ac2e795": {
+      "description": "Manual entry (6a698ac2e795)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "78c9957ee5d3": {
+      "description": "Manual entry (78c9957ee5d3)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "033d82e060cf": {
+      "description": "Manual entry (033d82e060cf)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "d16e510eb1c5": {
+      "description": "Manual entry (d16e510eb1c5)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "e1aae9ebd73b": {
+      "description": "Manual entry (e1aae9ebd73b)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "1144655561be": {
+      "description": "Manual entry (1144655561be)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "003f80c17ea6": {
+      "description": "Manual entry (003f80c17ea6)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "cbfaf833028e": {
+      "description": "Manual entry (cbfaf833028e)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "5629d9b2b2a3": {
+      "description": "Manual entry (5629d9b2b2a3)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "82790d2bdb68": {
+      "description": "Manual entry (82790d2bdb68)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "02b8a2a3c15f": {
+      "description": "Manual entry (02b8a2a3c15f)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "c2889bbe2697": {
+      "description": "Manual entry (c2889bbe2697)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "e42bfcaefbf9": {
+      "description": "Manual entry (e42bfcaefbf9)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "35cbd9aa1243": {
+      "description": "Manual entry (35cbd9aa1243)",
+      "reason": "Comment describes implementation semantics - requires code review to verify correctness",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "92fc7f5c0aca": {
+      "description": "Manual entry (92fc7f5c0aca)",
+      "reason": "Comment accurately describes implemented features vs persistence - acceptable description",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "1bce6f09f544": {
+      "description": "Manual entry (1bce6f09f544)",
+      "reason": "Defensive documentation against expected features - helpful context",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "51e0a3b5addb": {
+      "description": "Manual entry (51e0a3b5addb)",
+      "reason": "Cross-reference to file in codebase - valid reference",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "56f8a37e92a3": {
+      "description": "Manual entry (56f8a37e92a3)",
+      "reason": "Comment describes possible clients - implementation uses one option",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "b2e14968d362": {
+      "description": "Manual entry (b2e14968d362)",
+      "reason": "Need to verify if HELPSETTING command exists or should be removed",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "85b42df935c7": {
+      "description": "Manual entry (85b42df935c7)",
+      "reason": "RESET.md exists - link is valid",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "465e2a8d5571": {
+      "description": "Manual entry (465e2a8d5571)",
+      "reason": "WIDTH documentation correctly states simple form parses, LPRINT unsupported",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "e68e4ccde8a0": {
+      "description": "Manual entry (e68e4ccde8a0)",
+      "reason": "Keyboard shortcut template rendering issue - needs investigation",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ca45f1f37f9f": {
+      "description": "Manual entry (ca45f1f37f9f)",
+      "reason": "Web UI persistence documentation describes session-based storage correctly",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "eb0f5cc218b8": {
+      "description": "Manual entry (eb0f5cc218b8)",
+      "reason": "Features vary by UI - documentation correctly notes availability differences",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "ab2ed0e0e945": {
+      "description": "Manual entry (ab2ed0e0e945)",
+      "reason": "Auto-save availability varies by UI - Tk has explicit auto-save feature",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "aef9cd514d93": {
+      "description": "Manual entry (aef9cd514d93)",
+      "reason": "PEEK/POKE documentation consistent - architecture doc can add security note",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "f91c49e660f7": {
+      "description": "Manual entry (f91c49e660f7)",
+      "reason": "Web UI settings documentation may be in different location",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "42fa133e68da": {
+      "description": "Manual entry (42fa133e68da)",
+      "reason": "Index mentions 3 UIs in one list, getting-started mentions all 4 - both correct",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "012483d1f7a2": {
+      "description": "Manual entry (012483d1f7a2)",
+      "reason": "TTL documented with rationale - hardcoded value is implementation choice",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "d2cd2b688ec2": {
+      "description": "Manual entry (d2cd2b688ec2)",
+      "reason": "Future feature discussion - exploratory comment about design options",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "b313d2b0ed6c": {
+      "description": "Manual entry (b313d2b0ed6c)",
+      "reason": "Detailed comment for maintainer understanding - verbosity justified for non-obvious logic",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "98ef458a3020": {
+      "description": "Manual entry (98ef458a3020)",
+      "reason": "Comment explains comparison choice - defensive explanation acceptable",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "575690861b7a": {
+      "description": "Manual entry (575690861b7a)",
+      "reason": "Unused code documented for potential future use - explanation helpful",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "16c9995d2486": {
+      "description": "Manual entry (16c9995d2486)",
+      "reason": "Comment describes object lifecycle vs state management - both accurate",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "afa8f443cf2f": {
+      "description": "Manual entry (afa8f443cf2f)",
+      "reason": "Standard abbreviation used consistently in code - acceptable variation",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "a629757fef77": {
+      "description": "Manual entry (a629757fef77)",
+      "reason": "Box formatting used consistently - minor variation in box width acceptable",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "99b3aa573429": {
+      "description": "Manual entry (99b3aa573429)",
+      "reason": "Comment focuses on primary behavior - detailed state handling in implementation",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    },
+    "cbff9ecbbc89": {
+      "description": "Manual entry (cbff9ecbbc89)",
+      "reason": "Comment describes sync purpose generally - LIST implementation detail separate",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-09",
+      "files": []
+    }
+  }
+}

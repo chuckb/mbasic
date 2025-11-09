@@ -75,6 +75,7 @@ class EnhancedConsistencyAnalyzer:
         self.utils_dir = self.project_root / "utils"
         self.tests_dir = self.project_root / "tests"
         self.cache_file = Path(__file__).parent / ".consistency_cache.json"
+        self.ignore_file = Path(__file__).parent / ".consistency_ignore.json"
 
         # Scan these doc subdirectories
         self.scan_subdirs = ['help', 'library', 'stylesheets', 'user']
@@ -82,6 +83,47 @@ class EnhancedConsistencyAnalyzer:
         # Track code context for better analysis
         self.code_context = {}
         self.comment_conflicts = []
+
+        # Load ignored issues
+        self.ignored_issues = self._load_ignore_file()
+
+    def _load_ignore_file(self) -> dict:
+        """Load the ignore file if it exists."""
+        if self.ignore_file.exists():
+            try:
+                with open(self.ignore_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    ignored = data.get('ignored_issues', {})
+                    print(f"Loaded {len(ignored)} ignored issues from {self.ignore_file.name}")
+                    return ignored
+            except Exception as e:
+                print(f"Warning: Could not load ignore file: {e}")
+                return {}
+        return {}
+
+    def _compute_issue_hash(self, description: str, files: list, details: str = "", issue_type: str = "") -> str:
+        """Compute a stable hash for an issue.
+
+        This MUST match the hash computation in mark_ignored.py exactly.
+        Uses stable data (files + details + type) instead of variable description.
+        """
+        # Import here to avoid circular dependency issues
+        from compute_stable_hash import compute_stable_hash
+        return compute_stable_hash(files, details, issue_type)
+
+    def _is_ignored(self, issue: Dict[str, Any]) -> bool:
+        """Check if an issue should be ignored."""
+        files = issue.get('files', [])
+        if not files:
+            return False
+
+        # Extract stable fields for hashing
+        details = issue.get('details', '')
+        issue_type = issue.get('type', '')
+        description = issue.get('description', '')  # Fallback for legacy
+
+        issue_hash = self._compute_issue_hash(description, files, details, issue_type)
+        return issue_hash in self.ignored_issues
 
     def _api_call_with_retry(self, prompt: str, max_retries: int = 5, initial_delay: float = 2.0) -> str:
         """Make an API call with exponential backoff retry on overload errors.
@@ -589,6 +631,15 @@ CRITICAL JSON FORMAT REQUIREMENTS:
                    code_conflicts: List[Dict[str, Any]],
                    filename: str) -> Path:
         """Save the enhanced analysis report to docs/history."""
+        # Filter out ignored issues
+        original_count = len(all_inconsistencies)
+        all_inconsistencies = [issue for issue in all_inconsistencies if not self._is_ignored(issue)]
+        filtered_count = original_count - len(all_inconsistencies)
+
+        if filtered_count > 0:
+            print(f"\nFiltered out {filtered_count} ignored issues")
+            print(f"Reporting {len(all_inconsistencies)} new/unreviewed issues")
+
         # Determine output path - save to docs/history
         history_dir = self.project_root / "docs" / "history"
         history_dir.mkdir(parents=True, exist_ok=True)
@@ -655,6 +706,8 @@ CRITICAL JSON FORMAT REQUIREMENTS:
                 f.write(f"- Total issues found: {total}\n")
                 f.write(f"- Code/Comment conflicts: {len(code_conflicts)}\n")
                 f.write(f"- Other inconsistencies: {len(all_inconsistencies)}\n")
+                if filtered_count > 0:
+                    f.write(f"- Ignored (already reviewed): {filtered_count}\n")
 
         print(f"\nReport saved to: {report_path}")
         return report_path

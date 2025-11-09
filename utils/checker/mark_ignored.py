@@ -20,12 +20,22 @@ import re
 from pathlib import Path
 from datetime import datetime
 
+# Import the stable hash computation
+try:
+    from compute_stable_hash import compute_stable_hash
+except ImportError:
+    print("Error: compute_stable_hash module not found")
+    print("Make sure compute_stable_hash.py is in the same directory")
+    import sys
+    sys.exit(1)
 
-def compute_issue_hash(description: str, files: list) -> str:
-    """Compute a stable hash for an issue based on description and files."""
-    # Normalize the description and files for consistent hashing
-    normalized = description.lower().strip() + "||" + "||".join(sorted(files))
-    return hashlib.md5(normalized.encode()).hexdigest()[:12]
+
+def compute_issue_hash(description: str, files: list, details: str = "", issue_type: str = "") -> str:
+    """Compute a stable hash for an issue.
+
+    Uses stable data (files + details + type) instead of variable description text.
+    """
+    return compute_stable_hash(files, details, issue_type)
 
 
 def load_ignore_file(ignore_path: Path) -> dict:
@@ -92,14 +102,17 @@ def parse_markdown_report(report_path: Path) -> list:
                     break
                 details.append(line)
 
+        details_text = '\n'.join(details).strip()
+
         if description and files:
-            issue_hash = compute_issue_hash(description, files)
+            # Compute stable hash using details + files + type
+            issue_hash = compute_issue_hash(description, files, details_text, title)
             issues.append({
                 'hash': issue_hash,
                 'title': title,
                 'description': description,
                 'files': files,
-                'details': '\n'.join(details).strip()
+                'details': details_text
             })
 
     return issues

@@ -1,0 +1,157 @@
+{
+  "_comment": "Issues marked as reviewed/ignored. Hashes rebuilt on 2025-11-09.",
+  "ignored_issues": {
+    "26ba0e3d4bae": {
+      "description": "SandboxedFileIO methods documented as STUB but list_files() is IMPLEMENTED",
+      "files": [
+        "src/file_io.py"
+      ],
+      "reason": "Already verified - implementation is correct"
+    },
+    "35d7de9315e0": {
+      "description": "The auto_save.py module is fully implemented with comprehensive autosave functionality, but there is no evidence in the other UI files (cli.py, curses_settings_widget.py, base.py) that this autosave functionality is actually integrated or used by any UI backend.",
+      "files": [
+        "src/ui/auto_save.py"
+      ],
+      "reason": "Already verified - implementation is correct"
+    },
+    "ff0447e926f9": {
+      "description": "Comment about flush() behavior may be misleading about when content is saved",
+      "files": [
+        "src/filesystem/sandboxed_fs.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "f3e72c150e81": {
+      "description": "base.py documents input_char() with blocking parameter behavior, but web_io.py ignores the blocking parameter entirely",
+      "files": [
+        "src/iohandler/base.py",
+        "src/iohandler/web_io.py"
+      ],
+      "reason": "Platform limitation - cannot be fixed without major architectural changes"
+    },
+    "c80ac4659f92": {
+      "description": "ConsoleIOHandler.input_char() has complex fallback logic for Windows without msvcrt that calls input(), but this defeats the purpose of single-character input",
+      "files": [
+        "src/iohandler/console.py"
+      ],
+      "reason": "Platform limitation - cannot be fixed without major architectural changes"
+    },
+    "4d6544193a1b": {
+      "description": "Inconsistent key display format between keybindings.py and keymap_widget.py for Shift+Ctrl combinations.",
+      "files": [
+        "src/ui/keybindings.py",
+        "src/ui/keymap_widget.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "a0fdc9a61e28": {
+      "description": "get_variables() docstring claims to return array tracking info but implementation may return None for uninitialized fields",
+      "files": [
+        "src/runtime.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "4eca68ea0482": {
+      "description": "CLI STEP command documentation claims it implements statement-level stepping like curses 'Step Statement' (Ctrl+T), but curses also has a separate 'Step Line' command (Ctrl+K) that is not available in CLI. The documentation acknowledges this but creates confusion about feature parity.",
+      "files": [
+        "src/ui/cli_debug.py",
+        "src/ui/curses_keybindings.json"
+      ],
+      "reason": "Feature request, not a bug - would require new implementation"
+    },
+    "a0a629870d0b": {
+      "description": "The _execute_single_step() method's docstring claims it executes one statement and describes statement-level granularity, but includes a disclaimer that actual behavior depends on interpreter implementation. The comment admits the method might behave as line-level stepping if the interpreter doesn't support statement-level execution.",
+      "files": [
+        "src/ui/cli_debug.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "747fc7a4ab4c": {
+      "description": "The 'continue' command has different key bindings between CLI and curses: CLI uses 'CONT' command while curses uses 'Ctrl+C'. Additionally, curses uses 'Ctrl+C' for continue but 'Ctrl+X' for stop, which is inconsistent with typical terminal conventions where Ctrl+C stops execution.",
+      "files": [
+        "src/ui/cli_keybindings.json",
+        "src/ui/curses_keybindings.json"
+      ],
+      "reason": "Intentional design choice - CLI vs curses have different terminal capabilities"
+    },
+    "a691aee2913c": {
+      "description": "The base.py UIBackend class defines execute_immediate() as an optional method with a docstring showing examples, but cli.py's CLIBackend implements it by delegating to interactive.execute_statement() without any validation or error handling, and there's no documentation about whether execute_statement() actually exists or what it does.",
+      "files": [
+        "src/ui/cli.py",
+        "src/ui/base.py"
+      ],
+      "reason": "Feature request, not a bug - would require new implementation"
+    },
+    "85592c4b2191": {
+      "description": "Inconsistent handling of program source of truth between methods",
+      "files": [
+        "src/ui/curses_ui.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "de2c89227511": {
+      "description": "CONTINUE_KEY is documented with dual purpose (Go to line / Continue execution) but the JSON key name 'goto_line' only reflects one purpose, creating confusion.",
+      "files": [
+        "src/ui/keybindings.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "75402060af84": {
+      "description": "Inconsistent error handling between save_state_periodic and save_on_disconnect callbacks",
+      "files": [
+        "src/ui/web/nicegui_backend.py"
+      ],
+      "reason": "Intentional distinction for debugging - different messages for periodic vs final save"
+    },
+    "73801ff13ff2": {
+      "description": "get_screen_size() method exists in web_io.py but is not part of IOHandler base interface, creating API inconsistency",
+      "files": [
+        "src/iohandler/web_io.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "d432236afec8": {
+      "description": "ConsoleIOHandler.input_char() non-blocking mode uses select on Unix but warns about msvcrt unavailability on Windows, creating asymmetric error handling",
+      "files": [
+        "src/iohandler/console.py"
+      ],
+      "reason": "Platform limitation - cannot be fixed without major architectural changes"
+    },
+    "492ca6467433": {
+      "description": "Comment in _create_setting_widget() claims both removeprefix() and fallback [6:] 'only strip from the beginning', but this is redundant since slicing [6:] by definition only operates on the beginning of the string. The comment seems to over-explain obvious behavior.",
+      "files": [
+        "src/ui/curses_settings_widget.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "5ae654178de4": {
+      "description": "The cmd_break() docstring states 'Breakpoints can be set at any time (before or during execution)' and 'Use RUN to start the program', but there's no clear documentation about what happens if you set breakpoints during execution or how the breakpoint system integrates with the running program.",
+      "files": [
+        "src/ui/cli_debug.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "3cf2559ce31f": {
+      "description": "Comment about modal behavior is misleading",
+      "files": [
+        "src/ui/tk_settings_dialog.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "24eb8c5d70cf": {
+      "description": "cycle_sort_mode() docstring mentions 'Tk UI implementation' but this is supposed to be UI-agnostic code",
+      "files": [
+        "src/ui/variable_sorting.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    },
+    "3757c788c9d4": {
+      "description": "The cmd_delete() and cmd_renum() docstrings reference 'curses_ui.py or tk_ui.py' as example implementations, but these files are not present in the provided source code, making the references unhelpful.",
+      "files": [
+        "src/ui/visual.py"
+      ],
+      "reason": "Documentation/comment issue - should be in docs-v14.md"
+    }
+  }
+}
