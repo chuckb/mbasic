@@ -185,12 +185,10 @@ class InteractiveMode:
         This prevents crashes when line edits invalidate saved return addresses
         and loop contexts. Called when lines are added, deleted, or renumbered.
 
-        Note: We do NOT clear the stopped flag here. The stopped flag is checked
-        by CONT to determine if there's anything to continue. When the program is
-        edited, CONT will still see stopped=True and attempt to continue from the
-        (now invalid) PC position. This may crash or behave incorrectly because
-        CONT does not detect that the program was edited. Real MBASIC 5.21 shows
-        "?Can't continue" after editing, but this implementation has no such check.
+        Note: We do NOT clear/reset the PC here. The PC is preserved so that
+        CONT can detect if the program was edited using pc.is_valid(). If the
+        PC position still exists after editing, CONT will allow resuming;
+        if not, it shows "?Can't continue" matching MBASIC 5.21 behavior.
         """
         if self.program_runtime:
             self.program_runtime.gosub_stack.clear()
@@ -426,7 +424,7 @@ class InteractiveMode:
             # If start_line is specified, we need to handle it specially
             # because interpreter.run() calls start() which calls setup() which resets PC
             if start_line is not None:
-                from src.runtime import PC
+                from src.pc import PC
                 # Verify the line exists
                 if start_line not in self.line_asts:
                     print(f"?Undefined line {start_line}")
@@ -444,7 +442,7 @@ class InteractiveMode:
                 runtime.pc = PC.from_line(start_line)
 
                 # Run the tick loop manually (same as interpreter.run())
-                while not runtime.halted and not state.error_info:
+                while runtime.pc.is_running() and not state.error_info:
                     state = interpreter.tick(mode='run', max_statements=10000)
 
                     # Handle input synchronously for CLI
@@ -470,30 +468,33 @@ class InteractiveMode:
         """CONT - Continue execution after STOP or Break
 
         State management:
-        - Clears stopped/halted flags in runtime
-        - PC already contains the resume position (set by STOP or break handler)
+        - Uses immutable PC approach: checks if pc.is_running() is False (stopped)
+        - Validates PC position with pc.is_valid(program) before resuming
+        - Creates new running PC with pc.resume()
         - Resumes tick-based execution loop
         - Handles input prompts and errors during execution
 
-        BUG: CONT does not detect if the program has been edited (lines added, deleted,
-        or renumbered). It only checks if stopped=True. After editing, the PC position
-        becomes invalid but CONT will attempt to resume anyway, which may crash or
-        behave incorrectly. Real MBASIC 5.21 shows "?Can't continue" after editing.
-        The stopped flag is intentionally NOT cleared by clear_execution_state() to
-        preserve the ability to add edit detection in the future.
+        BUG FIX: Now properly detects if the program has been edited (lines added, deleted,
+        or renumbered) by using pc.is_valid() to check if the PC position still exists in
+        the program. Shows "?Can't continue" after editing, matching MBASIC 5.21 behavior.
         """
-        if not self.program_runtime or not self.program_runtime.stopped:
+        # Check if we have a stopped program
+        if not self.program_runtime or self.program_runtime.pc.is_running():
+            print("?Can't continue")
+            return
+
+        # Check if PC position is still valid (program may have been edited)
+        if not self.program_runtime.pc.is_valid(self.program_runtime.statement_table):
             print("?Can't continue")
             return
 
         try:
-            # Clear stopped flag - PC already contains the resume position
-            self.program_runtime.stopped = False
-            self.program_runtime.halted = False
+            # Resume execution by creating new running PC at same position
+            self.program_runtime.pc = self.program_runtime.pc.resume()
 
             # Resume execution using tick-based loop (same as run())
             state = self.program_interpreter.state
-            while not self.program_runtime.halted and not state.error_info:
+            while self.program_runtime.pc.is_running() and not state.error_info:
                 state = self.program_interpreter.tick(mode='run', max_statements=10000)
 
                 # Handle input synchronously for CLI

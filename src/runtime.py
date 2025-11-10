@@ -77,12 +77,9 @@ class Runtime:
         self.option_base_executed = False  # Track if OPTION BASE has been executed (can only execute once)
 
         # Execution control - NEW PC-based design
-        self.pc = PC.halted_pc()      # Current program counter (line, stmt_offset)
+        self.pc = PC.halted()      # Current program counter (line, stmt_offset)
         self.npc = None               # Next program counter (set by GOTO/GOSUB/etc., None = sequential)
         self.statement_table = StatementTable()  # Ordered collection of statements indexed by PC
-
-        # Execution control
-        self.halted = True            # Start halted (no program loaded yet)
 
         # Unified execution stack - tracks all active control flow (GOSUB, FOR, WHILE) in nesting order
         # Each entry: {'type': 'GOSUB'|'FOR'|'WHILE', ...type-specific fields...}
@@ -120,9 +117,6 @@ class Runtime:
 
         # Random number seed
         self.rnd_last = 0.5
-
-        # STOP/CONT state preservation
-        self.stopped = False              # True if program stopped via STOP or Break
 
         # Breakpoints - persist across runs (not cleared by RUN/CLEAR)
         self.breakpoints = set()          # Set of PC objects for breakpoints
@@ -186,11 +180,11 @@ class Runtime:
         Returns:
             bool: True if halted at a statement (paused/breakpoint), False if past end or not halted
         """
-        if not self.halted:
+        if self.pc.is_running():
             return False
 
         pc = self.pc
-        if pc.halted():
+        if pc.line is None:
             return False  # Past end of program
 
         stmt = self.statement_table.get(pc)
@@ -1501,7 +1495,6 @@ class Runtime:
         self.option_base_executed = False
 
         # Clear execution state
-        self.halted = False
         self.execution_stack.clear()
         self.for_loop_vars.clear()
 
@@ -1531,9 +1524,6 @@ class Runtime:
         # Reset RND
         self.rnd_last = 0.5
 
-        # Clear STOP/CONT state
-        self.stopped = False
-
         # Reset break handling
         self.break_requested = False
 
@@ -1547,7 +1537,7 @@ class Runtime:
 
         # Rebuild statement table and PC (like setup())
         self.statement_table = StatementTable()
-        self.pc = PC.halted_pc()
+        self.pc = PC.halted()
         self.npc = None
 
         # Process program lines to rebuild statement table
@@ -1582,3 +1572,4 @@ class Runtime:
         # NOTE: self.common_vars is NOT cleared - preserved for CHAIN compatibility
 
         return self
+

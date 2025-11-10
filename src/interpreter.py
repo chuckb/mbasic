@@ -42,11 +42,11 @@ class InterpreterState:
     For UI/callers checking completed state (recommended order):
     - error_info: Non-None if an error occurred (highest priority for display)
     - input_prompt: Non-None if waiting for input (set during statement execution)
-    - runtime.halted: True if stopped (paused/done/at breakpoint)
+    - runtime.pc.is_running(): False if stopped (paused/done/at breakpoint)
 
     Internal execution order in tick_pc() (for developers understanding control flow):
     1. pause_requested check - pauses if pause() was called
-    2. halted check - stops if already halted
+    2. is_running() check - stops if PC is not running
     3. break_requested check - handles Ctrl+C breaks
     4. breakpoints check - pauses at breakpoints
     5. trace output - displays [line] or [line.stmt] if TRON is active
@@ -87,7 +87,7 @@ class InterpreterState:
         """Get current line from runtime.pc (computed property, not cached)"""
         if self._interpreter:
             pc = self._interpreter.runtime.pc
-            return pc.line_num if pc and not pc.halted() else None
+            return pc.line_num if pc and pc.is_running() else None
         return None
 
     @property
@@ -95,7 +95,7 @@ class InterpreterState:
         """Get current statement char_start from statement table (computed property)"""
         if self._interpreter:
             pc = self._interpreter.runtime.pc
-            if pc and not pc.halted():
+            if pc and pc.is_running():
                 stmt = self._interpreter.runtime.statement_table.get(pc)
                 if stmt:
                     return getattr(stmt, 'char_start', 0)
@@ -119,13 +119,13 @@ class InterpreterState:
         """
         if self._interpreter:
             pc = self._interpreter.runtime.pc
-            if pc and not pc.halted():
+            if pc and pc.is_running():
                 stmt = self._interpreter.runtime.statement_table.get(pc)
                 if stmt:
                     stmt_char_end = getattr(stmt, 'char_end', 0)
 
                     # Check if there's a next statement on same line
-                    next_pc = PC(pc.line_num, pc.stmt_offset + 1)
+                    next_pc = PC.running_at(pc.line_num, pc.stmt_offset + 1)
                     next_stmt = self._interpreter.runtime.statement_table.get(next_pc)
                     if next_stmt and next_stmt.char_start > 0:
                         # Use max of char_end and (next_start - 1)
@@ -241,7 +241,7 @@ class Interpreter:
 
             # Initialize state
             self.state = InterpreterState(_interpreter=self)
-            self.runtime.halted = False
+            # PC is already set to running state by setup(), no need to set halted flag
             self.state.is_first_line = True
 
             # Setup Ctrl+C handler
@@ -250,11 +250,11 @@ class Interpreter:
             return self.state
 
         except Exception as e:
-            # Setup failed
-            self.runtime.halted = True
+            # Setup failed - set PC to halted state
+            self.runtime.pc = PC.halted()
             self.state.error_info = ErrorInfo(
                 error_code=5,  # Illegal function call (generic error)
-                pc=PC.halted_pc(),  # No valid PC during setup
+                pc=PC.halted(),  # No valid PC during setup
                 error_message=str(e)
             )
             return self.state
@@ -263,9 +263,9 @@ class Interpreter:
         """Check if interpreter has work to do (should execution continue?).
 
         Returns:
-            bool: True if there is work to do, False if halted
+            bool: True if there is work to do, False if stopped
         """
-        return not self.runtime.halted
+        return self.runtime.pc.is_running()
 
     def tick(self, mode='run', max_statements=100):
         """Execute a quantum of work and return updated state.
@@ -308,29 +308,27 @@ class Interpreter:
             while statements_in_tick < max_statements:
                 # Check for pause request
                 if self.state.pause_requested:
-                    self.runtime.halted = True
+                    self.runtime.pc = self.runtime.pc.stop("USER")
                     self.state.pause_requested = False
                     return self.state
 
                 # Get current PC
                 pc = self.runtime.pc
 
-                # Check if halted
-                if pc.halted() or self.runtime.halted:
-                    # Already halted - PC should be pointing past last statement
-                    # Ensure runtime.halted is set if PC is halted
-                    self.runtime.halted = True
+                # Check if not running (stopped/halted/error)
+                if not pc.is_running():
+                    # Already stopped - PC has stop_reason set
                     self._restore_break_handler()
                     return self.state
 
                 # Check for Ctrl+C break
                 if self.runtime.break_requested:
                     self.runtime.break_requested = False
-                    self.runtime.stopped = True
-                    self.runtime.halted = True
+                    self.runtime.stopped = True  # Keep for Phase 4
+                    self.runtime.pc = pc.stop("BREAK")
                     self.io.output("")
                     self.io.output(f"Break in {pc}")
-                    # Keep PC at current position for resume
+                    # PC keeps current position for resume via CONT
                     return self.state
 
                 # Check for breakpoint (supports both line-level and statement-level)
@@ -346,7 +344,7 @@ class Interpreter:
 
                 if at_breakpoint:
                     if not self.state.skip_next_breakpoint_check:
-                        self.runtime.halted = True
+                        self.runtime.pc = pc.stop("BREAK")
                         self.state.skip_next_breakpoint_check = True
                         return self.state
                     else:
@@ -375,8 +373,8 @@ class Interpreter:
 
                 except BreakException:
                     # User pressed Ctrl+C during INPUT
-                    self.runtime.stopped = True
-                    self.runtime.halted = True
+                    self.runtime.stopped = True  # Keep for Phase 4
+                    self.runtime.pc = pc.stop("BREAK")
                     self.io.output(f"Break in {pc}")
                     return self.state
 
@@ -401,8 +399,12 @@ class Interpreter:
                         self.state.statements_executed += 1
                         # Fall through to NPC handling below
                     else:
-                        # No error handler (or recursive error) - halt and raise
-                        self.runtime.halted = True
+                        # No error handler (or recursive error) - set PC to error state and raise
+                        self.runtime.pc = pc.with_error(
+                            error_code,
+                            str(e),
+                            self.runtime.on_error_goto if self.runtime.has_error_handler() else None
+                        )
                         self._restore_break_handler()
                         raise
 
@@ -420,12 +422,12 @@ class Interpreter:
 
                 # Check for step mode before updating PC
                 if mode == 'step_statement':
-                    self.runtime.pc = next_pc
-                    self.runtime.halted = True
+                    # Stop at next PC for stepping
+                    self.runtime.pc = next_pc.stop("BREAK") if next_pc.is_running() else next_pc
                     return self.state
                 elif mode == 'step_line' and pc.is_step_point(next_pc, 'step_line'):
-                    self.runtime.pc = next_pc
-                    self.runtime.halted = True
+                    # Stop at next line for stepping
+                    self.runtime.pc = next_pc.stop("BREAK") if next_pc.is_running() else next_pc
                     return self.state
 
                 # Update PC for next iteration
@@ -438,10 +440,11 @@ class Interpreter:
         except Exception as e:
             # Unhandled error
             if self.state.error_info is None:
-                self.runtime.halted = True
+                pc = self.runtime.pc
+                self.runtime.pc = pc.with_error(5, str(e)) if pc.is_running() else PC.error(None, 0, 5, str(e))
                 self.state.error_info = ErrorInfo(
                     error_code=5,
-                    pc=self.runtime.pc if not self.runtime.pc.halted() else PC.halted_pc(),
+                    pc=self.runtime.pc,
                     error_message=str(e)
                 )
             raise
@@ -484,15 +487,16 @@ class Interpreter:
         return self.state
 
     def continue_execution(self):
-        """Continue from halted state.
+        """Continue from stopped state (resume execution).
 
         Returns:
             InterpreterState: Updated state
         """
-        if not self.runtime.halted:
-            raise RuntimeError("Not halted")
+        if self.runtime.pc.is_running():
+            raise RuntimeError("Not stopped")
 
-        self.runtime.halted = False
+        # Resume from current PC position
+        self.runtime.pc = self.runtime.pc.resume()
         return self.state
 
     def reset(self):
@@ -566,7 +570,7 @@ class Interpreter:
                     raise RuntimeError(state.error_info.error_message)
 
                 # Run until done
-                while not self.runtime.halted and not state.error_info:
+                while self.runtime.pc.is_running() and not state.error_info:
                     state = self.tick(mode='run', max_statements=10000)
 
                     # Handle input synchronously for CLI
@@ -662,7 +666,7 @@ class Interpreter:
         if self.runtime.error_handler_is_gosub:
             # ON ERROR GOSUB - push return address (next statement after error)
             next_pc = self.runtime.statement_table.next_pc(error_pc)
-            if not next_pc.halted():
+            if next_pc.is_running():
                 self.runtime.push_gosub(next_pc.line_num, next_pc.stmt_offset)
 
         # Jump to error handler line
@@ -1006,8 +1010,8 @@ class Interpreter:
         return_pc = self.runtime.statement_table.next_pc(self.runtime.pc)
         # Store return address as (line_number, statement_offset) for RETURN
         self.runtime.push_gosub(
-            return_pc.line_num if not return_pc.halted() else 0,
-            return_pc.stmt_offset if not return_pc.halted() else 0
+            return_pc.line_num if return_pc.is_running() else 0,
+            return_pc.stmt_offset if return_pc.is_running() else 0
         )
 
         # Jump to subroutine
@@ -1060,8 +1064,8 @@ class Interpreter:
             # Push return address using PC
             return_pc = self.runtime.statement_table.next_pc(self.runtime.pc)
             self.runtime.push_gosub(
-                return_pc.line_num if not return_pc.halted() else 0,
-                return_pc.stmt_offset if not return_pc.halted() else 0
+                return_pc.line_num if return_pc.is_running() else 0,
+                return_pc.stmt_offset if return_pc.is_running() else 0
             )
             # Jump to subroutine
             self.runtime.npc = PC.from_line(stmt.line_numbers[index - 1])
@@ -1098,7 +1102,7 @@ class Interpreter:
             raise RuntimeError(f"RETURN error: statement {return_stmt} in line {return_line} no longer exists")
 
         # Jump back to the line and statement after GOSUB
-        self.runtime.npc = PC(return_line, return_stmt)
+        self.runtime.npc = PC.running_at(return_line, return_stmt)
 
     def execute_for(self, stmt):
         """Execute FOR statement - initialize loop variable and register loop.
@@ -1238,7 +1242,7 @@ class Interpreter:
                 def __init__(self, line):
                     self.line = line
                     self.position = 0
-            token = TokenInfo(self.runtime.pc.line_num if not self.runtime.pc.halted() else 0)
+            token = TokenInfo(self.runtime.pc.line_num if self.runtime.pc.is_running() else 0)
             current = self.runtime.get_variable(base_name, type_suffix, token=token)
 
         step = loop_info['step']
@@ -1268,7 +1272,7 @@ class Interpreter:
             # Continue loop - update variable and jump to statement AFTER the FOR
             self.runtime.set_variable(base_name, type_suffix, new_value, token=token, limits=self.limits)
             # Calculate proper next PC (may be next line if FOR is last statement on its line)
-            for_pc = PC(return_line, return_stmt)
+            for_pc = PC.running_at(return_line, return_stmt)
             next_pc = self.runtime.statement_table.next_pc(for_pc)
             self.runtime.npc = next_pc
             return True  # Loop continues
@@ -1296,11 +1300,11 @@ class Interpreter:
             wend_line, wend_stmt = wend_pos
 
             # Jump to the statement AFTER the WEND using statement_table
-            wend_pc = PC(wend_line, wend_stmt)
+            wend_pc = PC.running_at(wend_line, wend_stmt)
             next_pc = self.runtime.statement_table.next_pc(wend_pc)
-            if next_pc is None:
+            if not next_pc.is_running():
                 # No more statements - program ends
-                self.runtime.halted = True
+                self.runtime.pc = PC.halted()
             else:
                 self.runtime.npc = next_pc
         else:
@@ -1323,7 +1327,7 @@ class Interpreter:
             raise RuntimeError(f"WEND without matching WHILE at line {self.runtime.pc.line_num}")
 
         # Jump back to the WHILE statement to re-evaluate the condition
-        self.runtime.npc = PC(loop_info['while_line'], loop_info['while_stmt'])
+        self.runtime.npc = PC.running_at(loop_info['while_line'], loop_info['while_stmt'])
 
         # Pop the loop from the stack (after setting npc above, before WHILE re-executes).
         # Timing: We pop NOW so the stack is clean before WHILE condition re-evaluation.
@@ -1369,9 +1373,9 @@ class Interpreter:
         elif stmt.line_number == -1:
             # RESUME NEXT - continue at statement after the error
             next_pc = self.runtime.statement_table.next_pc(error_pc)
-            if next_pc.halted():
+            if not next_pc.is_running():
                 # No next statement, program ends
-                self.runtime.halted = True
+                self.runtime.pc = PC.halted()
             else:
                 self.runtime.npc = next_pc
         else:
@@ -1380,7 +1384,7 @@ class Interpreter:
 
     def execute_end(self, stmt):
         """Execute END statement"""
-        self.runtime.halted = True
+        self.runtime.pc = self.runtime.pc.stop("END")
 
     def execute_remark(self, stmt):
         """Execute REM statement (do nothing)"""
@@ -1619,7 +1623,7 @@ class Interpreter:
 
         # Set error information in variable table (integer variables, lowercase)
         self.runtime.set_variable_raw('err%', error_code)
-        if not self.runtime.pc.halted():
+        if self.runtime.pc.is_running():
             self.runtime.set_variable_raw('erl%', self.runtime.pc.line_num)
             self.runtime.set_variable_raw('ers%', self.runtime.pc.stmt_offset)
         else:
@@ -1969,20 +1973,20 @@ class Interpreter:
                     # Set NPC to target line (like GOTO)
                     # On next tick(), NPC will be moved to PC
                     self.runtime.npc = PC.from_line(line_num)
-                    self.runtime.halted = False  # Continue execution at new line
+                    # PC stays running - execution continues at new line
         else:
             # RUN without arguments - CLEAR + signal restart needed
             if hasattr(self, 'interactive_mode') and self.interactive_mode:
                 self.interactive_mode.cmd_run()
             else:
                 # In non-interactive context, signal that restart is needed
-                # Note: RUN without args sets halted=True to stop current execution,
+                # Note: RUN without args stops current execution,
                 # signaling the caller (e.g., UI tick loop) that it should restart
                 # execution from the beginning if desired. This is different from
-                # RUN line_number which sets halted=False to continue execution inline.
+                # RUN line_number which continues execution inline.
                 # The caller is responsible for actually restarting execution.
                 self.runtime.clear_variables()
-                self.runtime.halted = True
+                self.runtime.pc = self.runtime.pc.stop("END")
 
     def execute_common(self, stmt):
         """Execute COMMON statement
@@ -2142,8 +2146,8 @@ class Interpreter:
         self.runtime.clear_arrays()
 
         # Halt execution
-        self.runtime.pc = PC.halted_pc()
-        self.runtime.npc = PC.halted_pc()
+        self.runtime.pc = PC.halted()
+        self.runtime.npc = PC.halted()
 
     def execute_delete(self, stmt):
         """Execute DELETE statement - remove lines from program AST.
@@ -2817,21 +2821,21 @@ class Interpreter:
         """
         # Save the current execution position
         # We need to resume from the NEXT statement after STOP
-        self.runtime.stopped = True
+        self.runtime.stopped = True  # Keep for Phase 4
 
         # Move NPC to PC so CONT can resume from the next statement
         # runtime.npc (next program counter) is set by tick() to point to the next statement
         # to execute after the current one completes
-        self.runtime.pc = self.runtime.npc
+        if self.runtime.npc:
+            self.runtime.pc = self.runtime.npc.stop("STOP")
+        else:
+            self.runtime.pc = self.runtime.pc.stop("STOP")
 
         # Print "Break in <line>" message
         if self.runtime.pc and self.runtime.pc.line_num:
             self.io.output(f"Break in {self.runtime.pc.line_num}")
         else:
             self.io.output("Break")
-
-        # Halt execution (returns to interactive mode)
-        self.runtime.halted = True
 
     def execute_tron(self, stmt):
         """Execute TRON statement - enable execution trace

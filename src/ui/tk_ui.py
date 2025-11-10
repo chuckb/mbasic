@@ -712,9 +712,6 @@ class TkBackend(UIBackend):
         # Clear paused state to allow stepping through breakpoints
         self.paused_at_breakpoint = False
 
-        # Clear halted flag to allow execution (step will set it again after executing)
-        self.runtime.halted = False
-
         try:
             state = self.interpreter.tick(mode='step_line', max_statements=100)
 
@@ -726,7 +723,7 @@ class TkBackend(UIBackend):
                 self._add_output(f"\n--- Error at line {line_num}: {error_msg} ---\n")
                 self._set_status("Error")
                 self._clear_statement_highlight()
-            elif self.runtime.halted:
+            elif not self.runtime.pc.is_running():
                 # Halted - check what's at PC to determine if we should highlight
                 pc = self.runtime.pc
                 if pc.halted():
@@ -770,9 +767,6 @@ class TkBackend(UIBackend):
         # Clear paused state to allow stepping through breakpoints
         self.paused_at_breakpoint = False
 
-        # Clear halted flag to allow execution (step will set it again after executing)
-        self.runtime.halted = False
-
         try:
             state = self.interpreter.tick(mode='step_statement', max_statements=1)
 
@@ -784,7 +778,7 @@ class TkBackend(UIBackend):
                 self._add_output(f"\n--- Error at line {line_num}: {error_msg} ---\n")
                 self._set_status("Error")
                 self._clear_statement_highlight()
-            elif self.runtime.halted:
+            elif not self.runtime.pc.is_running():
                 # Halted - check what's at PC to determine if we should highlight
                 pc = self.runtime.pc
                 if pc.halted():
@@ -2104,11 +2098,9 @@ class TkBackend(UIBackend):
         if self.running and not self.paused_at_breakpoint:
             # Execution is running - preserve execution state
             self.runtime.pc = old_pc
-            self.runtime.halted = old_halted
         else:
             # No execution in progress - ensure halted
             self.runtime.pc = PC.halted_pc()
-            self.runtime.halted = True
 
     def _validate_editor_syntax(self):
         """Validate syntax of all lines in editor and update error markers.
@@ -3010,7 +3002,7 @@ class TkBackend(UIBackend):
                 if self.variables_visible:
                     self._update_variables()
 
-            elif self.runtime.halted:
+            elif not self.runtime.pc.is_running():
                 # Halted - check what's at PC to determine if done or paused
                 self.running = False
                 pc = self.runtime.pc
@@ -3497,22 +3489,18 @@ class TkBackend(UIBackend):
         - Ctrl+C/Break
         - END statement (in some cases)
 
-        Validation: Requires runtime exists and runtime.stopped is True.
+        Validation: Requires runtime exists and PC is not running.
 
         The interpreter moves NPC to PC when STOP is executed (see execute_stop()
-        in interpreter.py). CONT simply clears the stopped/halted flags and resumes
-        tick-based execution, which continues from the PC position.
+        in interpreter.py). CONT resumes tick-based execution, which continues from
+        the PC position.
         """
         # Check if runtime exists and is in stopped state
-        if not self.runtime or not self.runtime.stopped:
+        if not self.runtime or self.runtime.pc.is_running():
             self._write_output("?Can't continue")
             return
 
         try:
-            # Clear stopped and halted flags to resume execution
-            self.runtime.stopped = False
-            self.runtime.halted = False
-
             # The interpreter maintains the execution position in PC (moved by STOP).
             # When CONT is executed, tick() will continue from runtime.pc, which was
             # set by execute_stop() to point to the next statement after STOP.
@@ -3552,7 +3540,7 @@ class TkBackend(UIBackend):
             state = self.interpreter.state
             if state.error_info:
                 self.immediate_prompt_label.config(text="Error >", fg="red")
-            elif self.runtime.halted:
+            elif not self.runtime.pc.is_running():
                 if self.paused_at_breakpoint:
                     self.immediate_prompt_label.config(text="Paused >", fg="orange")
                 else:
@@ -3650,14 +3638,13 @@ class TkBackend(UIBackend):
                 #
                 # MAINTENANCE RISK: This duplicates part of start()'s logic (see interpreter.start()
                 # in src/interpreter.py). If start() changes, this code may need to be updated to
-                # match. We only replicate the minimal setup needed (clearing halted flag, marking
-                # first line) while avoiding the full initialization that start() does:
+                # match. We only replicate the minimal setup needed (marking first line) while
+                # avoiding the full initialization that start() does:
                 #   - runtime.setup() (rebuilds tables, resets PC) <- THIS is what we avoid
                 #   - Creates new InterpreterState
                 #   - Sets up Ctrl+C handler
                 # This tradeoff is necessary because RUN [line_number] in immediate mode must
                 # preserve the PC set by the RUN command rather than resetting to first statement.
-                self.runtime.halted = False  # Clear halted flag to start execution
                 self.interpreter.state.is_first_line = True
 
                 self._set_status('Running...')

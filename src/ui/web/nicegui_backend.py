@@ -1971,7 +1971,7 @@ class NiceGUIBackend(UIBackend):
                     # Focus the immediate input box for user to type
                     self.immediate_entry.run_method('focus')
                 # Don't cancel timer - keep ticking to check when input is provided
-            elif self.runtime.halted:
+            elif not self.runtime.pc.is_running():
                 # Check if done or paused at breakpoint
                 if not self.runtime.is_paused_at_statement():
                     # Past end of program - done
@@ -2015,8 +2015,7 @@ class NiceGUIBackend(UIBackend):
             self.exec_timer = None
 
         # Stop the interpreter
-        if self.interpreter:
-            self.runtime.halted = True
+        # Note: PC handles halted state - no need to set flags
 
         # Update UI state
         self.running = False
@@ -2092,8 +2091,7 @@ class NiceGUIBackend(UIBackend):
                 # Already running - step one line
                 if self.interpreter:
                     try:
-                        # Clear halted flag to allow execution (step will set it again after executing)
-                        self.runtime.halted = False
+                        # PC will be updated by tick - no need to manipulate flags
                         state = self.interpreter.tick(mode='step_line', max_statements=100)
                         self._handle_step_result(state, 'line')
                     except Exception as e:
@@ -2160,8 +2158,7 @@ class NiceGUIBackend(UIBackend):
                 # Already running - step one statement
                 if self.interpreter:
                     try:
-                        # Clear halted flag to allow execution (step will set it again after executing)
-                        self.runtime.halted = False
+                        # PC will be updated by tick - no need to manipulate flags
                         state = self.interpreter.tick(mode='step_statement', max_statements=1)
                         self._handle_step_result(state, 'statement')
                     except Exception as e:
@@ -2180,7 +2177,7 @@ class NiceGUIBackend(UIBackend):
 
     def _handle_step_result(self, state, step_type):
         """Handle result of a step operation."""
-        # Use microprocessor model: check error_info, input_prompt, and runtime.halted
+        # Use microprocessor model: check error_info, input_prompt, and pc.is_running()
         if state.input_prompt:
             # Waiting for input - show input UI
             self._show_input_prompt(state.input_prompt)
@@ -2206,9 +2203,9 @@ class NiceGUIBackend(UIBackend):
                 self.current_line_label.visible = False
             # Clear CodeMirror current statement highlight
             self.editor.set_current_statement(None)
-        elif self.runtime.halted:
-            # Runtime is halted - could be paused at statement or finished
-            # Check PC directly - state.current_line returns None when halted
+        elif not self.runtime.pc.is_running():
+            # Runtime is not running - could be paused at statement or finished
+            # Check PC directly - state.current_line returns None when not running
             pc = self.runtime.pc
             if pc and pc.line_num is not None:
                 # Paused at a statement - ready for next step
@@ -2518,10 +2515,9 @@ class NiceGUIBackend(UIBackend):
         - Otherwise (no active execution): Resets PC to halted state, preventing
           unexpected execution when LIST/edit commands modify the program.
         """
-        # Save current PC/halted state before rebuilding statement table
+        # Save current PC before rebuilding statement table
         # We'll conditionally restore based on whether execution is active (see below)
         old_pc = self.runtime.pc
-        old_halted = self.runtime.halted
 
         # Clear and rebuild statement table
         self.runtime.statement_table.statements.clear()
@@ -2540,15 +2536,13 @@ class NiceGUIBackend(UIBackend):
         # Conditionally restore PC based on whether execution timer is active
         # This logic is about PRESERVING vs RESETTING state, not about preventing accidental starts
         if self.exec_timer and self.exec_timer.active:
-            # Timer is active - execution is in progress, so preserve PC and halted state
+            # Timer is active - execution is in progress, so preserve PC
             # (allows program to resume from current position after statement table rebuild)
             self.runtime.pc = old_pc
-            self.runtime.halted = old_halted
         else:
             # Timer is not active - no execution in progress, so reset to halted state
             # (ensures program doesn't start executing unexpectedly when LIST/edit commands run)
             self.runtime.pc = PC.halted_pc()
-            self.runtime.halted = True
 
     def _save_editor_to_program(self):
         """Save editor content to program.
@@ -3478,7 +3472,7 @@ class NiceGUIBackend(UIBackend):
             'pc': {'line': self.runtime.pc.line_num, 'stmt': self.runtime.pc.stmt_offset} if self.runtime.pc else None,
             'npc': {'line': self.runtime.npc.line_num, 'stmt': self.runtime.npc.stmt_offset} if self.runtime.npc else None,
             'statement_table': pickle.dumps(self.runtime.statement_table).hex(),
-            'halted': self.runtime.halted,
+            # Note: halted flag removed - PC is now immutable and indicates running state
             'execution_stack': self.runtime.execution_stack,
             'for_loop_vars': self.runtime.for_loop_vars,
             'line_text_map': self.runtime.line_text_map,
@@ -3490,7 +3484,7 @@ class NiceGUIBackend(UIBackend):
             'error_handler': self.runtime.error_handler,
             'error_handler_is_gosub': self.runtime.error_handler_is_gosub,
             'rnd_last': self.runtime.rnd_last,
-            'stopped': self.runtime.stopped,
+            # Note: stopped flag removed - PC.stop_reason now indicates stop state (display only)
             'breakpoints': [{'line': bp.line_num, 'stmt': bp.stmt_offset} for bp in self.runtime.breakpoints],
             'break_requested': self.runtime.break_requested,
             'trace_on': self.runtime.trace_on,
@@ -3516,7 +3510,8 @@ class NiceGUIBackend(UIBackend):
         self.runtime.pc = PC(state['pc']['line'], state['pc']['stmt']) if state['pc'] else PC.halted_pc()
         self.runtime.npc = PC(state['npc']['line'], state['npc']['stmt']) if state['npc'] else None
         self.runtime.statement_table = pickle.loads(bytes.fromhex(state['statement_table']))
-        self.runtime.halted = state['halted']
+        # Note: halted flag removed - PC is now immutable and indicates running state
+        # Ignore 'halted' key if present (backwards compatibility with old saved states)
         self.runtime.execution_stack = state['execution_stack']
         self.runtime.for_loop_vars = state['for_loop_vars']
         self.runtime.line_text_map = state['line_text_map']
@@ -3528,7 +3523,8 @@ class NiceGUIBackend(UIBackend):
         self.runtime.error_handler = state['error_handler']
         self.runtime.error_handler_is_gosub = state['error_handler_is_gosub']
         self.runtime.rnd_last = state['rnd_last']
-        self.runtime.stopped = state['stopped']
+        # Note: stopped flag removed - PC.stop_reason now indicates stop state (display only)
+        # Ignore 'stopped' key if present (backwards compatibility with old saved states)
         self.runtime.breakpoints = {PC(bp['line'], bp['stmt']) for bp in state['breakpoints']}
         self.runtime.break_requested = state['break_requested']
         self.runtime.trace_on = state['trace_on']

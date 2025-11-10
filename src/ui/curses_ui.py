@@ -2065,12 +2065,11 @@ class CursesBackend(UIBackend):
 
         try:
             state = self.interpreter.get_state()
-            if self.runtime.halted and not state.error_info:
+            if not self.runtime.pc.is_running() and not state.error_info:
                 # Clear statement highlighting when continuing
                 self.editor._update_display()
-                # Continue from breakpoint - just clear halted flag and resume tick execution
+                # Continue from breakpoint - resume tick execution
                 # (Immediate mode status remains disabled - execution will show output in output window)
-                self.runtime.halted = False
                 # Schedule next tick to resume execution
                 self.loop.set_alarm_in(0.01, lambda _loop, _user_data: self._execute_tick())
             else:
@@ -2094,10 +2093,6 @@ class CursesBackend(UIBackend):
             # Fall through to execute first step
 
         try:
-            # If halted, clear it to resume execution (like a microprocessor)
-            if self.runtime.halted:
-                self.runtime.halted = False
-
             # Execute one statement
             # (Immediate mode status remains disabled during execution - output shows in output window)
             state = self.interpreter.tick(mode='step_statement', max_statements=1)
@@ -2109,7 +2104,7 @@ class CursesBackend(UIBackend):
                 self._update_output()
 
             # Update editor display with statement highlighting
-            if self.runtime.halted and not state.error_info and state.current_line:
+            if not self.runtime.pc.is_running() and not state.error_info and state.current_line:
                 # Highlight the current statement in the editor
                 pc = self.runtime.pc
                 self.editor._update_display(
@@ -2127,7 +2122,7 @@ class CursesBackend(UIBackend):
                     self._update_stack_window()
 
             # Show where we halted (if not an error and not completed)
-            if self.runtime.halted and not state.error_info:
+            if not self.runtime.pc.is_running() and not state.error_info:
                 pc = self.runtime.pc
                 # Show PC in line.statement format (e.g., "10.2")
                 pc_display = f"{pc.line_num}.{pc.stmt_offset}" if pc and not pc.halted() else str(state.current_line)
@@ -2146,7 +2141,7 @@ class CursesBackend(UIBackend):
                 self._update_output()
                 # Update immediate status (allows immediate mode again) - error message is in output
                 self._update_immediate_status()
-            elif self.runtime.halted:
+            elif not self.runtime.pc.is_running():
                 # Clear highlighting when done
                 self.editor._update_display()
                 self.output_buffer.append("Program completed")
@@ -2182,10 +2177,6 @@ class CursesBackend(UIBackend):
             # Fall through to execute first step
 
         try:
-            # If halted, clear it to resume execution (like a microprocessor)
-            if self.runtime.halted:
-                self.runtime.halted = False
-
             # Execute all statements on current line
             # (Immediate mode status remains disabled during execution - output shows in output window)
             state = self.interpreter.tick(mode='step_line', max_statements=100)
@@ -2197,7 +2188,7 @@ class CursesBackend(UIBackend):
                 self._update_output()
 
             # Update editor display based on new state
-            if self.runtime.halted and not state.error_info and state.current_line:
+            if not self.runtime.pc.is_running() and not state.error_info and state.current_line:
                 self.editor._update_display(
                     highlight_line=state.current_line,
                     highlight_stmt=0,  # Highlight whole line, not specific statement
@@ -2228,7 +2219,7 @@ class CursesBackend(UIBackend):
                 self._update_output()
                 # Update immediate status (allows immediate mode again) - error message is in output
                 self._update_immediate_status()
-            elif self.runtime.halted:
+            elif not self.runtime.pc.is_running():
                 self.editor._update_display()
                 self.output_buffer.append("Program completed")
                 self._update_output()
@@ -2256,7 +2247,7 @@ class CursesBackend(UIBackend):
 
         try:
             # Stop the interpreter (but don't destroy it - reuse for next run)
-            self.runtime.halted = True
+            # Note: PC handles halted state via stop_reason
             self.running = False
             self.output_buffer.append("Program stopped by user")
             self._update_output()
@@ -3600,7 +3591,7 @@ class CursesBackend(UIBackend):
                 # Update immediate status after error so user can continue
                 self._update_immediate_status()
 
-            elif self.runtime.halted:
+            elif not self.runtime.pc.is_running():
                 # Halted (could be done or breakpoint/paused)
                 # Check if PC is past last statement (program completed)
                 pc = self.runtime.pc
@@ -3657,7 +3648,7 @@ class CursesBackend(UIBackend):
                 context = {}
                 if state:
                     context['current_line'] = state.current_line
-                    context['halted'] = self.runtime.halted
+                    context['is_running'] = self.runtime.pc.is_running()
 
                 error_msg = debug_log_error(
                     "Execution error",
@@ -3691,12 +3682,10 @@ class CursesBackend(UIBackend):
         def on_input_complete(result):
             """Called when user completes input or cancels."""
             # If user cancelled (ESC), stop program execution
-            # Note: This sets runtime.stopped=True (like STOP) and self.running=False (stops UI tick).
-            # The stopped flag and PC position are preserved, so CONT can resume from here.
+            # Note: This stops the UI tick. PC already contains the position with stop_reason for CONT.
             # The behavior is similar to STOP: user can examine variables and continue with CONT.
             if result is None:
                 # Stop execution - PC already contains the position for CONT to resume from
-                self.runtime.stopped = True
                 self.running = False
                 self._append_to_output("Input cancelled - Program stopped")
                 self._update_immediate_status()
@@ -3805,7 +3794,6 @@ class CursesBackend(UIBackend):
         # Preserve current PC if it's valid (execution in progress)
         # Otherwise ensure it stays halted
         old_pc = self.runtime.pc
-        old_halted = self.runtime.halted
 
         # Clear and rebuild statement table
         self.runtime.statement_table.statements.clear()
@@ -3824,16 +3812,14 @@ class CursesBackend(UIBackend):
         # Restore PC only if execution is running AND not paused at breakpoint
         # When paused_at_breakpoint=True, we reset PC to halted to prevent accidental
         # resumption. When the user continues from a breakpoint (via _debug_continue),
-        # the interpreter's state already has the correct PC and simply clears the halted flag.
+        # the interpreter's state already has the correct PC.
         # When not running at all, ensure halted (don't accidentally start execution)
         if self.running and not self.paused_at_breakpoint:
             # Execution is running - preserve execution state
             self.runtime.pc = old_pc
-            self.runtime.halted = old_halted
         else:
             # No execution in progress or paused at breakpoint - ensure halted
             self.runtime.pc = PC.halted_pc()
-            self.runtime.halted = True
 
     def _update_output(self):
         """Update the output window with buffered content."""
@@ -4448,7 +4434,6 @@ class CursesBackend(UIBackend):
                 from src.interpreter import InterpreterState
                 if not hasattr(self.interpreter, 'state') or self.interpreter.state is None:
                     self.interpreter.state = InterpreterState(_interpreter=self.interpreter)
-                self.runtime.halted = False
                 self.interpreter.state.is_first_line = True
 
                 # Immediate mode status remains disabled during execution - program output shows in output window
@@ -4623,15 +4608,13 @@ class CursesBackend(UIBackend):
 
     def cmd_cont(self):
         """Execute CONT command - continue after STOP."""
-        # Check if in stopped state
-        if not self.runtime.stopped:
+        # Check if in stopped state (PC has stop_reason set)
+        if self.runtime.pc.is_running():
             self._append_to_output("?Can't continue")
             return
 
         try:
-            # Clear stopped flag - PC already contains the position to resume from
-            self.runtime.stopped = False
-            self.runtime.halted = False
+            # PC already contains the position to resume from
             self.running = True
 
             # Resume execution by scheduling next tick
