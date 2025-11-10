@@ -2380,8 +2380,12 @@ class Interpreter:
                 # Open for append
                 file_handle = self.fs.open(filename, "a", binary=False)
             elif mode == "R":
-                # Random access - open for both read and write
-                file_handle = self.fs.open(filename, "r+", binary=True)
+                # Random access - open for both read and write, create if doesn't exist
+                try:
+                    file_handle = self.fs.open(filename, "r+", binary=True)
+                except (IOError, OSError):
+                    # File doesn't exist, create it
+                    file_handle = self.fs.open(filename, "w+", binary=True)
             else:
                 raise RuntimeError(f"Invalid OPEN mode: {mode} (valid modes: I, O, A, R)")
 

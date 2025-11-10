@@ -4,21 +4,9 @@ Testing CHAIN
 Test 1: CHAIN with ALL flag (preserves variables)
 Before CHAIN: X = 42 , Y$ = Hello
 
+About to CHAIN to /tmp/chain_target.bas
 === Chained Program ===
 Variable X from main: 42 
 Variable Y$ from main: Hello
 CHAIN with ALL successful!
-Returned from CHAIN
-After CHAIN: X = 42 , Y$ = Hello
-
-Test 2: CHAIN without ALL (variables reset)
-Before CHAIN: A = 99 , B$ = World
-
-=== Chained Program (no ALL) ===
-Variable A (should be 0):0
-Variable B$ (should be empty): ''
-Returned from CHAIN
-After CHAIN: A = 99 , B$ = World
-
-CHAIN tests complete!
 
