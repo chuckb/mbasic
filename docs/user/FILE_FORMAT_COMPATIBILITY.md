@@ -2,16 +2,16 @@
 
 ## Line Endings (Newlines)
 
-MBASIC saves all program files using **Unix-style line endings** (`\n`, also called LF).
+MBASIC saves all program files using **LF line endings** (Line Feed, `\n`, Unix-style).
 
 ### What This Means
 
 - **Loading files**: MBASIC automatically handles files with any line ending style:
-  - Unix (`\n` / LF)
-  - Windows (`\r\n` / CRLF)
-  - Classic Mac (`\r` / CR)
+  - LF (`\n`, Unix/Linux/Mac)
+  - CRLF (`\r\n`, Windows/CP/M)
+  - CR (`\r`, Classic Mac)
 
-- **Saving files**: MBASIC always saves with Unix line endings (`\n`)
+- **Saving files**: MBASIC always saves with LF line endings (`\n`)
 
 ### Why Unix Line Endings?
 

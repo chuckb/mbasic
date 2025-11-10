@@ -1,5 +1,7 @@
 # MBASIC UI Feature Comparison Guide
 
+> **Note:** This guide uses `{{kbd:action:ui}}` notation for keyboard shortcuts. These are template variables that represent actual key combinations. For specific key mappings, see the Help menu in each UI or the individual UI quick reference guides.
+
 This guide helps you choose the right UI for your needs and understand the feature differences between MBASIC's user interfaces.
 
 ## Quick UI Selection Guide
@@ -48,9 +50,9 @@ This guide helps you choose the right UI for your needs and understand the featu
 | **Open file** | ✅ | ✅ | ✅ | ✅ | LOAD "filename" command or File → Open |
 | **Save (interactive)** | ❌ | ✅ | ✅ | ✅ | Keyboard shortcut prompts for filename |
 | **Save (command)** | ✅ | ✅ | ✅ | ✅ | SAVE "filename" command |
-| **Recent files** | ❌ | ❌ | ✅ | ⚠️ | Tk: menu, Web: localStorage |
+| **Recent files** | ❌ | ❌ | ✅ | ✅ | Tk: menu, Web: localStorage (filenames only) |
 | **Drag & drop** | ❌ | ❌ | ✅ | ✅ | GUI only |
-| **Auto-save** | ❌ | ❌ | ⚠️ | ✅ | Tk: planned/optional, Web: automatic |
+| **Auto-save** | ❌ | ❌ | 📋 | ✅ | Tk: planned, Web: automatic |
 
 ### Editing Features
 
@@ -93,7 +95,7 @@ This guide helps you choose the right UI for your needs and understand the featu
 | **Mouse support** | ❌ | ⚠️ | ✅ | ✅ | Curses: limited, terminal-dependent |
 | **Menus** | ❌ | ✅ | ✅ | ✅ | CLI: commands only |
 | **Keyboard shortcuts** | ⚠️ | ✅ | ✅ | ✅ | CLI: limited |
-| **Resizable panels** | ❌ | ⚠️ | ✅ | ✅ | |
+| **Resizable panels** | ❌ | ⚠️ | ✅ | ✅ | Curses: fixed 70/30 split (not user-resizable) |
 | **Themes** | ❌ | ❌ | ⚠️ | ✅ | Web: light/dark |
 | **Font options** | ❌ | ❌ | ✅ | ✅ | |
 

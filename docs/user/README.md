@@ -14,7 +14,7 @@ External user-facing documentation and guides.
 
 ### Reference Documentation
 - **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick command reference (Curses UI specific)
-- **[keyboard-shortcuts.md](keyboard-shortcuts.md)** - Keyboard shortcuts reference (Curses UI specific)
+- **[keyboard-shortcuts.md](keyboard-shortcuts.md)** - Keyboard shortcuts reference (Curses UI specific; Tk shortcuts in TK_UI_QUICK_START.md)
 - **[UI_FEATURE_COMPARISON.md](UI_FEATURE_COMPARISON.md)** - Feature comparison across UIs
 
 ### Configuration

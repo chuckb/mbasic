@@ -18,15 +18,15 @@ Extended precision calculator with up to 100-digit precision for arithmetic oper
 
 ### Calendar
 
-Simple calendar generator - prints a formatted calendar for any month/year (1900-2099)
+Month/year calendar generator - prompts for specific month and year (1900-2099), prints formatted calendar (Dr Dobbs, 1982)
 
 **Source:** Dr Dobbs Nov 1981
 **Year:** 1982
-**Tags:** date, calendar, utility
+**Tags:** date, calendar, utility, month-view
 
 **[Download calendar.bas](calendar.bas)**
 
-**Note:** A different calendar program is also available in the [Games Library](../games/index.md#calendar)
+**Note:** A different calendar program (full-year display) is available in the [Games Library](../games/index.md#calendar)
 
 ---
 

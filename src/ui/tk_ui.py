@@ -3648,13 +3648,15 @@ class TkBackend(UIBackend):
                 # set PC to the correct line (e.g., RUN 120 sets PC to line 120).
                 # Instead, we manually perform minimal initialization here.
                 #
-                # MAINTENANCE RISK: This duplicates part of start()'s logic. If start()
-                # changes, this code may need to be updated to match. We only replicate
-                # the minimal setup needed (clearing halted flag, marking first line)
-                # while avoiding the full initialization that start() does:
+                # MAINTENANCE RISK: This duplicates part of start()'s logic (see interpreter.start()
+                # in src/interpreter.py). If start() changes, this code may need to be updated to
+                # match. We only replicate the minimal setup needed (clearing halted flag, marking
+                # first line) while avoiding the full initialization that start() does:
                 #   - runtime.setup() (rebuilds tables, resets PC) <- THIS is what we avoid
                 #   - Creates new InterpreterState
                 #   - Sets up Ctrl+C handler
+                # This tradeoff is necessary because RUN [line_number] in immediate mode must
+                # preserve the PC set by the RUN command rather than resetting to first statement.
                 self.runtime.halted = False  # Clear halted flag to start execution
                 self.interpreter.state.is_first_line = True
 

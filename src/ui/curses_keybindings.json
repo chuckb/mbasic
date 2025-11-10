@@ -30,11 +30,6 @@
       "primary": "Ctrl+V",
       "description": "Save program (Ctrl+S unavailable - terminal flow control)"
     },
-    "parse": {
-      "keys": ["Ctrl+P"],
-      "primary": "Ctrl+P",
-      "description": "Parse program"
-    },
     "goto_line": {
       "keys": ["Ctrl+G"],
       "primary": "Ctrl+G",
@@ -64,6 +59,21 @@
       "keys": ["Ctrl+Q"],
       "primary": "Ctrl+Q",
       "description": "Quit"
+    },
+    "toggle_variables": {
+      "keys": ["Ctrl+W"],
+      "primary": "Ctrl+W",
+      "description": "Toggle variables window"
+    },
+    "renumber": {
+      "keys": ["Ctrl+E"],
+      "primary": "Ctrl+E",
+      "description": "Renumber all lines (RENUM)"
+    },
+    "settings": {
+      "keys": ["Ctrl+P"],
+      "primary": "Ctrl+P",
+      "description": "Settings"
     }
   },
   "help_browser": {

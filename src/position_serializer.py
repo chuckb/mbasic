@@ -122,6 +122,10 @@ class PositionSerializer:
         Note: This function requires lowercase input because it looks up the display case
         from the keyword case manager using the normalized form. The manager then applies
         the configured case policy (upper, lower, etc.) to produce the final output.
+
+        Architecture note: The parser stores keywords in uppercase (from TokenType enum names),
+        so callers must convert to lowercase before calling this method. See serialize_rem_statement()
+        for an example where stmt.comment_type.lower() is used for this conversion.
         """
         # Get display case from keyword case manager table
         if self.keyword_case_manager:
@@ -386,7 +390,8 @@ class PositionSerializer:
         elif expr_type == 'VariableNode':
             # Use original case if available, otherwise fall back to normalized name
             text = getattr(expr, 'original_case', expr.name) or expr.name
-            # Only add type suffix if explicit
+            # Only add type suffix if explicitly present in source code (not inferred from DEFINT/DEFSNG/etc)
+            # Note: explicit_type_suffix attribute may not exist on all VariableNode instances (defaults to False via getattr)
             if expr.type_suffix and getattr(expr, 'explicit_type_suffix', False):
                 text += expr.type_suffix
             # Add subscripts if present

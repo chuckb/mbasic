@@ -26,11 +26,11 @@ class SettingsManager:
 
     Precedence: project > global > default
 
-    Note: File-level settings infrastructure is partially implemented (file_settings dict,
-    FILE scope support in get/set/reset methods for runtime manipulation), but persistence
-    is not implemented (load() doesn't populate it, save() doesn't persist it). No settings
-    are defined with FILE scope in settings_definitions.py. This infrastructure is reserved
-    for future use.
+    Note: File-level settings (per-file settings) infrastructure is FULLY IMPLEMENTED for
+    runtime manipulation (file_settings dict, FILE scope support in get/set/reset methods),
+    but persistence is NOT IMPLEMENTED (load() doesn't populate it, save() doesn't persist it).
+    Files can have temporary settings set programmatically via set() with scope=SettingScope.FILE,
+    but these won't survive program restarts. Reserved for future use with persistence layer.
     """
 
     def __init__(self, project_dir: Optional[str] = None, backend: Optional[SettingsBackend] = None):
@@ -93,13 +93,13 @@ class SettingsManager:
     def load(self):
         """Load settings from backend (file or Redis).
 
-        Format handling: Settings are stored on disk in flattened format (e.g.,
-        {'editor.auto_number': True}) but this method loads them as-is without unflattening.
+        This method delegates loading to the backend, which returns settings dicts.
+        The backend determines the format (flat vs nested) based on what was saved.
         Internal representation is flexible: _get_from_dict() handles both flat keys like
         'editor.auto_number' and nested dicts like {'editor': {'auto_number': True}}.
-        Loaded settings remain flat; settings modified via set() become nested; both work.
+        Settings loaded from disk remain flat; settings modified via set() become nested; both work.
         """
-        # Load settings from backend
+        # Load settings from backend (backend handles format/storage details)
         self.global_settings = self.backend.load_global()
         self.project_settings = self.backend.load_project()
 
@@ -163,10 +163,11 @@ class SettingsManager:
 
         Precedence order: file > project > global > definition default > provided default
 
-        Note: File-level settings (first in precedence) are not populated in normal usage.
-        The file_settings dict can be set programmatically and is checked first, but no
-        persistence layer exists (not saved/loaded) and no UI/command manages per-file settings.
-        In practice, precedence is: project > global > definition default > provided default.
+        Note: File-level settings (first in precedence) are not populated in normal usage,
+        but can be set programmatically via set(key, value, scope=SettingScope.FILE).
+        The file_settings dict is checked first, but no persistence layer exists (not saved/loaded)
+        and no UI/command manages per-file settings. In practice, typical precedence order is:
+        project > global > definition default > provided default.
 
         Args:
             key: Setting key (e.g., 'variables.case_conflict')

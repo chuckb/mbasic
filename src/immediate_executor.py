@@ -247,9 +247,11 @@ class ImmediateExecutor:
 
                 # Note: We do not save/restore the PC before/after execution by design.
                 # This allows statements like RUN to properly change execution position.
-                # Control flow statements (GOTO, GOSUB) can also modify PC but are not recommended
-                # in immediate mode as they may produce unexpected results (see help text).
-                # Normal statements (PRINT, LET) don't modify PC.
+                # Tradeoff: Control flow statements (GOTO, GOSUB) can also modify PC but are
+                # not recommended in immediate mode as they may produce unexpected results
+                # (see help text). This design prioritizes RUN functionality over preventing
+                # potentially confusing GOTO/GOSUB behavior. Normal statements (PRINT, LET)
+                # don't modify PC and work as expected.
 
             # Get captured output
             output = self.io.get_output() if self.io else ""
@@ -403,8 +405,9 @@ class OutputCapturingIOHandler:
     def input(self, prompt=""):
         """Input not supported in immediate mode.
 
-        Note: INPUT statements are parsed and executed normally, but fail
-        at runtime when the interpreter calls this input() method."""
+        User-facing behavior: INPUT statement will fail at runtime in immediate mode.
+        Implementation detail: INPUT statements parse successfully but execution fails
+        when the interpreter calls this input() method."""
         raise RuntimeError("INPUT not allowed in immediate mode")
 
     def write(self, text):

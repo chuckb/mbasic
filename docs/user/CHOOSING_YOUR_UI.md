@@ -70,11 +70,11 @@ python3 mbasic --debug program.bas
 
 **Limitations:**
 - Line-by-line editing only
-- No visual debugging (text commands only)
+- No visual debugging interface (uses text commands instead)
 - No mouse support
 - No Save without filename
 
-> **Note:** CLI has full debugging capabilities through commands (BREAK, STEP, STACK), but lacks the visual debugging interface (Variables Window, clickable breakpoints, etc.) found in Curses, Tk, and Web UIs.
+> **Note:** CLI has full debugging capabilities through text commands (BREAK, STEP, STACK), but lacks the visual debugging interface (Variables Window, clickable breakpoints, etc.) found in Curses, Tk, and Web UIs.
 
 ### 📟 Curses (Terminal UI)
 
@@ -305,17 +305,19 @@ python3 mbasic --ui web --open
 
 ## Performance Comparison
 
+> **Note:** These measurements are approximate, taken on typical development hardware (modern CPU, 8GB+ RAM, Python 3.9+). Actual performance varies based on your system. Startup times are "cold start" measurements. Memory usage shown is Python process only; Web UI browser memory not included.
+
 ### Startup Time
 1. **CLI**: ~0.1s (fastest)
 2. **Curses**: ~0.3s
 3. **Tk**: ~0.8s
-4. **Web**: ~2s (browser launch)
+4. **Web**: ~2s (includes browser launch time)
 
 ### Memory Usage (approximate)
 1. **CLI**: 20MB (lowest)
 2. **Curses**: 25MB
 3. **Tk**: 40MB
-4. **Web**: 50MB+ (plus browser)
+4. **Web**: 50MB+ (Python process only; browser adds 100MB+)
 
 ### Large File Handling
 1. **CLI**: Best (streaming)

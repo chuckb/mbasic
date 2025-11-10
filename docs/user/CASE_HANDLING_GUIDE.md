@@ -27,7 +27,7 @@ Imagine you're writing a program:
 ```basic
 10 TotalCount = 0
 20 FOR I = 1 TO 10
-30   TotalCont = TotalCount + I   ← Typo! Missing 'u' in assignment target
+30   TotalCont = TotalCount + I   ← Typo! Missing 'u' in TotalCount
 40 NEXT I
 50 PRINT TotalCount
 ```

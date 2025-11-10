@@ -162,7 +162,7 @@ The result takes the "wider" type (DOUBLE > SINGLE > INTEGER).
 **INTEGER Overflow:**
 ```basic
 10 X% = 32767
-20 X% = X% + 1     ' ERROR: Overflow
+20 X% = X% + 1     ' ERROR: Overflow (Error 6 - OV)
 ```
 
 **Solution:** Use SINGLE or DOUBLE for larger numbers.
@@ -170,13 +170,15 @@ The result takes the "wider" type (DOUBLE > SINGLE > INTEGER).
 **Floating-Point Overflow:**
 ```basic
 10 X# = 1D+308
-20 X# = X# * 10    ' ERROR: Overflow
+20 X# = X# * 10    ' ERROR: Overflow (Error 6 - OV)
 ```
+
+See [Error Codes](appendices/error-codes.md) for more information on error 6 (OV - Overflow).
 
 **Underflow** (too small):
 ```basic
 10 X# = 1D-308
-20 X# = X# / 10    ' Becomes 0 (underflow)
+20 X# = X# / 10    ' Becomes 0 (underflow - no error)
 ```
 
 ## String Length Limit

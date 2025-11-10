@@ -10,7 +10,7 @@ keywords: [tk, workflows, guide, tutorial]
 
 Step-by-step guides for typical development tasks.
 
-**Note:** Some features described below (Smart Insert, Variables Window, Execution Stack, Renumber dialog) are documented here based on the Tk UI design specifications. Check [Settings](settings.md) for current implementation status or refer to the actual UI to verify which features are currently available.
+**Note:** The Tk UI has most features described below implemented (Smart Insert, Variables Window, Execution Stack, Renumber). The Settings dialog for configuring these features is planned but not yet implemented - see [Settings](settings.md) for details.
 
 ## 1. Write New Program
 

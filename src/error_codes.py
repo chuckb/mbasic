@@ -13,8 +13,10 @@ Specific duplicates (from MBASIC 5.21 specification):
 - DF: code 25 ("Device fault") and code 61 ("Disk full")
 - CN: code 17 ("Can't continue") and code 69 ("Communication buffer overflow")
 
-All error handling in this implementation uses numeric codes for lookups, so the
-duplicate two-letter codes do not cause ambiguity in practice.
+These duplicates exist in the original MBASIC 5.21 specification likely due to error codes
+being added at different times during development (communication and device errors came later).
+All error handling in this implementation uses numeric codes for lookups, so the duplicate
+two-letter codes do not cause ambiguity in practice.
 """
 
 # Error code mapping: number -> (two_letter_code, message)

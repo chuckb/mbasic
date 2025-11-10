@@ -360,7 +360,7 @@ class ResourceLimits:
 def create_web_limits() -> ResourceLimits:
     """Create resource limits suitable for web environment (restrictive).
 
-    Maintains MBASIC 5.21 compatibility with 255-byte string length limit.
+    MBASIC 5.21 compatibility: Enforces 255-byte string length limit (required for spec compliance).
 
     Returns:
         ResourceLimits configured for web environment with tight constraints
@@ -383,7 +383,7 @@ def create_web_limits() -> ResourceLimits:
 def create_local_limits() -> ResourceLimits:
     """Create resource limits suitable for local CLI (generous).
 
-    Maintains MBASIC 5.21 compatibility with 255-byte string length limit.
+    MBASIC 5.21 compatibility: Enforces 255-byte string length limit (required for spec compliance).
 
     Returns:
         ResourceLimits configured for local environment with generous constraints
@@ -406,11 +406,11 @@ def create_local_limits() -> ResourceLimits:
 def create_unlimited_limits() -> ResourceLimits:
     """Create effectively unlimited limits (for testing).
 
-    Note: This configuration intentionally breaks MBASIC 5.21 compatibility by setting
-    max_string_length to 1MB (instead of 255 bytes). This allows testing modern programs
-    without string length constraints, but may cause tests to pass with unlimited limits
-    that would fail with MBASIC-compatible limits. Use create_local_limits() or
-    create_web_limits() for MBASIC 5.21 compatible string handling.
+    WARNING: This configuration INTENTIONALLY BREAKS MBASIC 5.21 COMPATIBILITY by setting
+    max_string_length to 1MB (instead of the required 255 bytes). This is for testing/development
+    only - programs may pass tests with unlimited limits that would fail with MBASIC-compatible
+    limits. For MBASIC 5.21 spec compliance, use create_local_limits() or create_web_limits()
+    which enforce the mandatory 255-byte string limit.
 
     Returns:
         ResourceLimits configured with very high limits for testing/development

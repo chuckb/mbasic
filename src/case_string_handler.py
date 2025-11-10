@@ -49,19 +49,12 @@ class CaseStringHandler:
                 policy = get("keywords.case_style", "force_lower")
                 table = cls.get_keyword_table(policy)
             elif setting_prefix == "idents":
-                # Identifiers always preserve their original case in display.
-                # Unlike keywords, which can be forced to a specific case policy,
-                # identifiers (variable/function names) retain their case as typed.
-                # This matches MBASIC 5.21 behavior where identifiers are case-insensitive
-                # for matching but preserve display case.
-                #
-                # Note: This function ONLY handles display formatting (what the user sees).
-                # Case-insensitive matching occurs elsewhere:
-                # - At runtime: Variable lookups use canonicalized (lowercase) names as keys
-                #   in Runtime.variables and Runtime.arrays dictionaries (see runtime.py)
-                # - During parsing: Identifier comparison uses lowercase normalized forms
-                # This separation allows "MyVar", "myvar", and "MYVAR" to reference the same
-                # variable while each preserves its own display case when printed.
+                # Identifiers (variable/function names) always preserve original case in display.
+                # Unlike keywords (which follow case_style policy), identifiers retain case as typed.
+                # This matches MBASIC 5.21: identifiers are case-insensitive for matching but
+                # preserve display case. Case-insensitive matching happens at runtime (runtime.py
+                # uses lowercase keys) and parsing (uses normalized forms), while this function
+                # only handles display formatting.
                 return original_text
             else:
                 # Unknown prefix, return original

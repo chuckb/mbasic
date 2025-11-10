@@ -1,5 +1,7 @@
 # MBASIC Curses IDE - Quick Reference Card
 
+> **Note:** This reference uses `{{kbd:command}}` notation for keyboard shortcuts. Actual key mappings are configurable. To see your current key bindings, press the Help key or check `~/.mbasic/curses_keybindings.json`.
+
 ## Starting the IDE
 ```bash
 python3 mbasic --ui curses [filename.bas]

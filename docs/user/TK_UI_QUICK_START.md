@@ -1,5 +1,7 @@
 # MBASIC Tk UI - Quick Start Guide
 
+> **Note:** This guide uses `{{kbd:command}}` notation for keyboard shortcuts. Actual key mappings shown in the Help menu (Help → Keyboard Shortcuts) or in the Tk UI documentation.
+
 ## Starting the Tk UI
 
 ```bash

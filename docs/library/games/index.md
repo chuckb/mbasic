@@ -270,15 +270,15 @@ Classic BASIC games from the CP/M era
 
 ### Calendar
 
-Year-long calendar display program from Creative Computing
+Full-year calendar display program - shows entire year's calendar at once (Creative Computing, 1979)
 
 **Source:** Creative Computing, Morristown, NJ
 **Year:** 1979
-**Tags:** calendar, display
+**Tags:** calendar, display, year-view
 
 **[Download calendar.bas](calendar.bas)**
 
-**Note:** A simpler calendar utility is also available in the [Utilities Library](../utilities/index.md#calendar)
+**Note:** A different calendar program (month/year selector, 1900-2099) is available in the [Utilities Library](../utilities/index.md#calendar)
 
 ---
 

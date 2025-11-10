@@ -16,6 +16,8 @@ python3 --version
 
 If you see a version number like `Python 3.9.x` or higher, you're good to go! If not, download Python from [python.org](https://www.python.org/downloads/).
 
+> **Note:** This guide uses `python3` in all examples. On some systems (especially Windows), Python 3 is available as `python` instead. If you get "python3: command not found", try using `python` instead. See the Troubleshooting section for details.
+
 ## System Package Requirements (Root Installation)
 
 **On Debian/Ubuntu/Linux Mint systems**, you need to install these packages via `apt` with `sudo`:

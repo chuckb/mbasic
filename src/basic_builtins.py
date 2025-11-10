@@ -3,7 +3,9 @@ Built-in functions for MBASIC 5.21 (CP/M era MBASIC-80).
 
 BASIC built-in functions (SIN, CHR$, INT, etc.) and formatting utilities (TAB, SPC, USING).
 
-Note: Version 5.21 refers to BASIC-80 Reference Manual Version 5.21.
+Note: Version 5.21 refers to BASIC-80 Reference Manual Version 5.21, which documents
+Microsoft BASIC-80 as implemented for CP/M systems. This version was chosen as the
+reference implementation for maximum compatibility with classic BASIC programs.
 """
 
 import math
@@ -284,6 +286,7 @@ class UsingFormatter:
         if rounded == 0 and original_negative:
             is_negative = True
         else:
+            # For non-zero values, use the rounded value's sign (normal case)
             is_negative = rounded < 0
         abs_value = abs(rounded)
 
@@ -345,7 +348,8 @@ class UsingFormatter:
         content_width = len(num_str)
         if spec['dollar_sign']:
             content_width += 1
-        # Add sign to content width (trailing_minus_only ALWAYS adds a char, - or space)
+        # Add sign to content width
+        # Note: trailing_minus_only adds - for negative OR space for non-negative (always reserves 1 char)
         if spec['leading_sign'] or spec['trailing_sign'] or spec['trailing_minus_only']:
             content_width += 1
 
@@ -354,11 +358,10 @@ class UsingFormatter:
         # Build result
         result_parts = []
 
-        # For leading sign: padding comes first, then sign immediately before number
+        # For leading sign: padding comes first (spaces only), then sign immediately before number
+        # Note: Leading sign format uses spaces for padding, never asterisks (even if ** specified)
         if spec['leading_sign']:
-            # Add padding first (but only spaces, not asterisks for leading sign)
             result_parts.append(' ' * max(0, padding_needed))
-            # Then the sign
             result_parts.append('-' if is_negative else '+')
         else:
             # No leading sign: add padding/asterisk fill first
@@ -842,9 +845,9 @@ class BuiltinFunctions:
 
         Implementation details:
         - execute_open() in interpreter.py stores mode ('I', 'O', 'A', 'R') in file_info['mode']
-        - Mode 'I' files are opened with binary=True, allowing ^Z detection
+        - Mode 'I' files are opened in binary mode ('rb'), allowing ^Z detection
         - Text mode files (output 'O', append 'A') use standard Python EOF detection without ^Z
-        - See execute_open() in interpreter.py lines 2313-2369 for file opening implementation
+        - See execute_open() in interpreter.py for file opening implementation (search for "execute_open")
         """
         file_num = int(file_num)
         if file_num not in self.runtime.files:
@@ -999,15 +1002,15 @@ class BuiltinFunctions:
         INPUT$ - Read num characters from keyboard or file.
         (Method name is INPUT since Python doesn't allow $ in names)
 
+        This method receives the file number WITHOUT the # prefix (parser strips it).
+
         BASIC syntax:
             INPUT$(n) - read n characters from keyboard
             INPUT$(n, #filenum) - read n characters from file
 
         Python call syntax (from interpreter):
             INPUT(n) - read n characters from keyboard
-            INPUT(n, filenum) - read n characters from file
-
-        Note: The # prefix in BASIC syntax is stripped by the parser before calling this method.
+            INPUT(n, filenum) - read n characters from file (# prefix already stripped)
         """
         num = int(num)
 

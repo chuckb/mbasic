@@ -203,6 +203,11 @@ class Z88dkCBackend(CodeGenBackend):
 
         BASIC allows names like "I!", "COUNT%", "VALUE#"
         C needs alphanumeric + underscore, no type suffixes.
+
+        Transformations applied:
+        1. Remove type suffix (!%#$)
+        2. Convert to lowercase for consistency
+        3. Add 'v_' prefix if name conflicts with C keywords
         """
         # Remove type suffix
         name = basic_name.rstrip('!%#$')

@@ -90,10 +90,10 @@ class LineNode:
 
     Design note: This class intentionally does not have a source_text field to avoid
     maintaining duplicate copies that could get out of sync with the AST during editing.
-    Text regeneration is handled by the position_serializer module which reconstructs
-    source text from statement nodes and their token information. Each StatementNode
-    has char_start/char_end offsets that indicate the character position within the
-    regenerated line text.
+    Text regeneration is handled by the src.position_serializer module which reconstructs
+    source text from statement nodes and their token information. The serializer's
+    serialize_line() method uses each statement's tokens and char_start/char_end offsets to
+    regenerate the exact source text with preserved formatting and keyword casing.
     """
     line_number: int
     statements: List['StatementNode']
@@ -112,11 +112,17 @@ class StatementNode:
     All statement nodes inherit from this class. Statement nodes represent
     executable commands in BASIC programs. Subclasses include PrintStatementNode,
     ForStatementNode, GotoStatementNode, etc.
+
+    Note: char_start/char_end are populated by the parser and used by:
+    - UI highlighting: tk_ui._highlight_current_statement() highlights the currently executing
+      statement by underlining the text from char_start to char_end
+    - Position serializer: Preserves exact character positions for text regeneration
+    - Cursor positioning: Determines which statement the cursor is in during editing
     """
     line_num: int = 0
     column: int = 0
-    char_start: int = 0  # Character offset from start of line for highlighting
-    char_end: int = 0    # Character offset end position for highlighting
+    char_start: int = 0  # Character offset from start of line (see class docstring)
+    char_end: int = 0    # Character offset end position (see class docstring)
 
 
 @dataclass
@@ -134,8 +140,9 @@ class PrintStatementNode:
 
     Note: keyword_token fields are present in some statement nodes (PRINT, IF, FOR) but not
     others. These were intended for case-preserving keyword regeneration but are not currently
-    used by position_serializer, which handles keyword case through case_keepy_string() instead.
-    The fields remain for potential future use and backward compatibility.
+    used by position_serializer, which handles keyword case through apply_keyword_case_policy()
+    and the KeywordCaseManager instead. The fields remain for potential future use and backward
+    compatibility.
     """
     expressions: List['ExpressionNode']
     separators: List[str]  # ";" or "," or None for newline
@@ -886,7 +893,8 @@ class RemarkStatementNode:
 
     Note: comment_type preserves the original comment syntax used in source code.
     The parser sets this to "REM", "REMARK", or "APOSTROPHE" based on input.
-    Default value "REM" is used only when creating nodes programmatically.
+    Default value "REM" is used only when creating nodes programmatically (not from parsed
+    source). When generating source text, this value determines which comment keyword appears.
     """
     text: str
     comment_type: str = "REM"  # Tracks original syntax: "REM", "REMARK", or "APOSTROPHE"
@@ -1325,10 +1333,11 @@ class TypeInfo:
     between type suffixes, DEF statement tokens, and VarType enum values.
 
     This class serves two purposes:
-    1. Static helper methods for type conversions
+    1. Static helper methods for type conversions (from_suffix, from_token, etc.)
     2. Compatibility layer: Class attributes (INTEGER, SINGLE, etc.) alias VarType
-       enum values to support legacy code using TypeInfo.INTEGER instead of
-       VarType.INTEGER
+       enum values to support legacy code that used TypeInfo.INTEGER instead of
+       VarType.INTEGER. This allows gradual migration without breaking existing code.
+       Note: New code should use VarType enum directly.
     """
     # Expose enum values as class attributes for compatibility
     INTEGER = VarType.INTEGER

@@ -193,16 +193,23 @@ class SandboxedFileIO(FileIO):
     Why server memory? Web UI runs Python interpreter on server, not in browser.
     Security: No access to server filesystem - all files are sandboxed in memory.
     Lifetime: Files exist only during the server session (cleared on restart).
+              This is intentional - ephemeral storage prevents cross-user data leakage
+              in the multi-user web environment. Users must download programs via
+              browser's File → Save to persist them locally.
 
     Implementation status:
-    - list_files(): IMPLEMENTED - delegates to backend.sandboxed_fs
-    - load_file(): STUB - raises IOError (requires async refactor)
-    - save_file(): STUB - raises IOError (requires async refactor)
+    - list_files(): FULLY IMPLEMENTED - delegates to backend.sandboxed_fs to list
+                    in-memory files created by BASIC programs (OPEN/PRINT#/CLOSE)
+    - load_file(): STUB - raises IOError (requires async refactor to load .BAS programs)
+    - save_file(): STUB - raises IOError (requires async refactor to save .BAS programs)
     - delete_file(): STUB - raises IOError (requires async refactor)
     - file_exists(): STUB - raises IOError (requires async refactor)
 
-    The stubs exist because the current FileIO interface is synchronous, but full
-    implementation requires async refactor to properly integrate with the web UI backend.
+    Why only list_files() is implemented: The sandboxed_fs filesystem already exists
+    for runtime file I/O (OPEN/CLOSE/PRINT#). The list_files() method simply queries
+    what files exist in that already-functional in-memory filesystem. The other methods
+    (load/save/delete) require async refactor to integrate with the web UI's file
+    upload/download mechanisms for .BAS program files (not the same as runtime data files).
     """
 
     def __init__(self, backend):

@@ -8,11 +8,11 @@ keywords: [settings, configuration, tkinter, desktop, preferences, dialog]
 
 # Tk Settings Dialog
 
-**Implementation Status:** The Tk (Tkinter) desktop GUI is planned to provide the most comprehensive settings dialog. **The features described in this document represent planned/intended implementation and are not yet available.** This is a design document for future development.
+**Implementation Status:** The Tk (Tkinter) desktop GUI is planned to provide a comprehensive settings dialog. **The settings dialog itself is not yet implemented - settings are currently managed programmatically.** This document describes the planned settings dialog design.
 
 The Tk GUI is designed to offer a tabbed interface for all MBASIC settings, with more configuration options than the Web UI, including keyword display, variable case handling, interpreter settings, and UI themes.
 
-**Current Status:** Most features described below are not yet implemented. Check the actual UI or [UI Feature Comparison](../../../user/UI_FEATURE_COMPARISON.md) for what is currently available.
+**Current Status:** Many TK UI features work (auto-save, syntax checking, breakpoints, etc.) but the graphical settings dialog is not yet implemented. Settings are managed programmatically or via configuration files. Check the actual UI or [UI Feature Comparison](../../../user/UI_FEATURE_COMPARISON.md) for what is currently available.
 
 ## Opening the Settings Dialog
 

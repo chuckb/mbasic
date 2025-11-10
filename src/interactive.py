@@ -4,12 +4,15 @@ Modern implementation of MBASIC 5.21 interactive REPL
 
 Implements the interactive REPL with:
 - Line entry and editing
-- Direct commands: AUTO, EDIT, HELP (handled before parsing)
+- Direct commands: AUTO, EDIT, HELP (special-cased before parser, see execute_command())
 - Immediate mode statements: All other commands (RUN, LIST, SAVE, LOAD, NEW, MERGE, FILES,
-  SYSTEM, DELETE, RENUM, etc.) are handled directly by execute_immediate() methods
+  SYSTEM, DELETE, RENUM, etc.) are parsed as BASIC statements and executed via execute_immediate()
 - AUTO command for automatic line numbering with customizable start/step
 - EDIT command for character-by-character line editing (insert/delete/copy mode)
 - Immediate mode execution (PRINT, LET, etc. without line numbers)
+
+Note: Line number detection happens first in process_line(), then non-numbered lines go to
+execute_command() where AUTO/EDIT/HELP are handled before attempting to parse as BASIC statements.
 """
 
 import sys
@@ -471,8 +474,10 @@ class InteractiveMode:
         - Handles input prompts and errors during execution
 
         IMPORTANT: CONT will fail with "?Can't continue" if the program has been edited
-        (lines added, deleted, or renumbered) because editing clears the GOSUB/RETURN and
-        FOR/NEXT stacks to prevent crashes from invalidated return addresses and loop contexts.
+        (lines added, deleted, or renumbered). While the stopped flag remains True after
+        editing, the PC and execution stacks (GOSUB/RETURN and FOR/NEXT) become invalid,
+        causing CONT to fail. The stopped flag is intentionally NOT cleared by
+        clear_execution_state() so that CONT can detect the invalid state.
         See clear_execution_state() for details.
         """
         if not self.program_runtime or not self.program_runtime.stopped:
@@ -698,8 +703,13 @@ class InteractiveMode:
                 program_text = f.read()
 
             # Save variables based on CHAIN options:
-            # - MERGE or ALL: saves all variables (both flags have identical behavior for variable preservation)
+            # - ALL: passes all variables to the chained program
+            # - MERGE: merges program lines (overlays code) - NOTE: Currently also passes all vars
             # - Neither: passes only COMMON variables (resolves type suffixes if needed)
+            #
+            # MBASIC 5.21 behavior: MERGE and ALL are orthogonal options.
+            # Current implementation: Both MERGE and ALL result in passing all variables.
+            # TODO: Separate line merging (MERGE) from variable passing (ALL).
             saved_variables = None
             if self.program_runtime:
                 if all_flag or merge:
@@ -983,11 +993,12 @@ class InteractiveMode:
                 stmt.line_number = line_map[stmt.line_number]
 
     def _renum_erl_comparison(self, expr, line_map):
-        """Handle ERL binary operations in expressions
+        """Handle binary operations with ERL on left side
 
         MBASIC 5.21 Manual Specification:
         When ERL appears on the left side of a comparison operator (=, <>, <, >, <=, >=),
         the right-hand number is treated as a line number reference and should be renumbered.
+        Note: Only ERL on LEFT side is checked (ERL = 100, not 100 = ERL).
 
         INTENTIONAL DEVIATION FROM MANUAL:
         This implementation renumbers for ANY binary operator with ERL on left, including
@@ -1080,11 +1091,12 @@ class InteractiveMode:
         - <CR>: End and save
 
         Note: Count prefixes ([n]D, [n]C) and search commands ([n]S, [n]K) are not yet implemented.
-        INTENTIONAL BEHAVIOR: When digits are entered, they fall through the command checks and
-        are not processed (no output, no cursor movement, no error). This happens because there's
-        no explicit digit handling - they simply don't match any elif branch. This preserves MBASIC
-        compatibility where digits are reserved for count prefixes in the full EDIT implementation.
-        Future enhancement will add explicit digit parsing to accumulate count prefixes for commands.
+
+        INTENTIONAL MBASIC-COMPATIBLE BEHAVIOR: When digits are entered, they silently do nothing
+        (no output, no cursor movement, no error). This matches MBASIC 5.21 behavior where digits
+        are reserved for count prefixes (e.g., "3D" = delete 3 chars). Implementation: digits fall
+        through the command checks without matching any elif branch. Future enhancement will add
+        explicit digit parsing to accumulate count prefixes for commands like [n]D, [n]C, [n]S.
         """
         if not args or not args.strip():
             print("?Syntax error - specify line number")
@@ -1456,13 +1468,16 @@ class InteractiveMode:
             if ast.lines and len(ast.lines) > 0:
                 line_node = ast.lines[0]
                 # Save old PC to preserve stopped program position for CONT.
-                # Note: GOTO/GOSUB in immediate mode work but have special semantics:
+                # Note: GOTO/GOSUB in immediate mode work but PC restoration affects CONT behavior:
                 # They execute and jump during execute_statement(), but we restore the
                 # original PC afterward to preserve CONT functionality. This means:
                 # - The jump happens and target code runs during execute_statement()
                 # - The final PC change is then reverted, preserving the stopped position
                 # - CONT will resume at the original stopped location, not the GOTO target
-                # This is the intended behavior but may be unexpected, hence "not recommended".
+                # This implementation allows GOTO/GOSUB to function while preserving CONT state.
+                # However, the transient jump behavior may be unexpected, hence marked "not recommended"
+                # in help text. Users should prefer explicit RUN or line modifications over immediate
+                # mode GOTO/GOSUB.
                 old_pc = runtime.pc
 
                 # Execute each statement on line 0

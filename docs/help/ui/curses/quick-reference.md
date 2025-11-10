@@ -24,8 +24,8 @@ Quick reference for the curses text UI.
 | **{{kbd:quit:curses}}** | Quit |
 | **ESC** | Show menu |
 | **{{kbd:help:curses}}** | Help |
-| **Menu only** | Toggle variables window |
-| **Menu only** | Settings |
+| **{{kbd:toggle_variables:curses}}** | Toggle variables window |
+| **{{kbd:settings:curses}}** | Settings |
 | **Menu only** | Toggle execution stack window |
 
 ## Program Management
@@ -44,7 +44,7 @@ Quick reference for the curses text UI.
 |-----|--------|
 | **{{kbd:toggle_breakpoint:curses}}** | Toggle breakpoint on current line |
 | **Delete/Backspace** | Delete current line |
-| **Menu only** | Renumber all lines (RENUM) |
+| **{{kbd:renumber:curses}}** | Renumber all lines (RENUM) |
 
 **Note:** Cut/Copy/Paste are not available - use your terminal's native clipboard (typically Shift+Ctrl+C/V or mouse selection).
 
@@ -58,7 +58,7 @@ Quick reference for the curses text UI.
 | **{{kbd:step_line:curses}}** | Step Line - execute all statements on current line |
 | **{{kbd:step:curses}}** | Step Statement - execute one statement at a time |
 | **{{kbd:stop:curses}}** | Stop execution |
-| **Menu only** | Show/hide variables window |
+| **{{kbd:toggle_variables:curses}}** | Show/hide variables window |
 | **Menu only** | Show/hide execution stack window |
 
 ## Variables Window (when visible)

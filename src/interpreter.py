@@ -1517,16 +1517,17 @@ class Interpreter:
         self.runtime.clear_arrays()
 
         # Close all open files
-        # Note: Errors during file close are silently ignored to match MBASIC behavior.
-        # This differs from RESET which allows errors to propagate to the caller.
-        # We catch OSError and IOError specifically to avoid hiding programming errors.
+        # Note: Only OS-level file errors (OSError, IOError) are silently ignored to match
+        # MBASIC behavior. This differs from RESET which allows errors to propagate.
+        # We intentionally do NOT catch all exceptions (e.g., AttributeError) to avoid
+        # hiding programming errors.
         for file_num in list(self.runtime.files.keys()):
             try:
                 file_obj = self.runtime.files[file_num]
                 if hasattr(file_obj, 'close'):
                     file_obj.close()
             except (OSError, IOError):
-                # Silently ignore file close errors (e.g., already closed, permission denied)
+                # Silently ignore OS-level file close errors (e.g., already closed, permission denied)
                 pass
         self.runtime.files.clear()
         self.runtime.field_buffers.clear()
@@ -2593,8 +2594,10 @@ class Interpreter:
             # Compatibility note: In strict MBASIC 5.21, LSET/RSET are only for field
             # variables (used with FIELD statement for random file access). This fallback
             # is a deliberate extension that performs simple assignment without left-justification.
-            # The formatting only applies when used with FIELD variables. This is documented
-            # behavior, not a bug.
+            # The formatting only applies when used with FIELD variables.
+            # Note: This extension behavior allows LSET/RSET to work as simple assignment
+            # operators when not used with FIELD, which is intentional flexibility in this
+            # implementation, not a bug or incomplete feature.
             self.runtime.set_variable_raw(var_name, value)
 
     def execute_rset(self, stmt):
@@ -2857,8 +2860,13 @@ class Interpreter:
         Behavior (MBASIC 5.21 compatibility):
         Both STOP and Break (Ctrl+C) set runtime.stopped=True and runtime.halted=True.
         The stopped flag allows CONT to resume from the saved position.
-        Note: execute_stop() moves NPC to PC for resume, while BreakException handler
-        does not update PC, which affects whether CONT can resume properly.
+
+        PC handling difference:
+        - STOP: execute_stop() explicitly moves NPC to PC (line 2808), ensuring CONT
+          resumes from the statement AFTER the STOP.
+        - Break (Ctrl+C): BreakException handler (line 376-381) does NOT update PC,
+          leaving PC pointing to the statement that was interrupted. This means CONT
+          will re-execute the interrupted statement (typically INPUT where Break occurred).
         """
         if not hasattr(self, 'interactive_mode') or not self.interactive_mode:
             raise RuntimeError("CONT only available in interactive mode")

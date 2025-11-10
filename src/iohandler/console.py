@@ -103,7 +103,7 @@ class ConsoleIOHandler(IOHandler):
                     # Fallback for Windows without msvcrt: use input() with severe limitations
                     # WARNING: This fallback calls input() which:
                     # - Waits for Enter key (defeats the purpose of single-char input)
-                    # - Returns the entire line, not just one character
+                    # - Reads the entire line but returns only the first character
                     # This is a known limitation when msvcrt is unavailable.
                     # For proper single-character input on Windows, msvcrt is required.
                     import warnings

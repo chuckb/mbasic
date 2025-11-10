@@ -58,8 +58,12 @@ Execute the program one statement at a time.
 **Syntax:**
 ```
 STEP [n]               - Execute n statements (default: 1)
-STEP INTO             - Step into subroutines
-STEP OVER             - Step over subroutine calls
+```
+
+**Planned (not yet implemented):**
+```
+STEP INTO             - Step into subroutines (planned)
+STEP OVER             - Step over subroutine calls (planned)
 ```
 
 **Examples:**

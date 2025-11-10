@@ -9,14 +9,16 @@
 | `Ctrl+H` | Open help browser |
 | `Ctrl+N` | New program |
 | `Ctrl+O` | Open/Load BASIC file |
-| `Ctrl+P` | Parse program |
 | `Ctrl+Q` | Quit |
+| `Ctrl+E` | Renumber all lines (RENUM) |
 | `Ctrl+R` | Run program |
 | `Ctrl+V` | Save program (Ctrl+S unavailable - terminal flow control) |
+| `Ctrl+P` | Settings |
 | `Ctrl+T` | Step statement (execute one statement) |
 | `Ctrl+K` | Step Line (execute all statements on current line) |
 | `Ctrl+X` | Stop program execution |
 | `Ctrl+B` | Toggle breakpoint |
+| `Ctrl+W` | Toggle variables window |
 
 ## Help Browser
 

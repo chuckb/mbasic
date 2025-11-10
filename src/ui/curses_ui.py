@@ -3590,7 +3590,7 @@ class CursesBackend(UIBackend):
                 self.output_buffer.append("└──────────────────────────────────────────────────┘")
 
                 self._update_output()
-                # Don't update immediate status here - error is displayed in output
+                # Update immediate status after error so user can continue
                 self._update_immediate_status()
 
             elif self.runtime.halted:
@@ -3643,7 +3643,7 @@ class CursesBackend(UIBackend):
                 self.output_buffer.append(f"│ Error: {error_msg}")
                 self.output_buffer.append("└──────────────────────────────────────────────────┘")
                 self._update_output()
-                # Don't update immediate status here - error is displayed in output
+                # Update immediate status after error so user can continue
                 self._update_immediate_status()
             else:
                 # Internal/unexpected error - log it to stderr
@@ -3684,9 +3684,9 @@ class CursesBackend(UIBackend):
         def on_input_complete(result):
             """Called when user completes input or cancels."""
             # If user cancelled (ESC), stop program execution
-            # Note: This sets stopped=True and running=False. While similar to a BASIC STOP
-            # statement, the semantics differ - STOP is a deliberate program action that can
-            # be continued with CONT, while ESC is user cancellation that stops the UI tick loop.
+            # Note: This sets runtime.stopped=True (like STOP) and self.running=False (stops UI tick).
+            # The stopped flag and PC position are preserved, so CONT can resume from here.
+            # The behavior is similar to STOP: user can examine variables and continue with CONT.
             if result is None:
                 # Stop execution - PC already contains the position for CONT to resume from
                 self.runtime.stopped = True
