@@ -12,57 +12,165 @@ The codebase has several architectural issues that make it difficult to maintain
 2. **Program Representation Duplication** - Text, AST, and serialized forms kept in sync manually
 3. **Encapsulation Violations** - UIs directly access and modify interpreter/runtime internals
 
-## Issue 1: State Management Flags
+## Issue 1: State Management - Immutable PC Approach
 
-### Current State
+### Current State (MESSY)
 
-**Runtime state flags found:**
-- `runtime.stopped` - True if program stopped via STOP or Break
-- `runtime.halted` - True if program not running / execution finished
+**Scattered mutable state across multiple objects:**
+```python
+runtime.stopped = True       # In runtime.py
+runtime.halted = False       # Also in runtime.py
+pc.halted = True            # DUPLICATE in pc.py!
+interpreter.stepping = True  # In interpreter.py
+ui.step_mode = "statement"  # In UI files
+```
 
 **Historical context:**
-- User asked to reduce from ~8 flags to fewer
-- Some consolidation happened, but issues remain
+- Originally had ~8 different flags
+- User asked to reduce them
+- Some consolidation happened, but core problem remains: **mutable state everywhere**
 
 ### Problems
 
-1. **Unclear semantics:** What's the difference between `stopped` and `halted`?
-   - `stopped` = paused, can CONT
-   - `halted` = finished/not running, cannot CONT
-   - But both are checked/modified in overlapping ways
-
-2. **UIs directly modify these flags:**
+1. **Duplicate state:** `halted` exists in both PC and runtime - which is correct?
+2. **No clear semantics:** `stopped` vs `halted` - what's the difference?
+3. **UIs mutate internals:**
    ```python
    # curses_ui.py line 2068
-   self.runtime.halted = False
+   self.runtime.halted = False  # UI poking runtime
 
    # curses_ui.py line 3694
-   self.runtime.stopped = True
+   self.runtime.stopped = True  # UI poking runtime
    ```
+4. **Race conditions:** Multiple places can modify same flags
+5. **Hard to reason about:** "Is it running?" requires checking 3+ flags
 
-3. **No single source of truth** for execution state
+### Proposed Solution: IMMUTABLE PC
 
-### Proposed Solution
+**Core principle:** PC is the ONLY source of truth. PC is immutable. No flags anywhere else.
 
-- [ ] Document the **exact semantics** of each flag
-- [ ] Create a **state diagram** showing valid transitions
-- [ ] Add **accessor methods** instead of direct flag access:
-  ```python
-  runtime.pause_execution()  # instead of runtime.stopped = True
-  runtime.resume_execution() # instead of runtime.stopped = False
-  runtime.halt()            # instead of runtime.halted = True
-  runtime.is_stopped()      # instead of reading runtime.stopped
-  ```
-- [ ] Encapsulate flag logic in runtime, prevent external modification
+```python
+@dataclass(frozen=True)  # Immutable!
+class ProgramCounter:
+    line: int | None           # Where we are (None = not in program)
+    statement: int             # Which statement on the line
+    stop_reason: str | None    # None=running, "STOP"/"END"/"ERROR"/"BREAK"/"USER"
+    error: ErrorInfo | None    # Only if stop_reason=="ERROR"
+
+    def is_running(self) -> bool:
+        """Ask the PC, not a separate flag"""
+        return self.stop_reason is None
+
+    def is_valid(self, program) -> bool:
+        """Can we execute from current position?"""
+        if self.line is None:
+            return False
+        return self.line in program.lines
+
+    # Factory methods to create new PCs
+    @classmethod
+    def running_at(cls, line: int, statement: int = 0):
+        """Create a PC that's running at a position"""
+        return cls(line=line, statement=statement, stop_reason=None, error=None)
+
+    @classmethod
+    def stopped(cls, line: int, statement: int, reason: str):
+        """Create a stopped PC"""
+        return cls(line=line, statement=statement, stop_reason=reason, error=None)
+
+    @classmethod
+    def error(cls, line: int, statement: int, code: int, message: str, handler: int | None = None):
+        """Create a PC stopped on error"""
+        return cls(
+            line=line,
+            statement=statement,
+            stop_reason="ERROR",
+            error=ErrorInfo(code=code, message=message, on_error_handler=handler)
+        )
+
+    def advance(self, new_line: int, new_statement: int):
+        """Create new PC at advanced position (still running)"""
+        return ProgramCounter.running_at(new_line, new_statement)
+
+    def stop(self, reason: str):
+        """Create new PC that's stopped at current position"""
+        return ProgramCounter.stopped(self.line, self.statement, reason)
+
+    def resume(self):
+        """Create new PC that's running from current position"""
+        return ProgramCounter.running_at(self.line, self.statement)
+
+@dataclass(frozen=True)
+class ErrorInfo:
+    """Error details (no position - PC has that)"""
+    code: int
+    message: str
+    on_error_handler: int | None  # Line to jump to if ON ERROR GOTO active
+```
+
+**Usage examples:**
+
+```python
+# Start execution
+pc = ProgramCounter.running_at(line=10, statement=0)
+
+# Advance to next statement
+pc = pc.advance(line=20, statement=0)
+
+# STOP statement executes
+pc = pc.stop(reason="STOP")
+
+# Error happens
+pc = ProgramCounter.error(line=150, statement=2, code=11, message="Division by zero")
+
+# CONT command
+def cmd_cont(self):
+    if pc.is_running():
+        print("?Already running")
+        return
+
+    if not pc.is_valid(program):
+        print("?Can't continue")  # Line deleted or doesn't exist
+        return
+
+    # Create new running PC
+    pc = pc.resume()
+
+# UIs can't mutate - must create new PC
+pc.line = 999  # ❌ AttributeError: can't set attribute
+pc = ProgramCounter.running_at(line=999)  # ✓ Correct
+```
+
+### Benefits
+
+1. **No duplicate state** - PC is the only state, no runtime.stopped/halted
+2. **No mutation bugs** - Can't modify PC, must create new one
+3. **UIs can't poke internals** - frozen dataclass prevents it
+4. **Clear semantics** - `is_running()` is the only question
+5. **Thread-safe** - Immutable objects are inherently thread-safe
+6. **Easier debugging** - PC is a value, can print/compare/log it
+7. **No "stopped vs halted" confusion** - only one concept: stop_reason
 
 ### Files to Modify
 
-- `src/runtime.py` - Add state management methods
-- `src/ui/curses_ui.py` - 20+ direct flag modifications
-- `src/ui/tk_ui.py` - Similar violations
-- `src/ui/web/nicegui_backend.py` - Similar violations
-- `src/interpreter.py` - Use new methods
-- `src/interactive.py` - Use new methods
+**Phase 1: Create immutable PC**
+- [ ] `src/pc.py` - Rewrite as immutable dataclass with factory methods
+- [ ] Add `ErrorInfo` dataclass
+
+**Phase 2: Update interpreter to use immutable PC**
+- [ ] `src/interpreter.py` - Replace all `pc.line = X` with `pc = pc.advance(X)`
+- [ ] Remove all references to `runtime.stopped/halted`
+- [ ] Use `pc.is_running()` instead of flag checks
+
+**Phase 3: Update UIs to create new PCs**
+- [ ] `src/ui/curses_ui.py` - Remove 20+ `runtime.halted/stopped` mutations
+- [ ] `src/ui/tk_ui.py` - Remove state mutations
+- [ ] `src/ui/web/nicegui_backend.py` - Remove state mutations
+- [ ] All UIs: Replace mutations with PC creation
+
+**Phase 4: Remove old flags**
+- [ ] `src/runtime.py` - Delete `stopped` and `halted` fields
+- [ ] Verify no remaining references
 
 ## Issue 2: Program Representation Duplication
 
