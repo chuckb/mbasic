@@ -752,11 +752,11 @@ class TkBackend(UIBackend):
                         self._clear_statement_highlight()
                     else:
                         # Paused at steppable statement - highlight it
-                        self._add_output(f"→ Paused at line {state.current_line}\n")
-                        self._set_status(f"Paused at line {state.current_line}")
+                        self._add_output(f"→ Paused at line {pc.line}\n")
+                        self._set_status(f"Paused at line {pc.line}")
                         # Highlight current statement
                         if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
-                            self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
+                            self._highlight_current_statement(pc.line, state.current_statement_char_start, state.current_statement_char_end)
 
             # Update immediate mode status
             self._update_immediate_status()
@@ -817,12 +817,12 @@ class TkBackend(UIBackend):
                         self._clear_statement_highlight()
                     else:
                         # Paused at steppable statement - highlight it
-                        stmt_info = f" statement {pc.stmt_offset + 1}" if pc and pc.stmt_offset > 0 else ""
-                        self._add_output(f"→ Paused at line {state.current_line}{stmt_info}\n")
-                        self._set_status(f"Paused at line {state.current_line}{stmt_info}")
+                        stmt_info = f" statement {pc.statement + 1}" if pc and pc.statement > 0 else ""
+                        self._add_output(f"→ Paused at line {pc.line}{stmt_info}\n")
+                        self._set_status(f"Paused at line {pc.line}{stmt_info}")
                         # Highlight current statement
                         if state.current_statement_char_start > 0 or state.current_statement_char_end > 0:
-                            self._highlight_current_statement(state.current_line, state.current_statement_char_start, state.current_statement_char_end)
+                            self._highlight_current_statement(pc.line, state.current_statement_char_start, state.current_statement_char_end)
 
             # Update immediate mode status
             self._update_immediate_status()
