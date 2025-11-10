@@ -127,7 +127,7 @@ def get_additional_keybindings():
         return {}
 
     # Standard readline/Emacs keybindings available when readline is loaded
-    # Note: Ctrl+A is overridden by MBASIC to trigger edit mode
+    # Note: Ctrl+A is overridden by MBASIC to trigger edit mode (not readline's default move-to-start-of-line)
     return {
         "line_editing": {
             "move_end_of_line": {

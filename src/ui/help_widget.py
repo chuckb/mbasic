@@ -119,8 +119,10 @@ class HelpWidget(urwid.WidgetWrap):
             return results
 
         # Map tier to labels for search result display
-        # Note: Tier labels are determined from tier_labels dict ('language', 'mbasic'),
-        # startswith('ui/') check for UI tiers ('ui/curses', 'ui/tk'), or '📙 Other' fallback.
+        # Note: Tier labels are determined by:
+        # 1. Local tier_labels dict (defined below) for 'language' and 'mbasic' tiers
+        # 2. startswith('ui/') check for UI tiers ('ui/curses', 'ui/tk')
+        # 3. '📙 Other' fallback for unknown tiers
         tier_labels = {
             'language': '📕 Language',
             'mbasic': '📗 MBASIC',

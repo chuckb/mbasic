@@ -26,7 +26,7 @@ Quick reference for the curses text UI.
 | **{{kbd:help:curses}}** | Help |
 | **{{kbd:toggle_variables:curses}}** | Toggle variables window |
 | **{{kbd:settings:curses}}** | Settings |
-| **Menu only** | Toggle execution stack window |
+| **Menu only** (Ctrl+U → Debug) | Toggle execution stack window |
 
 ## Program Management
 
@@ -60,7 +60,7 @@ Quick reference for the curses text UI.
 | **{{kbd:step:curses}}** | Step Statement - execute one statement at a time |
 | **{{kbd:stop:curses}}** | Stop execution |
 | **{{kbd:toggle_variables:curses}}** | Show/hide variables window |
-| **Menu only** | Show/hide execution stack window |
+| **Menu only** (Ctrl+U → Debug) | Show/hide execution stack window |
 
 ## Variables Window (when visible)
 
