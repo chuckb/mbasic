@@ -30,20 +30,20 @@ class ImmediateExecutor:
 
     IMPORTANT: For tick-based execution (visual UIs), only execute immediate
     mode when the interpreter is in a safe state. The implementation checks:
-    - runtime.halted is True (program stopped)
+    - PC is not running (program stopped)
     - state.error_info is not None (program error)
     - state.input_prompt is not None (waiting for INPUT)
 
     State names used in documentation (not actual enum values):
-    - 'idle' - No program loaded (halted=True)
-    - 'paused' - User hit Ctrl+Q/stop (halted=True)
-    - 'at_breakpoint' - Hit breakpoint (halted=True)
-    - 'done' - Program finished (halted=True)
+    - 'idle' - No program loaded (PC not running)
+    - 'paused' - User hit Ctrl+Q/stop (PC not running)
+    - 'at_breakpoint' - Hit breakpoint (PC not running)
+    - 'done' - Program finished (PC not running)
     - 'error' - Program encountered error (error_info is not None)
     - 'waiting_for_input' - Waiting for INPUT (input_prompt is not None)
-    - 'running' - Program executing (halted=False) - DO NOT execute immediate mode
+    - 'running' - Program executing (PC is running) - DO NOT execute immediate mode
 
-    Note: The actual implementation checks boolean flags (halted, error_info, input_prompt),
+    Note: The actual implementation checks PC.is_running(), error_info, and input_prompt,
     not string state values.
 
     Usage:
@@ -97,8 +97,8 @@ class ImmediateExecutor:
             # - Program is halted (paused/done/breakpoint)
             # - OR there's an error
             # - OR waiting for input (allows inspection while paused for INPUT)
-            # NOT safe when program is actively running (halted=False)
-            return (self.runtime.halted or
+            # NOT safe when program is actively running
+            return (not self.runtime.pc.is_running() or
                     state.error_info is not None or
                     state.input_prompt is not None)
 
@@ -225,7 +225,7 @@ class ImmediateExecutor:
                     if hasattr(ui.interpreter, 'state') and ui.interpreter.state:
                         state = ui.interpreter.state
                         # Check if halted (paused/breakpoint) or has error
-                        if ui.runtime.halted or state.error_info:
+                        if not ui.runtime.pc.is_running() or state.error_info:
                             # Get current PC directly from runtime
                             if hasattr(ui, '_highlight_current_statement') and hasattr(ui, 'runtime'):
                                 pc = ui.runtime.pc

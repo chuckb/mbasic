@@ -324,7 +324,6 @@ class Interpreter:
                 # Check for Ctrl+C break
                 if self.runtime.break_requested:
                     self.runtime.break_requested = False
-                    self.runtime.stopped = True  # Keep for Phase 4
                     self.runtime.pc = pc.stop("BREAK")
                     self.io.output("")
                     self.io.output(f"Break in {pc}")
@@ -373,7 +372,6 @@ class Interpreter:
 
                 except BreakException:
                     # User pressed Ctrl+C during INPUT
-                    self.runtime.stopped = True  # Keep for Phase 4
                     self.runtime.pc = pc.stop("BREAK")
                     self.io.output(f"Break in {pc}")
                     return self.state
@@ -2821,7 +2819,6 @@ class Interpreter:
         """
         # Save the current execution position
         # We need to resume from the NEXT statement after STOP
-        self.runtime.stopped = True  # Keep for Phase 4
 
         # Move NPC to PC so CONT can resume from the next statement
         # runtime.npc (next program counter) is set by tick() to point to the next statement
@@ -2877,8 +2874,8 @@ class Interpreter:
         Only works in interactive mode.
 
         Behavior (MBASIC 5.21 compatibility):
-        Both STOP and Break (Ctrl+C) set runtime.stopped=True and runtime.halted=True.
-        The stopped flag allows CONT to resume from the saved position.
+        Both STOP and Break (Ctrl+C) set PC stop_reason to "STOP" or "BREAK".
+        The PC stop_reason allows CONT to resume from the saved position.
 
         PC handling difference:
         - STOP: execute_stop() explicitly moves PC to NPC (line 2825: pc = npc), ensuring CONT
@@ -2890,7 +2887,7 @@ class Interpreter:
         if not hasattr(self, 'interactive_mode') or not self.interactive_mode:
             raise RuntimeError("CONT only available in interactive mode")
 
-        if not self.runtime.stopped:
+        if self.runtime.pc.is_running():
             raise RuntimeError("Can't continue - no program stopped")
 
         # Resume execution from where we stopped

@@ -2077,7 +2077,6 @@ class TkBackend(UIBackend):
         # Preserve current PC if it's valid (execution in progress)
         # Otherwise ensure it stays halted
         old_pc = self.runtime.pc
-        old_halted = self.runtime.halted
 
         # Clear and rebuild statement table
         self.runtime.statement_table.statements.clear()
@@ -2100,7 +2099,7 @@ class TkBackend(UIBackend):
             self.runtime.pc = old_pc
         else:
             # No execution in progress - ensure halted
-            self.runtime.pc = PC.halted_pc()
+            self.runtime.pc = PC.halted()
 
     def _validate_editor_syntax(self):
         """Validate syntax of all lines in editor and update error markers.
@@ -3051,7 +3050,7 @@ class TkBackend(UIBackend):
             state = self.interpreter.state
             context = {
                 'current_line': state.current_line,
-                'halted': self.runtime.halted,
+                'halted': not self.runtime.pc.is_running(),
                 'pc': str(self.runtime.pc)
             }
             if state.error_info:
