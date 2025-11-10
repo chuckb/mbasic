@@ -60,10 +60,10 @@ class SettingsManager:
     def _get_global_settings_path(self) -> Path:
         """Get path to global settings file.
 
-        Note: This method is not called internally by SettingsManager. Path resolution has been
-        delegated to the backend (FileSettingsBackend or Redis backend). The __init__ method
-        retrieves paths from backend.global_settings_path for backward compatibility.
-        This helper method is kept for potential future use or manual path queries by external code.
+        Note: This method is not called directly by SettingsManager. Instead, it is called by
+        FileSettingsBackend.__init__() to compute paths. The __init__ method retrieves paths from
+        backend.global_settings_path for backward compatibility. This method is kept separate for
+        potential future use or manual path queries by external code.
         """
         if os.name == 'nt':  # Windows
             appdata = os.getenv('APPDATA', os.path.expanduser('~'))
@@ -77,10 +77,10 @@ class SettingsManager:
     def _get_project_settings_path(self) -> Optional[Path]:
         """Get path to project settings file.
 
-        Note: This method is not called internally by SettingsManager. Path resolution has been
-        delegated to the backend (FileSettingsBackend or Redis backend). The __init__ method
-        retrieves paths from backend.project_settings_path for backward compatibility.
-        This helper method is kept for potential future use or manual path queries by external code.
+        Note: This method is not called directly by SettingsManager. Instead, it is called by
+        FileSettingsBackend.__init__() to compute paths. The __init__ method retrieves paths from
+        backend.project_settings_path for backward compatibility. This method is kept separate for
+        potential future use or manual path queries by external code.
         """
         if not self.project_dir:
             return None
@@ -161,13 +161,13 @@ class SettingsManager:
     def get(self, key: str, default: Optional[Any] = None) -> Any:
         """Get setting value with scope precedence.
 
-        Precedence order: file > project > global > definition default > provided default
+        In normal usage (file settings not populated), precedence order is:
+        project > global > definition default > provided default
 
-        Note: File-level settings (first in precedence) are not populated in normal usage,
-        but can be set programmatically via set(key, value, scope=SettingScope.FILE).
-        The file_settings dict is checked first, but no persistence layer exists (not saved/loaded)
-        and no UI/command manages per-file settings. In practice, typical precedence order is:
-        project > global > definition default > provided default.
+        Note: The implementation also supports file-level settings (highest precedence: file > project > global...),
+        but these are not populated in normal usage. File settings can be set programmatically via
+        set(key, value, scope=SettingScope.FILE) but have no persistence layer. The file_settings dict
+        is checked first in the precedence order for theoretical support of per-file overrides.
 
         Args:
             key: Setting key (e.g., 'variables.case_conflict')

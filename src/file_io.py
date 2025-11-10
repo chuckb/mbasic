@@ -189,6 +189,14 @@ class SandboxedFileIO(FileIO):
     Acts as an adapter to backend.sandboxed_fs (SandboxedFileSystemProvider from
     src/filesystem/sandboxed_fs.py), which provides an in-memory virtual filesystem.
 
+    IMPORTANT: This class mixes two concerns for web UI convenience:
+    - Program file operations (load/save .BAS files for editing) - NOT IMPLEMENTED
+    - Runtime file listing (FILES command to show in-memory data files) - IMPLEMENTED
+
+    This design allows the FILES command to work in web UI by listing runtime data
+    files created by BASIC OPEN/PRINT# statements. However, LOAD/SAVE for programs
+    require different UI mechanisms (upload/download) and are not implemented.
+
     Storage location: In-memory virtual filesystem stored in server memory (NOT browser
                     localStorage or server disk files).
     Why server memory? Web UI runs Python interpreter on server, not in browser.
@@ -199,22 +207,21 @@ class SandboxedFileIO(FileIO):
               browser's File → Save to persist them locally.
 
     Implementation status:
-    - list_files(): IMPLEMENTED - queries the sandboxed_fs filesystem for in-memory files
-                    created by BASIC programs (OPEN/PRINT#/CLOSE). The sandboxed_fs
-                    filesystem already exists for runtime file I/O, so this method simply
-                    lists what's there. Returns empty list if backend.sandboxed_fs doesn't
-                    exist. Catches exceptions and returns (filename, None, False) for files
-                    that can't be stat'd.
-    - load_file(): STUB - raises IOError (requires async refactor to integrate with web UI
-                   file upload mechanisms for .BAS program files)
-    - save_file(): STUB - raises IOError (requires async refactor to integrate with web UI
-                   file download mechanisms for .BAS program files)
-    - delete_file(): STUB - raises IOError (requires async refactor)
-    - file_exists(): STUB - raises IOError (requires async refactor)
+    - list_files(): IMPLEMENTED - queries the sandboxed_fs filesystem for in-memory data
+                    files created by BASIC programs (OPEN/PRINT#/CLOSE). Returns empty list
+                    if backend.sandboxed_fs doesn't exist. Catches exceptions and returns
+                    (filename, None, False) for files that can't be stat'd.
+    - load_file(): STUB - raises IOError (for .BAS program files - requires async refactor
+                   to integrate with web UI file upload mechanisms)
+    - save_file(): STUB - raises IOError (for .BAS program files - requires async refactor
+                   to integrate with web UI file download mechanisms)
+    - delete_file(): STUB - raises IOError (for .BAS program files - requires async refactor)
+    - file_exists(): STUB - raises IOError (for .BAS program files - requires async refactor)
 
-    Note: The other methods (load/save/delete) are for managing .BAS program files through
-    the web UI's file upload/download mechanisms, which is different from the runtime data
-    files managed by the in-memory virtual filesystem.
+    Note: list_files() accesses runtime data files (created by OPEN statements), while
+    load/save/delete are designed for .BAS program files (edited via UI). This mismatch
+    is intentional - it allows FILES command to work while keeping program file handling
+    deferred to proper async UI mechanisms.
     """
 
     def __init__(self, backend):

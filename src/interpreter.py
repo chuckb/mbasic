@@ -50,8 +50,9 @@ class InterpreterState:
     3. break_requested check - handles Ctrl+C breaks
     4. breakpoints check - pauses at breakpoints
     5. trace output - displays [line] or [line.stmt] if TRON is active
-    6. statement execution - where input_prompt may be set
-    7. error handling - where error_info is set via exception handlers
+    6. statement execution (with error handling in try/except) - sets input_prompt or error_info
+    7. input_prompt check - pauses if waiting for input
+    8. PC advancement - moves to next statement or jumps to branch target
 
     Also tracks: input buffering, debugging flags, performance metrics, and
     provides computed properties for current line/statement position.
@@ -105,17 +106,12 @@ class InterpreterState:
     def current_statement_char_end(self) -> int:
         """Get current statement char_end from statement table (computed property)
 
-        Three cases handled:
-        1. Next statement exists: Returns max(char_end, next_char_start - 1)
-           - Handles string tokens where char_end may be too short
-           - The colon separator is at next_char_start - 1
-           - Most tokens have correct char_end >= next_char_start - 1
-
-        2. Last statement on line AND line_text_map available: Returns len(line_text)
-           - Returns the full line length including any trailing spaces/comments
-           - This may be larger than char_end if trailing content exists
-
-        3. Last statement AND no line_text_map: Returns stmt.char_end as fallback
+        Handles three cases:
+        1. Next statement exists: Returns max(char_end, next_char_start - 1) to account
+           for string token inaccuracies where char_end may be shorter than expected.
+        2. Last statement on line with line_text available: Returns len(line_text) to
+           include trailing spaces/comments not captured in char_end.
+        3. Last statement without line_text: Returns stmt.char_end as fallback.
         """
         if self._interpreter:
             pc = self._interpreter.runtime.pc
@@ -601,10 +597,11 @@ class Interpreter:
     # OLD EXECUTION METHODS REMOVED (version 1.0.299)
     # Note: The project has an internal implementation version (tracked in src/version.py)
     # which is separate from the MBASIC 5.21 language version being implemented.
-    # Old methods: run_from_current(), _run_loop(), step_once() (removed in v1.0.299)
-    # These used old current_line/next_line fields (also removed in v1.0.299)
-    # Replaced by tick_pc() and PC-based execution
-    # CONT command now uses tick() directly
+    # Removed from Interpreter class:
+    #   - Methods: run_from_current(), _run_loop(), step_once() (v1.0.299)
+    #   - Fields: current_line, next_line for tracking execution position (v1.0.299)
+    # These have been replaced by PC-based execution with tick_pc() method
+    # The CONT command now uses tick() directly with PC positioning
 
     def _map_exception_to_error_code(self, exception):
         """Map Python exception to MBASIC error code"""
@@ -1091,12 +1088,10 @@ class Interpreter:
         # return_stmt is 0-indexed offset into statements array.
         # Valid range: 0 to len(statements) (inclusive).
         # - 0 to len(statements)-1: Normal statement positions
-        # - len(statements): Special sentinel - GOSUB was last statement on line, so RETURN
-        #   continues at next line. This value is valid because PC can point one past the
-        #   last statement to indicate "move to next line" (handled by statement_table.next_pc).
+        # - len(statements): Sentinel value indicating "past the last statement" (move to next line).
+        #   This occurs when GOSUB is the last statement on a line. When RETURN jumps back,
+        #   statement_table.next_pc() creates this sentinel value to indicate the next sequential PC.
         # Values > len(statements) indicate the statement was deleted (validation error).
-        # Validation: return_stmt > len(line_statements) means the statement was deleted
-        # (Note: return_stmt == len(line_statements) is valid as a sentinel value)
         if return_stmt > len(line_statements):
             raise RuntimeError(f"RETURN error: statement {return_stmt} in line {return_line} no longer exists")
 

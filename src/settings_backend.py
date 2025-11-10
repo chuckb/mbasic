@@ -152,7 +152,7 @@ class RedisSettingsBackend(SettingsBackend):
     - Key format: nicegui:settings:{session_id}
     - Each session has independent settings
     - Optionally initialized from default file-based settings (if provided and not already in Redis)
-    - No disk writes in this mode (Redis is the only storage)
+    - No disk writes in this mode (only reads from disk for defaults, Redis is the only write storage)
     """
 
     def __init__(self, redis_client, session_id: str, default_settings: Optional[Dict[str, Any]] = None):

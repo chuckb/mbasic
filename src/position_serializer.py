@@ -9,6 +9,11 @@ Key principle: AST is the single source of truth for CONTENT (what tokens exist
 and their values). Original token positions are HINTS for formatting (where to
 place tokens). When positions conflict with content, content wins and a
 PositionConflict is recorded.
+
+Exception: Some statements intentionally normalize output for semantic equivalence:
+- LET statements are always serialized without the LET keyword (implicit form) since
+  explicit LET and implicit assignment are semantically identical in MBASIC 5.21.
+  This represents a deliberate design choice, not a limitation.
 """
 
 from typing import List, Optional, Tuple, Dict
@@ -37,18 +42,17 @@ def apply_keyword_case_policy(keyword: str, policy: str, keyword_tracker: Option
     """Apply keyword case policy to a keyword.
 
     Args:
-        keyword: The keyword to transform (should be normalized lowercase for consistency,
-                 but first_wins policy can handle mixed case by normalizing internally)
+        keyword: The keyword to transform. While callers should normalize to lowercase
+                 before calling (for consistency with emit_keyword()), this function can
+                 handle mixed-case input as the first_wins policy normalizes internally.
         policy: Case policy to apply (force_lower, force_upper, force_capitalize, first_wins, error, preserve)
         keyword_tracker: Dictionary tracking first occurrence of each keyword (for first_wins policy)
 
     Returns:
         Keyword with case policy applied
 
-    Note: While this function can handle mixed-case input (first_wins policy normalizes
-    to lowercase internally for lookup), callers should normalize to lowercase before
-    calling to ensure consistent behavior with emit_keyword() and avoid case-sensitivity
-    issues in non-first_wins policies.
+    Recommendation: Callers should normalize keyword to lowercase before calling to ensure
+    consistent behavior across all policies and avoid case-sensitivity issues.
     """
     if policy == "force_lower":
         return keyword.lower()

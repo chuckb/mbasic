@@ -28,23 +28,16 @@ class ImmediateExecutor:
     - Numbered line editing: add/modify/delete program lines (e.g., "100 PRINT X")
     - Access and modify current program state (variables, arrays)
 
-    IMPORTANT: For tick-based execution (visual UIs), only execute immediate
-    mode when the interpreter is in a safe state. The implementation checks:
-    - PC is not running (program stopped)
-    - state.error_info is not None (program error)
-    - state.input_prompt is not None (waiting for INPUT)
+    Safe execution: For tick-based execution (visual UIs), only execute immediate
+    mode when:
+    - PC is not running (program stopped) - Any reason: idle, paused, at breakpoint, done
+    - OR state.error_info is not None (program encountered error)
+    - OR state.input_prompt is not None (waiting for INPUT)
 
-    State names used in documentation (not actual enum values):
-    - 'idle' - No program loaded (PC not running)
-    - 'paused' - User hit Ctrl+Q/stop (PC not running)
-    - 'at_breakpoint' - Hit breakpoint (PC not running)
-    - 'done' - Program finished (PC not running)
-    - 'error' - Program encountered error (error_info is not None)
-    - 'waiting_for_input' - Waiting for INPUT (input_prompt is not None)
-    - 'running' - Program executing (PC is running) - DO NOT execute immediate mode
+    DO NOT execute immediate mode while PC is running (program actively executing).
 
-    Note: The actual implementation checks PC.is_running(), error_info, and input_prompt,
-    not string state values.
+    Unsafe condition:
+    - state.interpreter.runtime.pc.is_running() is True - Program is executing a statement
 
     Usage:
         executor = ImmediateExecutor(runtime, interpreter, io_handler)

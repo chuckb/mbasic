@@ -62,7 +62,7 @@ The GUI interfaces (Curses, Tk, Web) are **NOT in MBASIC 5.21**.
 - Mouse support (Tk, Web)
 - Auto-save behavior varies by UI:
   - **CLI, Tk, Curses:** Save to local filesystem (persistent)
-  - **Web UI:** Files stored in server-side session memory only (not persistent across page refreshes)
+  - **Web UI:** Files stored in server-side session memory only (lost on page refresh or session end)
 
 ### 🎯 Visual Debugging
 
@@ -83,8 +83,8 @@ The GUI interfaces (Curses, Tk, Web) are **NOT in MBASIC 5.21**.
 
 **Web UI File Storage Limitations:**
 The Web UI uses an in-memory virtual filesystem with these restrictions:
-- Files persist during browser session only (lost on page refresh)
-- No persistent storage across sessions
+- Files persist during a single browser session (lost on page refresh or when session ends)
+- No persistent storage across sessions or after closing the tab
 - 50 file limit maximum
 - 1MB per file maximum
 - No path support (simple filenames only)

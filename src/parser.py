@@ -2728,14 +2728,19 @@ class Parser:
 
         Function name normalization: All function names are normalized to lowercase with
         'fn' prefix (e.g., "FNR" becomes "fnr", "FNA$" becomes "fna") for consistent
-        lookup. Type suffixes are stripped from the name before normalization. This matches
+        lookup. Type suffixes are stripped from the name during normalization. This matches
         the lexer's identifier normalization and ensures function calls match their
-        definitions regardless of case.
+        definitions regardless of case or type suffix.
+
+        Key points:
+        - Type suffix characters ($, %, !, #) are STRIPPED during normalization
+        - Only the 'fn' + base name is kept for function lookup
+        - "DEF FNA$" and "DEF FNA" define the SAME function (both become "fna")
 
         Examples:
-            DEF FNR(X) = INT(X*100+.5)/100
-            DEF FNA$(U,V) = P1$+CHR$(31+U*2)+CHR$(48+V*5)
-            DEF FNB = 42  (no parameters)
+            DEF FNR(X) = INT(X*100+.5)/100        -> function name "fnr"
+            DEF FNA$(U,V) = P1$+CHR$(31+U*2)...   -> function name "fna" ($ stripped)
+            DEF FNB = 42  (no parameters)          -> function name "fnb"
         """
         token = self.advance()  # Consume DEF
 
