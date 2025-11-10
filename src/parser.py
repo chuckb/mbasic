@@ -2285,6 +2285,8 @@ class Parser:
                 if first_letter in self.def_type_map:
                     var_type = self.def_type_map[first_letter]
                     # Determine suffix based on DEF type
+                    # Note: This method modifies type_suffix variable (unlike parse_dim which
+                    # modifies the name directly). Both approaches are functionally equivalent.
                     if var_type == TypeInfo.STRING:
                         type_suffix = '$'
                     elif var_type == TypeInfo.INTEGER:
@@ -2827,8 +2829,10 @@ class Parser:
             COMMON variable1, variable2, array1(), string$, ...
 
         The empty parentheses () indicate an array variable (all elements shared).
-        This is just a marker - no subscripts are specified or stored. Non-empty
-        parentheses are an error (parser enforces empty parens only).
+        These parentheses are consumed during parsing but not stored in the AST.
+        The resulting CommonStatementNode contains only the variable names (without
+        any indicator of whether they were arrays or scalars). Non-empty parentheses
+        are an error (parser enforces empty parens only).
 
         Examples:
             COMMON A, B, C           - Simple variables
@@ -3420,7 +3424,8 @@ class Parser:
         - Unquoted strings: DATA HELLO WORLD, FOO BAR
 
         Unquoted strings extend until comma, colon, end of line, or unrecognized token.
-        Line numbers (e.g., DATA 100 200) are treated as part of unquoted strings.
+        Line numbers (e.g., DATA 100 200): These are tokenized as LINE_NUMBER tokens
+        but are converted to strings and included in unquoted string values.
         """
         token = self.advance()
 
@@ -3662,8 +3667,10 @@ class Parser:
         Extended syntax (for compatibility with other BASIC dialects):
             CALL ROUTINE(X,Y)      - Call with arguments
 
-        Note: MBASIC 5.21 primarily uses the simple numeric address form, but this
-        parser fully supports both forms for broader compatibility.
+        Note: MBASIC 5.21 primarily uses the simple numeric address form. This parser
+        also accepts the extended syntax (CALL routine_name(args)) for compatibility
+        with code from other BASIC dialects, though this form is not validated against
+        the MBASIC 5.21 specification.
 
         Examples:
             CALL 16384             - Call decimal address

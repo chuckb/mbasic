@@ -201,7 +201,7 @@ class ImmediateExecutor:
 
                 if hasattr(ui, 'program') and ui.program:
                     if line_content:
-                        # Add/update line - add_line expects complete line text with line number
+                        # Add/update line - add_line(line_number, complete_line_text) takes two parameters
                         complete_line = f"{line_num} {line_content}"
                         success, error = ui.program.add_line(line_num, complete_line)
                         if not success:

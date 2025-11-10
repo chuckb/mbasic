@@ -223,8 +223,9 @@ class InteractiveMode:
         # Bind Ctrl+A to insert the character (ASCII 0x01) into the input line,
         # overriding the default Ctrl+A (beginning-of-line) behavior.
         # When the user presses Ctrl+A, readline's 'self-insert' action inserts the
-        # 0x01 character into the input string and returns it to the application.
-        # The start() method then detects this character and enters edit mode.
+        # 0x01 character into the input buffer (the input line becomes just "^A").
+        # When the user then presses Enter, the input is returned to the application.
+        # The start() method detects this character in the returned input and enters edit mode.
         readline.parse_and_bind('Control-a: self-insert')
 
     def _completer(self, text, state):
@@ -1083,7 +1084,7 @@ class InteractiveMode:
 
         EDIT 100 - Edit line 100 using edit subcommands
 
-        Edit mode subcommands (implemented subset of MBASIC EDIT):
+        Edit mode subcommands (all implemented):
         - Space: Move cursor right, printing character
         - D: Delete character at cursor
         - C: Change character at cursor
@@ -1096,7 +1097,7 @@ class InteractiveMode:
         - A: Abort and restart
         - <CR>: End and save
 
-        Note: Count prefixes ([n]D, [n]C) and search commands ([n]S, [n]K) are not yet implemented.
+        Not yet implemented: Count prefixes ([n]D, [n]C) and search commands ([n]S, [n]K).
 
         INTENTIONAL MBASIC-COMPATIBLE BEHAVIOR: When digits are entered, they silently do nothing
         (no output, no cursor movement, no error). This matches MBASIC 5.21 behavior where digits
@@ -1256,10 +1257,10 @@ class InteractiveMode:
                 return ch if ch else None
             finally:
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-        except:
-            # Fallback for non-TTY/piped input or any terminal errors.
-            # Bare except is acceptable here because we're degrading gracefully to basic read()
-            # on any error (AttributeError, termios.error, ImportError on Windows, etc.)
+        except (AttributeError, OSError, ImportError):
+            # Fallback for non-TTY/piped input or terminal errors
+            # (AttributeError: fd not available, OSError/termios.error: raw mode failed,
+            #  ImportError: termios not available on Windows)
             ch = sys.stdin.read(1)
             return ch if ch else None
 
@@ -1404,7 +1405,7 @@ class InteractiveMode:
         Note: Drive letter syntax (e.g., "A:*.*") from CP/M and DOS is not supported.
         This is a modern implementation running on Unix-like and Windows systems where
         CP/M-style drive letter prefixes don't apply. Use standard path patterns instead
-        (e.g., "*.BAS", "../dir/*.BAS"). Future enhancement: Could add drive letter mapping.
+        (e.g., "*.BAS", "../dir/*.BAS"). Drive letter mapping is not currently planned.
         """
         from src.ui.ui_helpers import list_files
 

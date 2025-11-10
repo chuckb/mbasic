@@ -1855,7 +1855,7 @@ class NiceGUIBackend(UIBackend):
             # Don't clear output - continuous scrolling like ASR33 teletype
             # Design choice: Unlike some modern BASIC interpreters that clear output on RUN,
             # we preserve historical ASR33 behavior (continuous scrolling, no auto-clear).
-            # Note: Step commands (Ctrl+T/Ctrl+K) DO clear output for clarity when debugging
+            # Note: Step commands also preserve output (no clearing during debugging either)
             self._set_status('Running...')
 
             # Get program AST
