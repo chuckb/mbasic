@@ -26,7 +26,7 @@ class _ImmediateModeToken:
     """Token for variable edits from immediate mode or variable editor.
 
     This class is instantiated when editing variables via the variable inspector
-    (see _on_variable_edit() around line 1194). Used to mark variable changes that
+    (see _on_variable_double_click() around line 1122). Used to mark variable changes that
     originate from the variable inspector or immediate mode, not from program
     execution. The line=-1 signals to runtime.set_variable() that this is a
     debugger/immediate mode edit.

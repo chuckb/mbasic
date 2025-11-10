@@ -52,9 +52,8 @@ class CaseStringHandler:
                 # Identifiers (variable/function names) always preserve original case in display.
                 # Unlike keywords (which follow case_style policy), identifiers retain case as typed.
                 # This matches MBASIC 5.21: identifiers are case-insensitive for matching but
-                # preserve display case. Case-insensitive matching happens at runtime (runtime.py
-                # uses lowercase keys via _resolve_variable_name() which calls name.lower()) and
-                # parsing (uses normalized forms), while this function only handles display formatting.
+                # preserve display case. Case-insensitive matching happens at runtime and during
+                # parsing (using normalized forms), while this function only handles display formatting.
                 return original_text
             else:
                 # Unknown prefix, return original

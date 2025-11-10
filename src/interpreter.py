@@ -64,7 +64,7 @@ class InterpreterState:
     input_file_number: Optional[int] = None  # If reading from file
 
     # Debugging (breakpoints are stored in Runtime, not here)
-    skip_next_breakpoint_check: bool = False  # Set to True AFTER halting at a breakpoint (set after returning state).
+    skip_next_breakpoint_check: bool = False  # Set to True when halting at a breakpoint (in tick_pc method).
                                                # On next execution, if still True, allows stepping past the breakpoint once,
                                                # then is cleared to False. Prevents re-halting on same breakpoint.
     pause_requested: bool = False  # Set by pause() method
@@ -652,8 +652,9 @@ class Interpreter:
 
     def _invoke_error_handler(self, error_code, error_pc):
         """Invoke the error handler"""
-        # Note: error_info is set in the exception handler in tick_pc() just before
-        # calling this method. We're now ready to invoke the error handler.
+        # Note: error_info is always set in the exception handler in tick_pc() when an error
+        # occurs (line 385), regardless of whether an error handler exists. This method is
+        # only called if a handler exists (checked at line 392), so we're now ready to invoke it.
 
         # Set ERR%, ERL%, and ERS% system variables
         self.runtime.set_variable_raw('err%', error_code)
@@ -1524,8 +1525,9 @@ class Interpreter:
         self.runtime.clear_arrays()
 
         # Close all open files
-        # Note: Only OS-level file errors (OSError, IOError) are silently ignored to match
-        # MBASIC behavior. This differs from RESET which allows errors to propagate.
+        # Note: Only OS-level file errors are silently ignored to match MBASIC behavior.
+        # In Python 3, IOError is an alias for OSError, so we catch both for compatibility.
+        # This differs from RESET which allows errors to propagate.
         # We intentionally do NOT catch all exceptions (e.g., AttributeError) to avoid
         # hiding programming errors.
         for file_num in list(self.runtime.files.keys()):
@@ -2221,14 +2223,15 @@ class Interpreter:
     def execute_renum(self, stmt):
         """Execute RENUM statement - renumber program lines.
 
-        TODO: Implement RENUM to modify AST directly.
-        This is complex because it needs to:
-        1. Renumber lines in line_asts
-        2. Update statement_table PC keys
-        3. Update GOTO/GOSUB/ON GOTO target line numbers in AST nodes
-        4. Update RESTORE line number references
+        Note: RENUM is implemented via delegation to interactive_mode.cmd_renum.
+        This architecture allows the interactive UI to handle AST modifications directly.
+        The interactive mode implementation handles:
+        1. Renumbering lines in line_asts
+        2. Updating statement_table PC keys
+        3. Updating GOTO/GOSUB/ON GOTO target line numbers in AST nodes
+        4. Updating RESTORE line number references
 
-        For now, delegate to interactive_mode.cmd_renum if available.
+        In non-interactive contexts, RENUM is not available.
         """
         # Delegate to interactive mode if available
         if hasattr(self, 'interactive_mode') and self.interactive_mode:
@@ -2878,9 +2881,9 @@ class Interpreter:
         The PC stop_reason allows CONT to resume from the saved position.
 
         PC handling difference:
-        - STOP: execute_stop() explicitly moves PC to NPC (line 2825: pc = npc), ensuring CONT
-          resumes from the statement AFTER the STOP.
-        - Break (Ctrl+C): BreakException handler (line 376-381) does NOT update PC,
+        - STOP: execute_stop() (lines 2828-2831) sets PC via NPC.stop("STOP"),
+          ensuring CONT resumes from the statement AFTER the STOP.
+        - Break (Ctrl+C): BreakException handler (lines ~376-381) does NOT update PC,
           leaving PC pointing to the statement that was interrupted. This means CONT
           will re-execute the interrupted statement (typically INPUT where Break occurred).
         """
@@ -3092,7 +3095,8 @@ class Interpreter:
             saved_vars[param_name] = self.runtime.get_variable_for_debugger(param.name, param.type_suffix)
             if i < len(args):
                 # Set parameter to argument value - this is part of function call
-                self.runtime.set_variable(param.name, param.type_suffix, args[i], token=call_token, limits=self.limits)
+                # Use debugger_set=True to avoid tracking this internal variable operation
+                self.runtime.set_variable(param.name, param.type_suffix, args[i], token=call_token, limits=self.limits, debugger_set=True)
 
         # Evaluate function expression
         result = self.evaluate_expression(func_def.expression)

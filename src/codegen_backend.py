@@ -74,10 +74,10 @@ class Z88dkCBackend(CodeGenBackend):
     - FOR/NEXT loops
     - PRINT statements for integers
 
-    Future:
+    Known limitations (not yet implemented):
     - String support (requires runtime library)
     - Arrays
-    - More complex expressions
+    - Complex expressions beyond simple binary operations
     """
 
     def __init__(self, symbols: SymbolTable):
@@ -351,12 +351,10 @@ class Z88dkCBackend(CodeGenBackend):
         # C: for (i = 1; i <= 10; i += 2)
 
         # Determine comparison operator based on step
-        if stmt.step_expr:
-            # If step is negative, use >= instead of <=
-            # For now, assume positive step (TODO: handle negative steps)
-            comp = '<='
-        else:
-            comp = '<='
+        # LIMITATION: Currently only handles positive steps correctly
+        # Negative steps (e.g., FOR I = 10 TO 1 STEP -1) would generate incorrect C code
+        # and loop indefinitely. This is a known limitation that requires runtime step detection.
+        comp = '<='
 
         code.append(self.indent() + f'for ({var_name} = {start}; {var_name} {comp} {end}; {var_name} += {step}) {{')
         self.indent_level += 1
@@ -412,7 +410,7 @@ class Z88dkCBackend(CodeGenBackend):
         self.gosub_return_counter += 1
 
         # Push return ID onto stack
-        code.append(self.indent() + f'gosub_stack[gosub_sp++] = {return_id};  /* Push return address */')
+        code.append(self.indent() + f'gosub_stack[gosub_sp++] = {return_id};  /* Push return ID */')
         code.append(self.indent() + f'goto line_{stmt.line_number};  /* Jump to subroutine */')
         code.append(f'gosub_return_{return_id}:  /* Return point */')
         return code

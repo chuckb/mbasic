@@ -389,12 +389,12 @@ class Parser:
                 self.advance()
             elif self.match(TokenType.SEMICOLON):
                 # Allow trailing semicolon at end of line only (treat as no-op).
-                # Context matters: Semicolons WITHIN PRINT/LPRINT are item separators (parsed there),
-                # but semicolons BETWEEN statements are NOT valid in MBASIC.
-                # MBASIC uses COLON (:) to separate statements, not semicolon (;).
+                # Context matters: Semicolons have different meanings in different contexts:
+                # - WITHIN PRINT/LPRINT: item separators (parsed there, not at statement level)
+                # - BETWEEN statements: MBASIC primarily uses COLON (:) to separate statements
+                # - Trailing semicolon: Allowed only at end-of-line or before colon (acts as no-op)
                 self.advance()
-                # Trailing semicolon is valid at actual end-of-line OR before a colon (which separates statements).
-                # If there's more content after the semicolon (not colon, not newline), it's an error.
+                # If there's more content after the semicolon (not end-of-line, not colon), it's an error.
                 if not self.at_end_of_line() and not self.match(TokenType.COLON):
                     token = self.current()
                     raise ParseError(f"Expected : or newline after ;, got {token.type.name}", token)
@@ -1426,11 +1426,12 @@ class Parser:
                 column=token.column
             )
             # Consume separator after prompt (comma or semicolon)
-            # Note: In MBASIC 5.21, the separator after prompt affects "?" display:
-            # - INPUT "Name"; X  displays "Name? " (semicolon AFTER prompt shows '?')
-            # - INPUT "Name", X  displays "Name " (comma AFTER prompt suppresses '?')
-            # Different behavior: INPUT; (semicolon IMMEDIATELY after INPUT keyword, no prompt)
-            # suppresses the default '?' prompt entirely (tracked by suppress_question flag above).
+            # Note: In MBASIC 5.21, the SEPARATOR AFTER PROMPT affects "?" display:
+            # Semicolon after prompt: INPUT "Name"; X  displays "Name? " (shows '?')
+            # Comma after prompt:    INPUT "Name", X  displays "Name " (suppresses '?')
+            # This is different from suppressing '?' ENTIRELY, which requires:
+            # INPUT; (semicolon IMMEDIATELY after INPUT keyword with NO prompt).
+            # See suppress_question flag above for that behavior.
             if self.match(TokenType.SEMICOLON):
                 self.advance()
             elif self.match(TokenType.COMMA):
@@ -2517,8 +2518,8 @@ class Parser:
         Syntax: DIM array1(dims), array2(dims), ...
 
         Dimension expressions: This implementation accepts any expression for array dimensions
-        (e.g., DIM A(X*2, Y+1)), with dimensions evaluated at runtime. This behavior has been
-        verified with MBASIC 5.21 (see tests/bas_tests/ for examples).
+        (e.g., DIM A(X*2, Y+1)), with dimensions evaluated at runtime. This matches MBASIC 5.21
+        behavior which evaluates dimension expressions at runtime (not compile-time).
         Note: Some compiled BASICs (e.g., QuickBASIC) may require constants only.
         """
         token = self.advance()
@@ -2622,8 +2623,9 @@ class Parser:
             MID$(A$, 3, 5) = "HELLO"
             MID$(P$(I), J, 1) = " "
 
-        Note: The lexer tokenizes 'MID$' in source as TokenType.MID (the $ is part
-        of the keyword, not a separate token). The token type name is 'MID', not 'MID$'.
+        Note: The lexer tokenizes 'MID$' from source as TokenType.MID. The token TYPE is
+        named 'MID' (enum constant), but the token represents the full 'MID$' keyword with
+        the dollar sign as an integral part (not a separate type suffix token).
         """
         token = self.current()  # MID token (TokenType.MID represents 'MID$' from source)
         self.advance()  # Skip MID token
@@ -2667,11 +2669,16 @@ class Parser:
     def parse_deftype(self) -> DefTypeStatementNode:
         """Parse DEFINT/DEFSNG/DEFDBL/DEFSTR statement
 
-        Note: This method always updates def_type_map during parsing. The type map is
-        shared across all statements (both in interactive mode where statements are parsed
-        one at a time, and in batch mode where the entire program is parsed). The type map
-        affects variable type inference throughout the program. The AST node is created
-        for program serialization/documentation.
+        Design decision: This method updates def_type_map during PARSING, not during execution.
+        This is necessary because:
+        1. The type map must be available when parsing subsequent variable declarations
+           (DIM, FOR, etc.) to infer their types
+        2. In batch mode, DEFTYPE statements can appear anywhere and affect variables
+           declared before or after them in the source
+        3. The map must be consistent across all statements in a program
+
+        The def_type_map is shared across all statements (both interactive and batch modes).
+        The AST node is created for program serialization/documentation.
         """
         token = self.advance()
         var_type = TypeInfo.from_def_statement(token.type)
@@ -2720,9 +2727,10 @@ class Parser:
         Note: FN is part of the function name, e.g., "FNR", "FNA$"
 
         Function name normalization: All function names are normalized to lowercase with
-        'fn' prefix (e.g., "FNR" becomes "fnr", "FNA$" becomes "fna$") for consistent
-        lookup. This matches the lexer's identifier normalization and ensures function
-        calls match their definitions regardless of case.
+        'fn' prefix (e.g., "FNR" becomes "fnr", "FNA$" becomes "fna") for consistent
+        lookup. Type suffixes are stripped from the name before normalization. This matches
+        the lexer's identifier normalization and ensures function calls match their
+        definitions regardless of case.
 
         Examples:
             DEF FNR(X) = INT(X*100+.5)/100

@@ -43,9 +43,10 @@ class WebIOHandler(IOHandler):
             self.output_log.push("")
 
     # Backward compatibility alias
-    # This method was renamed from print() to output() to avoid conflicts with Python's
-    # built-in print function. The print() alias is maintained for backward compatibility
-    # with older code that may still call io_handler.print().
+    # This method was renamed from print() to output() for consistency with IOHandler
+    # interface and to support a more semantic naming convention. While Python's
+    # built-in print() exists in a different namespace, using output() makes the API
+    # clearer for interface implementations across different backends.
     def print(self, text="", end="\n"):
         """Deprecated: Use output() instead.
 
@@ -144,7 +145,8 @@ class WebIOHandler(IOHandler):
         Get single character input (for INKEY$, INPUT$).
 
         Args:
-            blocking: Accepted for interface compatibility but ignored in web UI.
+            blocking: Accepted for interface compatibility. The parameter is not used
+                     in web UI since character input is not supported.
 
         Returns:
             Empty string (character input not supported in web UI)
@@ -162,9 +164,8 @@ class WebIOHandler(IOHandler):
         """Deprecated: Use input_char() instead.
 
         This is a backward compatibility alias. New code should use input_char().
-        Note: Always calls input_char(blocking=False) for non-blocking behavior.
-        The original get_char() implementation was non-blocking, so this preserves
-        that behavior for backward compatibility.
+        Note: Always calls input_char(blocking=False) for non-blocking behavior
+        to match the expected behavior of the original get_char() method.
         """
         return self.input_char(blocking=False)
 

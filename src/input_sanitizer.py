@@ -73,8 +73,9 @@ def sanitize_input(text: str) -> str:
 
     Note: This function is typically called after clear_parity_all() in the
     sanitize_and_clear_parity() pipeline, where parity bits have already been
-    cleared. It validates that characters are in the valid range (32-126, plus
-    tab/newline/CR).
+    cleared. It filters out characters outside the valid range (32-126, plus
+    tab/newline/CR). By design, this removes any characters with bit 7 set
+    (codes >= 128), which is an indirect way of enforcing valid ASCII-only input.
 
     Args:
         text: Input text to sanitize

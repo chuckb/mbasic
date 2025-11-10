@@ -52,9 +52,9 @@ class RealFileHandle(FileHandle):
     def is_eof(self) -> bool:
         """Check if at end of file."""
         current_pos = self.file_obj.tell()
-        # Try to read one byte
-        byte = self.file_obj.read(1)
-        if byte:
+        # Try to read one character/byte (depends on file mode)
+        data = self.file_obj.read(1)
+        if data:
             # Not EOF, seek back
             self.file_obj.seek(current_pos)
             return False

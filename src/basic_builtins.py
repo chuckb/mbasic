@@ -1,9 +1,9 @@
 """
-Built-in functions for MBASIC 5.21 (CP/M era MBASIC-80).
+Built-in functions for Microsoft BASIC-80 (from BASIC-80 Reference Manual Version 5.21).
 
 BASIC built-in functions (SIN, CHR$, INT, etc.) and formatting utilities (TAB, SPC, USING).
 
-Note: Version 5.21 refers to BASIC-80 Reference Manual Version 5.21, which documents
+Note: This implementation follows BASIC-80 Reference Manual Version 5.21, which documents
 Microsoft BASIC-80 as implemented for CP/M systems. This version was chosen as the
 reference implementation for maximum compatibility with classic BASIC programs.
 """
@@ -114,9 +114,9 @@ class UsingFormatter:
         """Parse a numeric field starting at start_pos
 
         Sign behavior:
-        - leading_sign: + at start, always adds + or - sign (reserves 1 char for sign)
-        - trailing_sign: + at end, always adds + or - sign (reserves 1 char for sign)
-        - trailing_minus_only: - at end, adds - for negative OR space for non-negative (reserves 1 char)
+        - leading_sign: + at start, reserves space for sign (displays + or - based on value)
+        - trailing_sign: + at end, reserves space for sign (displays + or - based on value)
+        - trailing_minus_only: - at end, reserves space for sign (displays - for negative or space for non-negative)
         """
         spec = {
             'start_pos': start_pos,
@@ -279,10 +279,9 @@ class UsingFormatter:
             rounded = round(value)
 
         # Determine sign - preserve negative sign for values that round to zero.
-        # Use original_negative (captured above before rounding) to detect negative values that rounded to zero.
-        # This allows us to detect cases like -0.001 which round to 0 but should display as "-0" (not "0").
-        # This matches MBASIC 5.21 behavior: negative values that round to zero display as "-0",
-        # while positive values that round to zero display as "0".
+        # This matches MBASIC 5.21 behavior: -0.001 rounds to 0 but displays as "-0".
+        # We use original_negative (captured before rounding) to detect this case,
+        # ensuring: negative values that round to zero display "-0", positive display "0".
         if rounded == 0 and original_negative:
             is_negative = True
         else:
@@ -840,13 +839,14 @@ class BuiltinFunctions:
 
         Returns -1 if at EOF, 0 otherwise
 
-        Note: For binary input files (OPEN statement mode 'I'), respects ^Z (ASCII 26)
-        as EOF marker (CP/M style).
+        Note: For input files (OPEN statement mode 'I'), respects ^Z (ASCII 26)
+        as EOF marker (CP/M style). Input files are opened in Python binary mode ('rb')
+        to enable ^Z detection.
 
         Implementation details:
         - execute_open() in interpreter.py stores mode ('I', 'O', 'A', 'R') in file_info['mode']
-        - Mode 'I' files are opened in binary mode ('rb'), allowing ^Z detection
-        - Text mode files (output 'O', append 'A') use standard Python EOF detection without ^Z
+        - Mode 'I' (input): Opened in Python binary mode ('rb'), allowing ^Z detection
+        - Modes 'O' (output), 'A' (append): Use standard Python EOF detection without ^Z
         - See execute_open() in interpreter.py for file opening implementation (search for "execute_open")
         """
         file_num = int(file_num)
@@ -1008,9 +1008,12 @@ class BuiltinFunctions:
             INPUT$(n) - read n characters from keyboard
             INPUT$(n, #filenum) - read n characters from file
 
-        Python call syntax (from interpreter):
+        Python call syntax (from interpreter - # prefix already stripped by parser):
             INPUT(n) - read n characters from keyboard
-            INPUT(n, filenum) - read n characters from file (# prefix already stripped)
+            INPUT(n, filenum) - read n characters from file
+
+        Note: The file_num parameter (when provided) is a numeric value, not the original
+        BASIC source syntax with # prefix. The parser removes the # during parsing.
         """
         num = int(num)
 

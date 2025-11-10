@@ -54,8 +54,9 @@ class PC:
         PC(150, 2, "ERROR", ErrorInfo(...))       # Error at line 150, third statement
         PC(None, 0, "END", None)                  # Ended (fell off end of program)
 
-    The stmt index is 0-based: first statement has index 0, second has index 1, etc.
+    The statement index is 0-based: first statement has index 0, second has index 1, etc.
     Multiple statements can appear on one line, separated by colons.
+    (See stmt_offset property for compatibility with code using the older name)
     """
 
     line: Optional[int]

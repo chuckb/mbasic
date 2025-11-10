@@ -189,7 +189,8 @@ class SandboxedFileIO(FileIO):
     Acts as an adapter to backend.sandboxed_fs (SandboxedFileSystemProvider from
     src/filesystem/sandboxed_fs.py), which provides an in-memory virtual filesystem.
 
-    Storage location: Python server memory (NOT browser localStorage or disk files).
+    Storage location: In-memory virtual filesystem stored in server memory (NOT browser
+                    localStorage or server disk files).
     Why server memory? Web UI runs Python interpreter on server, not in browser.
     Security: No access to server filesystem - all files are sandboxed in memory.
     Lifetime: Files exist only during the server session (cleared on restart).
@@ -198,20 +199,22 @@ class SandboxedFileIO(FileIO):
               browser's File → Save to persist them locally.
 
     Implementation status:
-    - list_files(): IMPLEMENTED - delegates to backend.sandboxed_fs to list in-memory
-                    files created by BASIC programs (OPEN/PRINT#/CLOSE). Returns empty
-                    list if backend.sandboxed_fs doesn't exist. Catches exceptions and
-                    returns (filename, None, False) for files that can't be stat'd.
-    - load_file(): STUB - raises IOError (requires async refactor to load .BAS programs)
-    - save_file(): STUB - raises IOError (requires async refactor to save .BAS programs)
+    - list_files(): IMPLEMENTED - queries the sandboxed_fs filesystem for in-memory files
+                    created by BASIC programs (OPEN/PRINT#/CLOSE). The sandboxed_fs
+                    filesystem already exists for runtime file I/O, so this method simply
+                    lists what's there. Returns empty list if backend.sandboxed_fs doesn't
+                    exist. Catches exceptions and returns (filename, None, False) for files
+                    that can't be stat'd.
+    - load_file(): STUB - raises IOError (requires async refactor to integrate with web UI
+                   file upload mechanisms for .BAS program files)
+    - save_file(): STUB - raises IOError (requires async refactor to integrate with web UI
+                   file download mechanisms for .BAS program files)
     - delete_file(): STUB - raises IOError (requires async refactor)
     - file_exists(): STUB - raises IOError (requires async refactor)
 
-    Why only list_files() is implemented: The sandboxed_fs filesystem already exists
-    for runtime file I/O (OPEN/CLOSE/PRINT#). The list_files() method simply queries
-    what files exist in that already-functional in-memory filesystem. The other methods
-    (load/save/delete) require async refactor to integrate with the web UI's file
-    upload/download mechanisms for .BAS program files (not the same as runtime data files).
+    Note: The other methods (load/save/delete) are for managing .BAS program files through
+    the web UI's file upload/download mechanisms, which is different from the runtime data
+    files managed by the in-memory virtual filesystem.
     """
 
     def __init__(self, backend):

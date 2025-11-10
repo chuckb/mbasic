@@ -58,7 +58,7 @@ class Runtime:
         #       not the original case as first typed. See _check_case_conflict() for resolution logic.
         # Note: line -1 in last_write indicates non-program execution sources:
         #       1. System/internal variables (ERR%, ERL%) via set_variable_raw() with FakeToken(line=-1)
-        #       2. Debugger/interactive prompt via set_variable() with debugger_set=True and token.line=-1
+        #       2. Debugger/interactive prompt via set_variable() with debugger_set=True (always uses line=-1)
         #       Both use line=-1, making them indistinguishable from each other in last_write alone.
         #       However, line=-1 distinguishes these special sources from normal program execution (line >= 0).
         self._variables = {}
@@ -385,11 +385,11 @@ class Runtime:
                 'value': default_value,
                 'last_read': None,
                 'last_write': None,
-                'original_case': canonical_case  # Canonical case for display (field name is historical, see module header)
+                'original_case': canonical_case  # Canonical case for display (field name is misleading, see module header)
             }
         else:
             # Always update to canonical case (for prefer_upper/prefer_lower/prefer_mixed policies)
-            # Note: Despite the field name, this stores canonical case not original (see module header)
+            # Note: The field name is misleading - it stores canonical case not original (see module header)
             self._variables[full_name]['original_case'] = canonical_case
 
         # Track read access
@@ -460,11 +460,11 @@ class Runtime:
                 'value': None,
                 'last_read': None,
                 'last_write': None,
-                'original_case': canonical_case  # Canonical case for display (field name is historical, see module header)
+                'original_case': canonical_case  # Canonical case for display (field name is misleading, see module header)
             }
         else:
             # Always update to canonical case (for prefer_upper/prefer_lower/prefer_mixed policies)
-            # Note: Despite the field name, this stores canonical case not original (see module header)
+            # Note: The field name is misleading - it stores canonical case not original (see module header)
             self._variables[full_name]['original_case'] = canonical_case
 
         # Set value

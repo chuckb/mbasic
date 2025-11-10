@@ -1,15 +1,14 @@
 """Debug logging utility for MBASIC.
 
 Provides centralized debug output controlled by MBASIC_DEBUG environment variable.
-When enabled, errors and debug info are output to stderr and returned as formatted
-strings for UI display when debugging with IDEs or other development tools.
+When enabled, errors and debug info are output to stderr and returned as formatted strings.
 
 Usage:
     from src.debug_logger import debug_log_error, is_debug_mode
 
     if is_debug_mode():
         formatted_msg = debug_log_error("Error details", exception, context_info)
-        # formatted_msg can be displayed in UI
+        # formatted_msg also written to stderr for debugging
 """
 
 import os

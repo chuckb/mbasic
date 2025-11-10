@@ -141,7 +141,7 @@ class ImmediateExecutor:
             When a numbered line is entered (e.g., "100 PRINT X"), this method
             adds or updates that line in the program via UI integration:
             - Requires interpreter.interactive_mode to reference the UI object
-            - UI must have add_line() and delete_line() methods
+            - UI.program must have add_line() and delete_line() methods
             - Empty line content (e.g., "100") deletes that line
             - Returns error tuple if UI integration is missing or incomplete
 

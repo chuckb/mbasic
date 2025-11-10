@@ -2,6 +2,7 @@
 Abstract Syntax Tree (AST) node definitions for MBASIC 5.21
 
 Note: 5.21 refers to the Microsoft BASIC-80 language version, not this package version.
+This is an independent open-source implementation (package version 0.99.0).
 
 This module defines all AST node types for representing BASIC programs.
 Nodes are organized into:
@@ -91,9 +92,14 @@ class LineNode:
     Design note: This class intentionally does not have a source_text field to avoid
     maintaining duplicate copies that could get out of sync with the AST during editing.
     Text regeneration is handled by the src.position_serializer module which reconstructs
-    source text from statement nodes and their token information. The serializer's
-    serialize_line() method uses each statement's tokens and char_start/char_end offsets to
-    regenerate the exact source text with preserved formatting and keyword casing.
+    source text from statement nodes and their token information.
+
+    How text regeneration works without storing original text:
+    - Each StatementNode has char_start/char_end offsets that mark its position in the line
+    - Each token in a statement has original_case information (original keyword casing/identifier names)
+    - The position_serializer uses these token values with their char_start/char_end positions
+      to reconstruct the source text character-by-character
+    - This approach preserves original formatting and keyword casing while avoiding duplication
     """
     line_number: int
     statements: List['StatementNode']
@@ -137,19 +143,12 @@ class PrintStatementNode:
         , (comma)  - Tab to next print zone
         ; (semicolon) - No spacing between items
         (none) - Newline after output
-
-    Note: keyword_token fields are present in some statement nodes (PRINT, IF, FOR) but not
-    others. These were intended for case-preserving keyword regeneration but are not currently
-    used by position_serializer, which handles keyword case through apply_keyword_case_policy()
-    and the KeywordCaseManager instead. The fields remain for potential future use and backward
-    compatibility.
     """
     expressions: List['ExpressionNode']
     separators: List[str]  # ";" or "," or None for newline
     file_number: Optional['ExpressionNode'] = None  # For PRINT #n, ...
     line_num: int = 0
     column: int = 0
-    keyword_token: Optional[Token] = None  # Token for PRINT keyword (legacy, not currently used)
 
 
 @dataclass
@@ -199,9 +198,15 @@ class InputStatementNode:
     - suppress_question=True: No "?" added (for INPUT; syntax)
       Examples: INPUT; var → "" (no prompt), INPUT "prompt"; var → "prompt" (no "?")
 
-    Semicolon usage in MBASIC:
-    - INPUT; var → semicolon immediately after INPUT (sets suppress_question=True)
-    - INPUT "prompt"; var → semicolon after prompt is just separator (suppress_question=False)
+    Important: Semicolon placement changes meaning:
+    - INPUT; var → semicolon IMMEDIATELY after INPUT keyword (suppress_question=True)
+      This suppresses the "?" question mark entirely
+    - INPUT "prompt"; var → semicolon AFTER the prompt string (suppress_question=False)
+      This is parsed as: prompt="prompt", then semicolon separates the prompt from the variable
+      The "?" is still added after the prompt
+
+    Parser note: The parser determines suppress_question=True only when it sees INPUT
+    followed directly by semicolon with no prompt expression between them.
     """
     prompt: Optional['ExpressionNode']
     variables: List['VariableNode']
@@ -241,9 +246,6 @@ class IfStatementNode:
     else_line_number: Optional[int]
     line_num: int = 0
     column: int = 0
-    keyword_token: Optional[Token] = None  # Token for IF keyword (legacy, not currently used)
-    then_token: Optional[Token] = None     # Token for THEN keyword (legacy, not currently used)
-    else_token: Optional[Token] = None     # Token for ELSE keyword (legacy, not currently used)
 
 
 @dataclass
@@ -260,9 +262,6 @@ class ForStatementNode:
     step_expr: Optional['ExpressionNode']  # Default is 1
     line_num: int = 0
     column: int = 0
-    keyword_token: Optional[Token] = None  # Token for FOR keyword (legacy, not currently used)
-    to_token: Optional[Token] = None       # Token for TO keyword (legacy, not currently used)
-    step_token: Optional[Token] = None     # Token for STEP keyword (legacy, not currently used)
 
 
 @dataclass
@@ -887,13 +886,12 @@ class RemarkStatementNode:
         REMARK text
         ' text
 
-    Note: comment_type preserves the original comment syntax used in source code.
-    The parser sets this to "REM", "REMARK", or "APOSTROPHE" based on input.
-    Default value "REM" is used only when creating nodes programmatically (not from parsed
-    source). When generating source text, this value determines which comment keyword appears.
+    The comment_type field preserves the original comment syntax used in source code.
+    The parser sets this to "REM", "REMARK", or "APOSTROPHE" based on input, and the
+    value determines which comment keyword appears when generating source text.
     """
     text: str
-    comment_type: str = "REM"  # Tracks original syntax: "REM", "REMARK", or "APOSTROPHE"
+    comment_type: str = "REM"  # Original syntax: "REM", "REMARK", or "APOSTROPHE"
     line_num: int = 0
     column: int = 0
 
@@ -987,20 +985,22 @@ class CallStatementNode:
     Standard MBASIC 5.21 Syntax:
         CALL address           - Call machine code at numeric address
 
+    Extended Syntax (for compatibility with other BASIC dialects):
+        CALL ROUTINE(X,Y)      - Call with arguments
+
     Examples:
         CALL 16384             - Call decimal address
         CALL &HC000            - Call hex address
         CALL A                 - Call address in variable
         CALL DIO+1             - Call computed address
+        CALL MYSUB(X,Y)        - Call with arguments (extended syntax)
 
-    Implementation Note: The 'arguments' field is currently unused (always empty list).
-    It exists for potential future support of BASIC dialects that allow CALL with
-    arguments (e.g., CALL ROUTINE(args)). Standard MBASIC 5.21 only accepts a single
-    address expression in the 'target' field. Code traversing the AST can safely ignore
-    the 'arguments' field for MBASIC 5.21 programs.
+    Implementation Note: The 'arguments' field is populated when the target is parsed as
+    a function call or array access with subscripts. For standard MBASIC 5.21 programs
+    (which only use numeric addresses), this field will be empty.
     """
-    target: 'ExpressionNode'  # Memory address expression
-    arguments: List['ExpressionNode']  # Reserved for future (parser always sets to empty list)
+    target: 'ExpressionNode'  # Memory address or subroutine name
+    arguments: List['ExpressionNode'] = field(default_factory=list)  # Arguments for extended syntax
     line_num: int = 0
     column: int = 0
 
@@ -1206,9 +1206,17 @@ class VariableNode:
     - When explicit_type_suffix=True: suffix IS included in regenerated source (e.g., "X%")
     - When explicit_type_suffix=False: suffix is NOT included in regenerated source (e.g., "X")
 
+    Important: Both fields are ALWAYS present together:
+    - type_suffix may be non-None even when explicit_type_suffix=False (inferred from DEF statement)
+    - explicit_type_suffix=True should only occur when type_suffix is also non-None (the suffix was written)
+    - explicit_type_suffix=False + type_suffix=None means variable has default type (SINGLE) with no explicit suffix
+
     Example: In "DEFINT A-Z: X=5", variable X has type_suffix='%' and explicit_type_suffix=False.
     The suffix is tracked for type checking but not output when regenerating source code.
-    Both fields must always be examined together to correctly handle variable typing.
+
+    Critical: Code must always check BOTH fields together:
+    - For source regeneration: use explicit_type_suffix to decide whether to output the suffix
+    - For type checking: use type_suffix to determine the variable's actual type
     """
     name: str  # Normalized lowercase name for lookups
     type_suffix: Optional[str] = None  # $, %, !, # - The actual suffix (see explicit_type_suffix for origin)

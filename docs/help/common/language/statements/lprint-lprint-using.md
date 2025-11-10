@@ -13,13 +13,13 @@ type: statement
 
 ⚠️ **Not Implemented**: This feature requires line printer hardware and is not implemented in this Python-based interpreter.
 
-**Behavior**: Statement is parsed but no output is sent to a printer
+**Status**: Statement is parsed but produces no output
 
-**Why**: Line printers are obsolete hardware. Modern systems use different printing paradigms (print spooling, PDF generation, etc.).
+**Why Not**: Line printers are obsolete hardware. Modern systems use different printing paradigms (print spooling, PDF generation, etc.).
 
-**Alternative**: Use [PRINT](print.md) to output to console or [PRINT#](printi-printi-using.md) to output to a file, then print the file using your operating system's print facilities.
+**Recommended Alternative**: Use [PRINT](print.md) to output to console or [PRINT#](printi-printi-using.md) to output to a file, then print the file using your operating system's print facilities.
 
-**Historical Reference**: The documentation below is preserved from the original MBASIC 5.21 manual for historical reference.
+**Historical Documentation**: The content below is preserved from the original MBASIC 5.21 manual for reference.
 
 ---
 

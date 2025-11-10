@@ -243,8 +243,9 @@ def create_settings_backend(session_id: Optional[str] = None,
     Note:
         If NICEGUI_REDIS_URL is set but session_id is None, falls back to FileSettingsBackend
         (this is expected behavior - Redis requires both URL and session_id, so incomplete config
-        defaults to file mode without logging/warning).
-        If Redis package is not installed or connection fails, falls back to FileSettingsBackend with warning.
+        defaults to file mode silently).
+        If Redis package is not installed, prints warning and falls back to FileSettingsBackend.
+        If Redis connection fails, prints warning and falls back to FileSettingsBackend.
     """
     import os
 

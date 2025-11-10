@@ -152,9 +152,9 @@ The **Program Editor** automatically adds line numbers when you press Enter:
 
 File operations in the web UI work with an **in-memory filesystem**:
 
-- Files are stored in browser memory only
-- Each user has their own isolated filesystem
-- Files persist during your session (but are cleared when session ends)
+- Files are stored in server memory (sandboxed, per-session)
+- Each user/session has their own isolated filesystem
+- Files persist during your session (but are lost on page refresh or session end)
 - No access to the server's real filesystem (security)
 
 **Important:** Programs and data created via BASIC file I/O commands (OPEN, PRINT #, etc.) exist only in memory during your browser session. To save your BASIC program source code permanently, use File → Save to download it to your computer.
@@ -226,7 +226,7 @@ Works best with modern browsers:
 Compared to desktop UIs, the web UI:
 - Cannot directly access local filesystem (but can load files via browser file picker)
 - Limited debugger support (basic breakpoints only via Run menu)
-- Files don't persist after session ends (stored in browser memory only)
+- Files don't persist after session ends (stored in server memory per-session)
 
 ## Troubleshooting
 

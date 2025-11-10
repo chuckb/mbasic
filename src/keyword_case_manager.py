@@ -6,10 +6,22 @@ keywords to their display case based on the configured policy.
 
 The keyword table is the single source of truth for how keywords should be displayed.
 
-Note: This class provides advanced case policies (first_wins, preserve, error) via
+ARCHITECTURE - Two Case Handling Systems:
+
+This class provides advanced case policies (first_wins, preserve, error) via
 CaseKeeperTable and is used by parser.py and position_serializer.py. For simpler
-force-based policies in the lexer, see SimpleKeywordCase (src/simple_keyword_case.py)
-which only supports force_lower, force_upper, and force_capitalize.
+force-based policies in the lexer, see SimpleKeywordCase (src/simple_keyword_case.py).
+
+Why two systems:
+- SimpleKeywordCase: Used by lexer for fast, stateless tokenization (force-based policies only)
+- KeywordCaseManager: Used by parser/serializer for complex state tracking (all policies including first_wins, preserve, error)
+
+When to use which:
+- Lexer (tokenization phase): SimpleKeywordCase with force_lower/force_upper/force_capitalize
+- Parser/Serializer (later phases): KeywordCaseManager for any policy including first_wins/preserve/error
+- Both should read the same settings.get("keywords.case_style") to ensure consistency
+
+See simple_keyword_case.py for detailed architecture notes on the separation.
 """
 
 from src.case_keeper import CaseKeeperTable

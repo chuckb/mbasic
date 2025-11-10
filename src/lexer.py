@@ -2,8 +2,11 @@
 Lexer for MBASIC 5.21 (CP/M era MBASIC-80)
 Based on BASIC-80 Reference Manual Version 5.21
 
-MBASIC 5.21 Extended BASIC features: This implementation enables Extended BASIC
-features (e.g., periods in identifiers like "RECORD.FIELD") as they are part of MBASIC 5.21.
+This implementation includes the full set of keywords and tokenization rules from MBASIC 5.21,
+with support for Extended BASIC features such as periods in identifiers (e.g., "RECORD.FIELD").
+
+Note: 'Based on' means implementation follows the MBASIC 5.21 specification for lexical analysis.
+All documented MBASIC 5.21 tokens and keywords are supported.
 """
 from typing import List, Optional
 from src.tokens import Token, TokenType, KEYWORDS
@@ -243,6 +246,9 @@ class Lexer:
                 ident += self.advance()
             elif char in ['$', '%', '!', '#']:
                 # Type suffix - terminates identifier (e.g., A$ reads as A$, not A$B)
+                # Note: For PRINT#, INPUT#, etc., special handling occurs before this point
+                # (see PRINT# check earlier) where the # is excluded and re-tokenized separately.
+                # This general handling applies to user-defined identifiers like "A$", "B%", "C!".
                 ident += self.advance()
                 break
             else:
@@ -278,16 +284,17 @@ class Lexer:
                 return token
 
         # NOTE: We do NOT handle old BASIC where keywords run together (NEXTI, FORI).
-        # This is properly-formed MBASIC 5.21 which requires spaces.
-        # Exception: PRINT# and similar file I/O keywords (handled above) support # without space.
+        # MBASIC 5.21 is properly-formed and requires spaces between keywords.
+        # Special case handled above: PRINT# and similar file I/O keywords in MBASIC 5.21
+        # allow # without a space (MBASIC 5.21 feature, not old BASIC syntax).
         # Other old BASIC syntax should be preprocessed with conversion scripts.
 
         # Otherwise it's an identifier
         # Normalize to lowercase (BASIC is case-insensitive) but preserve original case
         token = Token(TokenType.IDENTIFIER, ident.lower(), start_line, start_column)
-        # Preserve original case for display. Identifiers use the original_case field
-        # to store the exact case as typed. Keywords use original_case_keyword to store
-        # the case determined by the keyword case policy (see Token class in tokens.py).
+        # Preserve original case for display. For identifiers (user-defined variables),
+        # store the exact case as typed in the original_case field for later display.
+        # (Keywords handle case separately via original_case_keyword - see Token class in tokens.py)
         token.original_case = ident
         return token
 

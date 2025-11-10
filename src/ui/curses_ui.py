@@ -359,7 +359,8 @@ class ProgramEditorWidget(urwid.WidgetWrap):
         This is an approximation since line numbers have variable width.
         """
         # FAST PATH: For normal printable characters, bypass editor-specific processing
-        # (syntax checking, column protection, etc.) for responsive typing
+        # (column protection, line number tracking, focus management) for responsive typing.
+        # Note: Syntax checking only happens on special keys (below), not during normal typing.
         if len(key) == 1 and key >= ' ' and key <= '~':
             return super().keypress(size, key)
 
@@ -2069,7 +2070,7 @@ class CursesBackend(UIBackend):
                 # Clear statement highlighting when continuing
                 self.editor._update_display()
                 # Continue from breakpoint - resume tick execution
-                # (Immediate mode status remains disabled - execution will show output in output window)
+                # (execution will show output in output window, immediate mode updates via tick loop)
                 # Schedule next tick to resume execution
                 self.loop.set_alarm_in(0.01, lambda _loop, _user_data: self._execute_tick())
             else:
@@ -2094,7 +2095,7 @@ class CursesBackend(UIBackend):
 
         try:
             # Execute one statement
-            # (Immediate mode status remains disabled during execution - output shows in output window)
+            # (output shows in output window, immediate mode status updates after step completes)
             state = self.interpreter.tick(mode='step_statement', max_statements=1)
 
             # Collect any output

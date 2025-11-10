@@ -186,9 +186,10 @@ class InteractiveMode:
         and loop contexts. Called when lines are added, deleted, or renumbered.
 
         Note: We do NOT clear/reset the PC here. The PC is preserved so that
-        CONT can detect if the program was edited using pc.is_valid(). If the
-        PC position still exists after editing, CONT will allow resuming;
-        if not, it shows "?Can't continue" matching MBASIC 5.21 behavior.
+        CONT can detect if the program was edited. The cmd_cont() method uses
+        pc.is_valid() to check if the PC position still exists after editing.
+        If PC is still valid, CONT resumes; if not, shows "?Can't continue"
+        matching MBASIC 5.21 behavior.
         """
         if self.program_runtime:
             self.program_runtime.gosub_stack.clear()
@@ -1485,9 +1486,7 @@ class InteractiveMode:
                 # - The final PC change is then reverted, preserving the stopped position
                 # - CONT will resume at the original stopped location, not the GOTO target
                 # This implementation allows GOTO/GOSUB to function while preserving CONT state.
-                # However, the transient jump behavior may be unexpected, hence marked "not recommended"
-                # in help text. Users should prefer explicit RUN or line modifications over immediate
-                # mode GOTO/GOSUB.
+                # However, the transient jump behavior may be unexpected - use this feature cautiously.
                 old_pc = runtime.pc
 
                 # Execute each statement on line 0

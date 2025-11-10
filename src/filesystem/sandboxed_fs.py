@@ -36,14 +36,12 @@ class InMemoryFileHandle(FileHandle):
     def flush(self):
         """Flush write buffers (no-op for in-memory files).
 
-        Note: This calls StringIO/BytesIO flush() which are no-ops.
-        Content is only saved to the virtual filesystem on close().
-        Unlike standard file flush() which persists buffered writes to disk,
-        in-memory file writes are already in memory, so flush() has no effect.
+        Calls the underlying StringIO/BytesIO flush() method, which is a no-op.
+        In-memory file writes are already in memory, so flush() has no practical effect.
+        Content is only logically "saved" to the virtual filesystem on close().
         """
-        # StringIO/BytesIO have flush() methods (no-ops) - hasattr check for safety
-        if hasattr(self.file_obj, 'flush'):
-            self.file_obj.flush()
+        # StringIO and BytesIO always have flush() methods (no-ops)
+        self.file_obj.flush()
 
     def close(self):
         """Close the file and save to virtual filesystem."""
@@ -83,19 +81,19 @@ class SandboxedFileSystemProvider(FileSystemProvider):
     Sandboxed in-memory filesystem for web UI.
 
     Features:
-    - All files stored in memory (no disk access)
-    - Per-user isolation (user_id-based)
-    - Size limits to prevent memory exhaustion
-    - File count limits
-    - Read-only example files can be pre-loaded
+    - All files stored in memory (no disk access).
+    - Per-user isolation (user_id-based).
+    - Size limits to prevent memory exhaustion.
+    - File count limits.
+    - Read-only example files can be pre-loaded.
 
     Security:
-    - No access to real filesystem
-    - No path traversal (../ etc.)
-    - Resource limits enforced
-    - Per-user isolation via user_id keys in class-level storage
+    - No access to real filesystem.
+    - No path traversal (../ etc.).
+    - Resource limits enforced.
+    - Per-user isolation via user_id keys in class-level storage.
       IMPORTANT: Caller must ensure user_id is securely generated/validated
-      to prevent cross-user access (e.g., use session IDs, not user-provided values)
+      to prevent cross-user access (e.g., use session IDs, not user-provided values).
     """
 
     # Class-level storage for all users

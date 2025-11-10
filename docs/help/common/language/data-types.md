@@ -83,9 +83,9 @@ PRECISE# = 0.123456789012345
 - Astronomy, physics calculations
 
 **Exponent Notation:**
-- D notation (e.g., 1.5D+10) forces double-precision, required for exponents beyond single-precision range
-- E notation (e.g., 1.5E+10) uses single-precision by default, converts to double if assigned to # variable
-- For values within single-precision range, D and E are interchangeable when assigned to # variables
+- D notation (e.g., 1.5D+10) forces double-precision representation in the code itself
+- E notation (e.g., 1.5E+10) uses single-precision representation by default, but will convert to double if assigned to a # variable
+- For practical purposes, both work with # variables, though D notation makes the intent explicit
 
 ## STRING ($)
 

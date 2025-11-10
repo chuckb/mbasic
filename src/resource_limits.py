@@ -61,7 +61,8 @@ class ResourceLimits:
             max_while_depth: Maximum WHILE loop nesting depth
             max_total_memory: Maximum total memory for all variables/arrays (bytes)
             max_array_size: Maximum size for a single array (bytes)
-            max_string_length: Maximum byte length for a string variable (UTF-8 encoded). MBASIC 5.21 limit is 255 bytes.
+            max_string_length: Maximum byte length for a string variable (UTF-8 encoded).
+                              MBASIC 5.21 limit is 255 bytes (mandatory for spec compliance).
             max_open_files: Maximum number of simultaneously open files
             max_file_size: Maximum size for a single file (bytes)
             max_total_files: Maximum number of files that can be created
