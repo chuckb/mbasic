@@ -2678,6 +2678,31 @@ class TkBackend(UIBackend):
 
             self.editor_text.text.insert(tk.INSERT, sanitized_text)
 
+            # After multi-line paste, if cursor is at start of empty line, add auto-number prompt
+            if '\n' in sanitized_text and self.auto_number_enabled:
+                current_pos = self.editor_text.text.index(tk.INSERT)
+                line_index = int(current_pos.split('.')[0])
+                col_index = int(current_pos.split('.')[1])
+                line_text = self.editor_text.text.get(f'{line_index}.0', f'{line_index}.end')
+
+                # If at start of empty line, add next line number
+                if col_index == 0 and not line_text.strip():
+                    # Find what the next line number should be
+                    existing_lines = []
+                    all_text = self.editor_text.text.get(1.0, tk.END)
+                    for line in all_text.split('\n'):
+                        match = re.match(r'^\s*(\d+)', line)
+                        if match:
+                            existing_lines.append(int(match.group(1)))
+
+                    if existing_lines:
+                        next_line_num = max(existing_lines) + self.auto_number_increment
+                    else:
+                        next_line_num = self.auto_number_start
+
+                    self.editor_text.text.insert(f'{line_index}.0', f"{next_line_num} ")
+                    self.editor_text.text.mark_set(tk.INSERT, f'{line_index}.end')
+
             # Prevent default paste behavior
             return 'break'
 
