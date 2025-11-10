@@ -425,8 +425,9 @@ class Interpreter:
                     self.runtime.pc = next_pc.stop("BREAK") if next_pc.is_running() else next_pc
                     return self.state
 
-                # Update PC for next iteration
-                self.runtime.pc = next_pc
+                # Update PC for next iteration (unless already stopped by END/STOP)
+                if self.runtime.pc.is_running():
+                    self.runtime.pc = next_pc
 
                 # Yield control periodically
                 if mode == 'run' and statements_in_tick >= max_statements:
@@ -436,7 +437,7 @@ class Interpreter:
             # Unhandled error
             if self.state.error_info is None:
                 pc = self.runtime.pc
-                self.runtime.pc = pc.with_error(5, str(e)) if pc.is_running() else PC.with_error(None, 0, 5, str(e))
+                self.runtime.pc = pc.with_error(5, str(e)) if pc.is_running() else PC.error_at(None, 0, 5, str(e))
                 self.state.error_info = ErrorInfo(
                     error_code=5,
                     pc=self.runtime.pc,
