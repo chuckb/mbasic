@@ -186,6 +186,7 @@ class TkBackend(UIBackend):
         self.editor_text.text.bind('<KeyRelease-Next>', self._on_cursor_move)   # Page Down
         self.editor_text.text.bind('<Button-1>', self._on_mouse_click, add='+')
         self.editor_text.text.bind('<FocusOut>', self._on_focus_out)
+        self.editor_text.text.bind('<FocusIn>', self._on_focus_in)
 
         # Bind Enter key for auto-numbering
         self.editor_text.text.bind('<Return>', self._on_enter_key)
@@ -2234,6 +2235,46 @@ class TkBackend(UIBackend):
         self._check_line_change()
         # Validate syntax when leaving editor
         self._validate_editor_syntax()
+
+    def _on_focus_in(self, event):
+        """Handle focus entering editor - show auto-number prompt if empty."""
+        if not self.auto_number_enabled:
+            return
+
+        # Check if editor is empty
+        content = self.editor_text.text.get(1.0, tk.END).strip()
+        if not content:
+            # Editor is empty - insert initial line number
+            self.editor_text.text.insert(1.0, f"{self.auto_number_start} ")
+            self.editor_text.text.mark_set(tk.INSERT, "1.end")
+            return
+
+        # Check if cursor is at start of empty line
+        current_pos = self.editor_text.text.index(tk.INSERT)
+        line_index = int(current_pos.split('.')[0])
+        col_index = int(current_pos.split('.')[1])
+
+        # Get current line text
+        line_text = self.editor_text.text.get(f'{line_index}.0', f'{line_index}.end')
+
+        # If at start of completely empty line, add line number
+        if col_index == 0 and not line_text.strip():
+            # Find what the next line number should be
+            import re
+            existing_lines = []
+            all_text = self.editor_text.text.get(1.0, tk.END)
+            for line in all_text.split('\n'):
+                match = re.match(r'^\s*(\d+)', line)
+                if match:
+                    existing_lines.append(int(match.group(1)))
+
+            if existing_lines:
+                next_line_num = max(existing_lines) + self.auto_number_increment
+            else:
+                next_line_num = self.auto_number_start
+
+            self.editor_text.text.insert(f'{line_index}.0', f"{next_line_num} ")
+            self.editor_text.text.mark_set(tk.INSERT, f'{line_index}.end')
 
     def _remove_blank_lines(self):
         """Remove all blank lines from the editor (except final line).
