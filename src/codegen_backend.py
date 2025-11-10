@@ -116,6 +116,7 @@ class Z88dkCBackend(CodeGenBackend):
         code.append('/* Target: CP/M via z88dk */')
         code.append('')
         code.append('#include <stdio.h>')
+        code.append('#include <math.h>')
         code.append('')
 
         # Main function

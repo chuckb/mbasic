@@ -1517,14 +1517,16 @@ class Interpreter:
         self.runtime.clear_arrays()
 
         # Close all open files
-        # Note: Errors during file close are silently ignored (bare except: pass).
+        # Note: Errors during file close are silently ignored to match MBASIC behavior.
         # This differs from RESET which allows errors to propagate to the caller.
+        # We catch OSError and IOError specifically to avoid hiding programming errors.
         for file_num in list(self.runtime.files.keys()):
             try:
                 file_obj = self.runtime.files[file_num]
                 if hasattr(file_obj, 'close'):
                     file_obj.close()
-            except:
+            except (OSError, IOError):
+                # Silently ignore file close errors (e.g., already closed, permission denied)
                 pass
         self.runtime.files.clear()
         self.runtime.field_buffers.clear()
@@ -2587,11 +2589,12 @@ class Interpreter:
                 break
 
         if not found:
-            # If not a field variable, fall back to normal assignment.
+            # If not a field variable, fall back to normal assignment (no formatting applied).
             # Compatibility note: In strict MBASIC 5.21, LSET/RSET are only for field
             # variables (used with FIELD statement for random file access). This fallback
-            # is a deliberate extension for compatibility with code that uses LSET for
-            # general string formatting. This is documented behavior, not a bug.
+            # is a deliberate extension that performs simple assignment without left-justification.
+            # The formatting only applies when used with FIELD variables. This is documented
+            # behavior, not a bug.
             self.runtime.set_variable_raw(var_name, value)
 
     def execute_rset(self, stmt):
@@ -2628,11 +2631,12 @@ class Interpreter:
                 break
 
         if not found:
-            # If not a field variable, fall back to normal assignment.
+            # If not a field variable, fall back to normal assignment (no formatting applied).
             # Compatibility note: In strict MBASIC 5.21, LSET/RSET are only for field
             # variables (used with FIELD statement for random file access). This fallback
-            # is a deliberate extension for compatibility with code that uses RSET for
-            # general string formatting. This is documented behavior, not a bug.
+            # is a deliberate extension that performs simple assignment without right-justification.
+            # The formatting only applies when used with FIELD variables. This is documented
+            # behavior, not a bug.
             self.runtime.set_variable_raw(var_name, value)
 
     def execute_midassignment(self, stmt):
@@ -2866,11 +2870,13 @@ class Interpreter:
         self.interactive_mode.cmd_cont()
 
     def execute_step(self, stmt):
-        """Execute STEP statement (debug command) - PLACEHOLDER, NOT FUNCTIONAL
+        """Execute STEP statement (debug command) - PARTIALLY IMPLEMENTED
 
         STEP is intended to execute one or more statements, then pause.
 
-        IMPORTANT: This method is a placeholder and does NOT actually perform stepping.
+        CURRENT STATUS: This method outputs an informational message but does NOT
+        actually perform stepping. It's a partial implementation that acknowledges
+        the command but doesn't execute the intended behavior.
 
         The tick_pc() method DOES have working step infrastructure (modes 'step_statement'
         and 'step_line'), which is used by UI debuggers. However, this STEP command

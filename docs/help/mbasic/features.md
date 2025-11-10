@@ -109,6 +109,7 @@ This document lists all features implemented in MBASIC-2025 (this implementation
 - **DELETE** - Delete line ranges
 - **RENUM** - Renumber program lines
 - **AUTO** - Auto-line numbering mode
+- **BREAK** - Set/list/clear breakpoints for debugging
 
 **Execution Control:**
 - **STOP** - Halt execution (resumable)

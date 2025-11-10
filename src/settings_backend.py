@@ -212,9 +212,10 @@ class RedisSettingsBackend(SettingsBackend):
         self._set_data(settings)
 
     def load_project(self) -> Dict[str, Any]:
-        """Load project settings (returns empty in Redis mode).
+        """Load project settings (returns empty dict in Redis mode).
 
         In Redis mode, all settings are session-scoped, not project-scoped.
+        This method returns an empty dict rather than None for consistency.
         """
         return {}
 
@@ -222,6 +223,7 @@ class RedisSettingsBackend(SettingsBackend):
         """Save project settings (no-op in Redis mode).
 
         In Redis mode, all settings are session-scoped, not project-scoped.
+        This method does nothing (no write operation) for consistency.
         """
         pass  # Project settings not supported in Redis mode
 
@@ -240,7 +242,7 @@ def create_settings_backend(session_id: Optional[str] = None,
 
     Note:
         If NICEGUI_REDIS_URL is set but session_id is None, silently falls back to FileSettingsBackend.
-        If Redis connection fails, also falls back to FileSettingsBackend with warning.
+        If Redis package is not installed or connection fails, falls back to FileSettingsBackend with warning.
     """
     import os
 

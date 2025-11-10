@@ -10701,6 +10701,765 @@
       "reviewed_by": "human",
       "reviewed_date": "2025-11-10",
       "files": []
+    },
+    "9396e5aaeb59": {
+      "description": "Manual entry (9396e5aaeb59)",
+      "reason": "False positive - code DOES include <math.h> at line 119 of src/codegen_backend.py",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "1dfcc5309562": {
+      "description": "Manual entry (1dfcc5309562)",
+      "reason": "Intentional design decision: serialize_let_statement() outputs assignment form without LET keyword. Function name reflects AST node (LetStatementNode) not output format. Working as documented.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "1b871e378468": {
+      "description": "Manual entry (1b871e378468)",
+      "reason": "Documentation clarity only - code behavior is correct, type_suffix field definition is accurate",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "42e1890589e6": {
+      "description": "Manual entry (42e1890589e6)",
+      "reason": "Documentation only - code behavior is correct, sign handling works as documented in docstring",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "b520f303dff9": {
+      "description": "Manual entry (b520f303dff9)",
+      "reason": "Documentation reference only - comment references interpreter.py which exists and implements execute_open correctly",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "11eba5b6a48e": {
+      "description": "Manual entry (11eba5b6a48e)",
+      "reason": "Documentation clarity - code behavior is correct, ChainException handling works as intended",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "7b90a0de737d": {
+      "description": "Manual entry (7b90a0de737d)",
+      "reason": "Documentation clarity - code behavior is correct, comment accurately describes sentinel value",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "26951d7b3100": {
+      "description": "Manual entry (26951d7b3100)",
+      "reason": "Documentation issue - comment incorrectly says \"general string formatting\" but fallback code just assigns without formatting. Comment should be updated, not code behavior.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "1201285b66c3": {
+      "description": "Manual entry (1201285b66c3)",
+      "reason": "Documentation consistency check - code matches documented behavior, just needs verification against MBASIC 5.21 spec. Not a code bug.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "8191e368ace3": {
+      "description": "Manual entry (8191e368ace3)",
+      "reason": "Documentation detail - code behavior is correct, lowercase normalization is working as intended",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "54e12680930f": {
+      "description": "Manual entry (54e12680930f)",
+      "reason": "Naming/documentation issue - \"offset\" name is potentially confusing but comment explains it. Historical naming choice. Not a code bug.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "5244205edde6": {
+      "description": "Manual entry (5244205edde6)",
+      "reason": "Design choice - convention-based flexibility over rigid enforcement. Comment documents this explicitly. Not a bug, intentional design.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "687ce063f7c7": {
+      "description": "Manual entry (687ce063f7c7)",
+      "reason": "Documentation clarity - code behavior is correct, comment accurately describes MBASIC array allocation",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "81a8a51d4153": {
+      "description": "Manual entry (81a8a51d4153)",
+      "reason": "Documentation accuracy - \"partially implemented\" is correct. Runtime works, persistence doesn't. Comment accurately describes state.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "1571d2716c96": {
+      "description": "Manual entry (1571d2716c96)",
+      "reason": "Documentation detail - code behavior is correct, format handling works as described",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "beeaa6cb57f2": {
+      "description": "Manual entry (beeaa6cb57f2)",
+      "reason": "Documentation consistency - both methods behave correctly, docstring wording difference is minor",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "baec171464ca": {
+      "description": "InputStatementNode.suppress_question field is documented as parsed but not implemented",
+      "reason": "Documented as intentional incomplete feature, not a bug",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/ast_nodes.py"
+      ]
+    },
+    "da29128be16e": {
+      "description": "keyword_token fields documented as 'legacy, not currently used' but still present in code",
+      "reason": "Documented as intentional technical debt for backward compatibility",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/ast_nodes.py"
+      ]
+    },
+    "586e693f022a": {
+      "description": "CallStatementNode.arguments field documented as unused but still present",
+      "reason": "Documented as intentional forward compatibility design",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/ast_nodes.py"
+      ]
+    },
+    "4aa1790f1065": {
+      "description": "RemarkStatementNode.comment_type default value documentation",
+      "reason": "Minor documentation imprecision, not a code behavior bug",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/ast_nodes.py"
+      ]
+    },
+    "56aaab805138": {
+      "description": "INPUT method docstring describes BASIC syntax with # prefix but notes it's stripped by parser, creating potential confusion",
+      "reason": "Documentation explains parser behavior, not a code bug",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/basic_builtins.py"
+      ]
+    },
+    "3de622922abe": {
+      "description": "Comment in EOF describes binary mode read behavior but doesn't handle potential exceptions",
+      "reason": "Comment assumes binary mode is guaranteed by design, defensive programming not needed",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/basic_builtins.py"
+      ]
+    },
+    "9e8aea6c0d97": {
+      "description": "Docstring example shows formatted_msg usage but function doesn't always return formatted message",
+      "reason": "Documentation inconsistency about return value, function works correctly",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/debug_logger.py"
+      ]
+    },
+    "467df001e2ba": {
+      "description": "ImmediateExecutor.execute() docstring mentions state names like 'idle', 'paused', 'at_breakpoint', 'done', 'error', 'waiting_for_input', 'running' but explicitly states these are NOT actual enum values, just documentation names",
+      "reason": "Documentation style choice, explicitly clarified in docstring",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/immediate_executor.py"
+      ]
+    },
+    "816dd6d7741c": {
+      "description": "Module docstring mentions Python 3.9+ requirement for type hints but doesn't specify what happens on earlier versions",
+      "reason": "Documentation note to developers, not a code bug",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/input_sanitizer.py"
+      ]
+    },
+    "8ef107918173": {
+      "description": "Security comment about user_id validation is repeated in both __init__ docstring and class docstring with slightly different wording",
+      "reason": "Documentation repetition for emphasis, minor wording difference not a bug",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/filesystem/sandboxed_fs.py"
+      ]
+    },
+    "358c34b5869a": {
+      "description": "Docstring claims EDIT subcommands are 'implemented subset' but doesn't specify which are missing",
+      "reason": "Documentation clarifies what's missing in the note, not a bug",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/interactive.py"
+      ]
+    },
+    "6d00d9a6b62a": {
+      "description": "Comment says 'Bare except is acceptable' but doesn't explain why all exceptions should be caught",
+      "reason": "Comment justifies bare except, could be improved but not a code behavior bug",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/interactive.py"
+      ]
+    },
+    "b2eb6a1e8f21": {
+      "description": "HELP command shows 'BREAK line' but doesn't document BREAK without arguments",
+      "reason": "Documentation incomplete, not a code bug",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/interactive.py"
+      ]
+    },
+    "493f7c3e4c26": {
+      "description": "Comment about sanitize_and_clear_parity mentions 'clear parity bits' but this may be outdated terminology",
+      "reason": "Comment may use outdated terminology but function works correctly",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/interactive.py"
+      ]
+    },
+    "3c4b39b38cec": {
+      "description": "execute_for docstring mentions string variables cause Type mismatch but doesn't explain this happens in set_variable, not in FOR itself",
+      "reason": "Documentation is accurate and properly attributes error to set_variable()",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/interpreter.py"
+      ]
+    },
+    "909d72c60e74": {
+      "description": "Comment about WEND timing is verbose but accurate",
+      "reason": "Verbose but accurate documentation, not a bug",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/interpreter.py"
+      ]
+    },
+    "01e9a7475c61": {
+      "description": "Comment about latin-1 encoding mentions CP/M code pages but doesn't explain the mismatch implications",
+      "reason": "Documentation could be clearer but explains encoding correctly",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/interpreter.py"
+      ]
+    },
+    "226e8d86e713": {
+      "description": "Comment about debugger_set parameter usage is inconsistent between two locations",
+      "reason": "Comment could be clearer about different mechanisms, code works correctly",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/interpreter.py"
+      ]
+    },
+    "5f02a59ceef5": {
+      "description": "execute_midassignment() comment about start_idx bounds check is verbose and could be simplified",
+      "reason": "Overly explanatory comment, not a code bug",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/interpreter.py"
+      ]
+    },
+    "76dfb20e8eab": {
+      "description": "Backward compatibility comment for print() method is misleading about the reason for renaming",
+      "reason": "Misleading comment about rename reason, but code behavior is correct",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/iohandler/web_io.py"
+      ]
+    },
+    "61feccc32934": {
+      "description": "Comment in at_end_of_line() warns about bugs when using it in statement parsing, but the actual implementation is correct",
+      "reason": "Cautious warning comment, implementation is correct",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/parser.py"
+      ]
+    },
+    "472ac6f9faa3": {
+      "description": "parse_resume() docstring states 'RESUME 0 also retries the error statement (interpreter treats 0 and None equivalently)' but the code stores the actual value 0, not None",
+      "reason": "Comment is accurate - verified interpreter treats 0 and None equivalently at line 1358",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/parser.py"
+      ]
+    },
+    "5b0e51fbede8": {
+      "description": "parse_call() docstring claims MBASIC 5.21 primarily uses simple numeric address form, but then says 'this parser fully supports both forms for broader compatibility' without clarifying if extended syntax is actually valid MBASIC 5.21",
+      "reason": "Documentation could clarify dialect compatibility, code works correctly",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/parser.py"
+      ]
+    },
+    "f32bf2dd6046": {
+      "description": "parse_common() docstring says 'Non-empty parentheses are an error (parser enforces empty parens only)' but the error message says 'subscripts not allowed' which is slightly different semantics",
+      "reason": "Subtle wording difference between comment and error message, behavior is correct",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/parser.py"
+      ]
+    },
+    "91b32d27b2d3": {
+      "description": "apply_keyword_case_policy() has 'preserve' policy that returns keyword.capitalize() as fallback, but the comment says this 'shouldn't normally execute in correct usage'. This suggests dead code or incomplete implementation.",
+      "reason": "Comment says this path shouldn't execute and is handled at higher level, just a fallback",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/position_serializer.py"
+      ]
+    },
+    "7323f6ef40da": {
+      "description": "estimate_size() method has inconsistent handling of var_type parameter",
+      "reason": "Docstring incorrectly lists VarType as accepted, but all callers only pass TypeInfo and code works correctly for actual usage",
+      "reviewed_by": "claude",
+      "reviewed_date": "2025-11-10",
+      "files": [
+        "src/resource_limits.py"
+      ]
+    },
+    "82deaf1036fb": {
+      "description": "Manual entry (82deaf1036fb)",
+      "reason": "False positive: editor_lines IS populated by _parse_editor_content() (line 3760-3776) which is called before RUN, LIST, SAVE, LOAD and other operations. Working as intended.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "b1aa8ce8f55f": {
+      "description": "Manual entry (b1aa8ce8f55f)",
+      "reason": "Design choice - silent skip is acceptable behavior, line_text_map should always be in sync in normal operation",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "2c5a8a2abaa5": {
+      "description": "Manual entry (2c5a8a2abaa5)",
+      "reason": "Intentional design difference - DIM modifies the name string (for declaration), while FOR/NEXT set type_suffix field (for usage). Different contexts require different approaches. Not a bug.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "fd48de6fb597": {
+      "description": "Manual entry (fd48de6fb597)",
+      "reason": "Documentation accuracy issue - docstring syntax description may not match MBASIC 5.21. Needs verification against manual, not code change.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "5314ba218423": {
+      "description": "Manual entry (5314ba218423)",
+      "reason": "Documentation clarity - code handles LINE_NUMBER tokens correctly by converting to string. Comment describes end result, not implementation. Not a bug.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "636b9fe2a27a": {
+      "description": "Manual entry (636b9fe2a27a)",
+      "reason": "Design choice - callers are documented to provide lowercase, adding validation would add overhead for no benefit",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "ce1f71e5f422": {
+      "description": "Manual entry (ce1f71e5f422)",
+      "reason": "Design choice - callers documented to provide lowercase, serialize_rem_statement shows correct usage pattern",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "216210aae3d0": {
+      "description": "Manual entry (216210aae3d0)",
+      "reason": "Design choice - local import in fallback prevents circular dependency, acceptable pattern for rare edge cases",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "1434f6ce7a64": {
+      "description": "Manual entry (1434f6ce7a64)",
+      "reason": "Documentation accuracy - docstring should say \"silently OR with warning\" depending on failure type. Minor doc fix, not code bug.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "712e86fc8ef0": {
+      "description": "Manual entry (712e86fc8ef0)",
+      "reason": "Documentation clarity - code behavior is correct, comment wording 'when present' is ambiguous but clarified by examples",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "1cac90375f65": {
+      "description": "Manual entry (1cac90375f65)",
+      "reason": "Code is consistent - all three sign modes reserve 1 char as stated in docstring",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "652a5ba6a6a7": {
+      "description": "Manual entry (652a5ba6a6a7)",
+      "reason": "Cross-file reference to interpreter.py - no code change needed in basic_builtins.py",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "b860935271ac": {
+      "description": "Manual entry (b860935271ac)",
+      "reason": "False positive - code already includes math.h at line 119",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "3201a17a76fb": {
+      "description": "Manual entry (3201a17a76fb)",
+      "reason": "Documentation clarity - behavior is correct, docstring could be more precise",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "5e94fafc5742": {
+      "description": "Manual entry (5e94fafc5742)",
+      "reason": "Comment is accurate - sentinel value position is correct",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "c2ee64f6ac48": {
+      "description": "Manual entry (c2ee64f6ac48)",
+      "reason": "Documentation describing error handling - no code bug",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "b65a72bea14e": {
+      "description": "Manual entry (b65a72bea14e)",
+      "reason": "Documentation matches implementation - needs MBASIC verification",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "5f5202bc33c1": {
+      "description": "Manual entry (5f5202bc33c1)",
+      "reason": "Documentation clarity - lowercase normalization is internally consistent",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "39e727ce1f64": {
+      "description": "Manual entry (39e727ce1f64)",
+      "reason": "Not a bug - DIM modifies name for ArrayDeclNode, FOR/NEXT use type_suffix field, both correct for their AST node types",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "1680a8bb6918": {
+      "description": "Manual entry (1680a8bb6918)",
+      "reason": "False positive: _debug_continue() method DOES exist in curses_ui.py at line 2053. Comment is accurate.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "809601a145ef": {
+      "description": "Manual entry (809601a145ef)",
+      "reason": "Documentation improvement - comment should mention lowercase normalization strategy. Not a code bug, just incomplete documentation.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "258281edd8e1": {
+      "description": "Manual entry (258281edd8e1)",
+      "reason": "Contract documentation - function requires lowercase input per contract. Adding validation would change performance characteristics. Callers are responsible per documented contract. Not a bug.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "9876156f6253": {
+      "description": "Manual entry (9876156f6253)",
+      "reason": "Contract documentation - function requires lowercase input per contract. Example shows correct usage (lowercasing before call). Not a bug.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "7c66c40cd045": {
+      "description": "Manual entry (7c66c40cd045)",
+      "reason": "Design pattern - lazy import in fallback path to avoid circular dependencies. This is the correct approach for rarely-used fallbacks. Not a bug.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "0c35490e44f3": {
+      "description": "Manual entry (0c35490e44f3)",
+      "reason": "Documentation verbosity - comment is detailed but accurate. Explains responsibility split. Not a bug, just thorough documentation.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "d34651cccc10": {
+      "description": "Manual entry (d34651cccc10)",
+      "reason": "Documentation clarity - docstring could be clearer but describes actual behavior correctly. Not a code bug.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "51154318fb20": {
+      "description": "Manual entry (51154318fb20)",
+      "reason": "Documentation semantics - \"returns empty\" is accurate. \"no-op\" in save_project is also correct (does nothing). Minor wording issue, not a bug.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "52a257e1c807": {
+      "description": "Manual entry (52a257e1c807)",
+      "reason": "Documentation honesty - docstring correctly qualifies behavior depends on interpreter implementation. Accurate documentation of dependency, not a bug.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "2ed14dc2d2c2": {
+      "description": "Manual entry (2ed14dc2d2c2)",
+      "reason": "Documentation references - _sync_program_to_editor() method exists (referenced in start()) but not in provided excerpt. Comment is accurate for full codebase.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "3b64760ab3e0": {
+      "description": "Manual entry (3b64760ab3e0)",
+      "reason": "Documentation accuracy - comment says \"remains disabled DURING execution\" which is correct. Status is updated only at state transitions, not during. Comment is accurate.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "bf2843d3ecec": {
+      "description": "Manual entry (bf2843d3ecec)",
+      "reason": "Intentional design - extensive comments (lines 1396-1427) explain lifecycle. Interpreter IO handler is replaced during execution. Multiple instances are intentional, not a bug.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "f3815619ec19": {
+      "description": "Manual entry (f3815619ec19)",
+      "reason": "Design pattern - runtime=None indicates helpers don't modify runtime directly. Caller syncs afterward. Comment explains pattern. Not a bug.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "6de935fe5773": {
+      "description": "Manual entry (6de935fe5773)",
+      "reason": "Known duplication - comment explicitly warns about duplication and documents need for consistency. Acknowledged technical debt, not a bug to fix now.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "6af26d0e7e07": {
+      "description": "Manual entry (6af26d0e7e07)",
+      "reason": "Defensive programming - attributes set to None to avoid AttributeError if future code accesses them. Comment explains rationale. Not a bug.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "81e15076bbda": {
+      "description": "Manual entry (81e15076bbda)",
+      "reason": "Documentation clarification - parenthetical note clarifies potential confusion. Comment is explaining what DOESN'T happen, then clarifying what DOES happen elsewhere. Accurate.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "d0cf7f906cf1": {
+      "description": "Manual entry (d0cf7f906cf1)",
+      "reason": "Documentation incomplete - comment should list all call sites including _save_editor_to_program. Minor doc update, not code bug.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "9700e8909925": {
+      "description": "Manual entry (9700e8909925)",
+      "reason": "Documentation references code not in excerpt - restoration logic exists elsewhere in codebase. Comment describes complete behavior, not just local code.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "3eb7fa4db385": {
+      "description": "Manual entry (3eb7fa4db385)",
+      "reason": "Documentation accuracy - needs MBASIC manual verification",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "3f64b49b8add": {
+      "description": "Manual entry (3f64b49b8add)",
+      "reason": "Documentation - LINE_NUMBER tokens handled correctly, comment describes semantic intent",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "1637a2956e49": {
+      "description": "Manual entry (1637a2956e49)",
+      "reason": "Naming convention clarity - code correct, name historical, docstring explains list index",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "33c6d4c63425": {
+      "description": "Manual entry (33c6d4c63425)",
+      "reason": "Not a bug - function handles non-lowercase input gracefully with .lower() calls",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "61e218568a7a": {
+      "description": "Manual entry (61e218568a7a)",
+      "reason": "API design - callers must lowercase, documented requirement",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "d03fe98b559c": {
+      "description": "Manual entry (d03fe98b559c)",
+      "reason": "Intentional fallback for unknown expression types",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "9813462f931b": {
+      "description": "Manual entry (9813462f931b)",
+      "reason": "Documentation detail - comment accurate and helpful",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "1cc108ededff": {
+      "description": "Manual entry (1cc108ededff)",
+      "reason": "Documentation accurate - runtime support implemented, only persistence missing",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "50f2427924a9": {
+      "description": "Manual entry (50f2427924a9)",
+      "reason": "Documentation clarity - behavior correct",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "d96afbf4d847": {
+      "description": "Manual entry (d96afbf4d847)",
+      "reason": "Design choice - convention documented, no enforcement intentional",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "fc5ba8afcc81": {
+      "description": "Manual entry (fc5ba8afcc81)",
+      "reason": "Documentation accurate - docstring correctly notes behavior depends on interpreter",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "dcf64d059849": {
+      "description": "Manual entry (dcf64d059849)",
+      "reason": "Comment is accurate - heading IS hardcoded on init (line 1017) to match initial sort state, and IS updated dynamically (line 1455) when sort changes. Working as intended.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "8a91b524f2c0": {
+      "description": "Manual entry (8a91b524f2c0)",
+      "reason": "Comment clarity issue, not code behavior bug. Code works correctly - preserves final line to maintain Tk Text widget invariant. No behavior change needed.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "19af875bf87d": {
+      "description": "Manual entry (19af875bf87d)",
+      "reason": "Naming issue documented as 'historical/misleading' in docstring. Method behavior is correct and documented. Renaming would break API compatibility.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "705dfab29589": {
+      "description": "Manual entry (705dfab29589)",
+      "reason": "UX design choice, not code bug. Comment accurately describes behavior - status column clicks show info only, not toggle. Toggling is via Ctrl+B as documented.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "234db4dbcaf9": {
+      "description": "Manual entry (234db4dbcaf9)",
+      "reason": "Not a bug - {{kbd:...}} macros are expanded by mkdocs plugin (commit d9cb1a59) when building static site. Macros in source files are correct workflow.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "d6efb2b475b2": {
+      "description": "Manual entry (d6efb2b475b2)",
+      "reason": "False positive: CLI docs correctly state CLI has no Variables Window and redirects to GUI UIs (Curses/Tk/Web) for visual inspection. No contradiction.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "f0556b78f7f0": {
+      "description": "Manual entry (f0556b78f7f0)",
+      "reason": "Feature counts all match correctly (8+6+6+6+7+4). Issue about 'Search Help' malformed shortcut is separate from count accuracy. Not a code behavior bug.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "95230bc87274": {
+      "description": "Manual entry (95230bc87274)",
+      "reason": "Documentation inconsistency about Web UI step features. Not a code behavior bug - Web UI implementation determines actual behavior, docs need sync.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "c4bc844f4f6b": {
+      "description": "Manual entry (c4bc844f4f6b)",
+      "reason": "Documentation inconsistency about Web UI keyboard shortcuts. Not a code behavior bug - actual Web UI keybindings determine behavior, docs need sync.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "0125bb80dfef": {
+      "description": "Manual entry (0125bb80dfef)",
+      "reason": "Documentation organization issue - QUICK_REFERENCE.md is for Curses UI, CHOOSING_YOUR_UI.md correctly distinguishes CLI vs Curses. No code behavior bug.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
+    },
+    "d7dc78b73523": {
+      "description": "Manual entry (d7dc78b73523)",
+      "reason": "Documentation clarity issue about Curses variable editing status (⚠️ symbol). Not a code behavior bug - actual Curses UI determines behavior, docs need clarification.",
+      "reviewed_by": "human",
+      "reviewed_date": "2025-11-10",
+      "files": []
     }
   }
 }

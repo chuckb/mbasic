@@ -180,12 +180,16 @@ class InteractiveMode:
 
         This prevents crashes when line edits invalidate saved return addresses
         and loop contexts. Called when lines are added, deleted, or renumbered.
+
+        Note: We do NOT clear the stopped flag here. The stopped flag is checked
+        by CONT to determine if there's anything to continue. When the program is
+        edited, CONT will still see stopped=True but will fail because the PC and
+        execution state are now invalid (this is the intended behavior documented
+        in cmd_cont()).
         """
         if self.program_runtime:
             self.program_runtime.gosub_stack.clear()
             self.program_runtime.for_loops.clear()
-            # Also clear STOP state since line edits invalidate the stop position
-            self.program_runtime.stopped = False
 
     def _setup_readline(self):
         """Configure readline for better line editing"""
