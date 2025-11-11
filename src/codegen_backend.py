@@ -98,6 +98,9 @@ class Z88dkCBackend(CodeGenBackend):
         # DEF FN user-defined functions
         self.def_fn_functions: List[DefFnStatementNode] = []
 
+        # File I/O support
+        self.max_file_number = 0  # Track highest file number used
+
     def get_file_extension(self) -> str:
         return '.c'
 
@@ -147,6 +150,9 @@ class Z88dkCBackend(CodeGenBackend):
 
         # Collect DEF FN functions
         self._collect_def_fn(program)
+
+        # Collect file I/O usage
+        self._collect_file_usage(program)
 
         code = []
 
@@ -203,6 +209,21 @@ class Z88dkCBackend(CodeGenBackend):
         code.append(self.indent() + 'int gosub_stack[100];  /* Return IDs (0, 1, 2...) - not line numbers */')
         code.append(self.indent() + 'int gosub_sp = 0;      /* Stack pointer */')
         code.append('')
+
+        # File I/O support
+        if self.max_file_number > 0:
+            code.append(self.indent() + '/* File I/O support */')
+            code.append(self.indent() + f'FILE *file_handles[{self.max_file_number + 1}];  /* File handles indexed by file number */')
+            code.append(self.indent() + f'char file_modes[{self.max_file_number + 1}];  /* File modes: I=input, O=output, R=random, A=append */')
+            # Initialize all file handles to NULL
+            code.append(self.indent() + 'int _i;')
+            code.append(self.indent() + f'for (_i = 0; _i <= {self.max_file_number}; _i++) {{')
+            self.indent_level += 1
+            code.append(self.indent() + 'file_handles[_i] = NULL;')
+            code.append(self.indent() + 'file_modes[_i] = 0;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
 
         # Generate DATA array if we have DATA statements
         if self.data_values:
@@ -385,6 +406,26 @@ class Z88dkCBackend(CodeGenBackend):
                 if isinstance(stmt, DefFnStatementNode):
                     self.def_fn_functions.append(stmt)
 
+    def _collect_file_usage(self, program: ProgramNode):
+        """Collect maximum file number used for file I/O array"""
+        self.max_file_number = 0
+        for line_node in program.lines:
+            for stmt in line_node.statements:
+                # Check OPEN statements
+                if isinstance(stmt, OpenStatementNode):
+                    # For now, assume file numbers are constants
+                    if isinstance(stmt.file_number, NumberNode):
+                        file_num = int(stmt.file_number.value)
+                        self.max_file_number = max(self.max_file_number, file_num)
+                    else:
+                        # If not constant, default to supporting up to 10 files
+                        self.max_file_number = max(self.max_file_number, 10)
+                # Check CLOSE, INPUT#, PRINT#, etc.
+                elif hasattr(stmt, 'file_number') and stmt.file_number:
+                    if isinstance(stmt.file_number, NumberNode):
+                        file_num = int(stmt.file_number.value)
+                        self.max_file_number = max(self.max_file_number, file_num)
+
     def _generate_variable_declarations(self) -> List[str]:
         """Generate C variable declarations from symbol table"""
         decls = []
@@ -552,6 +593,16 @@ class Z88dkCBackend(CodeGenBackend):
             return self._generate_swap(stmt)
         elif isinstance(stmt, RandomizeStatementNode):
             return self._generate_randomize(stmt)
+        elif isinstance(stmt, OpenStatementNode):
+            return self._generate_open(stmt)
+        elif isinstance(stmt, CloseStatementNode):
+            return self._generate_close(stmt)
+        elif isinstance(stmt, LineInputStatementNode):
+            return self._generate_line_input(stmt)
+        elif isinstance(stmt, WriteStatementNode):
+            return self._generate_write(stmt)
+        elif isinstance(stmt, KillStatementNode):
+            return self._generate_kill(stmt)
         else:
             # Unsupported statement
             self.warnings.append(f"Unsupported statement type: {type(stmt).__name__}")
@@ -620,9 +671,28 @@ class Z88dkCBackend(CodeGenBackend):
         """Generate PRINT statement code"""
         code = []
 
+        # Determine output stream
         if stmt.file_number:
-            self.warnings.append("PRINT to file not supported yet")
-            return [self.indent() + '/* PRINT to file not supported */']
+            # PRINT# to file
+            file_num_expr = self._generate_expression(stmt.file_number)
+            self.max_file_number = max(self.max_file_number, 255)  # Assume max 255 files
+            file_ptr = f'file_handles[(int)({file_num_expr})]'
+
+            # Check if file is open
+            code.append(self.indent() + f'if ({file_ptr} == NULL) {{')
+            self.indent_level += 1
+            code.append(self.indent() + f'fprintf(stderr, "?File not open\\n");')
+            code.append(self.indent() + 'return 1;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+
+            # Use fprintf for file output
+            output_func = 'fprintf'
+            output_stream = file_ptr + ', '
+        else:
+            # Regular PRINT to stdout
+            output_func = 'printf'
+            output_stream = ''
 
         # Print each expression with appropriate format
         for i, expr in enumerate(stmt.expressions):
@@ -641,11 +711,15 @@ class Z88dkCBackend(CodeGenBackend):
                 self.indent_level += 1
 
                 if separator == ';':
-                    code.append(self.indent() + 'printf("%s", temp_str);')
+                    code.append(self.indent() + f'{output_func}({output_stream}"%s", temp_str);')
                 elif separator == ',':
-                    code.append(self.indent() + 'printf("%s ", temp_str);')
+                    code.append(self.indent() + f'{output_func}({output_stream}"%s ", temp_str);')
                 else:
-                    code.append(self.indent() + 'printf("%s\\n", temp_str);')
+                    # Use CRLF for CP/M compatibility
+                    if stmt.file_number:
+                        code.append(self.indent() + f'{output_func}({output_stream}"%s\\r\\n", temp_str);')
+                    else:
+                        code.append(self.indent() + f'{output_func}({output_stream}"%s\\n", temp_str);')
 
                 code.append(self.indent() + 'free(temp_str);')
                 self.indent_level -= 1
@@ -658,16 +732,26 @@ class Z88dkCBackend(CodeGenBackend):
                 fmt = self._get_format_specifier(expr_type)
 
                 if separator == ';':
-                    code.append(self.indent() + f'printf("{fmt}", {c_expr});')
+                    code.append(self.indent() + f'{output_func}({output_stream}"{fmt}", {c_expr});')
                 elif separator == ',':
-                    code.append(self.indent() + f'printf("{fmt} ", {c_expr});')
+                    code.append(self.indent() + f'{output_func}({output_stream}"{fmt} ", {c_expr});')
                 else:
-                    code.append(self.indent() + f'printf("{fmt}\\n", {c_expr});')
+                    # Use CRLF for CP/M compatibility when writing to files
+                    if stmt.file_number:
+                        code.append(self.indent() + f'{output_func}({output_stream}"{fmt}\\r\\n", {c_expr});')
+                    else:
+                        code.append(self.indent() + f'{output_func}({output_stream}"{fmt}\\n", {c_expr});')
 
         # If no expressions or last separator was ; add newline
         if not stmt.expressions or (stmt.separators and stmt.separators[-1] != ';'):
             if not stmt.expressions:
-                code.append(self.indent() + 'printf("\\n");')
+                if stmt.file_number:
+                    file_num_expr = self._generate_expression(stmt.file_number)
+                    file_ptr = f'file_handles[(int)({file_num_expr})]'
+                    # Use CRLF for CP/M compatibility
+                    code.append(self.indent() + f'fprintf({file_ptr}, "\\r\\n");')
+                else:
+                    code.append(self.indent() + 'printf("\\n");')
 
         return code
 
@@ -746,58 +830,146 @@ class Z88dkCBackend(CodeGenBackend):
         """Generate INPUT statement"""
         code = []
 
+        # Determine input stream
         if stmt.file_number:
-            self.warnings.append("INPUT from file not supported yet")
-            return [self.indent() + '/* INPUT from file not supported */']
+            # INPUT# from file
+            file_num_expr = self._generate_expression(stmt.file_number)
+            self.max_file_number = max(self.max_file_number, 255)  # Assume max 255 files
+            file_ptr = f'file_handles[(int)({file_num_expr})]'
 
-        # Generate prompt
-        if stmt.prompt:
-            # Check if it's a string literal
-            if isinstance(stmt.prompt, StringNode):
-                prompt_str = stmt.prompt.value
-            else:
-                # For expressions, we'd need to evaluate - not implemented yet
-                prompt_str = ""
-                self.warnings.append("Complex prompt expressions not yet supported")
+            # Check if file is open
+            code.append(self.indent() + f'if ({file_ptr} == NULL) {{')
+            self.indent_level += 1
+            code.append(self.indent() + f'fprintf(stderr, "?File not open\\n");')
+            code.append(self.indent() + 'return 1;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
 
-            # Add question mark if not suppressed
-            if not stmt.suppress_question:
-                prompt_str += "? "
+            input_stream = file_ptr
+        else:
+            # Regular INPUT from stdin
+            input_stream = 'stdin'
 
-            code.append(self.indent() + f'printf("{self._escape_string(prompt_str)}");')
-        elif not stmt.suppress_question:
-            # No prompt but show "? " unless suppressed
-            code.append(self.indent() + 'printf("? ");')
-
-        # Generate input for each variable
-        for i, var_node in enumerate(stmt.variables):
-            var_type = self._get_expression_type(var_node)
-
-            if var_type == VarType.STRING:
-                # String input
-                var_str_id = self._get_string_id(var_node.name)
-                code.append(self.indent() + 'if (fgets(input_buffer, 256, stdin)) {')
-                self.indent_level += 1
-                code.append(self.indent() + 'size_t len = strlen(input_buffer);')
-                code.append(self.indent() + 'if (len > 0 && input_buffer[len-1] == \'\\n\') {')
-                self.indent_level += 1
-                code.append(self.indent() + 'input_buffer[len-1] = \'\\0\';')
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
-                code.append(self.indent() + f'mb25_string_alloc_init({var_str_id}, input_buffer);')
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
-            else:
-                # Numeric input
-                var_name = self._mangle_variable_name(var_node.name)
-                if var_type == VarType.INTEGER:
-                    code.append(self.indent() + f'scanf("%d", &{var_name});')
+            # Generate prompt (only for keyboard input)
+            if stmt.prompt:
+                # Check if it's a string literal
+                if isinstance(stmt.prompt, StringNode):
+                    prompt_str = stmt.prompt.value
                 else:
-                    code.append(self.indent() + f'scanf("%f", &{var_name});')
+                    # For expressions, we'd need to evaluate - not implemented yet
+                    prompt_str = ""
+                    self.warnings.append("Complex prompt expressions not yet supported")
 
-            # If there are more variables, show another prompt
-            if i < len(stmt.variables) - 1:
-                code.append(self.indent() + 'printf("?? ");  /* Next variable prompt */')
+                # Add question mark if not suppressed
+                if not stmt.suppress_question:
+                    prompt_str += "? "
+
+                code.append(self.indent() + f'printf("{self._escape_string(prompt_str)}");')
+            elif not stmt.suppress_question:
+                # No prompt but show "? " unless suppressed
+                code.append(self.indent() + 'printf("? ");')
+
+        # For file input with multiple variables, read entire line and parse
+        if stmt.file_number and len(stmt.variables) > 1:
+            # Read entire line first
+            code.append(self.indent() + f'if (fgets(input_buffer, 256, {input_stream})) {{')
+            self.indent_level += 1
+            code.append(self.indent() + 'char *_ptr = input_buffer;')
+            code.append(self.indent() + 'char _field[256];')
+
+            # Parse each field from the line
+            for i, var_node in enumerate(stmt.variables):
+                var_type = self._get_expression_type(var_node)
+                code.append(self.indent() + '/* Parse next field */')
+
+                if var_type == VarType.STRING:
+                    var_str_id = self._get_string_id(var_node.name)
+                    # Handle quoted strings from WRITE#
+                    code.append(self.indent() + 'if (*_ptr == \'\\"\') {')
+                    self.indent_level += 1
+                    code.append(self.indent() + '_ptr++; /* Skip opening quote */')
+                    code.append(self.indent() + 'char *_end = strchr(_ptr, \'\\"\');')
+                    code.append(self.indent() + 'if (_end) {')
+                    self.indent_level += 1
+                    code.append(self.indent() + 'int _len = _end - _ptr;')
+                    code.append(self.indent() + 'strncpy(_field, _ptr, _len);')
+                    code.append(self.indent() + '_field[_len] = \'\\0\';')
+                    code.append(self.indent() + f'mb25_string_alloc_init({var_str_id}, _field);')
+                    code.append(self.indent() + '_ptr = _end + 1; /* Skip closing quote */')
+                    code.append(self.indent() + 'if (*_ptr == \',\') _ptr++; /* Skip comma */')
+                    self.indent_level -= 1
+                    code.append(self.indent() + '}')
+                    self.indent_level -= 1
+                    code.append(self.indent() + '} else {')
+                    self.indent_level += 1
+                    # Unquoted string - read until comma
+                    code.append(self.indent() + '{')
+                    self.indent_level += 1
+                    code.append(self.indent() + 'char *_comma2 = strchr(_ptr, \',\');')
+                    code.append(self.indent() + 'if (_comma2) {')
+                    self.indent_level += 1
+                    code.append(self.indent() + 'int _len = _comma2 - _ptr;')
+                    code.append(self.indent() + 'strncpy(_field, _ptr, _len);')
+                    code.append(self.indent() + '_field[_len] = \'\\0\';')
+                    code.append(self.indent() + f'mb25_string_alloc_init({var_str_id}, _field);')
+                    code.append(self.indent() + '_ptr = _comma2 + 1;')
+                    self.indent_level -= 1
+                    code.append(self.indent() + '} else {')
+                    self.indent_level += 1
+                    code.append(self.indent() + f'mb25_string_alloc_init({var_str_id}, _ptr);')
+                    self.indent_level -= 1
+                    code.append(self.indent() + '}')
+                    self.indent_level -= 1
+                    code.append(self.indent() + '}')
+                    self.indent_level -= 1
+                    code.append(self.indent() + '}')
+                else:
+                    # Numeric input
+                    var_name = self._mangle_variable_name(var_node.name)
+                    code.append(self.indent() + '{')
+                    self.indent_level += 1
+                    if var_type == VarType.INTEGER:
+                        code.append(self.indent() + f'sscanf(_ptr, "%d", &{var_name});')
+                    else:
+                        code.append(self.indent() + f'sscanf(_ptr, "%f", &{var_name});')
+                    # Skip to next comma
+                    code.append(self.indent() + 'char *_comma3 = strchr(_ptr, \',\');')
+                    code.append(self.indent() + 'if (_comma3) _ptr = _comma3 + 1;')
+                    self.indent_level -= 1
+                    code.append(self.indent() + '}')
+
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+        else:
+            # Single variable or keyboard input - use original logic
+            for i, var_node in enumerate(stmt.variables):
+                var_type = self._get_expression_type(var_node)
+
+                if var_type == VarType.STRING:
+                    # String input
+                    var_str_id = self._get_string_id(var_node.name)
+                    code.append(self.indent() + f'if (fgets(input_buffer, 256, {input_stream})) {{')
+                    self.indent_level += 1
+                    code.append(self.indent() + 'size_t len = strlen(input_buffer);')
+                    code.append(self.indent() + 'if (len > 0 && input_buffer[len-1] == \'\\n\') {')
+                    self.indent_level += 1
+                    code.append(self.indent() + 'input_buffer[len-1] = \'\\0\';')
+                    self.indent_level -= 1
+                    code.append(self.indent() + '}')
+                    code.append(self.indent() + f'mb25_string_alloc_init({var_str_id}, input_buffer);')
+                    self.indent_level -= 1
+                    code.append(self.indent() + '}')
+                else:
+                    # Numeric input
+                    var_name = self._mangle_variable_name(var_node.name)
+                    if var_type == VarType.INTEGER:
+                        code.append(self.indent() + f'fscanf({input_stream}, "%d", &{var_name});')
+                    else:
+                        code.append(self.indent() + f'fscanf({input_stream}, "%f", &{var_name});')
+
+                # If there are more variables and it's keyboard input, show another prompt
+                if i < len(stmt.variables) - 1 and not stmt.file_number:
+                    code.append(self.indent() + 'printf("?? ");  /* Next variable prompt */')
 
         return code
 
@@ -1341,6 +1513,289 @@ class Z88dkCBackend(CodeGenBackend):
 
         return code
 
+    def _generate_open(self, stmt: OpenStatementNode) -> List[str]:
+        """Generate OPEN statement
+
+        OPEN mode, #filenum, filename$ [, reclen]
+        mode: "I" (input), "O" (output), "R" (random), "A" (append)
+        """
+        code = []
+
+        # Get file number
+        file_num_expr = self._generate_expression(stmt.file_number)
+
+        # Get filename (need to handle string expression)
+        if self._get_expression_type(stmt.filename) == VarType.STRING:
+            filename_str_id = self._generate_string_expression(stmt.filename)
+            # Convert to C string
+            code.append(self.indent() + '{')
+            self.indent_level += 1
+            code.append(self.indent() + f'int _file_num = (int)({file_num_expr});')
+            code.append(self.indent() + f'char *_filename = mb25_to_c_string({filename_str_id});')
+            code.append(self.indent() + 'if (_filename) {')
+            self.indent_level += 1
+
+            # Determine C mode string based on BASIC mode
+            c_mode = ''
+            if stmt.mode == 'I':
+                c_mode = 'r'  # Read
+            elif stmt.mode == 'O':
+                c_mode = 'w'  # Write (create/truncate)
+            elif stmt.mode == 'A':
+                c_mode = 'a'  # Append
+            elif stmt.mode == 'R':
+                c_mode = 'r+b'  # Random access (binary read/write)
+            else:
+                self.warnings.append(f"Unknown file mode: {stmt.mode}")
+                c_mode = 'r'
+
+            # Open the file
+            code.append(self.indent() + f'if (_file_num >= 0 && _file_num <= {self.max_file_number}) {{')
+            self.indent_level += 1
+            code.append(self.indent() + f'file_handles[_file_num] = fopen(_filename, "{c_mode}");')
+            code.append(self.indent() + f'file_modes[_file_num] = \'{stmt.mode}\';')
+            code.append(self.indent() + 'if (!file_handles[_file_num]) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'fprintf(stderr, "?File not found\\n");')
+            # In a real implementation, should trigger ON ERROR GOTO if set
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+
+            code.append(self.indent() + 'free(_filename);')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+        else:
+            self.warnings.append("OPEN requires string filename")
+            code.append(self.indent() + '/* OPEN error: filename must be string */')
+
+        return code
+
+    def _generate_close(self, stmt: CloseStatementNode) -> List[str]:
+        """Generate CLOSE statement
+
+        CLOSE - close all files
+        CLOSE #n - close specific file
+        CLOSE #n, #m - close multiple files
+        """
+        code = []
+
+        if not stmt.file_numbers:
+            # CLOSE without arguments - close all files
+            code.append(self.indent() + '{')
+            self.indent_level += 1
+            code.append(self.indent() + 'int _i;')
+            code.append(self.indent() + f'for (_i = 0; _i <= {self.max_file_number}; _i++) {{')
+            self.indent_level += 1
+            code.append(self.indent() + 'if (file_handles[_i]) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'fclose(file_handles[_i]);')
+            code.append(self.indent() + 'file_handles[_i] = NULL;')
+            code.append(self.indent() + 'file_modes[_i] = 0;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+        else:
+            # CLOSE specific files
+            for file_num_expr in stmt.file_numbers:
+                file_num = self._generate_expression(file_num_expr)
+                code.append(self.indent() + '{')
+                self.indent_level += 1
+                code.append(self.indent() + f'int _file_num = (int)({file_num});')
+                code.append(self.indent() + f'if (_file_num >= 0 && _file_num <= {self.max_file_number} && file_handles[_file_num]) {{')
+                self.indent_level += 1
+                code.append(self.indent() + 'fclose(file_handles[_file_num]);')
+                code.append(self.indent() + 'file_handles[_file_num] = NULL;')
+                code.append(self.indent() + 'file_modes[_file_num] = 0;')
+                self.indent_level -= 1
+                code.append(self.indent() + '}')
+                self.indent_level -= 1
+                code.append(self.indent() + '}')
+
+        return code
+
+    def _generate_line_input(self, stmt: LineInputStatementNode) -> List[str]:
+        """Generate LINE INPUT statement - read entire line into string variable"""
+        code = []
+
+        # Determine input stream
+        if stmt.file_number:
+            # LINE INPUT# from file
+            file_num_expr = self._generate_expression(stmt.file_number)
+            self.max_file_number = max(self.max_file_number, 255)  # Assume max 255 files
+            file_ptr = f'file_handles[(int)({file_num_expr})]'
+
+            # Check if file is open
+            code.append(self.indent() + f'if ({file_ptr} == NULL) {{')
+            self.indent_level += 1
+            code.append(self.indent() + f'fprintf(stderr, "?File not open\\n");')
+            code.append(self.indent() + 'return 1;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+
+            input_stream = file_ptr
+        else:
+            # Regular LINE INPUT from stdin
+            input_stream = 'stdin'
+
+            # Generate prompt (only for keyboard input)
+            if stmt.prompt:
+                # Check if it's a string literal
+                if isinstance(stmt.prompt, StringNode):
+                    prompt_str = stmt.prompt.value
+                else:
+                    # For expressions, we'd need to evaluate - not implemented yet
+                    prompt_str = ""
+                    self.warnings.append("Complex prompt expressions not yet supported")
+
+                code.append(self.indent() + f'printf("{self._escape_string(prompt_str)}");')
+
+        # LINE INPUT always reads a string into a string variable
+        var_type = self._get_expression_type(stmt.variable)
+        if var_type != VarType.STRING:
+            self.warnings.append("LINE INPUT requires a string variable")
+            return [self.indent() + '/* LINE INPUT requires a string variable */']
+
+        # String input - read entire line including spaces
+        var_str_id = self._get_string_id(stmt.variable.name)
+        code.append(self.indent() + f'if (!fgets(input_buffer, 256, {input_stream})) {{')
+        self.indent_level += 1
+        # If fgets fails, we've hit EOF or an error - set a flag or break
+        if stmt.file_number:
+            # For file input, just leave the string unchanged and let EOF() handle it
+            code.append(self.indent() + '/* EOF reached or read error */')
+        else:
+            # For keyboard input, set empty string
+            code.append(self.indent() + f'mb25_string_alloc_init({var_str_id}, "");')
+        self.indent_level -= 1
+        code.append(self.indent() + '} else {')
+        self.indent_level += 1
+        code.append(self.indent() + 'size_t len = strlen(input_buffer);')
+        code.append(self.indent() + 'if (len > 0 && input_buffer[len-1] == \'\\n\') {')
+        self.indent_level += 1
+        code.append(self.indent() + 'input_buffer[len-1] = \'\\0\';')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        # Check for CP/M ^Z EOF marker
+        code.append(self.indent() + 'if (len > 0 && input_buffer[0] == 0x1A) {')
+        self.indent_level += 1
+        code.append(self.indent() + '/* CP/M EOF marker (^Z) detected */')
+        code.append(self.indent() + f'mb25_string_alloc_init({var_str_id}, "");')
+        if stmt.file_number:
+            # Force EOF flag by seeking to end
+            code.append(self.indent() + f'fseek({input_stream}, 0, SEEK_END);')
+        self.indent_level -= 1
+        code.append(self.indent() + '} else {')
+        self.indent_level += 1
+        code.append(self.indent() + f'mb25_string_alloc_init({var_str_id}, input_buffer);')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+
+        return code
+
+    def _generate_kill(self, stmt: KillStatementNode) -> List[str]:
+        """Generate KILL statement - delete file"""
+        code = []
+
+        # Generate the filename expression (must be a string)
+        if self._get_expression_type(stmt.filename) != VarType.STRING:
+            self.warnings.append("KILL requires a string filename")
+            return [self.indent() + '/* KILL requires a string filename */']
+
+        filename_str_id = self._generate_string_expression(stmt.filename)
+
+        code.append(self.indent() + '{')
+        self.indent_level += 1
+        code.append(self.indent() + f'char *_filename = mb25_to_c_string({filename_str_id});')
+        code.append(self.indent() + 'if (_filename) {')
+        self.indent_level += 1
+        code.append(self.indent() + 'if (remove(_filename) != 0) {')
+        self.indent_level += 1
+        code.append(self.indent() + 'fprintf(stderr, "?File not found\\n");')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'free(_filename);')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+
+        return code
+
+    def _generate_write(self, stmt: WriteStatementNode) -> List[str]:
+        """Generate WRITE statement - output with comma delimiters and quotes for strings"""
+        code = []
+
+        # Determine output stream
+        if stmt.file_number:
+            # WRITE# to file
+            file_num_expr = self._generate_expression(stmt.file_number)
+            self.max_file_number = max(self.max_file_number, 255)  # Assume max 255 files
+            file_ptr = f'file_handles[(int)({file_num_expr})]'
+
+            # Check if file is open
+            code.append(self.indent() + f'if ({file_ptr} == NULL) {{')
+            self.indent_level += 1
+            code.append(self.indent() + f'fprintf(stderr, "?File not open\\n");')
+            code.append(self.indent() + 'return 1;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+
+            # Use fprintf for file output
+            output_func = 'fprintf'
+            output_stream = file_ptr + ', '
+        else:
+            # Regular WRITE to stdout
+            output_func = 'printf'
+            output_stream = ''
+
+        # WRITE outputs each expression with proper formatting
+        for i, expr in enumerate(stmt.expressions):
+            # Add comma separator if not the first item
+            if i > 0:
+                code.append(self.indent() + f'{output_func}({output_stream}",");')
+
+            # Determine format based on expression type
+            expr_type = self._get_expression_type(expr)
+
+            if expr_type == VarType.STRING:
+                # For strings, output with quotes
+                str_expr = self._generate_string_expression(expr)
+                code.append(self.indent() + '{')
+                self.indent_level += 1
+                code.append(self.indent() + f'char *temp_str = mb25_to_c_string({str_expr});')
+                code.append(self.indent() + 'if (temp_str) {')
+                self.indent_level += 1
+                # WRITE outputs strings with quotes
+                code.append(self.indent() + f'{output_func}({output_stream}"\\"%s\\"", temp_str);')
+                code.append(self.indent() + 'free(temp_str);')
+                self.indent_level -= 1
+                code.append(self.indent() + '}')
+                self.indent_level -= 1
+                code.append(self.indent() + '}')
+            else:
+                # Numeric expression - no quotes
+                expr_type = self._get_expression_type(expr)
+                format_spec = self._get_format_specifier(expr_type)
+                value = self._generate_expression(expr)
+                code.append(self.indent() + f'{output_func}({output_stream}"{format_spec}", {value});')
+
+        # WRITE always ends with a newline (CRLF for files, LF for console)
+        if stmt.file_number:
+            code.append(self.indent() + f'{output_func}({output_stream}"\\r\\n");')
+        else:
+            code.append(self.indent() + f'{output_func}({output_stream}"\\n");')
+
+        return code
+
     def _generate_variable_reference(self, var_node: VariableNode) -> str:
         """Generate C code for a variable reference (for SWAP)"""
         if var_node.subscripts:
@@ -1384,18 +1839,21 @@ class Z88dkCBackend(CodeGenBackend):
     def _generate_string_expression(self, expr: Any) -> str:
         """Generate C code for a string expression"""
         if isinstance(expr, StringNode):
-            # String literal - allocate as constant
+            # String literal - allocate as constant and return the ID
             temp_id = self._get_temp_string_id()
-            return f'mb25_string_alloc_const({temp_id}, "{self._escape_string(expr.value)}"), {temp_id}'
+            # mb25_string_alloc_const allocates the string but returns error code
+            # We need to call it and then use the string ID
+            return f'(mb25_string_alloc_const({temp_id}, "{self._escape_string(expr.value)}"), {temp_id})'
         elif isinstance(expr, VariableNode):
             # String variable reference
-            return self._get_string_id(expr.name)
+            return str(self._get_string_id(expr.name))
         elif isinstance(expr, BinaryOpNode) and expr.operator == TokenType.PLUS:
-            # String concatenation
+            # String concatenation - need to generate inline concat and return result ID
             left_str = self._generate_string_expression(expr.left)
             right_str = self._generate_string_expression(expr.right)
             result_id = self._get_temp_string_id()
-            return f'mb25_string_concat({result_id}, {left_str}, {right_str}), {result_id}'
+            # Generate inline concat expression and return the result ID
+            return f'(mb25_string_concat({result_id}, {left_str}, {right_str}), {result_id})'
         elif isinstance(expr, FunctionCallNode):
             return self._generate_string_function(expr)
         else:
@@ -1413,7 +1871,7 @@ class Z88dkCBackend(CodeGenBackend):
                 return '0'
             str_arg = self._generate_string_expression(expr.arguments[0])
             len_arg = self._generate_expression(expr.arguments[1])
-            return f'mb25_string_left({result_id}, {str_arg}, {len_arg}), {result_id}'
+            return f'(mb25_string_left({result_id}, {str_arg}, {len_arg}), {result_id})'
 
         elif func_name == 'RIGHT':
             if len(expr.arguments) != 2:
@@ -1421,7 +1879,7 @@ class Z88dkCBackend(CodeGenBackend):
                 return '0'
             str_arg = self._generate_string_expression(expr.arguments[0])
             len_arg = self._generate_expression(expr.arguments[1])
-            return f'mb25_string_right({result_id}, {str_arg}, {len_arg}), {result_id}'
+            return f'(mb25_string_right({result_id}, {str_arg}, {len_arg}), {result_id})'
 
         elif func_name == 'MID':
             if len(expr.arguments) < 2 or len(expr.arguments) > 3:
@@ -1431,10 +1889,10 @@ class Z88dkCBackend(CodeGenBackend):
             start_arg = self._generate_expression(expr.arguments[1])
             if len(expr.arguments) == 3:
                 len_arg = self._generate_expression(expr.arguments[2])
-                return f'mb25_string_mid({result_id}, {str_arg}, {start_arg}, {len_arg}), {result_id}'
+                return f'(mb25_string_mid({result_id}, {str_arg}, {start_arg}, {len_arg}), {result_id})'
             else:
                 # MID$ without length - to end of string
-                return f'mb25_string_mid({result_id}, {str_arg}, {start_arg}, 255), {result_id}'
+                return f'(mb25_string_mid({result_id}, {str_arg}, {start_arg}, 255), {result_id})'
 
         elif func_name == 'CHR':
             if len(expr.arguments) != 1:
@@ -1442,7 +1900,7 @@ class Z88dkCBackend(CodeGenBackend):
                 return '0'
             code_arg = self._generate_expression(expr.arguments[0])
             # Create a single-character string
-            return f'({{ char _chr[2] = {{(char){code_arg}, \'\\0\'}}; mb25_string_alloc_init({result_id}, _chr); }}), {result_id}'
+            return f'({{ char _chr[2] = {{(char){code_arg}, \'\\0\'}}; mb25_string_alloc_init({result_id}, _chr); }}, {result_id})'
 
         elif func_name == 'STR':
             if len(expr.arguments) != 1:
@@ -1450,7 +1908,7 @@ class Z88dkCBackend(CodeGenBackend):
                 return '0'
             num_arg = self._generate_expression(expr.arguments[0])
             # Convert number to string
-            return f'({{ char _str[32]; sprintf(_str, "%g", (double){num_arg}); mb25_string_alloc_init({result_id}, _str); }}), {result_id}'
+            return f'({{ char _str[32]; sprintf(_str, "%g", (double){num_arg}); mb25_string_alloc_init({result_id}, _str); }}, {result_id})'
 
         elif func_name == 'SPACE':
             if len(expr.arguments) != 1:
@@ -1458,7 +1916,7 @@ class Z88dkCBackend(CodeGenBackend):
                 return '0'
             count_arg = self._generate_expression(expr.arguments[0])
             # Create string of spaces
-            return f'({{ int _n = {count_arg}; char *_sp = malloc(_n+1); if(_sp) {{ memset(_sp, \' \', _n); _sp[_n] = \'\\0\'; mb25_string_alloc_init({result_id}, _sp); free(_sp); }} }}), {result_id}'
+            return f'({{ int _n = {count_arg}; char *_sp = malloc(_n+1); if(_sp) {{ memset(_sp, \' \', _n); _sp[_n] = \'\\0\'; mb25_string_alloc_init({result_id}, _sp); free(_sp); }} }}, {result_id})'
 
         elif func_name == 'STRING$':
             if len(expr.arguments) != 2:
@@ -1468,10 +1926,10 @@ class Z88dkCBackend(CodeGenBackend):
             # Second arg can be either a number (ASCII code) or string (use first char)
             if self._get_expression_type(expr.arguments[1]) == VarType.STRING:
                 str_arg = self._generate_string_expression(expr.arguments[1])
-                return f'({{ int _n = {count_arg}; uint8_t *_data = mb25_get_data({str_arg}); char _ch = (_data && mb25_get_length({str_arg}) > 0) ? _data[0] : \' \'; char *_s = malloc(_n+1); if(_s) {{ memset(_s, _ch, _n); _s[_n] = \'\\0\'; mb25_string_alloc_init({result_id}, _s); free(_s); }} }}), {result_id}'
+                return f'({{ int _n = {count_arg}; uint8_t *_data = mb25_get_data({str_arg}); char _ch = (_data && mb25_get_length({str_arg}) > 0) ? _data[0] : \' \'; char *_s = malloc(_n+1); if(_s) {{ memset(_s, _ch, _n); _s[_n] = \'\\0\'; mb25_string_alloc_init({result_id}, _s); free(_s); }} }}, {result_id})'
             else:
                 char_arg = self._generate_expression(expr.arguments[1])
-                return f'({{ int _n = {count_arg}; char _ch = (char){char_arg}; char *_s = malloc(_n+1); if(_s) {{ memset(_s, _ch, _n); _s[_n] = \'\\0\'; mb25_string_alloc_init({result_id}, _s); free(_s); }} }}), {result_id}'
+                return f'({{ int _n = {count_arg}; char _ch = (char){char_arg}; char *_s = malloc(_n+1); if(_s) {{ memset(_s, _ch, _n); _s[_n] = \'\\0\'; mb25_string_alloc_init({result_id}, _s); free(_s); }} }}, {result_id})'
 
         elif func_name == 'HEX':
             if len(expr.arguments) != 1:
@@ -1479,7 +1937,7 @@ class Z88dkCBackend(CodeGenBackend):
                 return '0'
             num_arg = self._generate_expression(expr.arguments[0])
             # Convert number to hex string
-            return f'({{ char _hex[17]; sprintf(_hex, "%X", (int){num_arg}); mb25_string_alloc_init({result_id}, _hex); }}), {result_id}'
+            return f'({{ char _hex[17]; sprintf(_hex, "%X", (int){num_arg}); mb25_string_alloc_init({result_id}, _hex); }}, {result_id})'
 
         elif func_name == 'OCT':
             if len(expr.arguments) != 1:
@@ -1487,13 +1945,13 @@ class Z88dkCBackend(CodeGenBackend):
                 return '0'
             num_arg = self._generate_expression(expr.arguments[0])
             # Convert number to octal string
-            return f'({{ char _oct[23]; sprintf(_oct, "%o", (int){num_arg}); mb25_string_alloc_init({result_id}, _oct); }}), {result_id}'
+            return f'({{ char _oct[23]; sprintf(_oct, "%o", (int){num_arg}); mb25_string_alloc_init({result_id}, _oct); }}, {result_id})'
 
         elif func_name == 'INKEY' or func_name == 'INKEY$':
             # INKEY$ reads a key without waiting (non-blocking)
             # For compiled code, this is runtime-specific
             self.warnings.append("INKEY$ requires runtime support - returning empty string")
-            return f'mb25_string_alloc_init({result_id}, ""), {result_id}'
+            return f'(mb25_string_alloc_init({result_id}, ""), {result_id})'
 
         else:
             self.warnings.append(f"Unsupported string function: {func_name}")
@@ -1610,6 +2068,41 @@ class Z88dkCBackend(CodeGenBackend):
             else:
                 self.warnings.append("RND requires 0 or 1 argument")
                 return '0'
+
+        # File I/O functions
+        elif func_name == 'EOF':
+            if len(expr.arguments) != 1:
+                self.warnings.append("EOF requires 1 argument (file number)")
+                return '0'
+            file_num = self._generate_expression(expr.arguments[0])
+            self.max_file_number = max(self.max_file_number, 255)
+            # EOF returns -1 (true) if end of file, 0 (false) otherwise
+            return f'(file_handles[(int)({file_num})] ? feof(file_handles[(int)({file_num})]) : -1)'
+
+        elif func_name == 'LOC':
+            # LOC returns current position in file
+            if len(expr.arguments) != 1:
+                self.warnings.append("LOC requires 1 argument (file number)")
+                return '0'
+            file_num = self._generate_expression(expr.arguments[0])
+            self.max_file_number = max(self.max_file_number, 255)
+            # Use ftell to get current position, cast to float for BASIC compatibility
+            return f'(file_handles[(int)({file_num})] ? (float)ftell(file_handles[(int)({file_num})]) : -1)'
+
+        elif func_name == 'LOF':
+            # LOF returns length of file
+            if len(expr.arguments) != 1:
+                self.warnings.append("LOF requires 1 argument (file number)")
+                return '0'
+            file_num = self._generate_expression(expr.arguments[0])
+            self.max_file_number = max(self.max_file_number, 255)
+            # Save position, seek to end, get position, restore position, cast to float
+            return (f'(file_handles[(int)({file_num})] ? '
+                   f'(float)({{ long _pos = ftell(file_handles[(int)({file_num})]); '
+                   f'fseek(file_handles[(int)({file_num})], 0, SEEK_END); '
+                   f'long _size = ftell(file_handles[(int)({file_num})]); '
+                   f'fseek(file_handles[(int)({file_num})], _pos, SEEK_SET); '
+                   f'_size; }}) : -1)')
 
         # Type conversion functions
         elif func_name == 'CINT':
