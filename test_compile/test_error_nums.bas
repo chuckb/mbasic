@@ -1,0 +1,15 @@
+10 REM Test error handling with numbers only
+20 ON ERROR GOTO 100
+30 A = 42
+40 ERROR 99
+50 A = 100
+60 GOTO 200
+100 REM Error handler
+110 B = ERR
+120 C = ERL
+130 RESUME 200
+200 REM Final output
+210 PRINT A
+220 PRINT B
+230 PRINT C
+240 END

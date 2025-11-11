@@ -109,6 +109,10 @@ class Z88dkCBackend(CodeGenBackend):
         self.needs_cvs_helper = False
         self.needs_cvd_helper = False
 
+        # Error handling support
+        self.needs_error_handling = False
+        self.error_handler_line = 0  # Line to jump to on error (0 = no handler)
+
     def get_file_extension(self) -> str:
         return '.c'
 
@@ -181,6 +185,9 @@ class Z88dkCBackend(CodeGenBackend):
         # Collect binary data function usage
         self._collect_binary_function_usage(program)
 
+        # Collect error handling usage
+        self._collect_error_handling(program)
+
         code = []
 
         # Header
@@ -209,6 +216,8 @@ class Z88dkCBackend(CodeGenBackend):
         code.append('#include <string.h>')
         code.append('#include <math.h>')
         code.append('#include <stdint.h>')
+        if self.needs_error_handling:
+            code.append('#include <setjmp.h>')
         code.append('')
 
         # Generate binary data conversion helper functions if needed
@@ -302,6 +311,16 @@ class Z88dkCBackend(CodeGenBackend):
         code.append(self.indent() + 'int gosub_sp = 0;      /* Stack pointer */')
         code.append('')
 
+        # Error handling support
+        if self.needs_error_handling:
+            code.append(self.indent() + '/* Error handling support */')
+            code.append(self.indent() + 'int basic_err = 0;  /* Current error code (ERR) */')
+            code.append(self.indent() + 'int basic_erl = 0;  /* Error line number (ERL) */')
+            code.append(self.indent() + 'int error_handler = 0;  /* Line number of error handler (0 = disabled) */')
+            code.append(self.indent() + 'int error_resume_line = 0;  /* Line to resume after error */')
+            code.append(self.indent() + 'jmp_buf error_jmp;  /* Jump buffer for error handling */')
+            code.append('')
+
         # File I/O support
         if self.max_file_number > 0:
             code.append(self.indent() + '/* File I/O support */')
@@ -322,19 +341,56 @@ class Z88dkCBackend(CodeGenBackend):
             code.extend(self._generate_data_array())
             code.append('')
 
+        # Setup error handling if needed
+        if self.needs_error_handling:
+            code.append(self.indent() + '/* Setup error handling */')
+            code.append(self.indent() + 'if (setjmp(error_jmp) != 0) {')
+            self.indent_level += 1
+            code.append(self.indent() + '/* Jump here on error */')
+            code.append(self.indent() + 'if (error_handler > 0) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'goto handle_error;')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + 'fprintf(stderr, "?Error %d in line %d\\n", basic_err, basic_erl);')
+            code.append(self.indent() + 'goto program_end;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
         # Generate code for each line
         for line_node in program.lines:
             code.extend(self._generate_line(line_node))
 
+        # Add error handler jump point if needed
+        if self.needs_error_handling:
+            code.append('')
+            code.append('handle_error:')
+            code.append(self.indent() + '/* Jump to error handler line */')
+            code.append(self.indent() + 'switch(error_handler) {')
+            self.indent_level += 1
+            # Collect all ON ERROR GOTO lines
+            for line_node in program.lines:
+                for stmt in line_node.statements:
+                    if isinstance(stmt, OnErrorStatementNode) and stmt.line_number > 0:
+                        code.append(self.indent() + f'case {stmt.line_number}: goto line_{stmt.line_number};')
+            code.append(self.indent() + 'default: fprintf(stderr, "?Invalid error handler\\n"); goto program_end;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+
         # End main
-        self.indent_level -= 1
         code.append('')
+        code.append('program_end:')
 
         # Cleanup string system if needed
         if self.string_count > 0:
             code.append('    mb25_cleanup();')
 
         code.append('    return 0;')
+        self.indent_level -= 1
         code.append('}')
         code.append('')
 
@@ -569,6 +625,20 @@ class Z88dkCBackend(CodeGenBackend):
             self._check_binary_function_in_expression(expr.operand)
         # Add more expression types as needed
 
+    def _collect_error_handling(self, program: ProgramNode):
+        """Collect error handling usage"""
+        for line_node in program.lines:
+            for stmt in line_node.statements:
+                if isinstance(stmt, OnErrorStatementNode):
+                    self.needs_error_handling = True
+                    # Track the initial error handler line
+                    if self.error_handler_line == 0 and stmt.line_number > 0:
+                        self.error_handler_line = stmt.line_number
+                elif isinstance(stmt, ResumeStatementNode):
+                    self.needs_error_handling = True
+                elif isinstance(stmt, ErrorStatementNode):
+                    self.needs_error_handling = True
+
     def _generate_variable_declarations(self) -> List[str]:
         """Generate C variable declarations from symbol table"""
         decls = []
@@ -752,6 +822,12 @@ class Z88dkCBackend(CodeGenBackend):
             return self._generate_cls(stmt)
         elif isinstance(stmt, MidAssignmentStatementNode):
             return self._generate_mid_assignment(stmt)
+        elif isinstance(stmt, OnErrorStatementNode):
+            return self._generate_on_error(stmt)
+        elif isinstance(stmt, ResumeStatementNode):
+            return self._generate_resume(stmt)
+        elif isinstance(stmt, ErrorStatementNode):
+            return self._generate_error(stmt)
         else:
             # Unsupported statement
             self.warnings.append(f"Unsupported statement type: {type(stmt).__name__}")
@@ -1163,7 +1239,11 @@ class Z88dkCBackend(CodeGenBackend):
 
     def _generate_end(self, stmt: EndStatementNode) -> List[str]:
         """Generate END statement"""
-        return [self.indent() + 'return 0;']
+        if self.needs_error_handling or self.string_count > 0:
+            # Jump to cleanup code
+            return [self.indent() + 'goto program_end;']
+        else:
+            return [self.indent() + 'return 0;']
 
     def _generate_remark(self, stmt: RemarkStatementNode) -> List[str]:
         """Generate REM statement as C comment"""
@@ -2252,7 +2332,16 @@ class Z88dkCBackend(CodeGenBackend):
             if expr.subscripts:
                 return self._generate_array_access(expr)
             else:
-                return self._mangle_variable_name(expr.name)
+                # Check for special built-in variables
+                var_upper = expr.name.upper()
+                if var_upper == 'ERR':
+                    self.needs_error_handling = True
+                    return 'basic_err'
+                elif var_upper == 'ERL':
+                    self.needs_error_handling = True
+                    return 'basic_erl'
+                else:
+                    return self._mangle_variable_name(expr.name)
         elif isinstance(expr, BinaryOpNode):
             return self._generate_binary_op(expr)
         elif isinstance(expr, UnaryOpNode):
@@ -2525,6 +2614,23 @@ class Z88dkCBackend(CodeGenBackend):
             else:
                 self.warnings.append("RND requires 0 or 1 argument")
                 return '0'
+
+        # Error handling functions
+        elif func_name == 'ERR':
+            # ERR returns current error code
+            if len(expr.arguments) != 0:
+                self.warnings.append("ERR takes no arguments")
+                return '0'
+            self.needs_error_handling = True
+            return 'basic_err'
+
+        elif func_name == 'ERL':
+            # ERL returns error line number
+            if len(expr.arguments) != 0:
+                self.warnings.append("ERL takes no arguments")
+                return '0'
+            self.needs_error_handling = True
+            return 'basic_erl'
 
         # File I/O functions
         elif func_name == 'EOF':
@@ -2891,3 +2997,74 @@ class Z88dkCBackend(CodeGenBackend):
             return f'(!{operand})'
         else:
             return operand
+
+    def _generate_on_error(self, stmt: OnErrorStatementNode) -> List[str]:
+        """Generate ON ERROR GOTO/GOSUB statement"""
+        code = []
+
+        if stmt.line_number == 0:
+            # ON ERROR GOTO 0 - disable error handling
+            code.append(self.indent() + 'error_handler = 0;  /* Disable error handling */')
+        else:
+            # ON ERROR GOTO line_number - set error handler
+            code.append(self.indent() + f'error_handler = {stmt.line_number};  /* Set error handler */')
+            # Ensure the target line has a label
+            self.line_labels.add(stmt.line_number)
+
+        return code
+
+    def _generate_resume(self, stmt: ResumeStatementNode) -> List[str]:
+        """Generate RESUME statement"""
+        code = []
+
+        if stmt.line_number is None:
+            # RESUME - retry the statement that caused the error
+            code.append(self.indent() + '/* RESUME - retry error statement */')
+            code.append(self.indent() + 'basic_err = 0;')
+            code.append(self.indent() + 'basic_erl = 0;')
+            code.append(self.indent() + 'if (error_resume_line > 0) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'switch(error_resume_line) {')
+            self.indent_level += 1
+            # Would need to generate cases for each line that could cause errors
+            code.append(self.indent() + '/* Jump to error line - not fully implemented */')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+        elif stmt.line_number == -1:
+            # RESUME NEXT (parser uses -1 as sentinel for NEXT)
+            code.append(self.indent() + '/* RESUME NEXT - continue after error */')
+            code.append(self.indent() + 'basic_err = 0;')
+            code.append(self.indent() + 'basic_erl = 0;')
+            code.append(self.indent() + '/* Continue execution - handled by normal flow */')
+        elif stmt.line_number == 0:
+            # RESUME 0 - same as RESUME (retry error statement)
+            code.append(self.indent() + '/* RESUME 0 - retry error statement */')
+            code.append(self.indent() + 'basic_err = 0;')
+            code.append(self.indent() + 'basic_erl = 0;')
+            code.append(self.indent() + '/* Retry logic not fully implemented */')
+        else:
+            # RESUME line_number - continue at specific line
+            code.append(self.indent() + f'/* RESUME {stmt.line_number} */')
+            code.append(self.indent() + 'basic_err = 0;')
+            code.append(self.indent() + 'basic_erl = 0;')
+            code.append(self.indent() + f'goto line_{stmt.line_number};')
+            # Ensure the target line has a label
+            self.line_labels.add(stmt.line_number)
+
+        return code
+
+    def _generate_error(self, stmt: ErrorStatementNode) -> List[str]:
+        """Generate ERROR statement - trigger an error"""
+        code = []
+
+        error_code = self._generate_expression(stmt.error_code)
+        code.append(self.indent() + f'/* ERROR statement */')
+        code.append(self.indent() + f'basic_err = (int)({error_code});')
+        # Get current line number - would need to track this
+        code.append(self.indent() + f'basic_erl = {stmt.line_num};  /* Current line number */')
+        code.append(self.indent() + f'error_resume_line = {stmt.line_num};')
+        code.append(self.indent() + 'longjmp(error_jmp, 1);  /* Trigger error handler */')
+
+        return code
