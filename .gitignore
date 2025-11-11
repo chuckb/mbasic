@@ -41,6 +41,15 @@ test_compile/*
 !test_compile/*.py
 !test_compile/*.com
 !test_compile/*.md
+!test_compile/*.h
+
+# Prevent compiler artifacts in root directory
+/*.c
+/*.com
+/sz*
+/SZ*
+/test*.c
+/test*.com
 
 # OS
 .DS_Store
