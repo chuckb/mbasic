@@ -1,6 +1,6 @@
 # MBASIC Documentation
 
-This directory contains all documentation for the MBASIC 5.21 interpreter project.
+This directory contains all documentation for the MBASIC 5.21 interpreter and compiler project.
 
 ## Directory Structure
 
@@ -22,9 +22,13 @@ Documentation accessible from within the MBASIC user interfaces.
 Current development notes, plans, and technical documentation.
 
 - **`/dev/archive/`** - Completed development sessions and obsolete notes
-- Active development documents
-- Implementation guides
+- **Interpreter** implementation guides
+- **Compiler** implementation and status:
+  - `COMPILER_STATUS_SUMMARY.md` - Complete feature list (100% complete!)
+  - `COMPILER_SETUP.md` - z88dk installation and configuration
+  - `TNYLPO_SETUP.md` - CP/M emulator setup
 - Technical specifications
+- Implementation guides
 
 ### `/history` - Historical Documentation
 Archived development timeline, session logs, and progress reports.
@@ -33,6 +37,7 @@ Archived development timeline, session logs, and progress reports.
 - Progress reports
 - Analysis documents from development
 - Historical design decisions
+- Compiler development history
 
 ### `/user` - User-Facing Documentation
 End-user guides and tutorials (external, not in-UI).
@@ -41,14 +46,18 @@ End-user guides and tutorials (external, not in-UI).
 - Tutorials
 - FAQ
 - Installation instructions
+- Compiler usage guides
 
 ### `/design` - Design Documents
 Architecture, design patterns, and future plans.
 
 - System architecture
 - Component designs
-- Future compiler plans
-- Optimization strategies
+- Compiler architecture:
+  - Code generation
+  - Optimization strategies
+  - Runtime library design
+- Future enhancements
 
 ### `/external` - External References
 Documentation for external formats, protocols, and standards.
@@ -97,8 +106,16 @@ mkdocs gh-deploy
 
 ## Quick Links
 
+### General
 - **[Web Documentation](https://avwohl.github.io/mbasic)** - Live documentation site
 - [Quick Reference](user/QUICK_REFERENCE.md) - Fast command reference
 - [Language Reference](help/common/language/index.md) - BASIC-80 language
+
+### Interpreter
 - [MBASIC Documentation](help/mbasic/index.md) - Interpreter docs
 - [Development Status](dev/STATUS.md) - Current project status
+
+### Compiler
+- [Compiler Status Summary](dev/COMPILER_STATUS_SUMMARY.md) - **100% complete!**
+- [Compiler Setup](dev/COMPILER_SETUP.md) - z88dk installation
+- [CP/M Emulator Setup](dev/TNYLPO_SETUP.md) - tnylpo installation
