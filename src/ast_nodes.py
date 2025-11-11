@@ -649,17 +649,6 @@ class TroffStatementNode:
 
 
 @dataclass
-class ClsStatementNode:
-    """CLS statement - clear screen (no-op for compatibility)
-
-    Syntax:
-        CLS
-    """
-    line_num: int = 0
-    column: int = 0
-
-
-@dataclass
 class SystemStatementNode:
     """SYSTEM statement - return control to operating system
 

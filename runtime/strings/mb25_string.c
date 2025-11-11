@@ -103,16 +103,16 @@ void mb25_reset(void) {
 
 /* ===== Core Allocation Functions ===== */
 
-mb25_error_t mb25_string_alloc_const(uint16_t str_id, const char *const_str) {
+mb25_error_t mb25_string_alloc_const(uint16_t str_id, const char *cstr) {
     if (!MB25_VALID_ID(str_id)) {
         return MB25_ERR_INVALID_STR_ID;
     }
-    if (const_str == NULL) {
+    if (cstr == NULL) {
         return MB25_ERR_NULL_POINTER;
     }
 
     mb25_string_pt str = &mb25_strings[str_id];
-    size_t len = strlen(const_str);
+    size_t len = strlen(cstr);
 
     if (len > MB25_MAX_STRING_LEN) {
         return MB25_ERR_STRING_TOO_LONG;
@@ -122,7 +122,7 @@ mb25_error_t mb25_string_alloc_const(uint16_t str_id, const char *const_str) {
     str->is_const = 1;
     str->writeable = 0;
     str->len = (uint8_t)len;
-    str->data = (uint8_t *)const_str;
+    str->data = (uint8_t *)cstr;
 
     return MB25_SUCCESS;
 }
@@ -287,6 +287,24 @@ mb25_error_t mb25_string_assign(uint16_t dest_id, const uint8_t *data, uint8_t l
     dest->len = len;
 
     return MB25_SUCCESS;
+}
+
+mb25_error_t mb25_string_set_from_buf(uint16_t dest_id, const uint8_t *buf, uint8_t width) {
+    if (!MB25_VALID_ID(dest_id)) {
+        return MB25_ERR_INVALID_STR_ID;
+    }
+    if (buf == NULL && width > 0) {
+        return MB25_ERR_NULL_POINTER;
+    }
+
+    /* Trim trailing spaces to get actual string length */
+    uint8_t len = width;
+    while (len > 0 && buf[len - 1] == ' ') {
+        len--;
+    }
+
+    /* Use mb25_string_assign to set the string */
+    return mb25_string_assign(dest_id, buf, len);
 }
 
 mb25_error_t mb25_string_concat(uint16_t dest_id, uint16_t str1_id, uint16_t str2_id) {
@@ -588,8 +606,6 @@ static int compare_by_str_id(const void *a, const void *b) {
 
 static void compact_strings(void) {
     uint16_t new_allocator = 0;
-    uint8_t *temp_buffer = NULL;
-    uint16_t temp_size = 0;
 
     /* Track the last moved string for sharing detection */
     uint8_t *last_old_start = NULL;
@@ -597,45 +613,10 @@ static void compact_strings(void) {
     uint8_t *last_new_start = NULL;
 
 #if MB25_ENABLE_DEBUG > 1
-    printf("DEBUG: Starting compaction (with sharing preservation)\n");
+    printf("DEBUG: Starting in-place compaction (with sharing preservation)\n");
 #endif
 
-    /* First pass: calculate total size needed (skip shared substrings) */
-    for (uint16_t i = 0; i < MB25_NUM_STRINGS; i++) {
-        mb25_string_pt str = &mb25_strings[i];
-        if (str->data != NULL && !str->is_const &&
-            str->data >= mb25_global.pool &&
-            str->data < mb25_global.pool + mb25_global.pool_size) {
-
-            /* Check if this string shares data with the previous string */
-            bool is_shared = false;
-            if (i > 0) {
-                mb25_string_pt prev = &mb25_strings[i-1];
-                if (prev->data != NULL && !prev->is_const &&
-                    str->data >= prev->data &&
-                    str->data + str->len <= prev->data + prev->len) {
-                    /* This string is a substring of the previous one */
-                    is_shared = true;
-                }
-            }
-
-            if (!is_shared) {
-                temp_size += str->len;
-            }
-        }
-    }
-
-    /* Allocate temporary buffer */
-    if (temp_size > 0) {
-        temp_buffer = (uint8_t *)malloc(temp_size);
-        if (temp_buffer == NULL) {
-            /* Can't compact without temp buffer, just return */
-            return;
-        }
-    }
-
-    /* Second pass: copy strings to temp buffer and update pointers */
-    uint16_t temp_offset = 0;
+    /* Single pass: move strings in-place using memmove (handles overlaps) */
     for (uint16_t i = 0; i < MB25_NUM_STRINGS; i++) {
         mb25_string_pt str = &mb25_strings[i];
 
@@ -663,33 +644,30 @@ static void compact_strings(void) {
 #endif
 
             } else {
-                /* This is a new string - copy it */
+                /* This is a new string - move it in-place */
+                uint8_t *new_location = mb25_global.pool + new_allocator;
+
 #if MB25_ENABLE_DEBUG > 1
-                printf("DEBUG: Copying string id=%u from %p to temp+%u (len=%u)\n",
-                       str->str_id, str->data, temp_offset, str->len);
+                printf("DEBUG: Moving string id=%u from %p to %p (len=%u)\n",
+                       str->str_id, str->data, new_location, str->len);
 #endif
 
                 /* Remember this string for sharing detection */
                 last_old_start = str->data;
                 last_old_end = str->data + str->len;
-                last_new_start = mb25_global.pool + new_allocator;
+                last_new_start = new_location;
 
-                /* Copy to temp buffer */
-                memcpy(temp_buffer + temp_offset, str->data, str->len);
+                /* Move in-place using memmove (handles overlapping memory) */
+                if (str->data != new_location) {
+                    memmove(new_location, str->data, str->len);
+                }
 
-                /* Update pointer to new location in pool */
-                str->data = last_new_start;
+                /* Update pointer to new location */
+                str->data = new_location;
 
-                temp_offset += str->len;
                 new_allocator += str->len;
             }
         }
-    }
-
-    /* Copy everything back from temp buffer to pool */
-    if (temp_size > 0) {
-        memcpy(mb25_global.pool, temp_buffer, temp_size);
-        free(temp_buffer);
     }
 
     mb25_global.allocator = new_allocator;
@@ -811,6 +789,71 @@ mb25_error_t mb25_string_dup(uint16_t dest_id, uint16_t src_id) {
     dest->len = src->len;
 
     return MB25_SUCCESS;
+}
+
+void mb25_print_string(uint16_t str_id) {
+    /* Print string directly using putchar - no malloc needed */
+    if (!MB25_VALID_ID(str_id)) {
+        return;
+    }
+
+    mb25_string_pt str = &mb25_strings[str_id];
+    if (str->data == NULL || str->len == 0) {
+        return;  /* Empty string - print nothing */
+    }
+
+    /* Output each character using putchar */
+    uint8_t *data = str->data;
+    uint8_t len = str->len;
+    while (len--) {
+        putchar(*data++);
+    }
+}
+
+void mb25_fprint_string(FILE *fp, uint16_t str_id) {
+    /* Print string to file using fputc - no malloc needed */
+    if (fp == NULL || !MB25_VALID_ID(str_id)) {
+        return;
+    }
+
+    mb25_string_pt str = &mb25_strings[str_id];
+    if (str->data == NULL || str->len == 0) {
+        return;  /* Empty string - print nothing */
+    }
+
+    /* Output each character using fputc */
+    uint8_t *data = str->data;
+    uint8_t len = str->len;
+    while (len--) {
+        fputc(*data++, fp);
+    }
+}
+
+char *mb25_get_c_string_temp(uint16_t src_id, uint16_t temp_id) {
+    /* Create null-terminated C string using temp pool - NO MALLOC! */
+    if (!MB25_VALID_ID(src_id) || !MB25_VALID_ID(temp_id)) {
+        return NULL;
+    }
+
+    mb25_string_pt src = &mb25_strings[src_id];
+    if (src->data == NULL || src->len == 0) {
+        /* Empty string - allocate 1 byte for null terminator */
+        mb25_string_alloc(temp_id, 1);
+        uint8_t *data = mb25_get_data(temp_id);
+        if (data) {
+            data[0] = '\0';
+        }
+        return (char *)data;
+    }
+
+    /* Allocate temp with room for null terminator */
+    mb25_string_alloc(temp_id, src->len + 1);
+    uint8_t *data = mb25_get_data(temp_id);
+    if (data) {
+        memcpy(data, src->data, src->len);
+        data[src->len] = '\0';
+    }
+    return (char *)data;
 }
 
 /* ===== Debug Functions ===== */

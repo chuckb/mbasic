@@ -89,7 +89,6 @@ class TokenType(Enum):
     RESTORE = auto()
 
     # Keywords - I/O
-    CLS = auto()
     PRINT = auto()
     LPRINT = auto()
     WRITE = auto()
@@ -332,7 +331,6 @@ KEYWORDS = {
     'restore': TokenType.RESTORE,
 
     # I/O
-    'cls': TokenType.CLS,
     'print': TokenType.PRINT,
     'lprint': TokenType.LPRINT,
     'write': TokenType.WRITE,

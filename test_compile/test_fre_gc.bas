@@ -1,0 +1,9 @@
+10 PRINT "String pool GC test"
+20 S1 = FRE("")
+30 PRINT "Initial:"; S1
+40 A$ = "XXXXXXXXXXXXXXXXXXXXXXXXXX"
+50 B$ = "YYYYYYYYYYYYYYYYYYYYYYYYYY"
+60 S2 = FRE("")
+70 PRINT "After alloc:"; S2
+80 PRINT "Used:"; S1 - S2
+90 END

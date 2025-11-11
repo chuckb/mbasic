@@ -532,8 +532,6 @@ class Parser:
             return self.parse_tron()
         elif token.type == TokenType.TROFF:
             return self.parse_troff()
-        elif token.type == TokenType.CLS:
-            return self.parse_cls()
         elif token.type == TokenType.SYSTEM:
             return self.parse_system()
         elif token.type == TokenType.LIMITS:
@@ -1594,15 +1592,6 @@ class Parser:
         token = self.advance()
 
         return TroffStatementNode(
-            line_num=token.line,
-            column=token.column
-        )
-
-    def parse_cls(self) -> ClsStatementNode:
-        """Parse CLS statement"""
-        token = self.advance()
-
-        return ClsStatementNode(
             line_num=token.line,
             column=token.column
         )

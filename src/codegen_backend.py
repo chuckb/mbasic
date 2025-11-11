@@ -181,7 +181,8 @@ class Z88dkCBackend(CodeGenBackend):
                 cmd.extend(['-I' + mb25_include_dir])
 
         # Add compiler flags
-        cmd.extend(['-create-app', '-lm', '-o', output_file])
+        # -DAMALLOC: Allocate ~75% of available TPA as heap at runtime
+        cmd.extend(['-create-app', '-lm', '-DAMALLOC', '-o', output_file])
 
         return cmd
 
@@ -223,14 +224,13 @@ class Z88dkCBackend(CodeGenBackend):
         code.append('')
         code.append('/* Memory configuration */')
         code.append(f'/* Stack pointer auto-detected by z88dk from BDOS (address 0x0006) */')
+        code.append(f'/* Heap size auto-detected at runtime using -DAMALLOC (75% of TPA) */')
         code.append(f'#pragma output CRT_STACK_SIZE = {self.stack_size}')
-        code.append(f'#pragma output CLIB_MALLOC_HEAP_SIZE = {self.heap_size}')
         code.append('')
 
         # String system defines and includes
         if self.string_count > 0:
             code.append(f'#define MB25_NUM_STRINGS {self.string_count}')
-            code.append(f'#define MB25_POOL_SIZE {self.string_pool_size}  /* String pool size */')
             code.append('#include "mb25_string.h"')
             code.append('')
             # Generate string ID defines
@@ -315,10 +315,11 @@ class Z88dkCBackend(CodeGenBackend):
         code.append('int main() {')
         self.indent_level += 1
 
-        # Initialize string system if needed
+        # Initialize string system
         if self.string_count > 0:
             code.append(self.indent() + '/* Initialize string system */')
-            code.append(self.indent() + 'if (mb25_init(MB25_POOL_SIZE) != MB25_SUCCESS) {')
+            code.append(self.indent() + '/* With -DAMALLOC, heap is ~75% of TPA. Use fixed pool that fits comfortably. */')
+            code.append(self.indent() + f'if (mb25_init({self.string_pool_size}) != MB25_SUCCESS) {{')
             self.indent_level += 1
             code.append(self.indent() + 'fprintf(stderr, "?Out of memory\\n");')
             code.append(self.indent() + 'return 1;')
@@ -353,14 +354,34 @@ class Z88dkCBackend(CodeGenBackend):
             code.append(self.indent() + '/* File I/O support */')
             code.append(self.indent() + f'FILE *file_handles[{self.max_file_number + 1}];  /* File handles indexed by file number */')
             code.append(self.indent() + f'char file_modes[{self.max_file_number + 1}];  /* File modes: I=input, O=output, R=random, A=append */')
+            code.append(self.indent() + f'unsigned char *file_record_buffers[{self.max_file_number + 1}];  /* Random file record buffers */')
+            code.append(self.indent() + f'int file_record_sizes[{self.max_file_number + 1}];  /* Random file record sizes */')
+            code.append(self.indent() + f'long file_record_numbers[{self.max_file_number + 1}];  /* Current record number (1-based) */')
+            # Field variable mapping for LSET/RSET
+            if self.string_count > 0:
+                code.append(self.indent() + f'int field_var_files[{self.string_count}];  /* File number for each string var (-1 = not a field) */')
+                code.append(self.indent() + f'int field_var_offsets[{self.string_count}];  /* Offset in record buffer for each field var */')
+                code.append(self.indent() + f'int field_var_widths[{self.string_count}];  /* Width of field for each field var */')
             # Initialize all file handles to NULL
             code.append(self.indent() + 'int _i;')
             code.append(self.indent() + f'for (_i = 0; _i <= {self.max_file_number}; _i++) {{')
             self.indent_level += 1
             code.append(self.indent() + 'file_handles[_i] = NULL;')
             code.append(self.indent() + 'file_modes[_i] = 0;')
+            code.append(self.indent() + 'file_record_buffers[_i] = NULL;')
+            code.append(self.indent() + 'file_record_sizes[_i] = 0;')
+            code.append(self.indent() + 'file_record_numbers[_i] = 0;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
+            # Initialize field mapping arrays
+            if self.string_count > 0:
+                code.append(self.indent() + f'for (_i = 0; _i < {self.string_count}; _i++) {{')
+                self.indent_level += 1
+                code.append(self.indent() + 'field_var_files[_i] = -1;')
+                code.append(self.indent() + 'field_var_offsets[_i] = 0;')
+                code.append(self.indent() + 'field_var_widths[_i] = 0;')
+                self.indent_level -= 1
+                code.append(self.indent() + '}')
             code.append('')
 
         # Generate DATA array if we have DATA statements
@@ -845,8 +866,6 @@ class Z88dkCBackend(CodeGenBackend):
             return self._generate_kill(stmt)
         elif isinstance(stmt, PrintUsingStatementNode):
             return self._generate_print_using(stmt)
-        elif isinstance(stmt, ClsStatementNode):
-            return self._generate_cls(stmt)
         elif isinstance(stmt, MidAssignmentStatementNode):
             return self._generate_mid_assignment(stmt)
         elif isinstance(stmt, OnErrorStatementNode):
@@ -1003,40 +1022,25 @@ class Z88dkCBackend(CodeGenBackend):
             expr_type = self._get_expression_type(expr)
 
             if expr_type == VarType.STRING:
-                # For strings, need to convert to C string
-                # Special handling for string literals
+                # Print string directly using mb25_print_string (no malloc!)
                 if isinstance(expr, StringNode):
-                    # Generate allocation separately for string literals
+                    # For string literals, allocate as const then print
                     temp_id = self._get_temp_string_id()
-                    code.append(self.indent() + '{')
-                    self.indent_level += 1
                     code.append(self.indent() + f'mb25_string_alloc_const({temp_id}, "{self._escape_string(expr.value)}");')
-                    code.append(self.indent() + f'char *temp_str = mb25_to_c_string({temp_id});')
+                    code.append(self.indent() + f'mb25_print_string({temp_id});')
                 else:
-                    # For variables and expressions, use existing generation
+                    # For variables and expressions, get string ID and print
                     str_expr = self._generate_string_expression(expr)
-                    code.append(self.indent() + '{')
-                    self.indent_level += 1
-                    code.append(self.indent() + f'char *temp_str = mb25_to_c_string({str_expr});')
-                code.append(self.indent() + 'if (temp_str) {')
-                self.indent_level += 1
+                    code.append(self.indent() + f'mb25_print_string({str_expr});')
 
-                if separator == ';':
-                    code.append(self.indent() + f'{output_func}({output_stream}"%s", temp_str);')
-                elif separator == ',':
-                    code.append(self.indent() + f'{output_func}({output_stream}"%s ", temp_str);')
-                else:
-                    # Use CRLF for CP/M compatibility
+                # Add separator using putchar (no printf formatting overhead)
+                if separator == ',':
+                    code.append(self.indent() + 'putchar(\' \');')
+                elif separator != ';':
+                    # Newline - use CRLF for CP/M file output
                     if stmt.file_number:
-                        code.append(self.indent() + f'{output_func}({output_stream}"%s\\r\\n", temp_str);')
-                    else:
-                        code.append(self.indent() + f'{output_func}({output_stream}"%s\\n", temp_str);')
-
-                code.append(self.indent() + 'free(temp_str);')
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
+                        code.append(self.indent() + 'putchar(\'\\r\');')
+                    code.append(self.indent() + 'putchar(\'\\n\');')
             else:
                 # Numeric types
                 c_expr = self._generate_expression(expr)
@@ -1842,11 +1846,12 @@ class Z88dkCBackend(CodeGenBackend):
         # Get filename (need to handle string expression)
         if self._get_expression_type(stmt.filename) == VarType.STRING:
             filename_str_id = self._generate_string_expression(stmt.filename)
-            # Convert to C string
+            # Convert to C string using temp pool (no malloc!)
+            temp_id = self._get_temp_string_id()
             code.append(self.indent() + '{')
             self.indent_level += 1
             code.append(self.indent() + f'int _file_num = (int)({file_num_expr});')
-            code.append(self.indent() + f'char *_filename = mb25_to_c_string({filename_str_id});')
+            code.append(self.indent() + f'char *_filename = mb25_get_c_string_temp({filename_str_id}, {temp_id});')
             code.append(self.indent() + 'if (_filename) {')
             self.indent_level += 1
 
@@ -1878,7 +1883,7 @@ class Z88dkCBackend(CodeGenBackend):
             self.indent_level -= 1
             code.append(self.indent() + '}')
 
-            code.append(self.indent() + 'free(_filename);')
+            # No free needed - temp string will be GC'd
             self.indent_level -= 1
             code.append(self.indent() + '}')
             self.indent_level -= 1
@@ -1910,6 +1915,7 @@ class Z88dkCBackend(CodeGenBackend):
             code.append(self.indent() + 'fclose(file_handles[_i]);')
             code.append(self.indent() + 'file_handles[_i] = NULL;')
             code.append(self.indent() + 'file_modes[_i] = 0;')
+            code.append(self.indent() + 'if (file_record_buffers[_i]) { free(file_record_buffers[_i]); file_record_buffers[_i] = NULL; }')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             self.indent_level -= 1
@@ -1928,6 +1934,7 @@ class Z88dkCBackend(CodeGenBackend):
                 code.append(self.indent() + 'fclose(file_handles[_file_num]);')
                 code.append(self.indent() + 'file_handles[_file_num] = NULL;')
                 code.append(self.indent() + 'file_modes[_file_num] = 0;')
+                code.append(self.indent() + 'if (file_record_buffers[_file_num]) { free(file_record_buffers[_file_num]); file_record_buffers[_file_num] = NULL; }')
                 self.indent_level -= 1
                 code.append(self.indent() + '}')
                 self.indent_level -= 1
@@ -2026,10 +2033,11 @@ class Z88dkCBackend(CodeGenBackend):
             return [self.indent() + '/* KILL requires a string filename */']
 
         filename_str_id = self._generate_string_expression(stmt.filename)
+        temp_id = self._get_temp_string_id()
 
         code.append(self.indent() + '{')
         self.indent_level += 1
-        code.append(self.indent() + f'char *_filename = mb25_to_c_string({filename_str_id});')
+        code.append(self.indent() + f'char *_filename = mb25_get_c_string_temp({filename_str_id}, {temp_id});')
         code.append(self.indent() + 'if (_filename) {')
         self.indent_level += 1
         code.append(self.indent() + 'if (remove(_filename) != 0) {')
@@ -2037,21 +2045,12 @@ class Z88dkCBackend(CodeGenBackend):
         code.append(self.indent() + 'fprintf(stderr, "?File not found\\n");')
         self.indent_level -= 1
         code.append(self.indent() + '}')
-        code.append(self.indent() + 'free(_filename);')
+        # No free needed - temp string will be GC'd
         self.indent_level -= 1
         code.append(self.indent() + '}')
         self.indent_level -= 1
         code.append(self.indent() + '}')
 
-        return code
-
-    def _generate_cls(self, stmt: ClsStatementNode) -> List[str]:
-        """Generate CLS statement - clear screen"""
-        code = []
-        # Use ANSI escape sequence to clear screen and move cursor to home
-        # This works on most terminals that support ANSI
-        code.append(self.indent() + 'printf("\\033[2J\\033[H");  /* Clear screen */')
-        code.append(self.indent() + 'fflush(stdout);  /* Ensure it is displayed */')
         return code
 
     def _generate_mid_assignment(self, stmt: MidAssignmentStatementNode) -> List[str]:
@@ -2083,8 +2082,9 @@ class Z88dkCBackend(CodeGenBackend):
         code.append(self.indent() + f'uint8_t *_data = mb25_get_data({var_str_id});')
         code.append(self.indent() + f'uint16_t _len = mb25_get_length({var_str_id});')
 
-        # Get replacement string
-        code.append(self.indent() + f'char *_repl = mb25_to_c_string({value_str_expr});')
+        # Get replacement string using temp pool (no malloc!)
+        temp_id = self._get_temp_string_id()
+        code.append(self.indent() + f'char *_repl = mb25_get_c_string_temp({value_str_expr}, {temp_id});')
         code.append(self.indent() + 'if (_data && _repl) {')
         self.indent_level += 1
 
@@ -2109,7 +2109,7 @@ class Z88dkCBackend(CodeGenBackend):
         # Store back to string variable
         code.append(self.indent() + f'mb25_string_alloc_init({var_str_id}, _temp);')
 
-        code.append(self.indent() + 'free(_repl);')
+        # No free needed - temp string will be GC'd
         self.indent_level -= 1
         code.append(self.indent() + '}')
         self.indent_level -= 1
@@ -2154,8 +2154,9 @@ class Z88dkCBackend(CodeGenBackend):
         code.append(self.indent() + '{')
         self.indent_level += 1
 
-        # Get format string as C string
-        code.append(self.indent() + f'char *_fmt = mb25_to_c_string({format_str_expr});')
+        # Get format string as C string using temp pool (no malloc!)
+        fmt_temp_id = self._get_temp_string_id()
+        code.append(self.indent() + f'char *_fmt = mb25_get_c_string_temp({format_str_expr}, {fmt_temp_id});')
         code.append(self.indent() + 'if (_fmt) {')
         self.indent_level += 1
 
@@ -2172,9 +2173,10 @@ class Z88dkCBackend(CodeGenBackend):
             if expr_type == VarType.STRING:
                 # String expression
                 str_expr = self._generate_string_expression(expr)
+                str_temp_id = self._get_temp_string_id()
                 code.append(self.indent() + '{')
                 self.indent_level += 1
-                code.append(self.indent() + f'char *_str = mb25_to_c_string({str_expr});')
+                code.append(self.indent() + f'char *_str = mb25_get_c_string_temp({str_expr}, {str_temp_id});')
                 code.append(self.indent() + 'if (_str) {')
                 self.indent_level += 1
 
@@ -2210,7 +2212,7 @@ class Z88dkCBackend(CodeGenBackend):
                 self.indent_level -= 1
                 code.append(self.indent() + '}')
 
-                code.append(self.indent() + 'free(_str);')
+                # No free needed - temp string will be GC'd
                 self.indent_level -= 1
                 code.append(self.indent() + '}')
                 self.indent_level -= 1
@@ -2276,7 +2278,7 @@ class Z88dkCBackend(CodeGenBackend):
         else:
             code.append(self.indent() + f'{output_func}({output_stream}"%s\\n", _output);')
 
-        code.append(self.indent() + 'free(_fmt);')
+        # No free needed - temp string will be GC'd
         self.indent_level -= 1
         code.append(self.indent() + '}')
         self.indent_level -= 1
@@ -2321,20 +2323,18 @@ class Z88dkCBackend(CodeGenBackend):
             expr_type = self._get_expression_type(expr)
 
             if expr_type == VarType.STRING:
-                # For strings, output with quotes
+                # For strings, output with quotes using efficient character-by-character output
                 str_expr = self._generate_string_expression(expr)
-                code.append(self.indent() + '{')
-                self.indent_level += 1
-                code.append(self.indent() + f'char *temp_str = mb25_to_c_string({str_expr});')
-                code.append(self.indent() + 'if (temp_str) {')
-                self.indent_level += 1
-                # WRITE outputs strings with quotes
-                code.append(self.indent() + f'{output_func}({output_stream}"\\"%s\\"", temp_str);')
-                code.append(self.indent() + 'free(temp_str);')
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
-                self.indent_level -= 1
-                code.append(self.indent() + '}')
+                if stmt.file_number:
+                    # File output: use fputc
+                    code.append(self.indent() + f'fputc(\'"\\"\', {file_ptr});')
+                    code.append(self.indent() + f'mb25_fprint_string({file_ptr}, {str_expr});')
+                    code.append(self.indent() + f'fputc(\'"\\"\', {file_ptr});')
+                else:
+                    # Console output: use putchar
+                    code.append(self.indent() + 'putchar(\'"\\"\');')
+                    code.append(self.indent() + f'mb25_print_string({str_expr});')
+                    code.append(self.indent() + 'putchar(\'"\\"\');')
             else:
                 # Numeric expression - no quotes
                 expr_type = self._get_expression_type(expr)
@@ -2478,8 +2478,8 @@ class Z88dkCBackend(CodeGenBackend):
                 self.warnings.append("SPACE$ requires 1 argument")
                 return '0'
             count_arg = self._generate_expression(expr.arguments[0])
-            # Create string of spaces
-            return f'({{ int _n = {count_arg}; char *_sp = malloc(_n+1); if(_sp) {{ memset(_sp, \' \', _n); _sp[_n] = \'\\0\'; mb25_string_alloc_init({result_id}, _sp); free(_sp); }} }}, {result_id})'
+            # Create string of spaces - allocate directly in string pool, no malloc needed
+            return f'({{ int _n = {count_arg}; if (_n > 0 && _n <= 255) {{ mb25_string_alloc({result_id}, _n); uint8_t *_d = mb25_get_data({result_id}); if (_d) memset(_d, \' \', _n); }} }}, {result_id})'
 
         elif func_name == 'STRING$':
             if len(expr.arguments) != 2:
@@ -2487,12 +2487,13 @@ class Z88dkCBackend(CodeGenBackend):
                 return '0'
             count_arg = self._generate_expression(expr.arguments[0])
             # Second arg can be either a number (ASCII code) or string (use first char)
+            # Allocate directly in string pool, no malloc needed
             if self._get_expression_type(expr.arguments[1]) == VarType.STRING:
                 str_arg = self._generate_string_expression(expr.arguments[1])
-                return f'({{ int _n = {count_arg}; uint8_t *_data = mb25_get_data({str_arg}); char _ch = (_data && mb25_get_length({str_arg}) > 0) ? _data[0] : \' \'; char *_s = malloc(_n+1); if(_s) {{ memset(_s, _ch, _n); _s[_n] = \'\\0\'; mb25_string_alloc_init({result_id}, _s); free(_s); }} }}, {result_id})'
+                return f'({{ int _n = {count_arg}; uint8_t *_data = mb25_get_data({str_arg}); char _ch = (_data && mb25_get_length({str_arg}) > 0) ? _data[0] : \' \'; if (_n > 0 && _n <= 255) {{ mb25_string_alloc({result_id}, _n); uint8_t *_d = mb25_get_data({result_id}); if (_d) memset(_d, _ch, _n); }} }}, {result_id})'
             else:
                 char_arg = self._generate_expression(expr.arguments[1])
-                return f'({{ int _n = {count_arg}; char _ch = (char){char_arg}; char *_s = malloc(_n+1); if(_s) {{ memset(_s, _ch, _n); _s[_n] = \'\\0\'; mb25_string_alloc_init({result_id}, _s); free(_s); }} }}, {result_id})'
+                return f'({{ int _n = {count_arg}; char _ch = (char){char_arg}; if (_n > 0 && _n <= 255) {{ mb25_string_alloc({result_id}, _n); uint8_t *_d = mb25_get_data({result_id}); if (_d) memset(_d, _ch, _n); }} }}, {result_id})'
 
         elif func_name == 'HEX':
             if len(expr.arguments) != 1:
@@ -2585,7 +2586,8 @@ class Z88dkCBackend(CodeGenBackend):
                 self.warnings.append("VAL requires 1 argument")
                 return '0'
             str_arg = self._generate_string_expression(expr.arguments[0])
-            return f'({{ char *_s = mb25_to_c_string({str_arg}); double _v = _s ? atof(_s) : 0; if (_s) free(_s); _v; }})'
+            temp_id = self._get_temp_string_id()
+            return f'({{ char *_s = mb25_get_c_string_temp({str_arg}, {temp_id}); double _v = _s ? atof(_s) : 0; _v; }})'
 
         elif func_name == 'INSTR':
             # INSTR can have 2 or 3 arguments: INSTR([start,] string1, string2)
@@ -2597,18 +2599,26 @@ class Z88dkCBackend(CodeGenBackend):
                 # INSTR(string1, string2) - search from beginning
                 str1_arg = self._generate_string_expression(expr.arguments[0])
                 str2_arg = self._generate_string_expression(expr.arguments[1])
-                return f'({{ char *_s1 = mb25_to_c_string({str1_arg}); char *_s2 = mb25_to_c_string({str2_arg}); ' \
+                temp1_id = self._get_temp_string_id()
+                temp2_id = self._get_temp_string_id()
+                # Allocate both temps first (before getting pointers) in case GC moves them
+                return f'({{ char *_s1 = mb25_get_c_string_temp({str1_arg}, {temp1_id}); ' \
+                       f'char *_s2 = mb25_get_c_string_temp({str2_arg}, {temp2_id}); ' \
                        f'int _pos = 0; if (_s1 && _s2) {{ char *_p = strstr(_s1, _s2); _pos = _p ? (_p - _s1 + 1) : 0; }} ' \
-                       f'if (_s1) free(_s1); if (_s2) free(_s2); _pos; }})'
+                       f'_pos; }})'
             else:
                 # INSTR(start, string1, string2) - search from position
                 start_arg = self._generate_expression(expr.arguments[0])
                 str1_arg = self._generate_string_expression(expr.arguments[1])
                 str2_arg = self._generate_string_expression(expr.arguments[2])
-                return f'({{ int _start = {start_arg}; char *_s1 = mb25_to_c_string({str1_arg}); char *_s2 = mb25_to_c_string({str2_arg}); ' \
+                temp1_id = self._get_temp_string_id()
+                temp2_id = self._get_temp_string_id()
+                # Allocate both temps first (before getting pointers) in case GC moves them
+                return f'({{ int _start = {start_arg}; char *_s1 = mb25_get_c_string_temp({str1_arg}, {temp1_id}); ' \
+                       f'char *_s2 = mb25_get_c_string_temp({str2_arg}, {temp2_id}); ' \
                        f'int _pos = 0; if (_s1 && _s2 && _start > 0) {{ int _len = strlen(_s1); if (_start <= _len) ' \
                        f'{{ char *_p = strstr(_s1 + _start - 1, _s2); _pos = _p ? (_p - _s1 + 1) : 0; }} }} ' \
-                       f'if (_s1) free(_s1); if (_s2) free(_s2); _pos; }})'
+                       f'_pos; }})'
 
         # Math functions - single argument
         elif func_name in ('ABS', 'SGN', 'INT', 'FIX', 'SIN', 'COS', 'TAN', 'ATN', 'EXP', 'LOG', 'SQR'):
@@ -2904,7 +2914,8 @@ class Z88dkCBackend(CodeGenBackend):
                 self.warnings.append("SPACE$ requires 1 argument")
                 return '/* SPACE$ error */'
             count_arg = self._generate_expression(expr.arguments[0])
-            return f'{{ int _n = {count_arg}; char *_sp = malloc(_n+1); if(_sp) {{ memset(_sp, \' \', _n); _sp[_n] = \'\\0\'; mb25_string_alloc_init({result_id}, _sp); free(_sp); }} }}'
+            # Allocate directly in string pool, no malloc needed
+            return f'{{ int _n = {count_arg}; if (_n > 0 && _n <= 255) {{ mb25_string_alloc({result_id}, _n); uint8_t *_d = mb25_get_data({result_id}); if (_d) memset(_d, \' \', _n); }} }}'
 
         elif func_name == 'STRING$':
             if len(expr.arguments) != 2:
@@ -2912,12 +2923,13 @@ class Z88dkCBackend(CodeGenBackend):
                 return '/* STRING$ error */'
             count_arg = self._generate_expression(expr.arguments[0])
             # Second arg can be number or string
+            # Allocate directly in string pool, no malloc needed
             if self._get_expression_type(expr.arguments[1]) == VarType.STRING:
                 str_arg = self._get_string_var_id(expr.arguments[1])
-                return f'{{ int _n = {count_arg}; uint8_t *_data = mb25_get_data({str_arg}); char _ch = (_data && mb25_get_length({str_arg}) > 0) ? _data[0] : \' \'; char *_s = malloc(_n+1); if(_s) {{ memset(_s, _ch, _n); _s[_n] = \'\\0\'; mb25_string_alloc_init({result_id}, _s); free(_s); }} }}'
+                return f'{{ int _n = {count_arg}; uint8_t *_data = mb25_get_data({str_arg}); char _ch = (_data && mb25_get_length({str_arg}) > 0) ? _data[0] : \' \'; if (_n > 0 && _n <= 255) {{ mb25_string_alloc({result_id}, _n); uint8_t *_d = mb25_get_data({result_id}); if (_d) memset(_d, _ch, _n); }} }}'
             else:
                 char_arg = self._generate_expression(expr.arguments[1])
-                return f'{{ int _n = {count_arg}; char _ch = (char){char_arg}; char *_s = malloc(_n+1); if(_s) {{ memset(_s, _ch, _n); _s[_n] = \'\\0\'; mb25_string_alloc_init({result_id}, _s); free(_s); }} }}'
+                return f'{{ int _n = {count_arg}; char _ch = (char){char_arg}; if (_n > 0 && _n <= 255) {{ mb25_string_alloc({result_id}, _n); uint8_t *_d = mb25_get_data({result_id}); if (_d) memset(_d, _ch, _n); }} }}'
 
         elif func_name == 'HEX':
             if len(expr.arguments) != 1:
@@ -3145,20 +3157,54 @@ class Z88dkCBackend(CodeGenBackend):
     def _generate_field(self, stmt: FieldStatementNode) -> List[str]:
         """Generate FIELD statement for random access files"""
         code = []
-        code.append(self.indent() + '/* FIELD statement - random access file fields */')
+        code.append(self.indent() + '/* FIELD statement - define random access record layout */')
 
-        # FIELD defines the structure of a random access record
-        # For now, we'll just note that it's not fully implemented
         file_num = self._generate_expression(stmt.file_number)
 
-        code.append(self.indent() + f'/* FIELD #{file_num}: ')
+        code.append(self.indent() + '{')
+        self.indent_level += 1
+        code.append(self.indent() + f'int _file_num = (int)({file_num});')
+        code.append(self.indent() + f'if (_file_num >= 0 && _file_num <= {self.max_file_number}) {{')
+        self.indent_level += 1
+
+        # Calculate total record size and track field mappings
+        code.append(self.indent() + 'int _rec_size = 0;')
+        code.append(self.indent() + 'int _field_offset = 0;')
+        code.append(self.indent() + 'int _field_width;')
+
         for width, var in stmt.fields:
             width_expr = self._generate_expression(width)
-            var_name = var.name if hasattr(var, 'name') else str(var)
-            code.append(f'{var_name}({width_expr}) ')
-        code.append('*/')
+            code.append(self.indent() + f'_field_width = (int)({width_expr});')
+            code.append(self.indent() + '_rec_size += _field_width;')
 
-        code.append(self.indent() + '/* Random access FIELD not fully implemented */')
+            # Map this variable to the field
+            # Check if it's a string variable (has $ suffix)
+            if var.name.endswith('$') or (hasattr(var, 'type_suffix') and var.type_suffix == '$'):
+                var_id = self._get_string_id(var.name)
+                # Extract the numeric ID from STR_VARNAME
+                code.append(self.indent() + f'field_var_files[{var_id}] = _file_num;')
+                code.append(self.indent() + f'field_var_offsets[{var_id}] = _field_offset;')
+                code.append(self.indent() + f'field_var_widths[{var_id}] = _field_width;')
+
+            code.append(self.indent() + '_field_offset += _field_width;')
+
+        # Allocate record buffer if not already allocated or size changed
+        code.append(self.indent() + 'if (file_record_buffers[_file_num] == NULL || file_record_sizes[_file_num] != _rec_size) {')
+        self.indent_level += 1
+        code.append(self.indent() + 'if (file_record_buffers[_file_num]) free(file_record_buffers[_file_num]);')
+        code.append(self.indent() + 'file_record_buffers[_file_num] = (unsigned char *)malloc(_rec_size);')
+        code.append(self.indent() + 'file_record_sizes[_file_num] = _rec_size;')
+        code.append(self.indent() + 'if (file_record_buffers[_file_num]) memset(file_record_buffers[_file_num], 0, _rec_size);')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+
+        code.append(self.indent() + f'/* Record size: {len(stmt.fields)} fields, total {{}}_rec_size{{}} bytes */')
+
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+
         return code
 
     def _generate_get(self, stmt: GetStatementNode) -> List[str]:
@@ -3169,15 +3215,63 @@ class Z88dkCBackend(CodeGenBackend):
         file_num = self._generate_expression(stmt.file_number)
         self.max_file_number = max(self.max_file_number, 255)
 
+        code.append(self.indent() + '{')
+        self.indent_level += 1
+        code.append(self.indent() + f'int _file_num = (int)({file_num});')
+
+        # Check file is open and buffer is allocated
+        code.append(self.indent() + f'if (_file_num >= 0 && _file_num <= {self.max_file_number} && ')
+        code.append('file_handles[_file_num] != NULL && file_record_buffers[_file_num] != NULL) {')
+        self.indent_level += 1
+
+        # Determine record number
         if stmt.record_number:
             rec_num = self._generate_expression(stmt.record_number)
-            code.append(self.indent() + f'/* GET #{file_num}, {rec_num} */')
+            code.append(self.indent() + f'long _rec_num = (long)({rec_num});')
         else:
-            code.append(self.indent() + f'/* GET #{file_num} (next record) */')
+            # Use next record (current + 1)
+            code.append(self.indent() + 'long _rec_num = file_record_numbers[_file_num] + 1;')
 
-        # For now, just a placeholder
-        code.append(self.indent() + '/* Random access GET not fully implemented */')
-        code.append(self.indent() + f'/* Would read from file_handles[(int)({file_num})] */')
+        # Seek to record position (records are 1-based)
+        code.append(self.indent() + 'long _file_pos = (_rec_num - 1) * file_record_sizes[_file_num];')
+        code.append(self.indent() + 'fseek(file_handles[_file_num], _file_pos, SEEK_SET);')
+
+        # Read record into buffer
+        code.append(self.indent() + 'size_t _bytes_read = fread(file_record_buffers[_file_num], 1, ')
+        code.append('file_record_sizes[_file_num], file_handles[_file_num]);')
+
+        # Update current record number
+        code.append(self.indent() + 'file_record_numbers[_file_num] = _rec_num;')
+
+        # Pad with zeros if short read (end of file)
+        code.append(self.indent() + 'if (_bytes_read < file_record_sizes[_file_num]) {')
+        self.indent_level += 1
+        code.append(self.indent() + 'memset(file_record_buffers[_file_num] + _bytes_read, 0, ')
+        code.append('file_record_sizes[_file_num] - _bytes_read);')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+
+        # Copy buffer contents to field variables
+        if self.string_count > 0:
+            code.append(self.indent() + '/* Copy buffer contents to field variables */')
+            code.append(self.indent() + 'int _i;')
+            code.append(self.indent() + f'for (_i = 0; _i < {self.string_count}; _i++) {{')
+            self.indent_level += 1
+            code.append(self.indent() + 'if (field_var_files[_i] == _file_num) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'int _offset = field_var_offsets[_i];')
+            code.append(self.indent() + 'int _width = field_var_widths[_i];')
+            code.append(self.indent() + 'unsigned char *_src = file_record_buffers[_file_num] + _offset;')
+            code.append(self.indent() + 'mb25_string_set_from_buf(_i, _src, _width);')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
 
         return code
 
@@ -3189,15 +3283,39 @@ class Z88dkCBackend(CodeGenBackend):
         file_num = self._generate_expression(stmt.file_number)
         self.max_file_number = max(self.max_file_number, 255)
 
+        code.append(self.indent() + '{')
+        self.indent_level += 1
+        code.append(self.indent() + f'int _file_num = (int)({file_num});')
+
+        # Check file is open and buffer is allocated
+        code.append(self.indent() + f'if (_file_num >= 0 && _file_num <= {self.max_file_number} && ')
+        code.append('file_handles[_file_num] != NULL && file_record_buffers[_file_num] != NULL) {')
+        self.indent_level += 1
+
+        # Determine record number
         if stmt.record_number:
             rec_num = self._generate_expression(stmt.record_number)
-            code.append(self.indent() + f'/* PUT #{file_num}, {rec_num} */')
+            code.append(self.indent() + f'long _rec_num = (long)({rec_num});')
         else:
-            code.append(self.indent() + f'/* PUT #{file_num} (next record) */')
+            # Use current record
+            code.append(self.indent() + 'long _rec_num = file_record_numbers[_file_num];')
+            code.append(self.indent() + 'if (_rec_num == 0) _rec_num = 1;  /* Default to record 1 */')
 
-        # For now, just a placeholder
-        code.append(self.indent() + '/* Random access PUT not fully implemented */')
-        code.append(self.indent() + f'/* Would write to file_handles[(int)({file_num})] */')
+        # Seek to record position (records are 1-based)
+        code.append(self.indent() + 'long _file_pos = (_rec_num - 1) * file_record_sizes[_file_num];')
+        code.append(self.indent() + 'fseek(file_handles[_file_num], _file_pos, SEEK_SET);')
+
+        # Write buffer to file
+        code.append(self.indent() + 'fwrite(file_record_buffers[_file_num], 1, ')
+        code.append('file_record_sizes[_file_num], file_handles[_file_num]);')
+
+        # Update current record number
+        code.append(self.indent() + 'file_record_numbers[_file_num] = _rec_num;')
+
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
 
         return code
 
@@ -3206,15 +3324,35 @@ class Z88dkCBackend(CodeGenBackend):
         code = []
         code.append(self.indent() + '/* LSET - left justify in field */')
 
-        # LSET is used to set values in FIELD variables for random access
-        # For regular string variables, it can also left-justify
         var_id = self._get_string_id(stmt.variable.name)
         value_expr = self._generate_string_expression(stmt.expression)
 
-        # For now, just do a regular string assignment
-        # A full implementation would handle field variables specially
+        # Check if this is a field variable
+        code.append(self.indent() + '{')
+        self.indent_level += 1
+        code.append(self.indent() + f'int _str_id = {var_id};')
+        code.append(self.indent() + 'if (field_var_files[_str_id] >= 0) {')
+        self.indent_level += 1
+        code.append(self.indent() + '/* Field variable - write to record buffer */')
+        code.append(self.indent() + 'int _file_num = field_var_files[_str_id];')
+        code.append(self.indent() + 'int _offset = field_var_offsets[_str_id];')
+        code.append(self.indent() + 'int _width = field_var_widths[_str_id];')
+        code.append(self.indent() + f'mb25_string *_src = &mb25_strings[{value_expr}];')
+        code.append(self.indent() + 'unsigned char *_dest = file_record_buffers[_file_num] + _offset;')
+        code.append(self.indent() + 'int _copy_len = _src->len < _width ? _src->len : _width;')
+        code.append(self.indent() + '/* Copy string data (left-justified) */')
+        code.append(self.indent() + 'memcpy(_dest, _src->data, _copy_len);')
+        code.append(self.indent() + '/* Pad with spaces */')
+        code.append(self.indent() + 'if (_copy_len < _width) memset(_dest + _copy_len, \' \', _width - _copy_len);')
+        self.indent_level -= 1
+        code.append(self.indent() + '} else {')
+        self.indent_level += 1
+        code.append(self.indent() + '/* Regular variable - just copy */')
         code.append(self.indent() + f'mb25_string_copy({var_id}, {value_expr});')
-        code.append(self.indent() + '/* LSET field padding not implemented */')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
 
         return code
 
@@ -3223,13 +3361,35 @@ class Z88dkCBackend(CodeGenBackend):
         code = []
         code.append(self.indent() + '/* RSET - right justify in field */')
 
-        # RSET is similar to LSET but right-justifies
         var_id = self._get_string_id(stmt.variable.name)
         value_expr = self._generate_string_expression(stmt.expression)
 
-        # For now, just do a regular string assignment
-        # A full implementation would handle field variables specially
+        # Check if this is a field variable
+        code.append(self.indent() + '{')
+        self.indent_level += 1
+        code.append(self.indent() + f'int _str_id = {var_id};')
+        code.append(self.indent() + 'if (field_var_files[_str_id] >= 0) {')
+        self.indent_level += 1
+        code.append(self.indent() + '/* Field variable - write to record buffer */')
+        code.append(self.indent() + 'int _file_num = field_var_files[_str_id];')
+        code.append(self.indent() + 'int _offset = field_var_offsets[_str_id];')
+        code.append(self.indent() + 'int _width = field_var_widths[_str_id];')
+        code.append(self.indent() + f'mb25_string *_src = &mb25_strings[{value_expr}];')
+        code.append(self.indent() + 'unsigned char *_dest = file_record_buffers[_file_num] + _offset;')
+        code.append(self.indent() + 'int _copy_len = _src->len < _width ? _src->len : _width;')
+        code.append(self.indent() + '/* Pad with spaces (right-justify) */')
+        code.append(self.indent() + 'int _pad_len = _width - _copy_len;')
+        code.append(self.indent() + 'if (_pad_len > 0) memset(_dest, \' \', _pad_len);')
+        code.append(self.indent() + '/* Copy string data */')
+        code.append(self.indent() + 'memcpy(_dest + _pad_len, _src->data, _copy_len);')
+        self.indent_level -= 1
+        code.append(self.indent() + '} else {')
+        self.indent_level += 1
+        code.append(self.indent() + '/* Regular variable - just copy */')
         code.append(self.indent() + f'mb25_string_copy({var_id}, {value_expr});')
-        code.append(self.indent() + '/* RSET field padding not implemented */')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
 
         return code

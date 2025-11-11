@@ -25,12 +25,8 @@ These graphics commands are from GW-BASIC and QuickBASIC, not MBASIC 5.21:
 - **DRAW** - Draw using string commands
 - **GET/PUT** - Graphics block operations (not the file I/O GET/PUT which ARE implemented)
 - **PALETTE** - Color palette
-- **COLOR** - Set colors
-- **LOCATE** - Cursor positioning with row/column parameters (GW-BASIC version)
 - **VIEW** - Set viewport
 - **WINDOW** - Set coordinate system
-
-**Note:** Basic CLS (clear screen) IS implemented in MBASIC - see [CLS](../common/language/statements/cls.md). The GW-BASIC extended CLS with optional parameters is not implemented.
 
 **Why not implemented:** MBASIC 5.21 predates graphics BASIC. These features were added in GW-BASIC and later versions.
 

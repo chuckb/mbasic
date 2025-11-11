@@ -523,14 +523,6 @@
       "tier": "language"
     },
     {
-      "path": "common/language/statements/cls.md",
-      "title": "CLS",
-      "type": "statement",
-      "category": "display",
-      "description": "Clears the screen and moves the cursor to the home position",
-      "tier": "language"
-    },
-    {
       "path": "common/language/statements/width.md",
       "title": "WIDTH",
       "type": "statement",

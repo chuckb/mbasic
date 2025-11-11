@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 
 /* Configuration - set at compile time based on BASIC program analysis */
 #ifndef MB25_NUM_STRINGS
@@ -85,7 +86,7 @@ void mb25_reset(void);
 /* ===== Core Allocation Functions ===== */
 
 /* Allocate a constant string (no heap space used) */
-mb25_error_t mb25_string_alloc_const(uint16_t str_id, const char *const_str);
+mb25_error_t mb25_string_alloc_const(uint16_t str_id, const char *cstr);
 
 /* Allocate a heap string with given size */
 mb25_error_t mb25_string_alloc(uint16_t str_id, uint16_t size);
@@ -103,6 +104,9 @@ mb25_error_t mb25_string_copy(uint16_t dest_id, uint16_t src_id);
 
 /* Assign string value (may reuse space if writeable) */
 mb25_error_t mb25_string_assign(uint16_t dest_id, const uint8_t *data, uint8_t len);
+
+/* Set string from fixed-width buffer (trims trailing spaces) */
+mb25_error_t mb25_string_set_from_buf(uint16_t dest_id, const uint8_t *buf, uint8_t width);
 
 /* Concatenate two strings into destination */
 mb25_error_t mb25_string_concat(uint16_t dest_id, uint16_t str1_id, uint16_t str2_id);
@@ -171,6 +175,15 @@ void mb25_string_clear(uint16_t str_id);
 
 /* Duplicate string to new ID */
 mb25_error_t mb25_string_dup(uint16_t dest_id, uint16_t src_id);
+
+/* Print string directly using putchar (no malloc, efficient) */
+void mb25_print_string(uint16_t str_id);
+
+/* Print string to file using fputc (no malloc, efficient) */
+void mb25_fprint_string(FILE *fp, uint16_t str_id);
+
+/* Get C string (null-terminated) using temp pool - NO MALLOC! */
+char *mb25_get_c_string_temp(uint16_t src_id, uint16_t temp_id);
 
 /* ===== Debug Functions ===== */
 

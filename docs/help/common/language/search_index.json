@@ -456,13 +456,6 @@
       "description": "To declare variable types as integer,        single precision, double precision, or string"
     },
     {
-      "path": "statements/cls.md",
-      "title": "CLS",
-      "type": "statement",
-      "category": "display",
-      "description": "Clears the screen and moves the cursor to the home position"
-    },
-    {
       "path": "statements/width.md",
       "title": "WIDTH",
       "type": "statement",
@@ -1873,7 +1866,6 @@
     ],
     "display": [
       "statements/showsettings.md",
-      "statements/cls.md",
       "statements/print.md"
     ],
     "list": [
@@ -2082,22 +2074,11 @@
       "statements/defint-sng-dbl-str.md",
       "functions/str_dollar.md"
     ],
-    "cls": [
-      "statements/cls.md"
-    ],
     "clear": [
-      "statements/cls.md",
       "statements/clear.md"
     ],
-    "screen": [
-      "statements/cls.md"
-    ],
     "terminal": [
-      "statements/cls.md",
       "statements/print.md"
-    ],
-    "home": [
-      "statements/cls.md"
     ],
     "width": [
       "statements/width.md"
@@ -2534,9 +2515,6 @@
     "type-declaration": [
       "statements/defint-sng-dbl-str.md"
     ],
-    "display": [
-      "statements/cls.md"
-    ],
     "variables": [
       "statements/swap.md"
     ],
@@ -2636,7 +2614,6 @@
       "statements/run.md",
       "statements/rset.md",
       "statements/defint-sng-dbl-str.md",
-      "statements/cls.md",
       "statements/width.md",
       "statements/edit.md",
       "statements/print.md",
