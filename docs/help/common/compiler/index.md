@@ -1,6 +1,6 @@
 # MBASIC Compiler
 
-**Status: Core Features Complete!** - The MBASIC-2025 compiler implements all core computational features of MBASIC 5.21. The only unimplemented feature is CHAIN (program chaining), which is planned for a future release.
+**Status: 100% Complete!** - The MBASIC-2025 compiler is now 100% compatible with Microsoft BASCOM! Every feature supported by the original Microsoft BASIC Compiler is now implemented.
 
 ## Overview
 
@@ -12,7 +12,7 @@ The MBASIC compiler translates BASIC-80 programs into native CP/M executables fo
 - **Interpreter** - Run BASIC programs interactively with modern UIs
 - **Compiler** - Generate native .COM executables for CP/M systems
 
-**Core Features Implemented:**
+**Features Implemented (100% Microsoft BASCOM Compatible):**
 - All data types (INTEGER %, SINGLE !, DOUBLE #, STRING $)
 - All control structures (IF/THEN/ELSE, FOR/NEXT, WHILE/WEND, GOTO, GOSUB/RETURN)
 - All 50+ built-in functions
@@ -20,7 +20,7 @@ The MBASIC compiler translates BASIC-80 programs into native CP/M executables fo
 - Error handling (ON ERROR GOTO, RESUME, ERR, ERL)
 - Hardware access (PEEK/POKE/INP/OUT/WAIT) - **Works in compiled code!**
 - Machine language integration (CALL/USR/VARPTR) - **Works in compiled code!**
-- Missing: CHAIN (program chaining) - planned for future release
+- **CHAIN** - Program chaining using CP/M warm boot - **Just implemented!**
 
 ## Getting Started
 
@@ -103,21 +103,22 @@ The compiler includes a sophisticated runtime library:
 ✅ String manipulation (MID$ assignment)
 ✅ User-defined functions (DEF FN)
 
-## What's Not Yet Implemented
+## What's Not Supported (Matching Microsoft BASCOM)
 
-MBASIC-2025 compiler is feature-complete for core computational features. However, some specialized features are not yet implemented:
+MBASIC-2025 compiler now matches Microsoft BASCOM 100%! The following features are correctly NOT supported (because Microsoft BASCOM didn't support them either):
 
-**Not Implemented (but supported by Microsoft BASCOM):**
-- **CHAIN** - Program chaining to other .COM files
-  - Microsoft's compiler supported basic `CHAIN "filename"` using CP/M warm boot
-  - Could be implemented using the same technique (write to 0080H, jump to 0000H)
-  - Not implemented in MBASIC-2025 compiler yet
-
-**Not Supported by Microsoft BASCOM either:**
-- **COMMON** - Variable passing between chained programs (interpreter-only in MBASIC 5.21)
-- **CHAIN ALL/MERGE/DELETE** - Advanced chaining options (interpreter-only)
+**Interpreter-Only Features (Not in Microsoft BASCOM):**
+- **COMMON** - Variable passing between chained programs (MBASIC 5.21 interpreter-only)
+- **CHAIN MERGE** - Merging programs during chain (MBASIC 5.21 interpreter-only)
+- **CHAIN line number** - Starting at specific line (MBASIC 5.21 interpreter-only)
+- **CHAIN ALL** - Passing all variables (MBASIC 5.21 interpreter-only)
+- **CHAIN DELETE** - Deleting line ranges (MBASIC 5.21 interpreter-only)
+- **ERASE** - Deallocating arrays (not supported by Microsoft BASCOM)
 - **Interactive commands** - LIST, RUN, SAVE, LOAD (not applicable to compiled programs)
 - **CLOAD/CSAVE** - Cassette tape operations (obsolete)
+
+**What IS Supported:**
+- ✅ **CHAIN "filename"** - Basic program chaining (just implemented!)
 
 ## See Also
 

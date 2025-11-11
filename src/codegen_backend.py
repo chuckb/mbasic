@@ -3736,28 +3736,109 @@ class Z88dkCBackend(CodeGenBackend):
         return code
 
     def _generate_chain(self, stmt: ChainStatementNode) -> List[str]:
-        """Generate CHAIN statement - chain to another program
+        """Generate CHAIN statement - chain to another program using CP/M warm boot
 
-        CHAIN loads and executes another BASIC program, optionally passing variables.
-        This is an interpreter feature that cannot be implemented in compiled code.
+        Implements basic CHAIN "filename" using CP/M technique:
+        1. Write command to CP/M command buffer at 0x0080
+        2. Perform warm boot by jumping to 0x0000
+        3. CCP reads 0x0080 and executes the command
+
+        Note: MERGE, line number, ALL, and DELETE options are not supported
+        (matching Microsoft BASCOM behavior - it only supports basic CHAIN "filename")
         """
         code = []
-        filename = self._generate_expression(stmt.filename)
 
-        code.append(self.indent() + '/* CHAIN statement not implemented - interpreter-only feature */')
-        code.append(self.indent() + f'/* Would chain to: {filename} */')
-
+        # Warn about unsupported options (Microsoft BASCOM doesn't support these either)
         if stmt.merge:
-            code.append(self.indent() + '/* MERGE option specified */')
+            code.append(self.indent() + '/* MERGE option not supported in compiled code */')
+            self.warnings.append("CHAIN MERGE not supported - Microsoft BASCOM doesn't support this either")
         if stmt.start_line:
-            start = self._generate_expression(stmt.start_line)
-            code.append(self.indent() + f'/* Would start at line: {start} */')
+            code.append(self.indent() + '/* Start line not supported in compiled code */')
+            self.warnings.append("CHAIN line number not supported - Microsoft BASCOM doesn't support this either")
         if stmt.all_flag:
-            code.append(self.indent() + '/* ALL option - pass all variables */')
+            code.append(self.indent() + '/* ALL option not supported in compiled code */')
+            self.warnings.append("CHAIN ALL not supported - use COMMON in interpreter mode")
         if stmt.delete_range:
-            code.append(self.indent() + f'/* DELETE {stmt.delete_range[0]}-{stmt.delete_range[1]} */')
+            code.append(self.indent() + '/* DELETE option not supported in compiled code */')
+            self.warnings.append("CHAIN DELETE not supported - Microsoft BASCOM doesn't support this either")
 
-        self.warnings.append("CHAIN not supported in compiled code - interpreter-only feature")
+        # Get filename as C string (need to handle string expression)
+        if self._get_expression_type(stmt.filename) == VarType.STRING:
+            filename_str_id = self._generate_string_expression(stmt.filename)
+            temp_id = self._get_temp_string_id()
+        else:
+            self.warnings.append("CHAIN requires string filename")
+            code.append(self.indent() + '/* ERROR: CHAIN requires string filename */')
+            return code
+
+        code.append(self.indent() + '/* CHAIN to another program using CP/M warm boot */')
+        code.append(self.indent() + '{')
+        self.indent_level += 1
+
+        # Generate code to build command string with .COM extension if needed
+        code.append(self.indent() + 'char cmd_buf[128];')
+        code.append(self.indent() + f'char *filename = mb25_get_c_string_temp({filename_str_id}, {temp_id});')
+        code.append(self.indent() + 'int len;')
+        code.append(self.indent() + 'char *p;')
+        code.append(self.indent())
+
+        # Build command - convert to 8.3 format with .COM extension
+        code.append(self.indent() + '/* Convert to CP/M 8.3 format (8 chars name, 3 chars extension) */')
+        code.append(self.indent() + 'p = strchr(filename, \'.\');')
+        code.append(self.indent() + 'if (p) {')
+        self.indent_level += 1
+        code.append(self.indent() + '/* Has extension - copy name (max 8 chars) and extension (max 3 chars) */')
+        code.append(self.indent() + 'int name_len = p - filename;')
+        code.append(self.indent() + 'if (name_len > 8) name_len = 8;')
+        code.append(self.indent() + 'strncpy(cmd_buf, filename, name_len);')
+        code.append(self.indent() + 'cmd_buf[name_len] = \'.\';')
+        code.append(self.indent() + 'len = name_len + 1;')
+        code.append(self.indent() + '/* Copy extension (max 3 chars) */')
+        code.append(self.indent() + 'int ext_len = strlen(p + 1);')
+        code.append(self.indent() + 'if (ext_len > 3) ext_len = 3;')
+        code.append(self.indent() + 'strncpy(cmd_buf + len, p + 1, ext_len);')
+        code.append(self.indent() + 'len += ext_len;')
+        code.append(self.indent() + 'cmd_buf[len] = 0;')
+        self.indent_level -= 1
+        code.append(self.indent() + '} else {')
+        self.indent_level += 1
+        code.append(self.indent() + '/* No extension - copy name (max 8 chars) and add .COM */')
+        code.append(self.indent() + 'len = strlen(filename);')
+        code.append(self.indent() + 'if (len > 8) len = 8;')
+        code.append(self.indent() + 'strncpy(cmd_buf, filename, len);')
+        code.append(self.indent() + 'strcpy(cmd_buf + len, ".COM");')
+        code.append(self.indent() + 'len += 4;')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent())
+
+        # Convert to uppercase (CP/M convention) - MUST be uppercase!
+        code.append(self.indent() + '/* Convert to UPPERCASE (required by CP/M) */')
+        code.append(self.indent() + 'for (p = cmd_buf; *p; p++) {')
+        self.indent_level += 1
+        code.append(self.indent() + 'if (*p >= \'a\' && *p <= \'z\') *p -= 32;')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent())
+
+        # Write to CP/M command buffer at 0x0080
+        code.append(self.indent() + '/* Write command to CP/M command buffer at 0x0080 */')
+        code.append(self.indent() + '((unsigned char *)0x0080)[0] = len;  /* Length byte */')
+        code.append(self.indent() + 'memcpy((char *)0x0081, cmd_buf, len);  /* Command string */')
+        code.append(self.indent())
+
+        # Perform CP/M warm boot
+        code.append(self.indent() + '/* Perform CP/M warm boot - CCP will execute command at 0x0080 */')
+        code.append(self.indent() + '/* Jump to 0x0000 (warm boot entry point) */')
+        code.append(self.indent() + '((void (*)(void))0x0000)();')
+        code.append(self.indent())
+
+        # This point should never be reached
+        code.append(self.indent() + '/* Should never reach here */')
+
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+
         return code
 
     def _generate_common(self, stmt: CommonStatementNode) -> List[str]:
