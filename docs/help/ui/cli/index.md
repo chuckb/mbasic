@@ -30,11 +30,9 @@ The CLI provides a classic MBASIC command-line interface with direct mode and pr
 - RENUM - Renumber lines
 - SYSTEM - Exit MBASIC
 
-**Debugging Commands:**
-- [Debugging Guide](debugging.md) - Complete debugging reference
-- BREAK - Set/clear breakpoints
-- STEP - Single-step execution
-- STACK - View call stack
+**Debugging:**
+- Use the Tk or Curses UI for full debugging support (breakpoints, stepping, stack viewing)
+- CLI supports basic program execution and direct mode testing
 
 ## 📗 MBASIC Interpreter
 

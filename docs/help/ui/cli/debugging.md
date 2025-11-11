@@ -1,220 +1,207 @@
-# CLI Debugging Commands
+# CLI Debugging
 
-The CLI backend provides powerful debugging commands for interactive debugging of BASIC programs.
+The CLI backend provides basic debugging through direct mode commands and program tracing.
 
-## Overview
+## Debugging Limitations
 
-The CLI debugger allows you to:
-- Set and manage breakpoints
-- Single-step through program execution
-- View the execution stack
-- Control program flow during debugging
-- Inspect variables using PRINT statement
+**The CLI does not support advanced debugging features like:**
+- Breakpoints (BREAK command)
+- Single-stepping (STEP command)
+- Call stack viewing (STACK command)
 
-## Debugging Commands
+**For full debugging support, use:**
+- **Tk GUI** - Visual debugger with breakpoints, stepping, variable watching
+- **Curses UI** - Terminal-based debugger with similar features
 
-### BREAK - Breakpoint Management
+## Available Debugging Techniques
 
-Set, clear, and list breakpoints in your program.
+### 1. Direct Mode Testing
 
-**Syntax:**
-```
-BREAK [line_number]     - Set breakpoint at line
-BREAK                   - List all breakpoints
-BREAK CLEAR            - Clear all breakpoints
-BREAK CLEAR line_number - Clear specific breakpoint
-```
+Test expressions and statements immediately without running the full program:
 
-**Examples:**
 ```
 Ready
-BREAK 100              # Set breakpoint at line 100
-Breakpoint set at line 100
+PRINT 2 + 2
+ 4
 Ready
-BREAK 200              # Set another breakpoint
-Breakpoint set at line 200
+LET A = 10
 Ready
-BREAK                  # List all breakpoints
-Breakpoints: 100, 200
-Ready
-BREAK CLEAR 100        # Clear breakpoint at line 100
-Breakpoint cleared at line 100
-Ready
-BREAK CLEAR            # Clear all breakpoints
-All breakpoints cleared
+PRINT A * 3
+ 30
 Ready
 ```
 
-**Notes:**
-- Breakpoints pause execution before the specified line executes
-- When a breakpoint is hit, you enter debug mode
-- Use CONT to continue execution from a breakpoint
-- Breakpoints persist until cleared or the program is modified
+### 2. PRINT Statement Debugging
 
-### STEP - Single-Step Execution
+Add PRINT statements to your program to trace execution and inspect variables:
 
-Execute the program one statement at a time.
-
-**Syntax:**
-```
-STEP [n]               - Execute n statements (default: 1)
+```basic
+10 LET A = 0
+20 FOR I = 1 TO 10
+25 PRINT "Loop:"; I; "A ="; A    ' Debug output
+30   A = A + I
+40 NEXT I
+50 PRINT "Final sum:"; A
 ```
 
-**Planned (not yet implemented):**
-```
-STEP INTO             - Step into subroutines (planned)
-STEP OVER             - Step over subroutine calls (planned)
-```
+### 3. Program Tracing with TRON/TROFF
 
-**Examples:**
+Enable execution tracing to see which lines are executed:
+
 ```
 Ready
-10 PRINT "Starting"
-20 A = 10
-30 B = 20
-40 PRINT A + B
+10 PRINT "START"
+20 FOR I = 1 TO 3
+30   PRINT I
+40 NEXT I
+50 END
+Ready
+TRON
+Tracing ON
+Ready
 RUN
-Starting
-[Break at line 20]
+[10]START
+[20][30] 1
+[40][30] 2
+[40][30] 3
+[40][50]
 Ready
-STEP                   # Execute line 20
-[Break at line 30]
-Ready
-STEP 2                 # Execute lines 30 and 40
-30
-[Program ended]
-Ready
+TROFF
+Tracing OFF
 ```
 
-**Notes:**
-- STEP without arguments executes one statement
-- Useful for understanding program flow
-- Shows current line before execution
-- Can be combined with breakpoints
+**How it works:**
+- `TRON` - Turn tracing on
+- `TROFF` - Turn tracing off
+- Each `[line_number]` shows which line executed
+- Helps identify control flow and which paths are taken
 
-### STACK - Call Stack Inspection
+### 4. Incremental Testing
 
-View the current execution stack including GOSUB calls and FOR loops.
+Run partial programs by adding temporary END statements:
 
-**Syntax:**
+```basic
+10 PRINT "Phase 1"
+20 LET A = 10
+30 PRINT "A ="; A
+35 END              ' Temporary - stop here to test phase 1
+40 PRINT "Phase 2"
+50 LET B = A * 2
+60 PRINT "B ="; B
 ```
-STACK                  - Show full call stack
-STACK GOSUB           - Show only GOSUB stack
-STACK FOR             - Show only FOR loop stack
-```
 
-**Examples:**
+Test each section, then move the END statement down as you verify each part works.
+
+### 5. Error Line Inspection
+
+When an error occurs, BASIC shows the line number:
+
 ```
 Ready
-10 FOR I = 1 TO 3
-20   GOSUB 100
+10 LET A = 10
+20 PRINT B * 2
+Ready
+RUN
+?Undefined variable B in 20
+Ready
+LIST 20
+20 PRINT B * 2
+```
+
+Use `LIST line_number` to examine the problematic line.
+
+### 6. Variable Inspection After Execution
+
+After a program runs (or errors), variables remain accessible in direct mode:
+
+```
+Ready
+10 FOR I = 1 TO 5
+20   A = A + I
 30 NEXT I
-40 END
-100 PRINT "In subroutine"
-110 STACK
-120 RETURN
-RUN
-In subroutine
-Call Stack:
-  GOSUB from line 20 to line 100
-  FOR I from line 10 (I = 1, limit = 3, step = 1)
 Ready
+RUN
+Ready
+PRINT I, A
+ 6             15
 ```
 
-**Notes:**
-- Shows nested subroutine calls
-- Displays FOR loop variables and limits
-- Helpful for debugging complex program flow
-- Updates in real-time during execution
-
-## Debug Mode
-
-When a breakpoint is hit or during STEP execution, you enter debug mode.
-
-**In debug mode you can:**
-- Examine variables with PRINT
-- Modify variables with assignment statements
-- Set/clear additional breakpoints
-- View the stack with STACK
-- Continue execution with CONT
-- Step to next statement with STEP
-- Stop debugging with STOP
+This lets you inspect the final state after execution.
 
 ## Debugging Workflow
 
-### Basic Debugging Session
+**Typical debugging process in CLI:**
 
+1. **Write and test small sections**
+   ```
+   10 LET A = 5
+   20 PRINT A
+   RUN
+   ```
+
+2. **Add tracing for complex sections**
+   ```
+   TRON
+   RUN
+   TROFF
+   ```
+
+3. **Use PRINT statements liberally**
+   ```
+   25 PRINT "DEBUG: I="; I; "A="; A
+   ```
+
+4. **Test in direct mode**
+   ```
+   PRINT function_expression
+   LET X = test_value
+   ```
+
+5. **Inspect after errors**
+   ```
+   ?Error in 45
+   LIST 40-50
+   PRINT relevant_variables
+   ```
+
+## Comparison with Other UIs
+
+| Feature | CLI | Tk/Curses |
+|---------|-----|-----------|
+| Breakpoints | ❌ No | ✅ Yes |
+| Single-step | ❌ No | ✅ Yes |
+| Variable watch | ❌ No | ✅ Yes |
+| Call stack | ❌ No | ✅ Yes |
+| TRON/TROFF | ✅ Yes | ✅ Yes |
+| PRINT debugging | ✅ Yes | ✅ Yes |
+| Direct mode | ✅ Yes | ✅ Yes |
+
+## Tips
+
+1. **Use TRON for loops** - See exactly how many times and which path the loop takes
+2. **PRINT with labels** - `PRINT "Here:"; X` makes output clear
+3. **Test expressions in direct mode** - Verify calculations before adding to program
+4. **Keep programs simple** - CLI debugging is manual, so shorter programs are easier
+5. **Switch to Tk/Curses for complex debugging** - When PRINT statements aren't enough
+
+## When to Use Other UIs
+
+**Switch to Tk or Curses UI if you need to:**
+- Set breakpoints at specific lines
+- Step through code line by line
+- Watch variable values in real-time
+- View the call stack during execution
+- Debug complex nested loops or subroutines
+
+**Launch other UIs:**
+```bash
+mbasic --ui tk yourprogram.bas      # Graphical debugger
+mbasic --ui curses yourprogram.bas  # Terminal-based debugger
 ```
-Ready
-LOAD "program.bas"     # Load your program
-LIST                   # Review the code
-BREAK 50               # Set breakpoint at suspicious line
-RUN                    # Run program
-[Break at line 50]
-PRINT A, B, C          # Check variables
-STEP                   # Execute one statement
-PRINT A                # Check specific variable
-CONT                   # Continue execution
-```
-
-### Finding Logic Errors
-
-```
-Ready
-10 FOR I = 1 TO 10
-20   A = A + I
-30   B = B + A
-40 NEXT I
-50 PRINT "A ="; A; "B ="; B
-Ready
-BREAK 30               # Break inside loop
-RUN
-[Break at line 30]
-PRINT I, A, B          # Check loop variables
-STEP                   # Step through iterations
-PRINT I, A, B          # See values change
-CONT                   # Continue to next iteration
-```
-
-### Debugging Subroutines
-
-```
-Ready
-100 GOSUB 200
-110 PRINT "Done"
-120 END
-200 REM Subroutine
-210 X = 10
-220 Y = 20
-230 RETURN
-Ready
-BREAK 200              # Break at subroutine entry
-RUN
-[Break at line 200]
-STACK                  # See where we came from
-STEP 3                 # Execute subroutine
-PRINT X, Y             # Check subroutine variables
-CONT                   # Return to main program
-```
-
-## Tips and Best Practices
-
-1. **Start with LIST**: Review your program before debugging
-2. **Use meaningful breakpoints**: Set them before suspicious code
-3. **Print key variables**: Use PRINT to monitor variables that control program flow
-4. **Step through loops once**: Understand loop behavior before continuing
-5. **Check the stack**: Useful when debugging nested subroutines
-6. **Clear breakpoints when done**: Use BREAK CLEAR to remove all
-
-## Limitations
-
-- Breakpoints don't persist across program edits
-- STEP INTO/OVER not yet implemented (use STEP)
-- No conditional breakpoints (must check conditions manually)
-- Variable inspection uses PRINT statement (no dedicated inspection command)
 
 ## See Also
 
-- [CLI Commands Reference](index.md)
-- [Running Programs](../common/running.md)
-- [Error Messages](../common/errors.md)
+- [CLI Index](index.md) - Full CLI command reference
+- [Variables](variables.md) - Inspecting and testing variables
+- [Tk UI](../tk/index.md) - Full visual debugger
+- [Curses UI](../curses/index.md) - Terminal-based debugger
