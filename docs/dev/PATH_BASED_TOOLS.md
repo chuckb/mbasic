@@ -146,4 +146,4 @@ If wrong version is in PATH:
 
 - [COMPILER_SETUP.md](COMPILER_SETUP.md) - Complete compiler setup guide
 - [TNYLPO_SETUP.md](TNYLPO_SETUP.md) - tnylpo installation guide
-- [UTILITY_SCRIPTS_INDEX.md](../utils/UTILITY_SCRIPTS_INDEX.md) - Check utilities
+- [UTILITY_SCRIPTS_INDEX.md](https://github.com/avwohl/mbasic/blob/main/utils/UTILITY_SCRIPTS_INDEX.md) - Check utilities

@@ -299,7 +299,7 @@ chmod -R o+rx /home/$USER/cl/mbasic
 - [Compiler Setup](COMPILER_SETUP.md) - Detailed z88dk configuration
 - [tnylpo Setup](TNYLPO_SETUP.md) - CP/M emulator usage
 - [Redis Setup](REDIS_SESSION_STORAGE_SETUP.md) - Multi-user web configuration
-- [Testing Guide](../../tests/README.md) - Running tests
+- [Testing Guide](https://github.com/avwohl/mbasic/blob/main/tests/README.md) - Running tests
 
 ## Support
 

@@ -283,7 +283,7 @@ python3 test_compile.py yourprogram.bas
 - **[Quick Start Guide](user/QUICK_REFERENCE.md)** - Get running in 5 minutes
 - **[Language Reference](help/common/language/index.md)** - Every BASIC feature documented
 - **[Compiler Guide](dev/COMPILER_STATUS_SUMMARY.md)** - 100% feature list
-- **[Developer Docs](dev/)** - Architecture and implementation
+- **[Developer Docs](dev/index.md)** - Architecture and implementation
 
 ### Community
 - **GitHub Issues:** Report bugs, request features
@@ -317,7 +317,7 @@ python3 test_compile.py yourprogram.bas
 
 **Watch videos:** [Coming soon - YouTube channel]
 
-**Example programs:** [basic/](../basic/) directory
+**Example programs:** [basic/](https://github.com/avwohl/mbasic/tree/main/basic) directory
 
 ## 🤝 Who Made This?
 

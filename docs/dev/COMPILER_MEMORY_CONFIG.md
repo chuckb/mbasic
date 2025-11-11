@@ -270,6 +270,6 @@ This is **incorrect** because:
 
 ## See Also
 
-- [mb25_string.h](../../test_compile/mb25_string.h) - String system implementation
-- [test_custom_memory.py](../../test_compile/test_custom_memory.py) - Configuration example
+- [mb25_string.h](https://github.com/avwohl/mbasic/blob/main/test_compile/mb25_string.h) - String system implementation
+- [test_custom_memory.py](https://github.com/avwohl/mbasic/blob/main/test_compile/test_custom_memory.py) - Configuration example
 - [z88dk CP/M Platform](https://github.com/z88dk/z88dk/wiki/Platform---CPM)

@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2025-11-11
-**Total Documents:** 193
+**Total Documents:** 194
 
 ## What's Here
 
@@ -71,6 +71,7 @@ If you're contributing to MBASIC:
 - [Compiler Status Summary](COMPILER_STATUS_SUMMARY.md)
 - [Compiler Z88Dk Path Change](COMPILER_Z88DK_PATH_CHANGE.md)
 - [Consistency Checker Convergence Proposal](CONSISTENCY_CHECKER_CONVERGENCE_PROPOSAL.md)
+- [Linux Mint Developer Setup](LINUX_MINT_DEVELOPER_SETUP.md)
 - [Path Based Tools](PATH_BASED_TOOLS.md)
 - [Persistent Issues Analysis](PERSISTENT_ISSUES_ANALYSIS.md)
 - [Persistent Issues Answer](PERSISTENT_ISSUES_ANSWER.md)
