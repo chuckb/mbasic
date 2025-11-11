@@ -1,0 +1,21 @@
+10 REM Test math functions
+20 X! = 3.14159
+30 Y! = -2.5
+40 PRINT "Testing math functions"
+50 PRINT "ABS(-2.5) = "; ABS(Y!)
+60 PRINT "SGN(-2.5) = "; SGN(Y!)
+70 PRINT "INT(3.7) = "; INT(3.7)
+80 PRINT "INT(-3.7) = "; INT(-3.7)
+90 PRINT "FIX(3.7) = "; FIX(3.7)
+100 PRINT "FIX(-3.7) = "; FIX(-3.7)
+110 PRINT "SIN(PI/6) = "; SIN(X!/6)
+120 PRINT "COS(0) = "; COS(0)
+130 PRINT "TAN(PI/4) = "; TAN(X!/4)
+140 PRINT "ATN(1) = "; ATN(1)
+150 PRINT "EXP(1) = "; EXP(1)
+160 PRINT "LOG(2.71828) = "; LOG(2.71828)
+170 PRINT "SQR(16) = "; SQR(16)
+180 PRINT "RND = "; RND
+190 PRINT "CINT(3.7) = "; CINT(3.7)
+200 PRINT "CINT(-3.7) = "; CINT(-3.7)
+210 END

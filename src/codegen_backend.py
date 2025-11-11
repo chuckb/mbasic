@@ -91,6 +91,10 @@ class Z88dkCBackend(CodeGenBackend):
         self.next_temp_id = 0  # For temporary string allocation
         self.max_temps_per_statement = 5  # Estimate max temporaries needed
 
+        # DATA/READ/RESTORE support
+        self.data_values: List[Any] = []  # All DATA values in order
+        self.data_types: List[str] = []  # Type of each DATA value ('int', 'float', 'string')
+
     def get_file_extension(self) -> str:
         return '.c'
 
@@ -134,6 +138,9 @@ class Z88dkCBackend(CodeGenBackend):
 
         # Collect line numbers that are referenced (for labels)
         self._collect_line_labels(program)
+
+        # Collect DATA values for static initialization
+        self._collect_data_values(program)
 
         code = []
 
@@ -185,6 +192,11 @@ class Z88dkCBackend(CodeGenBackend):
         code.append(self.indent() + 'int gosub_stack[100];  /* Return IDs (0, 1, 2...) - not line numbers */')
         code.append(self.indent() + 'int gosub_sp = 0;      /* Stack pointer */')
         code.append('')
+
+        # Generate DATA array if we have DATA statements
+        if self.data_values:
+            code.extend(self._generate_data_array())
+            code.append('')
 
         # Generate code for each line
         for line_node in program.lines:
@@ -317,6 +329,43 @@ class Z88dkCBackend(CodeGenBackend):
         for line_node in program.lines:
             self.line_labels.add(line_node.line_number)
 
+    def _collect_data_values(self, program: ProgramNode):
+        """Collect all DATA statement values for static initialization"""
+        self.data_values = []
+        self.data_types = []
+
+        for line_node in program.lines:
+            for stmt in line_node.statements:
+                if isinstance(stmt, DataStatementNode):
+                    for value_expr in stmt.values:
+                        # Evaluate constant expressions
+                        if isinstance(value_expr, NumberNode):
+                            self.data_values.append(value_expr.value)
+                            # Determine if it's int or float
+                            # Check if the value is a whole number
+                            if isinstance(value_expr.value, (int, float)) and value_expr.value == int(value_expr.value):
+                                self.data_types.append('int')
+                                # Store as int
+                                self.data_values[-1] = int(value_expr.value)
+                            else:
+                                self.data_types.append('float')
+                        elif isinstance(value_expr, StringNode):
+                            self.data_values.append(value_expr.value)
+                            self.data_types.append('string')
+                        elif isinstance(value_expr, UnaryOpNode) and value_expr.operator == TokenType.MINUS:
+                            # Handle negative numbers
+                            if isinstance(value_expr.operand, NumberNode):
+                                val = -value_expr.operand.value
+                                self.data_values.append(val)
+                                if isinstance(val, int):
+                                    self.data_types.append('int')
+                                else:
+                                    self.data_types.append('float')
+                            else:
+                                self.warnings.append(f"Complex expression in DATA not supported: {type(value_expr.operand).__name__}")
+                        else:
+                            self.warnings.append(f"Complex expression in DATA not supported: {type(value_expr).__name__}")
+
     def _generate_variable_declarations(self) -> List[str]:
         """Generate C variable declarations from symbol table"""
         decls = []
@@ -326,10 +375,38 @@ class Z88dkCBackend(CodeGenBackend):
         singles = []
         doubles = []
 
+        # First, handle arrays
+        arrays = []
+        seen_arrays = set()  # Track which arrays we've already declared
+        for var_name, var_info in self.symbols.variables.items():
+            if var_info.is_array and var_info.flattened_size is not None:
+                # Generate array declaration (skip duplicates without dimension info)
+                var_name_c = self._mangle_variable_name(var_name)
+
+                # Skip if we've already declared this array
+                if var_name_c in seen_arrays:
+                    continue
+                seen_arrays.add(var_name_c)
+
+                if var_info.var_type == VarType.STRING:
+                    # String arrays need special handling with mb25_string
+                    continue  # Skip for now, TODO: implement string arrays
+
+                # Calculate total size for flattened array
+                total_size = var_info.flattened_size or 1
+
+                if var_info.var_type == VarType.INTEGER:
+                    arrays.append(f'int {var_name_c}[{total_size}];')
+                elif var_info.var_type == VarType.SINGLE:
+                    arrays.append(f'float {var_name_c}[{total_size}];')
+                elif var_info.var_type == VarType.DOUBLE:
+                    arrays.append(f'double {var_name_c}[{total_size}];')
+                continue  # Don't process as regular variable
+
+        # Then, handle regular variables
         for var_name, var_info in self.symbols.variables.items():
             if var_info.is_array:
-                # Skip arrays for now - not fully supported
-                continue
+                continue  # Already handled above
 
             # Skip string variables - they're handled by mb25_string system
             if var_info.var_type == VarType.STRING:
@@ -345,6 +422,13 @@ class Z88dkCBackend(CodeGenBackend):
                 doubles.append(c_name)
 
         # Generate declarations
+        # Arrays first
+        if arrays:
+            decls.append(self.indent() + '/* Arrays */')
+            for array_decl in arrays:
+                decls.append(self.indent() + array_decl)
+
+        # Then regular variables
         if integers:
             decls.append(self.indent() + 'int ' + ', '.join(integers) + ';')
         if singles:
@@ -423,6 +507,14 @@ class Z88dkCBackend(CodeGenBackend):
             return self._generate_wend(stmt)
         elif isinstance(stmt, GotoStatementNode):
             return self._generate_goto(stmt)
+        elif isinstance(stmt, DimStatementNode):
+            return self._generate_dim(stmt)
+        elif isinstance(stmt, DataStatementNode):
+            return self._generate_data(stmt)
+        elif isinstance(stmt, ReadStatementNode):
+            return self._generate_read(stmt)
+        elif isinstance(stmt, RestoreStatementNode):
+            return self._generate_restore(stmt)
         elif isinstance(stmt, GosubStatementNode):
             return self._generate_gosub(stmt)
         elif isinstance(stmt, ReturnStatementNode):
@@ -457,13 +549,18 @@ class Z88dkCBackend(CodeGenBackend):
             return left_type
         elif isinstance(expr, FunctionCallNode):
             # String functions (parser removes $ from function names)
-            if expr.name.upper() in ('LEFT', 'RIGHT', 'MID', 'CHR', 'STR', 'STRING'):
+            if expr.name.upper() in ('LEFT', 'RIGHT', 'MID', 'CHR', 'STR', 'STRING$',
+                                    'SPACE', 'HEX', 'OCT', 'INKEY', 'INKEY$',
+                                    'INPUT$'):
                 return VarType.STRING
             # LEN returns integer
             elif expr.name.upper() == 'LEN':
                 return VarType.INTEGER
             # ASC returns integer
             elif expr.name.upper() == 'ASC':
+                return VarType.INTEGER
+            # INSTR returns integer (position)
+            elif expr.name.upper() == 'INSTR':
                 return VarType.INTEGER
             # VAL returns numeric
             elif expr.name.upper() == 'VAL':
@@ -576,6 +673,13 @@ class Z88dkCBackend(CodeGenBackend):
         """Generate assignment statement"""
         # Check if it's a string assignment
         var_type = self._get_expression_type(stmt.variable)
+
+        # Handle array assignment - check if variable has subscripts
+        if hasattr(stmt.variable, 'subscripts') and stmt.variable.subscripts is not None and len(stmt.variable.subscripts) > 0:
+            # Array element assignment
+            array_access = self._generate_array_access(stmt.variable)
+            expr = self._generate_expression(stmt.expression)
+            return [self.indent() + f'{array_access} = {expr};']
 
         if var_type == VarType.STRING:
             # String assignment
@@ -740,6 +844,161 @@ class Z88dkCBackend(CodeGenBackend):
         """Generate GOTO statement"""
         return [self.indent() + f'goto line_{stmt.line_number};']
 
+    def _generate_dim(self, stmt: DimStatementNode) -> List[str]:
+        """Generate DIM statement
+
+        Arrays are already declared at the top of main(), so DIM is mostly
+        a no-op in C. However, we might want to initialize them here.
+        """
+        code = []
+        # For now, DIM is handled at declaration time
+        # We could add array initialization here if needed
+        # e.g., memset(array, 0, sizeof(array));
+        return code
+
+    def _generate_data_array(self) -> List[str]:
+        """Generate static DATA array and pointer"""
+        code = []
+        code.append(self.indent() + '/* DATA values */')
+
+        # Since z88dk may have limited union support, use separate arrays
+        # Generate numeric data array
+        if any(t in ['int', 'float'] for t in self.data_types):
+            code.append(self.indent() + f'static const float data_values[{len(self.data_values)}] = {{')
+            self.indent_level += 1
+            for i, (val, typ) in enumerate(zip(self.data_values, self.data_types)):
+                if typ == 'int':
+                    code.append(self.indent() + f'{int(val)}.0f,  /* int: {int(val)} */')
+                elif typ == 'float':
+                    code.append(self.indent() + f'{float(val):.6f}f,  /* float: {float(val)} */')
+                elif typ == 'string':
+                    # Use 0 as placeholder for string values
+                    code.append(self.indent() + f'0.0f,  /* string placeholder */')
+            self.indent_level -= 1
+            code.append(self.indent() + '};')
+
+        # Generate type array
+        code.append(self.indent() + f'static const char data_types[{len(self.data_types)}] = {{')
+        self.indent_level += 1
+        type_chars = {'int': 'I', 'float': 'F', 'string': 'S'}
+        for typ in self.data_types:
+            code.append(self.indent() + f"'{type_chars[typ]}',")
+        self.indent_level -= 1
+        code.append(self.indent() + '};')
+
+        # Generate data pointer
+        code.append(self.indent() + 'int data_pointer = 0;')
+
+        return code
+
+    def _generate_data(self, stmt: DataStatementNode) -> List[str]:
+        """Generate DATA statement - no-op since data is handled statically"""
+        # DATA values are collected during analysis and generated as static array
+        return []
+
+    def _generate_read(self, stmt: ReadStatementNode) -> List[str]:
+        """Generate READ statement"""
+        code = []
+
+        for var_node in stmt.variables:
+            # Check if we're out of data
+            code.append(self.indent() + f'if (data_pointer >= {len(self.data_values)}) {{')
+            self.indent_level += 1
+            code.append(self.indent() + 'fprintf(stderr, "?Out of DATA\\n");')
+            code.append(self.indent() + 'return 1;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+
+            # Read value based on variable type
+            var_type = self._get_expression_type(var_node)
+            var_name = self._mangle_variable_name(var_node.name)
+
+            if var_type == VarType.STRING:
+                # String variables not yet fully supported in DATA
+                code.append(self.indent() + '/* String READ not yet supported */')
+            elif var_type == VarType.INTEGER:
+                # Integer variable - read from float array and convert
+                code.append(self.indent() + f'{var_name} = (int)data_values[data_pointer];')
+            else:
+                # Float/double variable - read directly from float array
+                code.append(self.indent() + f'{var_name} = data_values[data_pointer];')
+
+            code.append(self.indent() + 'data_pointer++;')
+
+        return code
+
+    def _generate_restore(self, stmt: RestoreStatementNode) -> List[str]:
+        """Generate RESTORE statement"""
+        code = []
+
+        if stmt.line_number is None:
+            # RESTORE without line number - reset to beginning
+            code.append(self.indent() + 'data_pointer = 0;')
+        else:
+            # RESTORE with line number - not fully supported in compiled version
+            # For simplicity, just reset to beginning
+            code.append(self.indent() + '/* RESTORE to specific line not supported - resetting to beginning */')
+            code.append(self.indent() + 'data_pointer = 0;')
+            self.warnings.append(f"RESTORE to line {stmt.line_number} not supported - resetting to beginning")
+
+        return code
+
+    def _generate_array_access(self, var_node: VariableNode) -> str:
+        """Generate C code for array access
+
+        BASIC arrays can be multi-dimensional, but we flatten them to 1D in C.
+        The semantic analyzer has already computed the flattened index expression.
+        """
+        var_name = self._mangle_variable_name(var_node.name)
+        # Need to include type suffix when looking up in symbol table
+        lookup_name = var_node.name.upper()
+        if var_node.type_suffix and var_node.explicit_type_suffix:
+            # Only add suffix if it was explicitly in the source
+            lookup_name += var_node.type_suffix
+        var_info = self.symbols.variables.get(lookup_name)
+
+        # If not found, try without suffix (for implicitly typed variables)
+        if not var_info:
+            var_info = self.symbols.variables.get(var_node.name.upper())
+
+        if not var_info or not var_info.is_array:
+            self.warnings.append(f"Variable {var_node.name} is not an array")
+            return var_name
+
+        # If the semantic analyzer has already flattened the subscripts
+        # (it should have transformed multi-dimensional to single index)
+        if len(var_node.subscripts) == 1:
+            # Simple 1D access or already flattened
+            index = self._generate_expression(var_node.subscripts[0])
+            return f'{var_name}[{index}]'
+        else:
+            # Multi-dimensional - need to flatten
+            # Calculate flattened index: for A(i,j,k) with dims (d1,d2,d3)
+            # index = i*(d2+1)*(d3+1) + j*(d3+1) + k (for OPTION BASE 0)
+            dimensions = var_info.dimensions or []
+            if not dimensions:
+                self.warnings.append(f"No dimension info for array {var_node.name}")
+                return var_name
+
+            # Build the flattened index expression
+            index_parts = []
+            for i, subscript in enumerate(var_node.subscripts):
+                sub_expr = self._generate_expression(subscript)
+
+                # Calculate stride for this dimension
+                stride = 1
+                for j in range(i + 1, len(dimensions)):
+                    # Assuming OPTION BASE 0 by default
+                    stride *= (dimensions[j] + 1)
+
+                if stride > 1:
+                    index_parts.append(f'({sub_expr} * {stride})')
+                else:
+                    index_parts.append(sub_expr)
+
+            flattened_index = ' + '.join(index_parts)
+            return f'{var_name}[{flattened_index}]'
+
     def _generate_gosub(self, stmt: GosubStatementNode) -> List[str]:
         """Generate GOSUB statement with proper return mechanism"""
         code = []
@@ -792,7 +1051,11 @@ class Z88dkCBackend(CodeGenBackend):
             else:
                 return str(expr.value)
         elif isinstance(expr, VariableNode):
-            return self._mangle_variable_name(expr.name)
+            # Check if it's an array access
+            if expr.subscripts:
+                return self._generate_array_access(expr)
+            else:
+                return self._mangle_variable_name(expr.name)
         elif isinstance(expr, BinaryOpNode):
             return self._generate_binary_op(expr)
         elif isinstance(expr, UnaryOpNode):
@@ -866,6 +1129,57 @@ class Z88dkCBackend(CodeGenBackend):
             # Create a single-character string
             return f'({{ char _chr[2] = {{(char){code_arg}, \'\\0\'}}; mb25_string_alloc_init({result_id}, _chr); }}), {result_id}'
 
+        elif func_name == 'STR':
+            if len(expr.arguments) != 1:
+                self.warnings.append("STR$ requires 1 argument")
+                return '0'
+            num_arg = self._generate_expression(expr.arguments[0])
+            # Convert number to string
+            return f'({{ char _str[32]; sprintf(_str, "%g", (double){num_arg}); mb25_string_alloc_init({result_id}, _str); }}), {result_id}'
+
+        elif func_name == 'SPACE':
+            if len(expr.arguments) != 1:
+                self.warnings.append("SPACE$ requires 1 argument")
+                return '0'
+            count_arg = self._generate_expression(expr.arguments[0])
+            # Create string of spaces
+            return f'({{ int _n = {count_arg}; char *_sp = malloc(_n+1); if(_sp) {{ memset(_sp, \' \', _n); _sp[_n] = \'\\0\'; mb25_string_alloc_init({result_id}, _sp); free(_sp); }} }}), {result_id}'
+
+        elif func_name == 'STRING$':
+            if len(expr.arguments) != 2:
+                self.warnings.append("STRING$ requires 2 arguments")
+                return '0'
+            count_arg = self._generate_expression(expr.arguments[0])
+            # Second arg can be either a number (ASCII code) or string (use first char)
+            if self._get_expression_type(expr.arguments[1]) == VarType.STRING:
+                str_arg = self._generate_string_expression(expr.arguments[1])
+                return f'({{ int _n = {count_arg}; uint8_t *_data = mb25_get_data({str_arg}); char _ch = (_data && mb25_get_length({str_arg}) > 0) ? _data[0] : \' \'; char *_s = malloc(_n+1); if(_s) {{ memset(_s, _ch, _n); _s[_n] = \'\\0\'; mb25_string_alloc_init({result_id}, _s); free(_s); }} }}), {result_id}'
+            else:
+                char_arg = self._generate_expression(expr.arguments[1])
+                return f'({{ int _n = {count_arg}; char _ch = (char){char_arg}; char *_s = malloc(_n+1); if(_s) {{ memset(_s, _ch, _n); _s[_n] = \'\\0\'; mb25_string_alloc_init({result_id}, _s); free(_s); }} }}), {result_id}'
+
+        elif func_name == 'HEX':
+            if len(expr.arguments) != 1:
+                self.warnings.append("HEX$ requires 1 argument")
+                return '0'
+            num_arg = self._generate_expression(expr.arguments[0])
+            # Convert number to hex string
+            return f'({{ char _hex[17]; sprintf(_hex, "%X", (int){num_arg}); mb25_string_alloc_init({result_id}, _hex); }}), {result_id}'
+
+        elif func_name == 'OCT':
+            if len(expr.arguments) != 1:
+                self.warnings.append("OCT$ requires 1 argument")
+                return '0'
+            num_arg = self._generate_expression(expr.arguments[0])
+            # Convert number to octal string
+            return f'({{ char _oct[23]; sprintf(_oct, "%o", (int){num_arg}); mb25_string_alloc_init({result_id}, _oct); }}), {result_id}'
+
+        elif func_name == 'INKEY' or func_name == 'INKEY$':
+            # INKEY$ reads a key without waiting (non-blocking)
+            # For compiled code, this is runtime-specific
+            self.warnings.append("INKEY$ requires runtime support - returning empty string")
+            return f'mb25_string_alloc_init({result_id}, ""), {result_id}'
+
         else:
             self.warnings.append(f"Unsupported string function: {func_name}")
             return '0'
@@ -895,8 +1209,127 @@ class Z88dkCBackend(CodeGenBackend):
             str_arg = self._generate_string_expression(expr.arguments[0])
             return f'({{ char *_s = mb25_to_c_string({str_arg}); double _v = _s ? atof(_s) : 0; if (_s) free(_s); _v; }})'
 
+        elif func_name == 'INSTR':
+            # INSTR can have 2 or 3 arguments: INSTR([start,] string1, string2)
+            if len(expr.arguments) < 2 or len(expr.arguments) > 3:
+                self.warnings.append("INSTR requires 2 or 3 arguments")
+                return '0'
+
+            if len(expr.arguments) == 2:
+                # INSTR(string1, string2) - search from beginning
+                str1_arg = self._generate_string_expression(expr.arguments[0])
+                str2_arg = self._generate_string_expression(expr.arguments[1])
+                return f'({{ char *_s1 = mb25_to_c_string({str1_arg}); char *_s2 = mb25_to_c_string({str2_arg}); ' \
+                       f'int _pos = 0; if (_s1 && _s2) {{ char *_p = strstr(_s1, _s2); _pos = _p ? (_p - _s1 + 1) : 0; }} ' \
+                       f'if (_s1) free(_s1); if (_s2) free(_s2); _pos; }})'
+            else:
+                # INSTR(start, string1, string2) - search from position
+                start_arg = self._generate_expression(expr.arguments[0])
+                str1_arg = self._generate_string_expression(expr.arguments[1])
+                str2_arg = self._generate_string_expression(expr.arguments[2])
+                return f'({{ int _start = {start_arg}; char *_s1 = mb25_to_c_string({str1_arg}); char *_s2 = mb25_to_c_string({str2_arg}); ' \
+                       f'int _pos = 0; if (_s1 && _s2 && _start > 0) {{ int _len = strlen(_s1); if (_start <= _len) ' \
+                       f'{{ char *_p = strstr(_s1 + _start - 1, _s2); _pos = _p ? (_p - _s1 + 1) : 0; }} }} ' \
+                       f'if (_s1) free(_s1); if (_s2) free(_s2); _pos; }})'
+
+        # Math functions - single argument
+        elif func_name in ('ABS', 'SGN', 'INT', 'FIX', 'SIN', 'COS', 'TAN', 'ATN', 'EXP', 'LOG', 'SQR'):
+            if len(expr.arguments) != 1:
+                self.warnings.append(f"{func_name} requires 1 argument")
+                return '0'
+            arg = self._generate_expression(expr.arguments[0])
+
+            # Map BASIC functions to C functions
+            if func_name == 'ABS':
+                return f'fabs({arg})'
+            elif func_name == 'SGN':
+                # SGN returns -1, 0, or 1
+                return f'(({arg}) > 0 ? 1 : ({arg}) < 0 ? -1 : 0)'
+            elif func_name == 'INT':
+                # INT truncates towards negative infinity
+                return f'floor({arg})'
+            elif func_name == 'FIX':
+                # FIX truncates towards zero
+                return f'trunc({arg})'
+            elif func_name == 'SIN':
+                return f'sin({arg})'
+            elif func_name == 'COS':
+                return f'cos({arg})'
+            elif func_name == 'TAN':
+                return f'tan({arg})'
+            elif func_name == 'ATN':
+                return f'atan({arg})'
+            elif func_name == 'EXP':
+                return f'exp({arg})'
+            elif func_name == 'LOG':
+                return f'log({arg})'  # Natural log in C
+            elif func_name == 'SQR':
+                return f'sqrt({arg})'
+            else:
+                self.warnings.append(f"Function {func_name} not yet implemented")
+                return '0'
+
+        # RND function - random number
+        elif func_name == 'RND':
+            if len(expr.arguments) == 0:
+                # RND without arguments - return random [0, 1)
+                return '((float)rand() / (float)RAND_MAX)'
+            elif len(expr.arguments) == 1:
+                # RND(n) - n>0: same sequence, n<0: reseed, n=0: repeat last
+                arg = self._generate_expression(expr.arguments[0])
+                # Simplified implementation - just return random regardless of arg
+                # A full implementation would need to handle seed management
+                return f'(({arg}), ((float)rand() / (float)RAND_MAX))'
+            else:
+                self.warnings.append("RND requires 0 or 1 argument")
+                return '0'
+
+        # Type conversion functions
+        elif func_name == 'CINT':
+            if len(expr.arguments) != 1:
+                self.warnings.append("CINT requires 1 argument")
+                return '0'
+            arg = self._generate_expression(expr.arguments[0])
+            return f'((int)round({arg}))'
+
+        elif func_name == 'CSNG':
+            if len(expr.arguments) != 1:
+                self.warnings.append("CSNG requires 1 argument")
+                return '0'
+            arg = self._generate_expression(expr.arguments[0])
+            return f'((float)({arg}))'
+
+        elif func_name == 'CDBL':
+            if len(expr.arguments) != 1:
+                self.warnings.append("CDBL requires 1 argument")
+                return '0'
+            arg = self._generate_expression(expr.arguments[0])
+            return f'((double)({arg}))'
+
+        # PEEK function - read memory byte
+        elif func_name == 'PEEK':
+            if len(expr.arguments) != 1:
+                self.warnings.append("PEEK requires 1 argument")
+                return '0'
+            addr = self._generate_expression(expr.arguments[0])
+            # For safety, return 0 in compiled code
+            # Real implementation would need memory management
+            self.warnings.append("PEEK not fully supported - returns 0")
+            return '0'
+
+        # INP function - read I/O port
+        elif func_name == 'INP':
+            if len(expr.arguments) != 1:
+                self.warnings.append("INP requires 1 argument")
+                return '0'
+            port = self._generate_expression(expr.arguments[0])
+            # For safety, return 0 in compiled code
+            # Real implementation would need I/O port access
+            self.warnings.append("INP not fully supported - returns 0")
+            return '0'
+
         else:
-            # Other numeric functions (SIN, COS, etc.)
+            # Other numeric functions not yet implemented
             self.warnings.append(f"Function {func_name} not yet implemented")
             return '0'
 
@@ -971,6 +1404,47 @@ class Z88dkCBackend(CodeGenBackend):
                 return '/* CHR$ error */'
             code_arg = self._generate_expression(expr.arguments[0])
             return f'{{ char _chr[2] = {{(char){code_arg}, \'\\0\'}}; mb25_string_alloc_init({result_id}, _chr); }}'
+
+        elif func_name == 'STR':
+            if len(expr.arguments) != 1:
+                self.warnings.append("STR$ requires 1 argument")
+                return '/* STR$ error */'
+            num_arg = self._generate_expression(expr.arguments[0])
+            return f'{{ char _str[32]; sprintf(_str, "%g", (double){num_arg}); mb25_string_alloc_init({result_id}, _str); }}'
+
+        elif func_name == 'SPACE':
+            if len(expr.arguments) != 1:
+                self.warnings.append("SPACE$ requires 1 argument")
+                return '/* SPACE$ error */'
+            count_arg = self._generate_expression(expr.arguments[0])
+            return f'{{ int _n = {count_arg}; char *_sp = malloc(_n+1); if(_sp) {{ memset(_sp, \' \', _n); _sp[_n] = \'\\0\'; mb25_string_alloc_init({result_id}, _sp); free(_sp); }} }}'
+
+        elif func_name == 'STRING$':
+            if len(expr.arguments) != 2:
+                self.warnings.append("STRING$ requires 2 arguments")
+                return '/* STRING$ error */'
+            count_arg = self._generate_expression(expr.arguments[0])
+            # Second arg can be number or string
+            if self._get_expression_type(expr.arguments[1]) == VarType.STRING:
+                str_arg = self._get_string_var_id(expr.arguments[1])
+                return f'{{ int _n = {count_arg}; uint8_t *_data = mb25_get_data({str_arg}); char _ch = (_data && mb25_get_length({str_arg}) > 0) ? _data[0] : \' \'; char *_s = malloc(_n+1); if(_s) {{ memset(_s, _ch, _n); _s[_n] = \'\\0\'; mb25_string_alloc_init({result_id}, _s); free(_s); }} }}'
+            else:
+                char_arg = self._generate_expression(expr.arguments[1])
+                return f'{{ int _n = {count_arg}; char _ch = (char){char_arg}; char *_s = malloc(_n+1); if(_s) {{ memset(_s, _ch, _n); _s[_n] = \'\\0\'; mb25_string_alloc_init({result_id}, _s); free(_s); }} }}'
+
+        elif func_name == 'HEX':
+            if len(expr.arguments) != 1:
+                self.warnings.append("HEX$ requires 1 argument")
+                return '/* HEX$ error */'
+            num_arg = self._generate_expression(expr.arguments[0])
+            return f'{{ char _hex[17]; sprintf(_hex, "%X", (int){num_arg}); mb25_string_alloc_init({result_id}, _hex); }}'
+
+        elif func_name == 'OCT':
+            if len(expr.arguments) != 1:
+                self.warnings.append("OCT$ requires 1 argument")
+                return '/* OCT$ error */'
+            num_arg = self._generate_expression(expr.arguments[0])
+            return f'{{ char _oct[23]; sprintf(_oct, "%o", (int){num_arg}); mb25_string_alloc_init({result_id}, _oct); }}'
 
         else:
             self.warnings.append(f"Unsupported string function: {func_name}")

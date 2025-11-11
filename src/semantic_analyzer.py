@@ -1277,6 +1277,8 @@ class SemanticAnalyzer:
         # INPUT - variables are no longer constants after being read
         elif isinstance(stmt, InputStatementNode):
             for var in stmt.variables:
+                # Analyze the variable to ensure it's in the symbol table
+                self._analyze_expression(var, "INPUT")
                 self._invalidate_expressions(var.name)
                 self.evaluator.clear_constant(var.name)
                 # INPUT initializes the variable
@@ -1285,6 +1287,8 @@ class SemanticAnalyzer:
         # READ - variables are no longer constants after being read
         elif isinstance(stmt, ReadStatementNode):
             for var in stmt.variables:
+                # Analyze the variable to ensure it's in the symbol table
+                self._analyze_expression(var, "READ")
                 self._invalidate_expressions(var.name)
                 self.evaluator.clear_constant(var.name)
                 # READ initializes the variable
@@ -1293,12 +1297,16 @@ class SemanticAnalyzer:
         # LINE INPUT - variables are no longer constants
         elif isinstance(stmt, LineInputStatementNode):
             if hasattr(stmt, 'variable'):
+                # Analyze the variable to ensure it's in the symbol table
+                self._analyze_expression(stmt.variable, "LINE INPUT")
                 self._invalidate_expressions(stmt.variable.name)
                 self.evaluator.clear_constant(stmt.variable.name)
                 # LINE INPUT initializes the variable
                 self.initialized_variables.add(stmt.variable.name.upper())
             elif hasattr(stmt, 'variables'):
                 for var in stmt.variables:
+                    # Analyze the variable to ensure it's in the symbol table
+                    self._analyze_expression(var, "LINE INPUT")
                     self._invalidate_expressions(var.name)
                     self.evaluator.clear_constant(var.name)
                     # LINE INPUT initializes the variable
