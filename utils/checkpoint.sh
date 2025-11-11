@@ -8,6 +8,11 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
+# Activate venv if it exists
+if [ -d "venv" ] && [ -f "venv/bin/activate" ]; then
+    source venv/bin/activate
+fi
+
 COMMIT_MSG="$1"
 VERSION_FILE="src/version.py"
 
@@ -118,7 +123,11 @@ if [ -n "$DOCS_CHANGED" ]; then
 
         echo "✓ Developer docs build validation passed"
     else
-        echo "⚠ Warning: mkdocs not installed, skipping build validation"
+        echo "❌ ERROR: mkdocs not installed!"
+        echo ""
+        echo "Install mkdocs to validate documentation builds:"
+        echo "  pip install -r requirements.txt"
+        exit 1
     fi
 fi
 
