@@ -80,7 +80,7 @@ class Z88dkCBackend(CodeGenBackend):
     - Complex expressions beyond simple binary operations
     """
 
-    def __init__(self, symbols: SymbolTable):
+    def __init__(self, symbols: SymbolTable, config: Optional[Dict[str, Any]] = None):
         super().__init__(symbols)
         self.indent_level = 0
         self.line_labels: Set[int] = set()  # Line numbers that need labels
@@ -112,6 +112,16 @@ class Z88dkCBackend(CodeGenBackend):
         # Error handling support
         self.needs_error_handling = False
         self.error_handler_line = 0  # Line to jump to on error (0 = no handler)
+
+        # Memory configuration (can be overridden via config)
+        self.config = config or {}
+        # CP/M TPA typically ends around BDOS entry (varies by system)
+        # Common values: 0xDC00 (56K), 0xF000 (60K), 0xFC00 (63K)
+        self.stack_pointer = self.config.get('stack_pointer', '0xDC00')  # Conservative default
+        self.stack_size = self.config.get('stack_size', 512)
+        self.heap_size = self.config.get('heap_size', 2048)
+        self.string_pool_size = self.config.get('string_pool_size', 1024)
+        self.auto_stack = self.config.get('auto_stack', True)  # Auto-detect stack placement
 
     def get_file_extension(self) -> str:
         return '.c'
@@ -149,9 +159,23 @@ class Z88dkCBackend(CodeGenBackend):
         # Include mb25_string.c if we have strings
         if self.string_count > 0:
             import os
-            mb25_path = os.path.join(os.path.dirname(os.path.dirname(source_file)), 'mb25_string.c')
+            # Look for mb25_string.c in the same directory as the source file
+            source_dir = os.path.dirname(source_file) or '.'
+            mb25_path = os.path.join(source_dir, 'mb25_string.c')
+            mb25_include_dir = None
             if os.path.exists(mb25_path):
                 cmd.append(mb25_path)
+                mb25_include_dir = source_dir
+            else:
+                # Also try test_compile subdirectory (for development)
+                mb25_path_alt = os.path.join('test_compile', 'mb25_string.c')
+                if os.path.exists(mb25_path_alt):
+                    cmd.append(mb25_path_alt)
+                    mb25_include_dir = 'test_compile'
+
+            # Add include directory for mb25_string.h
+            if mb25_include_dir and mb25_include_dir != '.':
+                cmd.extend(['-I' + mb25_include_dir])
 
         # Add compiler flags
         cmd.extend(['-create-app', '-lm', '-o', output_file])
@@ -828,6 +852,16 @@ class Z88dkCBackend(CodeGenBackend):
             return self._generate_resume(stmt)
         elif isinstance(stmt, ErrorStatementNode):
             return self._generate_error(stmt)
+        elif isinstance(stmt, FieldStatementNode):
+            return self._generate_field(stmt)
+        elif isinstance(stmt, GetStatementNode):
+            return self._generate_get(stmt)
+        elif isinstance(stmt, PutStatementNode):
+            return self._generate_put(stmt)
+        elif isinstance(stmt, LsetStatementNode):
+            return self._generate_lset(stmt)
+        elif isinstance(stmt, RsetStatementNode):
+            return self._generate_rset(stmt)
         else:
             # Unsupported statement
             self.warnings.append(f"Unsupported statement type: {type(stmt).__name__}")
@@ -967,10 +1001,20 @@ class Z88dkCBackend(CodeGenBackend):
 
             if expr_type == VarType.STRING:
                 # For strings, need to convert to C string
-                str_expr = self._generate_string_expression(expr)
-                code.append(self.indent() + '{')
-                self.indent_level += 1
-                code.append(self.indent() + f'char *temp_str = mb25_to_c_string({str_expr});')
+                # Special handling for string literals
+                if isinstance(expr, StringNode):
+                    # Generate allocation separately for string literals
+                    temp_id = self._get_temp_string_id()
+                    code.append(self.indent() + '{')
+                    self.indent_level += 1
+                    code.append(self.indent() + f'mb25_string_alloc_const({temp_id}, "{self._escape_string(expr.value)}");')
+                    code.append(self.indent() + f'char *temp_str = mb25_to_c_string({temp_id});')
+                else:
+                    # For variables and expressions, use existing generation
+                    str_expr = self._generate_string_expression(expr)
+                    code.append(self.indent() + '{')
+                    self.indent_level += 1
+                    code.append(self.indent() + f'char *temp_str = mb25_to_c_string({str_expr});')
                 code.append(self.indent() + 'if (temp_str) {')
                 self.indent_level += 1
 
@@ -2720,6 +2764,32 @@ class Z88dkCBackend(CodeGenBackend):
             self.needs_cvd_helper = True
             return f'mb25_cvd({str_arg})'
 
+        # FRE function - return free memory
+        elif func_name == 'FRE':
+            # FRE(numeric) - return total free memory
+            # FRE(string) - trigger garbage collection and return free string pool space
+            if len(expr.arguments) > 1:
+                self.warnings.append("FRE requires 0 or 1 argument")
+                return '0'
+
+            # Check if argument is present
+            if len(expr.arguments) == 0:
+                # FRE with no args - treat as FRE(0)
+                return '16384  /* FRE() - free memory (simulated) */'
+
+            # Check if argument is a string or numeric expression
+            arg_type = self._get_expression_type(expr.arguments[0])
+            if arg_type == VarType.STRING:
+                # FRE("") or FRE(string_var) - trigger GC and return string pool free space
+                # Evaluate the string argument (even though we don't use it, it may have side effects)
+                str_arg = self._generate_string_expression(expr.arguments[0])
+                return f'(mb25_garbage_collect(), mb25_get_free_space())'
+            else:
+                # FRE(0) or FRE(numeric) - return total free memory
+                # Evaluate the numeric argument (side effects)
+                num_arg = self._generate_expression(expr.arguments[0])
+                return f'(({num_arg}), 16384)  /* FRE(n) - free memory (simulated) */'
+
         # PEEK function - read memory byte
         elif func_name == 'PEEK':
             if len(expr.arguments) != 1:
@@ -3066,5 +3136,97 @@ class Z88dkCBackend(CodeGenBackend):
         code.append(self.indent() + f'basic_erl = {stmt.line_num};  /* Current line number */')
         code.append(self.indent() + f'error_resume_line = {stmt.line_num};')
         code.append(self.indent() + 'longjmp(error_jmp, 1);  /* Trigger error handler */')
+
+        return code
+
+    def _generate_field(self, stmt: FieldStatementNode) -> List[str]:
+        """Generate FIELD statement for random access files"""
+        code = []
+        code.append(self.indent() + '/* FIELD statement - random access file fields */')
+
+        # FIELD defines the structure of a random access record
+        # For now, we'll just note that it's not fully implemented
+        file_num = self._generate_expression(stmt.file_number)
+
+        code.append(self.indent() + f'/* FIELD #{file_num}: ')
+        for width, var in stmt.fields:
+            width_expr = self._generate_expression(width)
+            var_name = var.name if hasattr(var, 'name') else str(var)
+            code.append(f'{var_name}({width_expr}) ')
+        code.append('*/')
+
+        code.append(self.indent() + '/* Random access FIELD not fully implemented */')
+        return code
+
+    def _generate_get(self, stmt: GetStatementNode) -> List[str]:
+        """Generate GET statement for random access files"""
+        code = []
+        code.append(self.indent() + '/* GET statement - read random access record */')
+
+        file_num = self._generate_expression(stmt.file_number)
+        self.max_file_number = max(self.max_file_number, 255)
+
+        if stmt.record_number:
+            rec_num = self._generate_expression(stmt.record_number)
+            code.append(self.indent() + f'/* GET #{file_num}, {rec_num} */')
+        else:
+            code.append(self.indent() + f'/* GET #{file_num} (next record) */')
+
+        # For now, just a placeholder
+        code.append(self.indent() + '/* Random access GET not fully implemented */')
+        code.append(self.indent() + f'/* Would read from file_handles[(int)({file_num})] */')
+
+        return code
+
+    def _generate_put(self, stmt: PutStatementNode) -> List[str]:
+        """Generate PUT statement for random access files"""
+        code = []
+        code.append(self.indent() + '/* PUT statement - write random access record */')
+
+        file_num = self._generate_expression(stmt.file_number)
+        self.max_file_number = max(self.max_file_number, 255)
+
+        if stmt.record_number:
+            rec_num = self._generate_expression(stmt.record_number)
+            code.append(self.indent() + f'/* PUT #{file_num}, {rec_num} */')
+        else:
+            code.append(self.indent() + f'/* PUT #{file_num} (next record) */')
+
+        # For now, just a placeholder
+        code.append(self.indent() + '/* Random access PUT not fully implemented */')
+        code.append(self.indent() + f'/* Would write to file_handles[(int)({file_num})] */')
+
+        return code
+
+    def _generate_lset(self, stmt: LsetStatementNode) -> List[str]:
+        """Generate LSET statement - left-justify string in field"""
+        code = []
+        code.append(self.indent() + '/* LSET - left justify in field */')
+
+        # LSET is used to set values in FIELD variables for random access
+        # For regular string variables, it can also left-justify
+        var_id = self._get_string_id(stmt.variable.name)
+        value_expr = self._generate_string_expression(stmt.expression)
+
+        # For now, just do a regular string assignment
+        # A full implementation would handle field variables specially
+        code.append(self.indent() + f'mb25_string_copy({var_id}, {value_expr});')
+        code.append(self.indent() + '/* LSET field padding not implemented */')
+
+        return code
+
+    def _generate_rset(self, stmt: RsetStatementNode) -> List[str]:
+        """Generate RSET statement - right-justify string in field"""
+        code = []
+        code.append(self.indent() + '/* RSET - right justify in field */')
+
+        # RSET is similar to LSET but right-justifies
+        var_id = self._get_string_id(stmt.variable.name)
+        value_expr = self._generate_string_expression(stmt.expression)
+
+        # For now, just do a regular string assignment
+        # A full implementation would handle field variables specially
+        code.append(self.indent() + f'mb25_string_copy({var_id}, {value_expr});')
+        code.append(self.indent() + '/* RSET field padding not implemented */')
 
         return code

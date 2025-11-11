@@ -99,6 +99,7 @@ class TokenType(Enum):
     ERROR = auto()
     ERR = auto()
     ERL = auto()
+    FRE = auto()
     HELP = auto()
     OUT = auto()
     POKE = auto()
@@ -340,6 +341,7 @@ KEYWORDS = {
     'error': TokenType.ERROR,
     'err': TokenType.ERR,
     'erl': TokenType.ERL,
+    'fre': TokenType.FRE,
     'help': TokenType.HELP,
     'out': TokenType.OUT,
     'poke': TokenType.POKE,

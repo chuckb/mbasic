@@ -3007,7 +3007,7 @@ class SemanticAnalyzer:
                 savings = "Eliminate MUL, replace with 0"
 
             # X * 4 -> (X + X) + (X + X) or X * 2^n for larger powers
-            elif right_val is not None and right_val > 0:
+            elif right_val is not None and isinstance(right_val, (int, float)) and right_val > 0:
                 # Check if it's an integer value (might be stored as float)
                 if right_val == int(right_val):
                     int_val = int(right_val)
@@ -3019,7 +3019,7 @@ class SemanticAnalyzer:
                         savings = f"Replace MUL with shift/repeated addition"
                         # Don't actually transform since BASIC doesn't have <<
                         # But track the opportunity
-            elif left_val is not None and left_val > 0:
+            elif left_val is not None and isinstance(left_val, (int, float)) and left_val > 0:
                 if left_val == int(left_val):
                     int_val = int(left_val)
                     if int_val > 2 and (int_val & (int_val - 1)) == 0:
@@ -3029,7 +3029,7 @@ class SemanticAnalyzer:
 
         # Division by power of 2 -> bit shift (for integers)
         elif expr.operator == TokenType.BACKSLASH:  # Integer division in BASIC
-            if right_val is not None and right_val > 0:
+            if right_val is not None and isinstance(right_val, (int, float)) and right_val > 0:
                 if right_val == int(right_val):
                     int_val = int(right_val)
                     if int_val > 0 and (int_val & (int_val - 1)) == 0:
