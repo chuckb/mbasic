@@ -191,6 +191,7 @@ class TokenType(Enum):
     SPC = auto()             # SPC (print spacing function)
     TAB = auto()             # TAB (print tab function)
     USR = auto()
+    VARPTR = auto()
 
     # Delimiters
     LPAREN = auto()          # (
@@ -415,4 +416,5 @@ KEYWORDS = {
     'spc': TokenType.SPC,
     'tab': TokenType.TAB,
     'usr': TokenType.USR,
+    'varptr': TokenType.VARPTR,
 }

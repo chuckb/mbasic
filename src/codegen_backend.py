@@ -866,6 +866,12 @@ class Z88dkCBackend(CodeGenBackend):
             return self._generate_write(stmt)
         elif isinstance(stmt, KillStatementNode):
             return self._generate_kill(stmt)
+        elif isinstance(stmt, ResetStatementNode):
+            return self._generate_reset(stmt)
+        elif isinstance(stmt, NameStatementNode):
+            return self._generate_name(stmt)
+        elif isinstance(stmt, FilesStatementNode):
+            return self._generate_files(stmt)
         elif isinstance(stmt, PrintUsingStatementNode):
             return self._generate_print_using(stmt)
         elif isinstance(stmt, MidAssignmentStatementNode):
@@ -888,6 +894,18 @@ class Z88dkCBackend(CodeGenBackend):
             return self._generate_rset(stmt)
         elif isinstance(stmt, EraseStatementNode):
             return self._generate_erase(stmt)
+        elif isinstance(stmt, WidthStatementNode):
+            return self._generate_width(stmt)
+        elif isinstance(stmt, LprintStatementNode):
+            return self._generate_lprint(stmt)
+        elif isinstance(stmt, ClearStatementNode):
+            return self._generate_clear(stmt)
+        elif isinstance(stmt, CallStatementNode):
+            return self._generate_call(stmt)
+        elif isinstance(stmt, ChainStatementNode):
+            return self._generate_chain(stmt)
+        elif isinstance(stmt, CommonStatementNode):
+            return self._generate_common(stmt)
         else:
             # Unsupported statement
             self.warnings.append(f"Unsupported statement type: {type(stmt).__name__}")
@@ -2850,6 +2868,63 @@ class Z88dkCBackend(CodeGenBackend):
             # Note: z88dk may use in() or inp() depending on target
             return f'inp((int)({port}))'
 
+        # VARPTR function - get address of variable
+        elif func_name == 'VARPTR':
+            if len(expr.arguments) != 1:
+                self.warnings.append("VARPTR requires 1 argument")
+                return '0'
+
+            # Get the variable reference
+            arg = expr.arguments[0]
+            if isinstance(arg, VariableNode):
+                var_name = arg.name.upper()
+                # Get C variable name
+                if var_name.endswith('$'):
+                    # String variable - return address of string ID (stored as int)
+                    # In our implementation, string variables store an int ID
+                    c_var = self._mangle_variable_name(var_name)
+                    return f'(float)((long)&{c_var})'
+                elif var_name.endswith('%'):
+                    # Integer variable
+                    c_var = self._mangle_variable_name(var_name)
+                    return f'(float)((long)&{c_var})'
+                else:
+                    # Float variable
+                    c_var = self._mangle_variable_name(var_name)
+                    return f'(float)((long)&{c_var})'
+            elif isinstance(arg, ArrayAccessNode):
+                # Array element - get address of specific element
+                array_name = arg.array_name.upper()
+                # For arrays, we need to calculate the element address
+                c_array = self._mangle_variable_name(array_name)
+                subscripts = [self._generate_expression(sub) for sub in arg.subscripts]
+                subscript_str = ']['.join(subscripts)
+                return f'(float)((long)&{c_array}[{subscript_str}])'
+            else:
+                self.warnings.append("VARPTR requires a variable or array element")
+                return '0'
+
+        # USR function - call user machine language function
+        elif func_name == 'USR':
+            if len(expr.arguments) < 1:
+                self.warnings.append("USR requires at least 1 argument (address)")
+                return '0'
+
+            # First argument is the address to call
+            addr = self._generate_expression(expr.arguments[0])
+
+            if len(expr.arguments) == 1:
+                # USR(addr) - call with no arguments, returns float
+                return f'((float (*)(void))(int)({addr}))()'
+            else:
+                # USR(addr, arg1, arg2, ...) - call with arguments
+                # In MBASIC, USR can take one argument passed in a register
+                # For simplicity, we'll pass one float argument
+                arg1 = self._generate_expression(expr.arguments[1])
+                if len(expr.arguments) > 2:
+                    self.warnings.append("USR with multiple arguments not fully supported - only first argument passed")
+                return f'((float (*)(float))(int)({addr}))({arg1})'
+
         else:
             # Other numeric functions not yet implemented
             self.warnings.append(f"Function {func_name} not yet implemented")
@@ -3432,4 +3507,266 @@ class Z88dkCBackend(CodeGenBackend):
         code.append(self.indent() + '/* ERASE statement not implemented - interpreter-only feature */')
         code.append(self.indent() + f'/* Arrays cannot be deallocated in compiled code: {", ".join(stmt.array_names)} */')
         self.warnings.append(f"ERASE not supported in compiled code (matches Microsoft BASIC Compiler) - arrays: {', '.join(stmt.array_names)}")
+        return code
+
+    def _generate_reset(self, stmt: ResetStatementNode) -> List[str]:
+        """Generate RESET statement - close all open files
+
+        RESET is equivalent to CLOSE with no arguments.
+        It closes all open files and frees associated buffers.
+        """
+        code = []
+        if self.max_file_number > 0:
+            code.append(self.indent() + '/* RESET - close all files */')
+            code.append(self.indent() + '{')
+            self.indent_level += 1
+            code.append(self.indent() + 'int _i;')
+            code.append(self.indent() + f'for (_i = 0; _i <= {self.max_file_number}; _i++) {{')
+            self.indent_level += 1
+            code.append(self.indent() + 'if (file_handles[_i]) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'fclose(file_handles[_i]);')
+            code.append(self.indent() + 'file_handles[_i] = NULL;')
+            code.append(self.indent() + 'file_modes[_i] = 0;')
+            code.append(self.indent() + 'if (file_record_buffers[_i]) { free(file_record_buffers[_i]); file_record_buffers[_i] = NULL; }')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+        else:
+            code.append(self.indent() + '/* RESET - no files to close */')
+        return code
+
+    def _generate_name(self, stmt: NameStatementNode) -> List[str]:
+        """Generate NAME statement - rename file
+
+        NAME oldfile$ AS newfile$ - renames a file on disk
+        Uses C rename() function
+        """
+        code = []
+        old_filename = self._generate_expression(stmt.old_filename)
+        new_filename = self._generate_expression(stmt.new_filename)
+
+        code.append(self.indent() + '{')
+        self.indent_level += 1
+
+        # For string expressions, need to extract the C string
+        code.append(self.indent() + 'char _old_name[256];')
+        code.append(self.indent() + 'char _new_name[256];')
+        code.append(self.indent() + f'mb25_get_string_data({old_filename}, _old_name, sizeof(_old_name));')
+        code.append(self.indent() + f'mb25_get_string_data({new_filename}, _new_name, sizeof(_new_name));')
+        code.append(self.indent() + 'if (rename(_old_name, _new_name) != 0) {')
+        self.indent_level += 1
+        code.append(self.indent() + 'fprintf(stderr, "?File not found\\n");')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        return code
+
+    def _generate_files(self, stmt: FilesStatementNode) -> List[str]:
+        """Generate FILES statement - directory listing
+
+        FILES is a CP/M-specific feature that lists files.
+        This would require BDOS calls which are beyond the scope of the compiler.
+        We generate a comment and warning instead.
+        """
+        code = []
+        code.append(self.indent() + '/* FILES statement not implemented - requires CP/M BDOS calls */')
+        if stmt.filespec:
+            filespec = self._generate_expression(stmt.filespec)
+            code.append(self.indent() + f'/* Would list files matching: {filespec} */')
+        else:
+            code.append(self.indent() + '/* Would list all files */')
+        self.warnings.append("FILES statement not implemented - requires CP/M BDOS calls")
+        return code
+
+    def _generate_width(self, stmt: WidthStatementNode) -> List[str]:
+        """Generate WIDTH statement - set output width
+
+        WIDTH sets the line width for console or printer output.
+        In compiled code, this is typically a terminal/display feature
+        and cannot be easily implemented portably.
+        """
+        code = []
+        width = self._generate_expression(stmt.width)
+        code.append(self.indent() + f'/* WIDTH {width} - not implemented (display feature) */')
+        if stmt.device:
+            device = self._generate_expression(stmt.device)
+            code.append(self.indent() + f'/* Device: {device} */')
+        self.warnings.append("WIDTH statement not implemented in compiled code")
+        return code
+
+    def _generate_lprint(self, stmt: LprintStatementNode) -> List[str]:
+        """Generate LPRINT statement - print to line printer
+
+        LPRINT sends output to the line printer (LPT1: in DOS/CP/M).
+        We'll implement this by opening/using a special file handle for the printer.
+        For simplicity in compiled code, we'll just output to stdout like PRINT.
+        """
+        code = []
+
+        # If file number specified, treat like PRINT #
+        if stmt.file_number:
+            # Generate similar to PRINT #
+            file_num_expr = self._generate_expression(stmt.file_number)
+            file_ptr = f'file_handles[(int)({file_num_expr})]'
+
+            for i, expr in enumerate(stmt.expressions):
+                expr_code = self._generate_expression(expr)
+                separator = stmt.separators[i] if i < len(stmt.separators) else None
+
+                # Determine type and print accordingly
+                expr_type = self._get_expression_type(expr)
+                if expr_type == VarType.STRING:
+                    code.append(self.indent() + '{')
+                    self.indent_level += 1
+                    code.append(self.indent() + 'char _buf[256];')
+                    code.append(self.indent() + f'mb25_get_string_data({expr_code}, _buf, sizeof(_buf));')
+                    code.append(self.indent() + f'fprintf({file_ptr}, "%s", _buf);')
+                    self.indent_level -= 1
+                    code.append(self.indent() + '}')
+                else:
+                    code.append(self.indent() + f'fprintf({file_ptr}, "%g", (double)({expr_code}));')
+
+                # Handle separator
+                if separator == ',':
+                    code.append(self.indent() + f'fprintf({file_ptr}, "\\t");')
+                elif separator == ';':
+                    pass  # No spacing
+                elif separator is None and i == len(stmt.expressions) - 1:
+                    code.append(self.indent() + f'fprintf({file_ptr}, "\\n");')
+        else:
+            # Regular LPRINT - output to stdout like PRINT
+            # (In a real CP/M system, this would go to LPT1:)
+            for i, expr in enumerate(stmt.expressions):
+                expr_code = self._generate_expression(expr)
+                separator = stmt.separators[i] if i < len(stmt.separators) else None
+
+                # Determine type and print accordingly
+                expr_type = self._get_expression_type(expr)
+                if expr_type == VarType.STRING:
+                    code.append(self.indent() + 'mb25_print_string(' + expr_code + ');')
+                else:
+                    code.append(self.indent() + f'printf("%g", (double)({expr_code}));')
+
+                # Handle separator
+                if separator == ',':
+                    code.append(self.indent() + 'printf("\\t");')
+                elif separator == ';':
+                    pass  # No spacing
+                elif separator is None and i == len(stmt.expressions) - 1:
+                    code.append(self.indent() + 'putchar(\'\\n\');')
+
+        return code
+
+    def _generate_clear(self, stmt: ClearStatementNode) -> List[str]:
+        """Generate CLEAR statement - clear variables and set memory limits
+
+        CLEAR [string_space] [, stack_space]
+
+        In the interpreter, CLEAR:
+        - Closes all files
+        - Clears all variables
+        - Resets the stack
+        - Optionally sets string space and stack space
+
+        In compiled code, we cannot dynamically clear variables or adjust memory.
+        We can only close files.
+        """
+        code = []
+        code.append(self.indent() + '/* CLEAR - close all files (variable clearing not supported in compiled code) */')
+
+        # Close all files (same as RESET) - only if files are actually used
+        if self.max_file_number > 0:
+            code.append(self.indent() + '{')
+            self.indent_level += 1
+            code.append(self.indent() + 'int _i;')
+            code.append(self.indent() + f'for (_i = 0; _i <= {self.max_file_number}; _i++) {{')
+            self.indent_level += 1
+            code.append(self.indent() + 'if (file_handles[_i]) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'fclose(file_handles[_i]);')
+            code.append(self.indent() + 'file_handles[_i] = NULL;')
+            code.append(self.indent() + 'file_modes[_i] = 0;')
+            code.append(self.indent() + 'if (file_record_buffers[_i]) { free(file_record_buffers[_i]); file_record_buffers[_i] = NULL; }')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+
+        if stmt.string_space or stmt.stack_space:
+            msg = "CLEAR memory parameters ignored in compiled code"
+            if stmt.string_space:
+                msg += f" (string_space={self._generate_expression(stmt.string_space)})"
+            if stmt.stack_space:
+                msg += f" (stack_space={self._generate_expression(stmt.stack_space)})"
+            self.warnings.append(msg)
+
+        return code
+
+    def _generate_call(self, stmt: CallStatementNode) -> List[str]:
+        """Generate CALL statement - call machine language routine
+
+        CALL address - Calls machine code at the specified address
+        CALL routine(args) - Extended syntax with arguments
+
+        We generate a function pointer call. This is dangerous but matches BASIC behavior.
+        """
+        code = []
+
+        if stmt.arguments:
+            # Extended syntax with arguments - not standard MBASIC 5.21
+            self.warnings.append("CALL with arguments is not standard MBASIC 5.21 - may not work as expected")
+            target = self._generate_expression(stmt.target)
+            args = ', '.join(self._generate_expression(arg) for arg in stmt.arguments)
+            code.append(self.indent() + f'/* CALL with arguments not fully supported */')
+            code.append(self.indent() + f'((void (*)({", ".join(["float"] * len(stmt.arguments))}))(int)({target}))({args});')
+        else:
+            # Standard MBASIC 5.21 syntax - CALL address
+            target = self._generate_expression(stmt.target)
+            code.append(self.indent() + f'/* CALL machine language routine at address */')
+            code.append(self.indent() + f'((void (*)(void))(int)({target}))();')
+
+        return code
+
+    def _generate_chain(self, stmt: ChainStatementNode) -> List[str]:
+        """Generate CHAIN statement - chain to another program
+
+        CHAIN loads and executes another BASIC program, optionally passing variables.
+        This is an interpreter feature that cannot be implemented in compiled code.
+        """
+        code = []
+        filename = self._generate_expression(stmt.filename)
+
+        code.append(self.indent() + '/* CHAIN statement not implemented - interpreter-only feature */')
+        code.append(self.indent() + f'/* Would chain to: {filename} */')
+
+        if stmt.merge:
+            code.append(self.indent() + '/* MERGE option specified */')
+        if stmt.start_line:
+            start = self._generate_expression(stmt.start_line)
+            code.append(self.indent() + f'/* Would start at line: {start} */')
+        if stmt.all_flag:
+            code.append(self.indent() + '/* ALL option - pass all variables */')
+        if stmt.delete_range:
+            code.append(self.indent() + f'/* DELETE {stmt.delete_range[0]}-{stmt.delete_range[1]} */')
+
+        self.warnings.append("CHAIN not supported in compiled code - interpreter-only feature")
+        return code
+
+    def _generate_common(self, stmt: CommonStatementNode) -> List[str]:
+        """Generate COMMON statement - declare shared variables for CHAIN
+
+        COMMON declares variables that should be passed to CHAINed programs.
+        Since CHAIN doesn't work in compiled code, COMMON is also not meaningful.
+        We generate a comment for documentation purposes.
+        """
+        code = []
+        code.append(self.indent() + f'/* COMMON {", ".join(stmt.variables)} - used with CHAIN (not supported) */')
         return code

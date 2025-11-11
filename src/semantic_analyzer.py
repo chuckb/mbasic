@@ -1260,18 +1260,18 @@ class SemanticAnalyzer:
         elif isinstance(stmt, (TronStatementNode, TroffStatementNode)):
             self.flags.has_tron_troff = True
 
-        # COMMON - not supported in compiler
+        # COMMON - generates comment only (used with CHAIN which is also unsupported)
         elif isinstance(stmt, CommonStatementNode):
-            raise SemanticError(
-                "COMMON statement not supported in compiler",
-                self.current_line
+            # Issue warning but allow compilation
+            self.warnings.append(
+                f"Line {self.current_line}: COMMON is only meaningful with CHAIN (not supported in compiled code)"
             )
 
-        # ERASE - not supported in compiler
+        # ERASE - not supported in compiler (matches Microsoft BASIC Compiler)
         elif isinstance(stmt, EraseStatementNode):
-            raise SemanticError(
-                "ERASE statement not supported in compiler - arrays cannot be redimensioned",
-                self.current_line
+            # Issue warning but allow compilation
+            self.warnings.append(
+                f"Line {self.current_line}: ERASE not supported in compiled code - arrays cannot be deallocated (matches Microsoft BASIC Compiler)"
             )
 
         # INPUT - variables are no longer constants after being read

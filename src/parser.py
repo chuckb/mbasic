@@ -1029,7 +1029,7 @@ class Parser:
             TokenType.ABS, TokenType.ATN, TokenType.COS, TokenType.SIN, TokenType.TAN,
             TokenType.EXP, TokenType.LOG, TokenType.SQR, TokenType.INT, TokenType.FIX,
             TokenType.RND, TokenType.SGN, TokenType.ASC, TokenType.VAL, TokenType.LEN,
-            TokenType.PEEK, TokenType.INP, TokenType.USR, TokenType.EOF_FUNC, TokenType.FRE,
+            TokenType.PEEK, TokenType.INP, TokenType.USR, TokenType.VARPTR, TokenType.EOF_FUNC, TokenType.FRE,
             TokenType.LOC, TokenType.LOF, TokenType.POS, TokenType.TAB, TokenType.SPC,
             # String functions
             TokenType.LEFT, TokenType.RIGHT, TokenType.MID, TokenType.CHR, TokenType.STR,
