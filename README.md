@@ -50,7 +50,7 @@ pip install mbasic[all]
 pip install mbasic[dev]
 ```
 
-**Building from source**: See `docs/dev/DISTRIBUTION_TESTING.md` for instructions on building and testing the package.
+**Building from source**: See [Linux Mint Developer Setup](docs/dev/LINUX_MINT_DEVELOPER_SETUP.md) for complete system setup including all required packages, compiler tools, and development dependencies.
 
 **Note:** Tkinter is included with most Python installations. If missing:
 - **Debian/Ubuntu:** `sudo apt-get install python3-tk`
@@ -59,7 +59,9 @@ pip install mbasic[dev]
 
 ### From Source
 
-For detailed installation instructions including virtual environment setup, see **[INSTALL.md](docs/user/INSTALL.md)**.
+**For end users** (interpreter only): See **[INSTALL.md](docs/user/INSTALL.md)** for detailed installation instructions.
+
+**For developers** (full development environment including compiler): See **[Linux Mint Developer Setup](docs/dev/LINUX_MINT_DEVELOPER_SETUP.md)** for comprehensive system setup with all packages and tools.
 
 **System Requirements (Debian/Ubuntu/Mint only):**
 ```bash
