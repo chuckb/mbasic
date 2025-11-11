@@ -213,6 +213,43 @@ python3 mbasic --list-backends
 # - web (if web dependencies installed)
 ```
 
+## Documentation Development
+
+### Local Documentation Server
+
+For developing/testing documentation changes before publishing to GitHub Pages:
+
+```bash
+# Install MkDocs (if not already in venv)
+source venv/bin/activate
+pip install mkdocs mkdocs-material mkdocs-awesome-pages-plugin
+
+# Start local documentation server
+mkdocs serve
+# Opens at: http://localhost:8000/
+```
+
+### Environment Variable for Local Docs
+
+By default, MBASIC UIs link to GitHub Pages documentation (`https://avwohl.github.io/mbasic/help/`).
+
+To test documentation changes locally before publishing:
+
+```bash
+# Set environment variable to use local docs
+export MBASIC_DOCS_URL="http://localhost:8000/help/"
+
+# Run MBASIC with local docs
+python3 mbasic --ui tk
+# Help > Help Topics now opens localhost instead of GitHub Pages
+```
+
+**Documentation URLs:**
+- **Production (default)**: `https://avwohl.github.io/mbasic/help/`
+- **Local development**: `http://localhost:8000/help/` (with `MBASIC_DOCS_URL` set)
+
+See [DOCS_URL_CONFIGURATION.md](DOCS_URL_CONFIGURATION.md) for complete documentation URL configuration details.
+
 ## Quick Test
 
 Verify everything works:
