@@ -968,6 +968,23 @@ class OutStatementNode:
 
 
 @dataclass
+class WaitStatementNode:
+    """WAIT statement - wait for I/O port condition
+
+    Syntax:
+        WAIT port, mask [, select]
+
+    Waits until (INP(port) XOR select) AND mask <> 0
+    If select is omitted, waits until INP(port) AND mask <> 0
+    """
+    port: 'ExpressionNode'
+    mask: 'ExpressionNode'
+    select: Optional['ExpressionNode'] = None
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
 class CallStatementNode:
     """CALL statement - call machine language routine (MBASIC 5.21)
 

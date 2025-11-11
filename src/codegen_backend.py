@@ -848,6 +848,8 @@ class Z88dkCBackend(CodeGenBackend):
             return self._generate_poke(stmt)
         elif isinstance(stmt, OutStatementNode):
             return self._generate_out(stmt)
+        elif isinstance(stmt, WaitStatementNode):
+            return self._generate_wait(stmt)
         elif isinstance(stmt, DefFnStatementNode):
             return self._generate_def_fn(stmt)
         elif isinstance(stmt, SwapStatementNode):
@@ -884,6 +886,8 @@ class Z88dkCBackend(CodeGenBackend):
             return self._generate_lset(stmt)
         elif isinstance(stmt, RsetStatementNode):
             return self._generate_rset(stmt)
+        elif isinstance(stmt, EraseStatementNode):
+            return self._generate_erase(stmt)
         else:
             # Unsupported statement
             self.warnings.append(f"Unsupported statement type: {type(stmt).__name__}")
@@ -1674,18 +1678,14 @@ class Z88dkCBackend(CodeGenBackend):
         """Generate POKE statement
 
         POKE address, value - Write byte to memory
-        In compiled C code, this is generally unsafe/unsupported
+        Direct memory access for CP/M programs
         """
         code = []
         addr_expr = self._generate_expression(stmt.address)
         value_expr = self._generate_expression(stmt.value)
 
-        # For safety, we'll generate a comment but not actually do the POKE
-        # Real implementation would need proper memory management
-        code.append(self.indent() + f'/* POKE {addr_expr}, {value_expr} - memory writes not supported in compiled code */')
-
-        # Optionally, could warn at compile time
-        self.warnings.append("POKE statement not fully supported in compiled code")
+        # Direct memory write
+        code.append(self.indent() + f'*((unsigned char*)((int)({addr_expr}))) = (unsigned char)({value_expr});')
 
         return code
 
@@ -1693,20 +1693,48 @@ class Z88dkCBackend(CodeGenBackend):
         """Generate OUT statement
 
         OUT port, value - Write byte to I/O port
-        In compiled C code, this requires platform-specific implementation
+        Uses z88dk outp() function for CP/M port I/O
         """
         code = []
         port_expr = self._generate_expression(stmt.port)
         value_expr = self._generate_expression(stmt.value)
 
-        # For z88dk/CP/M, we could potentially use outp() function if available
-        # But for safety, we'll just generate a comment
-        code.append(self.indent() + f'/* OUT {port_expr}, {value_expr} - I/O port writes not supported in compiled code */')
+        # Use z88dk's outp() function for port I/O
+        code.append(self.indent() + f'outp((int)({port_expr}), (int)({value_expr}));')
 
-        # Could potentially use z88dk's outp() for real implementation:
-        # code.append(self.indent() + f'outp({port_expr}, {value_expr});')
+        return code
 
-        self.warnings.append("OUT statement not fully supported in compiled code")
+    def _generate_wait(self, stmt: WaitStatementNode) -> List[str]:
+        """Generate WAIT statement
+
+        WAIT port, mask [, select]
+        Waits until (INP(port) XOR select) AND mask <> 0
+        If select is omitted, waits until INP(port) AND mask <> 0
+        """
+        code = []
+        port_expr = self._generate_expression(stmt.port)
+        mask_expr = self._generate_expression(stmt.mask)
+
+        if stmt.select:
+            select_expr = self._generate_expression(stmt.select)
+            # Wait until (INP(port) XOR select) AND mask != 0
+            code.append(self.indent() + '{')
+            self.indent_level += 1
+            code.append(self.indent() + f'int _port = (int)({port_expr});')
+            code.append(self.indent() + f'int _mask = (int)({mask_expr});')
+            code.append(self.indent() + f'int _select = (int)({select_expr});')
+            code.append(self.indent() + 'while (((inp(_port) ^ _select) & _mask) == 0);')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+        else:
+            # Wait until INP(port) AND mask != 0
+            code.append(self.indent() + '{')
+            self.indent_level += 1
+            code.append(self.indent() + f'int _port = (int)({port_expr});')
+            code.append(self.indent() + f'int _mask = (int)({mask_expr});')
+            code.append(self.indent() + 'while ((inp(_port) & _mask) == 0);')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
 
         return code
 
@@ -2809,10 +2837,8 @@ class Z88dkCBackend(CodeGenBackend):
                 self.warnings.append("PEEK requires 1 argument")
                 return '0'
             addr = self._generate_expression(expr.arguments[0])
-            # For safety, return 0 in compiled code
-            # Real implementation would need memory management
-            self.warnings.append("PEEK not fully supported - returns 0")
-            return '0'
+            # Direct memory access - read byte at address
+            return f'(*((unsigned char*)((int)({addr}))))'
 
         # INP function - read I/O port
         elif func_name == 'INP':
@@ -2820,10 +2846,9 @@ class Z88dkCBackend(CodeGenBackend):
                 self.warnings.append("INP requires 1 argument")
                 return '0'
             port = self._generate_expression(expr.arguments[0])
-            # For safety, return 0 in compiled code
-            # Real implementation would need I/O port access
-            self.warnings.append("INP not fully supported - returns 0")
-            return '0'
+            # z88dk provides inp() function for CP/M port I/O
+            # Note: z88dk may use in() or inp() depending on target
+            return f'inp((int)({port}))'
 
         else:
             # Other numeric functions not yet implemented
@@ -3392,4 +3417,19 @@ class Z88dkCBackend(CodeGenBackend):
         self.indent_level -= 1
         code.append(self.indent() + '}')
 
+        return code
+
+    def _generate_erase(self, stmt: EraseStatementNode) -> List[str]:
+        """Generate ERASE statement - not implemented (matches Microsoft BASIC Compiler)
+
+        The Microsoft BASIC Compiler did NOT implement ERASE - it was interpreter-only.
+        ERASE deallocates array memory and removes variable names in the interpreter,
+        but the compiler does not support dynamic deallocation.
+
+        We generate a comment to document this limitation, matching Microsoft's behavior.
+        """
+        code = []
+        code.append(self.indent() + '/* ERASE statement not implemented - interpreter-only feature */')
+        code.append(self.indent() + f'/* Arrays cannot be deallocated in compiled code: {", ".join(stmt.array_names)} */')
+        self.warnings.append(f"ERASE not supported in compiled code (matches Microsoft BASIC Compiler) - arrays: {', '.join(stmt.array_names)}")
         return code

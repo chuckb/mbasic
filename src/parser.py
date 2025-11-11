@@ -578,6 +578,8 @@ class Parser:
             return self.parse_poke()
         elif token.type == TokenType.OUT:
             return self.parse_out()
+        elif token.type == TokenType.WAIT:
+            return self.parse_wait()
         elif token.type == TokenType.CALL:
             return self.parse_call()
 
@@ -3642,6 +3644,27 @@ class Parser:
         return OutStatementNode(
             port=port,
             value=value,
+            line_num=token.line,
+            column=token.column
+        )
+
+    def parse_wait(self) -> WaitStatementNode:
+        """Parse WAIT statement - Syntax: WAIT port, mask [, select]"""
+        token = self.advance()
+
+        port = self.parse_expression()
+        self.expect(TokenType.COMMA)
+        mask = self.parse_expression()
+
+        select = None
+        if self.match(TokenType.COMMA):
+            self.advance()
+            select = self.parse_expression()
+
+        return WaitStatementNode(
+            port=port,
+            mask=mask,
+            select=select,
             line_num=token.line,
             column=token.column
         )
