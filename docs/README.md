@@ -106,6 +106,9 @@ mkdocs gh-deploy
 
 ## Quick Links
 
+### Project Overview
+- **[MBASIC Project Overview](MBASIC_PROJECT_OVERVIEW.md)** - Complete feature showcase and marketing brief
+
 ### General
 - **[Web Documentation](https://avwohl.github.io/mbasic)** - Live documentation site
 - [Quick Reference](user/QUICK_REFERENCE.md) - Fast command reference

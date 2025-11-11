@@ -3,6 +3,8 @@
 A complete implementation of Microsoft BASIC-80 5.21 (CP/M era) with both an interactive interpreter and a native code compiler, written in Python.
 
 > **About MBASIC:** MBASIC was a BASIC interpreter originally developed by Microsoft in the late 1970s. This is an independent, open-source reimplementation created for educational purposes and historical software preservation. See [MBASIC History](docs/MBASIC_HISTORY.md) for more information.
+>
+> **📄 Want the full story?** See [MBASIC Project Overview](docs/MBASIC_PROJECT_OVERVIEW.md) for a comprehensive feature showcase.
 
 **Status:** Full MBASIC 5.21 implementation complete with 100% compatibility in both interpreter and compiler modes.
 
