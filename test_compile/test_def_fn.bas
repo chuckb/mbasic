@@ -1,0 +1,16 @@
+10 REM Test DEF FN user-defined functions
+20 DEF FNSQUARE(X) = X * X
+30 DEF FNCUBE(X) = X * X * X
+40 DEF FNAVERAGE(X, Y) = (X + Y) / 2
+50 DEF FNHYPOT(X, Y) = SQR(X*X + Y*Y)
+60 DEF FNSIGN%(X) = SGN(X)
+70 PRINT "Testing user-defined functions"
+80 PRINT "FNSQUARE(5) = "; FNSQUARE(5)
+90 PRINT "FNCUBE(3) = "; FNCUBE(3)
+100 PRINT "FNAVERAGE(10, 20) = "; FNAVERAGE(10, 20)
+110 PRINT "FNHYPOT(3, 4) = "; FNHYPOT(3, 4)
+120 PRINT "FNSIGN(-5) = "; FNSIGN%(-5)
+130 REM Test function with no parameters
+140 DEF FNPI() = 3.14159265
+150 PRINT "FNPI() = "; FNPI()
+160 END

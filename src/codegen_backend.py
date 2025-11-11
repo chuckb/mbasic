@@ -95,6 +95,9 @@ class Z88dkCBackend(CodeGenBackend):
         self.data_values: List[Any] = []  # All DATA values in order
         self.data_types: List[str] = []  # Type of each DATA value ('int', 'float', 'string')
 
+        # DEF FN user-defined functions
+        self.def_fn_functions: List[DefFnStatementNode] = []
+
     def get_file_extension(self) -> str:
         return '.c'
 
@@ -142,6 +145,9 @@ class Z88dkCBackend(CodeGenBackend):
         # Collect DATA values for static initialization
         self._collect_data_values(program)
 
+        # Collect DEF FN functions
+        self._collect_def_fn(program)
+
         code = []
 
         # Header
@@ -165,6 +171,11 @@ class Z88dkCBackend(CodeGenBackend):
         code.append('#include <string.h>')
         code.append('#include <math.h>')
         code.append('')
+
+        # Generate DEF FN functions before main
+        if self.def_fn_functions:
+            code.extend(self._generate_def_fn_functions())
+            code.append('')
 
         # Main function
         code.append('int main() {')
@@ -366,6 +377,14 @@ class Z88dkCBackend(CodeGenBackend):
                         else:
                             self.warnings.append(f"Complex expression in DATA not supported: {type(value_expr).__name__}")
 
+    def _collect_def_fn(self, program: ProgramNode):
+        """Collect all DEF FN functions for generation before main()"""
+        self.def_fn_functions = []
+        for line_node in program.lines:
+            for stmt in line_node.statements:
+                if isinstance(stmt, DefFnStatementNode):
+                    self.def_fn_functions.append(stmt)
+
     def _generate_variable_declarations(self) -> List[str]:
         """Generate C variable declarations from symbol table"""
         decls = []
@@ -519,6 +538,16 @@ class Z88dkCBackend(CodeGenBackend):
             return self._generate_gosub(stmt)
         elif isinstance(stmt, ReturnStatementNode):
             return self._generate_return(stmt)
+        elif isinstance(stmt, OnGotoStatementNode):
+            return self._generate_on_goto(stmt)
+        elif isinstance(stmt, OnGosubStatementNode):
+            return self._generate_on_gosub(stmt)
+        elif isinstance(stmt, PokeStatementNode):
+            return self._generate_poke(stmt)
+        elif isinstance(stmt, OutStatementNode):
+            return self._generate_out(stmt)
+        elif isinstance(stmt, DefFnStatementNode):
+            return self._generate_def_fn(stmt)
         else:
             # Unsupported statement
             self.warnings.append(f"Unsupported statement type: {type(stmt).__name__}")
@@ -861,19 +890,36 @@ class Z88dkCBackend(CodeGenBackend):
         code = []
         code.append(self.indent() + '/* DATA values */')
 
-        # Since z88dk may have limited union support, use separate arrays
-        # Generate numeric data array
-        if any(t in ['int', 'float'] for t in self.data_types):
-            code.append(self.indent() + f'static const float data_values[{len(self.data_values)}] = {{')
+        # Check if we have any DATA values
+        if not self.data_values:
+            return code
+
+        # Generate numeric data array for int/float values
+        code.append(self.indent() + f'static const float data_numeric[{len(self.data_values)}] = {{')
+        self.indent_level += 1
+        for i, (val, typ) in enumerate(zip(self.data_values, self.data_types)):
+            if typ == 'int':
+                code.append(self.indent() + f'{int(val)}.0f,  /* int: {int(val)} */')
+            elif typ == 'float':
+                code.append(self.indent() + f'{float(val):.6f}f,  /* float: {float(val)} */')
+            elif typ == 'string':
+                # Use 0 as placeholder for string values
+                code.append(self.indent() + f'0.0f,  /* string placeholder */')
+        self.indent_level -= 1
+        code.append(self.indent() + '};')
+
+        # Generate string data array if we have any strings
+        string_count = sum(1 for t in self.data_types if t == 'string')
+        if string_count > 0:
+            code.append(self.indent() + f'static const char *data_strings[{len(self.data_values)}] = {{')
             self.indent_level += 1
             for i, (val, typ) in enumerate(zip(self.data_values, self.data_types)):
-                if typ == 'int':
-                    code.append(self.indent() + f'{int(val)}.0f,  /* int: {int(val)} */')
-                elif typ == 'float':
-                    code.append(self.indent() + f'{float(val):.6f}f,  /* float: {float(val)} */')
-                elif typ == 'string':
-                    # Use 0 as placeholder for string values
-                    code.append(self.indent() + f'0.0f,  /* string placeholder */')
+                if typ == 'string':
+                    # Escape quotes in string
+                    escaped_str = val.replace('\\', '\\\\').replace('"', '\\"')
+                    code.append(self.indent() + f'"{escaped_str}",')
+                else:
+                    code.append(self.indent() + 'NULL,  /* numeric */')
             self.indent_level -= 1
             code.append(self.indent() + '};')
 
@@ -914,14 +960,45 @@ class Z88dkCBackend(CodeGenBackend):
             var_name = self._mangle_variable_name(var_node.name)
 
             if var_type == VarType.STRING:
-                # String variables not yet fully supported in DATA
-                code.append(self.indent() + '/* String READ not yet supported */')
+                # String variable - read from appropriate source based on DATA type
+                str_id = self._get_string_id(var_node.name)
+                code.append(self.indent() + 'if (data_types[data_pointer] == \'S\') {')
+                self.indent_level += 1
+                # Read string directly
+                code.append(self.indent() + f'mb25_string_alloc_const({str_id}, data_strings[data_pointer]);')
+                self.indent_level -= 1
+                code.append(self.indent() + '} else if (data_types[data_pointer] == \'I\' || data_types[data_pointer] == \'F\') {')
+                self.indent_level += 1
+                # Convert number to string
+                code.append(self.indent() + 'char _num_str[32];')
+                code.append(self.indent() + f'sprintf(_num_str, "%g", data_numeric[data_pointer]);')
+                code.append(self.indent() + f'mb25_string_alloc_init({str_id}, _num_str);')
+                self.indent_level -= 1
+                code.append(self.indent() + '}')
             elif var_type == VarType.INTEGER:
-                # Integer variable - read from float array and convert
-                code.append(self.indent() + f'{var_name} = (int)data_values[data_pointer];')
+                # Integer variable - read from appropriate source based on DATA type
+                code.append(self.indent() + 'if (data_types[data_pointer] == \'I\' || data_types[data_pointer] == \'F\') {')
+                self.indent_level += 1
+                code.append(self.indent() + f'{var_name} = (int)data_numeric[data_pointer];')
+                self.indent_level -= 1
+                code.append(self.indent() + '} else if (data_types[data_pointer] == \'S\') {')
+                self.indent_level += 1
+                # Convert string to int
+                code.append(self.indent() + f'{var_name} = data_strings[data_pointer] ? atoi(data_strings[data_pointer]) : 0;')
+                self.indent_level -= 1
+                code.append(self.indent() + '}')
             else:
-                # Float/double variable - read directly from float array
-                code.append(self.indent() + f'{var_name} = data_values[data_pointer];')
+                # Float/double variable - read from appropriate source based on DATA type
+                code.append(self.indent() + 'if (data_types[data_pointer] == \'I\' || data_types[data_pointer] == \'F\') {')
+                self.indent_level += 1
+                code.append(self.indent() + f'{var_name} = data_numeric[data_pointer];')
+                self.indent_level -= 1
+                code.append(self.indent() + '} else if (data_types[data_pointer] == \'S\') {')
+                self.indent_level += 1
+                # Convert string to float
+                code.append(self.indent() + f'{var_name} = data_strings[data_pointer] ? atof(data_strings[data_pointer]) : 0.0;')
+                self.indent_level -= 1
+                code.append(self.indent() + '}')
 
             code.append(self.indent() + 'data_pointer++;')
 
@@ -1033,6 +1110,167 @@ class Z88dkCBackend(CodeGenBackend):
         code.append(self.indent() + '}')
         self.indent_level -= 1
         code.append(self.indent() + '}')
+        return code
+
+    def _generate_on_goto(self, stmt: OnGotoStatementNode) -> List[str]:
+        """Generate ON...GOTO statement
+
+        ON expr GOTO line1, line2, ...
+        If expr = 1, goto line1; if expr = 2, goto line2; etc.
+        If expr is out of range, fall through to next statement.
+        """
+        code = []
+        index_expr = self._generate_expression(stmt.expression)
+
+        # Generate switch statement
+        code.append(self.indent() + f'switch ((int)({index_expr})) {{')
+        self.indent_level += 1
+
+        # Generate cases for each line number
+        for i, line_num in enumerate(stmt.line_numbers, 1):
+            code.append(self.indent() + f'case {i}: goto line_{line_num};')
+
+        # Default case - fall through
+        code.append(self.indent() + 'default: break;  /* Out of range - fall through */')
+
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+
+        return code
+
+    def _generate_on_gosub(self, stmt: OnGosubStatementNode) -> List[str]:
+        """Generate ON...GOSUB statement
+
+        ON expr GOSUB line1, line2, ...
+        If expr = 1, gosub line1; if expr = 2, gosub line2; etc.
+        If expr is out of range, fall through to next statement.
+        """
+        code = []
+        index_expr = self._generate_expression(stmt.expression)
+
+        # Generate switch statement
+        code.append(self.indent() + f'switch ((int)({index_expr})) {{')
+        self.indent_level += 1
+
+        # Generate cases for each line number
+        for i, line_num in enumerate(stmt.line_numbers, 1):
+            code.append(self.indent() + f'case {i}:')
+            self.indent_level += 1
+
+            # Push return address and jump
+            return_id = self.gosub_return_counter
+            self.gosub_return_counter += 1
+            code.append(self.indent() + f'gosub_stack[gosub_sp++] = {return_id};')
+            code.append(self.indent() + f'goto line_{line_num};')
+            code.append(f'gosub_return_{return_id}:')
+            code.append(self.indent() + 'break;')
+
+            self.indent_level -= 1
+
+        # Default case - fall through
+        code.append(self.indent() + 'default: break;  /* Out of range - fall through */')
+
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+
+        return code
+
+    def _generate_poke(self, stmt: PokeStatementNode) -> List[str]:
+        """Generate POKE statement
+
+        POKE address, value - Write byte to memory
+        In compiled C code, this is generally unsafe/unsupported
+        """
+        code = []
+        addr_expr = self._generate_expression(stmt.address)
+        value_expr = self._generate_expression(stmt.value)
+
+        # For safety, we'll generate a comment but not actually do the POKE
+        # Real implementation would need proper memory management
+        code.append(self.indent() + f'/* POKE {addr_expr}, {value_expr} - memory writes not supported in compiled code */')
+
+        # Optionally, could warn at compile time
+        self.warnings.append("POKE statement not fully supported in compiled code")
+
+        return code
+
+    def _generate_out(self, stmt: OutStatementNode) -> List[str]:
+        """Generate OUT statement
+
+        OUT port, value - Write byte to I/O port
+        In compiled C code, this requires platform-specific implementation
+        """
+        code = []
+        port_expr = self._generate_expression(stmt.port)
+        value_expr = self._generate_expression(stmt.value)
+
+        # For z88dk/CP/M, we could potentially use outp() function if available
+        # But for safety, we'll just generate a comment
+        code.append(self.indent() + f'/* OUT {port_expr}, {value_expr} - I/O port writes not supported in compiled code */')
+
+        # Could potentially use z88dk's outp() for real implementation:
+        # code.append(self.indent() + f'outp({port_expr}, {value_expr});')
+
+        self.warnings.append("OUT statement not fully supported in compiled code")
+
+        return code
+
+    def _generate_def_fn(self, stmt: DefFnStatementNode) -> List[str]:
+        """Generate DEF FN statement - no-op since functions are generated before main()"""
+        # The actual function is generated before main()
+        # This is just a placeholder in the flow
+        return []
+
+    def _generate_def_fn_functions(self) -> List[str]:
+        """Generate C functions for all DEF FN definitions"""
+        code = []
+        code.append('/* User-defined functions (DEF FN) */')
+
+        for fn_stmt in self.def_fn_functions:
+            # Determine return type from function name
+            return_type = 'double'  # Default to double
+            if fn_stmt.name.endswith('%'):
+                return_type = 'int'
+            elif fn_stmt.name.endswith('$'):
+                # String functions would need special handling
+                self.warnings.append(f"String DEF FN functions not yet supported: {fn_stmt.name}")
+                continue
+
+            # Function name without type suffix
+            # fn_stmt.name already includes 'fn' prefix from parser
+            func_name = fn_stmt.name.lower().rstrip('%!#$')
+            # Replace 'fn' prefix with 'fn_' for C naming
+            if func_name.startswith('fn'):
+                func_name = 'fn_' + func_name[2:]
+            else:
+                func_name = 'fn_' + func_name
+
+            # Generate function signature
+            params = []
+            if fn_stmt.parameters:
+                for param in fn_stmt.parameters:
+                    param_type = 'double'
+                    if param.name.endswith('%'):
+                        param_type = 'int'
+                    elif param.name.endswith('$'):
+                        # String parameters would need special handling
+                        self.warnings.append(f"String parameters in DEF FN not yet supported")
+                        param_type = 'char*'
+                    param_name = self._mangle_variable_name(param.name)
+                    params.append(f'{param_type} {param_name}')
+
+            if params:
+                code.append(f'{return_type} {func_name}({", ".join(params)}) {{')
+            else:
+                code.append(f'{return_type} {func_name}(void) {{')
+
+            # Generate function body - just return the expression
+            self.indent_level += 1
+            expr_code = self._generate_expression(fn_stmt.expression)
+            code.append(self.indent() + f'return {expr_code};')
+            self.indent_level -= 1
+            code.append('}')
+
         return code
 
     def _generate_expression(self, expr: Any) -> str:
@@ -1187,6 +1425,18 @@ class Z88dkCBackend(CodeGenBackend):
     def _generate_function_call(self, expr: FunctionCallNode) -> str:
         """Generate code for numeric function calls"""
         func_name = expr.name.upper()
+
+        # Check if it's a user-defined function (starts with FN)
+        if func_name.startswith('FN'):
+            # Generate call to user-defined function
+            c_func_name = 'fn_' + func_name[2:].rstrip('%!#$').lower()
+            args = []
+            for arg in expr.arguments:
+                args.append(self._generate_expression(arg))
+            if args:
+                return f'{c_func_name}({", ".join(args)})'
+            else:
+                return f'{c_func_name}()'
 
         if func_name == 'LEN':
             if len(expr.arguments) != 1:
