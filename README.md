@@ -182,6 +182,53 @@ LIST
 SAVE "hello.bas"
 ```
 
+## Compiler (Experimental)
+
+MBASIC includes an experimental compiler that can generate C code and compile to CP/M executables for Z80 processors.
+
+### Compiler Requirements
+
+To use the compiler features, you need:
+
+1. **z88dk** (required) - Z80 C compiler
+   - Must have `z88dk.zcc` in your PATH
+   - Installation: snap, source build, or docker
+
+2. **tnylpo** (optional) - CP/M emulator for testing
+   - Must have `tnylpo` in your PATH
+   - Installation: build from source
+
+### Quick Compiler Check
+
+```bash
+# Check if compiler tools are installed
+python3 utils/check_compiler_tools.py
+```
+
+### Compiling BASIC to CP/M
+
+```bash
+# Compile BASIC to C, then to CP/M .COM file
+python3 test_compile.py program.bas
+
+# This generates:
+#   program.c    - C source code
+#   PROGRAM.COM  - CP/M executable
+```
+
+### Compiler Features
+
+- Generates C code using the mb25_string runtime (O(n log n) garbage collection)
+- Full string support with sharing and copy-on-write optimization
+- Integer, single, and double precision variables
+- FOR/NEXT, WHILE/WEND, GOSUB/RETURN, GOTO
+- INPUT/PRINT with string support
+- String functions: LEFT$, RIGHT$, MID$, LEN, ASC, CHR$
+
+For detailed setup instructions, see:
+- `docs/dev/COMPILER_SETUP.md` - Complete compiler setup guide
+- `docs/dev/TNYLPO_SETUP.md` - CP/M emulator installation
+
 ## Project Structure
 
 ```

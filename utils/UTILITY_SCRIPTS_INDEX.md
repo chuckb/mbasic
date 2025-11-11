@@ -75,6 +75,27 @@
 
 - **`gen_deep_stack.py`** - Generate test for deep stack usage
 
+### Compilation/Build Tools
+
+- **`check_z88dk.py`** - Check if z88dk compiler is properly installed
+  - Verifies z88dk.zcc is in PATH
+  - Tests if compiler is accessible via /usr/bin/env
+  - Provides installation suggestions if not found
+  - Use before compiling BASIC to CP/M executables
+
+- **`check_tnylpo.py`** - Check if tnylpo CP/M emulator is properly installed
+  - Verifies tnylpo is in PATH
+  - Tests if emulator is accessible via /usr/bin/env
+  - Tests basic CP/M program execution
+  - Provides build instructions if not found
+  - Use before running compiled .COM files
+
+- **`check_compiler_tools.py`** - Check entire compiler toolchain at once
+  - Runs both check_z88dk.py and check_tnylpo.py
+  - Shows summary of what's installed
+  - Indicates if toolchain is ready for compilation/testing
+  - Convenient single check for all requirements
+
 ### Documentation Tools
 
 - **`check_docs_consistency.py`** - Analyze docs for inconsistencies using Claude API

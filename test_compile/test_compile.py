@@ -8,6 +8,17 @@ This script tests the complete compilation pipeline:
 3. Code generation
 4. Compilation with z88dk
 5. Execution with tnylpo
+
+Requirements:
+- z88dk must be installed and z88dk.zcc must be in PATH
+- tnylpo should be installed and tnylpo must be in PATH (for testing)
+
+To verify installation:
+  python3 utils/check_compiler_tools.py
+
+For installation instructions:
+- z88dk: See docs/dev/COMPILER_SETUP.md
+- tnylpo: See docs/dev/TNYLPO_SETUP.md
 """
 
 import sys
@@ -91,12 +102,13 @@ def main():
         print(f"Running {com_file} with tnylpo...")
         print("=" * 70)
         try:
-            subprocess.run(['tnylpo', com_file], check=True)
+            subprocess.run(['/usr/bin/env', 'tnylpo', com_file], check=True)
         except subprocess.CalledProcessError as e:
             print(f"\nExecution failed: {e}")
             sys.exit(1)
         except FileNotFoundError:
             print("\ntnylpo not found - install tnylpo to test execution")
+            print("See docs/dev/TNYLPO_SETUP.md for installation instructions")
     else:
         print(f"\nWarning: {com_file} not found")
 
