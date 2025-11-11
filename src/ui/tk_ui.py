@@ -1744,12 +1744,15 @@ class TkBackend(UIBackend):
         import webbrowser
         # Open help documentation in web browser
         from .web_help_launcher import open_help_in_browser
-        open_help_in_browser(topic="help/ui/tk/", ui_type="tk")
+        open_help_in_browser(topic="ui/tk/", ui_type="tk")
 
     def _menu_games_library(self):
         """Help > Games Library - Opens games library in browser"""
-        from .web_help_launcher import open_help_in_browser
-        open_help_in_browser(topic="library/games", ui_type="tk")
+        import webbrowser
+        from ..docs_config import get_site_url
+        # Library is at site root, not under /help/
+        url = get_site_url("library/")
+        webbrowser.open(url)
 
     def _context_help(self):
         """Show context-sensitive help for keyword at cursor"""
@@ -1780,32 +1783,32 @@ class TkBackend(UIBackend):
                 # Open help for specific keyword
                 from .web_help_launcher import open_help_in_browser
 
-                # Map to help topics
+                # Map to help topics (relative to DOCS_BASE_URL which already includes /help/)
                 topic_map = {
-                    'PRINT': 'help/common/statements/print',
-                    'INPUT': 'help/common/statements/input',
-                    'IF': 'help/common/statements/if',
-                    'FOR': 'help/common/statements/for',
-                    'NEXT': 'help/common/statements/next',
-                    'GOTO': 'help/common/statements/goto',
-                    'GOSUB': 'help/common/statements/gosub',
-                    'RETURN': 'help/common/statements/return',
-                    'DIM': 'help/common/statements/dim',
-                    'LET': 'help/common/statements/let',
-                    'REM': 'help/common/statements/rem',
-                    'END': 'help/common/statements/end',
-                    'STOP': 'help/common/statements/stop',
-                    'RUN': 'help/common/statements/run',
-                    'LIST': 'help/common/statements/list',
-                    'NEW': 'help/common/statements/new',
-                    'SAVE': 'help/common/statements/save',
-                    'LOAD': 'help/common/statements/load',
-                    'CLS': 'help/common/statements/cls',
-                    'WHILE': 'help/common/statements/while',
-                    'WEND': 'help/common/statements/wend',
+                    'PRINT': 'common/statements/print',
+                    'INPUT': 'common/statements/input',
+                    'IF': 'common/statements/if',
+                    'FOR': 'common/statements/for',
+                    'NEXT': 'common/statements/next',
+                    'GOTO': 'common/statements/goto',
+                    'GOSUB': 'common/statements/gosub',
+                    'RETURN': 'common/statements/return',
+                    'DIM': 'common/statements/dim',
+                    'LET': 'common/statements/let',
+                    'REM': 'common/statements/rem',
+                    'END': 'common/statements/end',
+                    'STOP': 'common/statements/stop',
+                    'RUN': 'common/statements/run',
+                    'LIST': 'common/statements/list',
+                    'NEW': 'common/statements/new',
+                    'SAVE': 'common/statements/save',
+                    'LOAD': 'common/statements/load',
+                    'CLS': 'common/statements/cls',
+                    'WHILE': 'common/statements/while',
+                    'WEND': 'common/statements/wend',
                 }
 
-                topic = topic_map.get(keyword, f"help/ui/tk/")
+                topic = topic_map.get(keyword, "ui/tk/")
                 open_help_in_browser(topic=topic, ui_type="tk")
             else:
                 # No keyword, open general help

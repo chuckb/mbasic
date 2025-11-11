@@ -2349,19 +2349,15 @@ class NiceGUIBackend(UIBackend):
     def _menu_games_library(self):
         """Help > Games Library - Opens program library in browser."""
         try:
-            from ..web_help_launcher import open_help_in_browser
-            from ...docs_config import DOCS_BASE_URL
-            # Note: URL is constructed by web_help_launcher based on topic parameter
-            # Library is at root level, not under /help/, so we construct it from base
-            topic_path = "library/"
-            success = open_help_in_browser(topic=topic_path, ui_type="web")
+            import webbrowser
+            from ...docs_config import get_site_url
+            # Library is at site root, not under /help/
+            url = get_site_url("library/")
+            success = webbrowser.open(url)
 
             if success:
                 self._notify('Opening program library in browser...', type='positive', log_to_output=False)
             else:
-                # Get base URL and construct library path
-                base_url = DOCS_BASE_URL.replace('/help/', '/')  # Library is at site root, not under /help/
-                url = f'{base_url.rstrip("/")}/library/'
                 msg = f'Could not open browser automatically.\n\nPlease open this URL manually:\n{url}'
                 self._notify(msg, type='warning')
                 self._append_output(f'\n--- Library URL ---\n{url}\n')
