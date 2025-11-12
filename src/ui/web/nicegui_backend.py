@@ -20,6 +20,7 @@ from src.pc import PC
 from src.ui.web.codemirror5_editor import CodeMirror5Editor
 from src.ui.variable_sorting import sort_variables, get_sort_mode_label, cycle_sort_mode, get_default_reverse_for_mode
 from src.error_logger import log_web_error
+from src.usage_tracker import init_usage_tracker, get_usage_tracker
 
 
 class SimpleWebIOHandler(IOHandler):
@@ -1092,7 +1093,47 @@ class NiceGUIBackend(UIBackend):
             exception: The exception that occurred
         """
         session_id = self.sandboxed_fs.user_id if hasattr(self, 'sandboxed_fs') else None
-        self._log_error(context, exception, session_id=session_id)
+        log_web_error(context, exception, session_id=session_id)
+
+    def _track_program_execution(self, success: bool, error_message: str = None):
+        """Track program execution statistics.
+
+        Args:
+            success: Whether execution completed successfully
+            error_message: Error message if execution failed
+        """
+        tracker = get_usage_tracker()
+        if not tracker:
+            return
+
+        try:
+            import time
+            # Calculate execution time
+            execution_time_ms = 0
+            if hasattr(self, '_exec_start_time'):
+                execution_time_ms = int((time.time() - self._exec_start_time) * 1000)
+
+            # Get program size
+            program_lines = self._exec_start_line_count if hasattr(self, '_exec_start_line_count') else 0
+
+            # Get lines executed from runtime
+            lines_executed = self.runtime.lines_executed if hasattr(self.runtime, 'lines_executed') else 0
+
+            # Get session ID
+            session_id = app.storage.client.id if app.storage.client else 'unknown'
+
+            # Track the execution
+            tracker.track_program_execution(
+                session_id=session_id,
+                program_lines=program_lines,
+                execution_time_ms=execution_time_ms,
+                lines_executed=lines_executed,
+                success=success,
+                error_message=error_message
+            )
+        except Exception as e:
+            sys.stderr.write(f"Warning: Failed to track program execution: {e}\n")
+            sys.stderr.flush()
 
     def build_ui(self):
         """Build the NiceGUI interface.
@@ -1909,6 +1950,11 @@ class NiceGUIBackend(UIBackend):
             # Mark as running (for display and state tracking - spinner, status, continue/step logic)
             self.running = True
 
+            # Track execution start time
+            import time
+            self._exec_start_time = time.time()
+            self._exec_start_line_count = len(self.program.lines) if self.program else 0
+
             # Start async execution - store timer handle so we can cancel it
             self.exec_timer = ui.timer(0.01, self._execute_tick, once=False)
 
@@ -1963,6 +2009,10 @@ class NiceGUIBackend(UIBackend):
                 self._append_output(f"\n--- Error: {error_msg} ---\n")
                 self._set_status("Error")
                 self.running = False
+
+                # Track failed program execution
+                self._track_program_execution(success=False, error_message=error_msg)
+
                 # Hide current line highlight
                 if self.current_line_label:
                     self.current_line_label.visible = False
@@ -1991,6 +2041,10 @@ class NiceGUIBackend(UIBackend):
                     self._append_output("\n--- Program finished ---\n")
                     self._set_status("Ready")
                     self.running = False
+
+                    # Track successful program execution
+                    self._track_program_execution(success=True)
+
                     # Hide current line highlight
                     if self.current_line_label:
                         self.current_line_label.visible = False
@@ -3621,6 +3675,34 @@ def start_web_ui(port=8080):
     sys.stderr.write(f"{'='*70}\n\n")
     sys.stderr.flush()
 
+    # Initialize usage tracking
+    import os
+    import json
+    config_path = os.path.join(os.path.dirname(__file__), '../../..', 'config/multiuser.json')
+    if os.path.exists(config_path):
+        try:
+            with open(config_path) as f:
+                multiuser_config = json.load(f)
+
+            # Replace environment variables in config
+            config_str = json.dumps(multiuser_config)
+            for env_var in ['MYSQL_HOST', 'MYSQL_USER', 'MYSQL_PASSWORD']:
+                config_str = config_str.replace(f'${{{env_var}}}', os.environ.get(env_var, ''))
+            multiuser_config = json.loads(config_str)
+
+            # Initialize usage tracker
+            usage_config = multiuser_config.get('usage_tracking', {})
+            if usage_config.get('enabled'):
+                init_usage_tracker(usage_config)
+                sys.stderr.write("Usage tracking enabled\n")
+                sys.stderr.flush()
+            else:
+                sys.stderr.write("Usage tracking disabled\n")
+                sys.stderr.flush()
+        except Exception as e:
+            sys.stderr.write(f"Warning: Failed to initialize usage tracking: {e}\n")
+            sys.stderr.flush()
+
     @ui.page('/', viewport='width=device-width, initial-scale=1.0')
     def main_page():
         """Create or restore backend instance for each client."""
@@ -3641,6 +3723,19 @@ def start_web_ui(port=8080):
 
         # Create new backend instance
         backend = NiceGUIBackend(None, program_manager)
+
+        # Track IDE session start
+        tracker = get_usage_tracker()
+        if tracker:
+            try:
+                from nicegui import context
+                session_id = app.storage.client.id
+                user_agent = context.client.request.headers.get('user-agent') if context.client.request else None
+                ip = context.client.request.client.host if context.client.request and context.client.request.client else None
+                tracker.start_ide_session(session_id, user_agent, ip)
+            except Exception as e:
+                sys.stderr.write(f"Warning: Failed to track session start: {e}\n")
+                sys.stderr.flush()
 
         # Restore state if available
         if saved_state:
@@ -3673,6 +3768,15 @@ def start_web_ui(port=8080):
                 sys.stderr.write(f"Warning: Failed to save final session state: {e}\n")
                 sys.stderr.flush()
 
+            # Track session end
+            tracker = get_usage_tracker()
+            if tracker:
+                try:
+                    tracker.end_ide_session(app.storage.client.id)
+                except Exception as e:
+                    sys.stderr.write(f"Warning: Failed to track session end: {e}\n")
+                    sys.stderr.flush()
+
         ui.context.client.on_disconnect(save_on_disconnect)
 
     # Health check endpoint for Kubernetes liveness/readiness probes
@@ -3684,6 +3788,23 @@ def start_web_ui(port=8080):
         Used by Docker HEALTHCHECK and Kubernetes probes.
         """
         return {'status': 'healthy', 'version': VERSION}
+
+    # Landing page visit tracking endpoint
+    @app.post('/api/track-visit')
+    def track_visit(page: str = '/', referrer: str = None, userAgent: str = None, sessionId: str = None):
+        """Track landing page visit."""
+        tracker = get_usage_tracker()
+        if tracker:
+            try:
+                # Get IP from request (FastAPI context)
+                from starlette.requests import Request
+                from fastapi import Request as FastAPIRequest
+                # Note: IP extraction handled in tracker, pass None for now
+                tracker.track_page_visit(page, referrer, userAgent, None, sessionId)
+            except Exception as e:
+                sys.stderr.write(f"Warning: Failed to track page visit: {e}\n")
+                sys.stderr.flush()
+        return {'status': 'ok'}
 
     # Check if Redis is configured
     import os

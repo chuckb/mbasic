@@ -268,8 +268,16 @@ ___  ___  ______  ___   _____ _____  _____
     </div>
 
     <script>
-        // Simple analytics (if needed)
-        console.log('MBASIC Landing Page loaded');
+        // Track page visit
+        fetch('/api/track-visit', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                page: window.location.pathname,
+                referrer: document.referrer,
+                userAgent: navigator.userAgent
+            })
+        }).catch(e => console.error('Tracking failed:', e));
 
         // Check if browser supports required features
         if (!window.fetch || !window.Promise) {
