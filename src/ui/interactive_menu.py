@@ -157,16 +157,14 @@ class InteractiveMenuBar(urwid.WidgetWrap):
         if base_widget is None:
             base_widget = self.parent_ui.loop.widget
 
-        # Wrap base widget in AttrMap to ensure black background everywhere
-        # This prevents urwid from using default colors (39;49) which may be white
-        base_with_bg = urwid.AttrMap(base_widget, 'body')
-
         # Wrap entire dropdown in AttrMap with body style (white on black)
         dropdown_widget = urwid.AttrMap(box, 'body')
 
+        # Don't wrap base_widget - wrapping it in a new AttrMap causes urwid to lose
+        # editor scroll position. Pass it directly to preserve widget state.
         overlay = urwid.Overlay(
             dropdown_widget,
-            base_with_bg,
+            base_widget,
             align='left',
             width=menu_width + 2,  # Menu width + border
             valign='top',
