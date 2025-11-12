@@ -15,9 +15,11 @@ spec:
       labels:
         app: mbasic-web
     spec:
+      imagePullSecrets:
+      - name: registry-awohl-mbasic
       containers:
       - name: mbasic-web
-        image: registry.digitalocean.com/YOUR_REGISTRY/mbasic-web:latest
+        image: registry.digitalocean.com/awohl-mbasic/mbasic-web:latest
         ports:
         - containerPort: 8080
           name: http
@@ -53,9 +55,6 @@ spec:
         - name: config
           mountPath: /app/config/multiuser.json
           subPath: multiuser.json
-        - name: mysql-ca
-          mountPath: /app/config/mysql-ca.pem
-          subPath: MYSQL_CA_CERT
         resources:
           requests:
             memory: "256Mi"
@@ -81,9 +80,6 @@ spec:
       - name: config
         configMap:
           name: mbasic-config
-      - name: mysql-ca
-        secret:
-          secretName: mbasic-secrets
 ---
 apiVersion: v1
 kind: Service
