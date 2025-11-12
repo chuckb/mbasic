@@ -15,6 +15,18 @@
 - Status shows: "at line 2065: COMMAND?" (line number + prompt)
 - Current line label shows: ">>> INPUT at line 2065"
 
+### 3. Breakpoints detected but program ends instead of pausing ✅
+**Status**: FIXED in src/pc.py:102-117 (v873)
+**Root Cause**: PC is frozen dataclass with default __eq__ that compared all fields
+- When breakpoint hits, `pc.stop("BREAK")` creates new PC with stop_reason="BREAK"
+- `statement_table.get(stopped_pc)` failed because default equality includes stop_reason
+- `__hash__` included stop_reason, violating hash/equality contract when comparing by position only
+**Fix**: Added custom `__eq__` and `__hash__` methods to PC class
+- Both now only compare/hash position (line, statement), not state (stop_reason, error)
+- This allows PC lookups in statement_table and breakpoints to work correctly regardless of PC state
+- Line-level breakpoint detection also fixed in interpreter.py:352-355 (v871)
+- Changed from `pc.line_num in self.runtime.breakpoints` to loop checking `bp.line == pc.line_num`
+
 ## Outstanding Issues
 
 ### 3. Curses UI: ^U menu scrolls program to top

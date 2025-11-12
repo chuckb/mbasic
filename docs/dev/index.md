@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2025-11-12
-**Total Documents:** 202
+**Total Documents:** 203
 
 ## What's Here
 
@@ -53,6 +53,7 @@ If you're contributing to MBASIC:
 
 ### Debugging & Errors
 
+- [Debugger Issues Todo](DEBUGGER_ISSUES_TODO.md)
 - [Import Consistency Fix](IMPORT_CONSISTENCY_FIX.md)
 - [Low Severity Fix Report](LOW_SEVERITY_FIX_REPORT.md)
 - [Random Fixes Todo](RANDOM_FIXES_TODO.md)

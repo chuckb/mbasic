@@ -99,9 +99,22 @@ class PC:
 
         return False
 
+    def __eq__(self, other):
+        """Compare PCs by position only (line, statement), not state (stop_reason, error).
+
+        This allows PC lookups in statement_table and breakpoints to work correctly
+        regardless of whether the PC is running or stopped.
+        """
+        if not isinstance(other, PC):
+            return False
+        return self.line == other.line and self.statement == other.statement
+
     def __hash__(self):
-        """Allow PC to be used as dict key or in sets (for breakpoints)"""
-        return hash((self.line, self.statement, self.stop_reason))
+        """Hash by position only (line, statement), not state (stop_reason, error).
+
+        Must match __eq__ per Python's hash/equality contract.
+        """
+        return hash((self.line, self.statement))
 
     def __repr__(self):
         """String representation for debugging"""

@@ -187,6 +187,8 @@ class Runtime:
         if pc.line is None:
             return False  # Past end of program
 
+        # PC.__eq__ only compares position (line, statement), not state (stop_reason, error)
+        # so this lookup works correctly regardless of whether PC is running or stopped
         stmt = self.statement_table.get(pc)
         return stmt is not None  # True if at a valid statement
 
