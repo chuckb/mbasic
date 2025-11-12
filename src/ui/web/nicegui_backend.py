@@ -1298,8 +1298,11 @@ class NiceGUIBackend(UIBackend):
         self.save_as_dialog = SaveAsDialog(self)
         self.merge_file_dialog = MergeFileDialog(self)
         self.about_dialog = AboutDialog(self)
+        self.browse_examples_dialog = BrowseExamplesDialog(self)
         self.find_replace_dialog = FindReplaceDialog(self)
         self.smart_insert_dialog = SmartInsertDialog(self)
+        # NOTE: All dialogs must be initialized here during build_ui to avoid double-click bugs.
+        # Do NOT use lazy initialization (hasattr checks) for dialogs called from menus.
         self.delete_lines_dialog = DeleteLinesDialog(self)
         self.renumber_dialog = RenumberDialog(self)
 
@@ -2505,14 +2508,7 @@ class NiceGUIBackend(UIBackend):
 
     def _menu_browse_examples(self):
         """Help > Browse Example Programs - Browse and load example BASIC programs from server."""
-        try:
-            # Create and show browse examples dialog
-            if not hasattr(self, 'browse_examples_dialog'):
-                self.browse_examples_dialog = BrowseExamplesDialog(self)
-            self.browse_examples_dialog.show()
-        except Exception as e:
-            self._log_error("_menu_browse_examples", e)
-            self._notify(f'Error opening examples browser: {e}', type='negative')
+        self.browse_examples_dialog.show()
 
     async def _menu_settings(self):
         """Edit > Settings - Open settings dialog."""
