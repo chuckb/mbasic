@@ -7,7 +7,8 @@ Configure and deploy MBASIC web application to DigitalOcean Kubernetes cluster.
 **Phase 1: Configuration** ✅ COMPLETED
 **Phase 2: Docker Build** ✅ COMPLETED
 **Phase 3: Deployment** ✅ COMPLETED
-**Phase 4: DNS Configuration** ⏳ PENDING (user action required)
+**Phase 4: DNS Configuration** ✅ COMPLETED
+**Phase 5: SSL Certificate** ⏳ IN PROGRESS (waiting for DNS propagation)
 
 ## Completed Steps
 
@@ -65,16 +66,24 @@ Configure and deploy MBASIC web application to DigitalOcean Kubernetes cluster.
 - Deployed ingress configuration
 - Load balancer IP assigned: **129.212.196.85**
 
-## Next Steps (User Action Required)
+### 11. ✅ DNS Configuration
+- Created A record via doctl: `mbasic.awohl.com` → `129.212.196.85`
+- TTL: 300 seconds
+- DNS propagating (resolves on Google DNS 8.8.8.8)
 
-1. **Configure DNS**:
-   Add an A record for your domain:
-   ```
-   Type: A
-   Name: mbasic
-   Value: 129.212.196.85
-   TTL: 300
-   ```
+### 12. ✅ Redis Configuration
+- Enabled Redis session storage: `NICEGUI_REDIS_URL=redis://redis-service:6379`
+- Updated MBASIC deployment with Redis connection
+- Verified pods showing "Redis storage enabled"
+- Session state now shared across all load-balanced instances
+
+## Next Steps (Automated)
+
+1. **SSL Certificate Provisioning** (in progress):
+   - DNS propagating to global DNS servers
+   - Let's Encrypt HTTP-01 challenge pending
+   - Certificate will auto-issue once DNS propagates to cluster DNS
+   - Expected completion: 10-20 minutes from DNS record creation
 
 2. **Monitor SSL Certificate**:
    Once DNS propagates, the Let's Encrypt certificate will be automatically issued:
@@ -94,12 +103,25 @@ Configure and deploy MBASIC web application to DigitalOcean Kubernetes cluster.
 - `docs/dev/WORK_IN_PROGRESS.md` - This file
 
 ## Additional Notes
-- All credentials are stored in Kubernetes secrets, not in config files
-- Using private networking between k8s cluster and MariaDB server (10.136.0.2, more secure, faster)
-- Image pull secret created: `registry-awohl-mbasic` for accessing private registry
-- Nginx-ingress controller configuration snippets are disabled by default for security
+
+### Architecture
+- **Redis**: In-cluster deployment (1 pod in mbasic namespace) for session storage
+- **MySQL**: External on awohl4 droplet at 10.136.0.2 (private network) for user accounts
+- **MBASIC Web**: 3-10 pods (HPA enabled) with shared Redis sessions
+- **Landing Page**: 2 pods (nginx static content)
+
+### Security & Configuration
+- All credentials stored in Kubernetes secrets, not in config files
+- Private networking between k8s cluster and MySQL server (10.136.0.2, more secure/faster)
+- Image pull secret: `registry-awohl-mbasic` for accessing private registry
+- Nginx-ingress controller configuration snippets disabled by default for security
+- SSL certificate auto-renews via Let's Encrypt (90-day cycle)
+
+### Networking
 - Load balancer IP: **129.212.196.85** (assigned by DigitalOcean)
-- SSL certificate will auto-renew via Let's Encrypt (90-day cycle)
+- Domain: **mbasic.awohl.com**
+- Routes: `/` → landing page, `/ide` → MBASIC IDE
+- VPC: b3756118-dc84-11e8-8650-3cfdfea9f8c8 (shared with awohl4)
 
 ---
 **Created:** 2025-11-12
