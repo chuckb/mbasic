@@ -498,9 +498,13 @@ class BrowseExamplesDialog(ui.dialog):
         self.excluded_dirs = {'bad_syntax', 'bas_tests', 'tests', 'tests_with_results', 'incompatible', 'dev'}
 
         self.file_grid = None
+        self.path_label = None
 
     def show(self):
         """Show the examples browser dialog."""
+        # Reset to base directory when opening
+        self.current_path = self.base_path
+
         self.clear()
 
         with self, ui.card().classes('w-full max-w-4xl'):
@@ -512,8 +516,21 @@ class BrowseExamplesDialog(ui.dialog):
                 self.path_label = ui.label(self._get_relative_path()).classes('text-sm font-mono')
                 ui.button('⬆ Up', on_click=self._go_up).props('outline dense no-caps').classes('ml-4')
 
-            # File/folder grid
-            self._create_file_grid()
+            # File/folder grid - create once with initial data
+            columns = [
+                {'name': 'type', 'label': '', 'field': 'type', 'align': 'center', 'style': 'width: 40px'},
+                {'name': 'name', 'label': 'Name', 'field': 'name', 'align': 'left', 'sortable': True},
+                {'name': 'size', 'label': 'Size', 'field': 'size', 'align': 'right', 'style': 'width: 100px'},
+            ]
+
+            self.file_grid = ui.table(
+                columns=columns,
+                rows=self._get_items(),
+                row_key='name'
+            ).classes('w-full').props('dense flat')
+
+            # Handle row clicks (single click to navigate/open)
+            self.file_grid.on('rowClick', lambda e: self._handle_row_click(e.args[1]))
 
             # Buttons
             with ui.row().classes('w-full justify-end gap-2 mt-4'):
@@ -529,12 +546,8 @@ class BrowseExamplesDialog(ui.dialog):
         except:
             return "basic/"
 
-    def _create_file_grid(self):
-        """Create the file/folder grid."""
-        if self.file_grid:
-            self.file_grid.clear()
-
-        # Get files and directories
+    def _get_items(self):
+        """Get list of files and directories for current path."""
         items = []
 
         try:
@@ -567,24 +580,14 @@ class BrowseExamplesDialog(ui.dialog):
 
         except Exception as e:
             self.backend._notify(f'Error reading directory: {e}', type='negative')
-            return
 
-        # Create grid
-        columns = [
-            {'name': 'type', 'label': '', 'field': 'type', 'align': 'center', 'style': 'width: 40px'},
-            {'name': 'name', 'label': 'Name', 'field': 'name', 'align': 'left', 'sortable': True},
-            {'name': 'size', 'label': 'Size', 'field': 'size', 'align': 'right', 'style': 'width: 100px'},
-        ]
+        return items
 
-        self.file_grid = ui.table(
-            columns=columns,
-            rows=items,
-            row_key='name',
-            selection='single'
-        ).classes('w-full').props('dense flat')
-
-        # Handle row clicks
-        self.file_grid.on('rowClick', lambda e: self._handle_row_click(e.args[1]))
+    def _update_grid(self):
+        """Update the file grid with current directory contents."""
+        if self.file_grid:
+            self.file_grid.rows = self._get_items()
+            self.file_grid.update()
 
     def _handle_row_click(self, row):
         """Handle clicking on a file or directory."""
@@ -601,7 +604,7 @@ class BrowseExamplesDialog(ui.dialog):
                 # Navigate into directory
                 self.current_path = path
                 self.path_label.text = self._get_relative_path()
-                self._create_file_grid()
+                self._update_grid()
             else:
                 # Load file
                 self._load_file(path)
@@ -619,7 +622,7 @@ class BrowseExamplesDialog(ui.dialog):
         if self._is_safe_path(parent):
             self.current_path = parent
             self.path_label.text = self._get_relative_path()
-            self._create_file_grid()
+            self._update_grid()
 
     def _is_safe_path(self, path):
         """Check if path is within allowed base directory."""
