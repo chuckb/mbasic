@@ -3887,7 +3887,7 @@ def start_web_ui(port=8080):
         }
         all_healthy = True
 
-        # Check MySQL connectivity if configured for error logging or usage tracking
+        # Check MySQL connectivity if configured for error logging
         config = get_config()
         if config.enabled:
             # Check error logging MySQL
@@ -3906,24 +3906,6 @@ def start_web_ui(port=8080):
                     health_status['checks']['mysql_error_logging'] = 'ok'
                 except Exception as e:
                     health_status['checks']['mysql_error_logging'] = f'failed: {str(e)[:100]}'
-                    all_healthy = False
-
-            # Check usage tracking MySQL
-            if config.usage_tracking.enabled and config.usage_tracking.mysql:
-                try:
-                    import mysql.connector
-                    conn = mysql.connector.connect(
-                        host=config.usage_tracking.mysql.host,
-                        port=config.usage_tracking.mysql.port or 3306,
-                        user=config.usage_tracking.mysql.user,
-                        password=config.usage_tracking.mysql.password,
-                        database=config.usage_tracking.mysql.database,
-                        connection_timeout=3
-                    )
-                    conn.close()
-                    health_status['checks']['mysql_usage_tracking'] = 'ok'
-                except Exception as e:
-                    health_status['checks']['mysql_usage_tracking'] = f'failed: {str(e)[:100]}'
                     all_healthy = False
 
         if not all_healthy:
