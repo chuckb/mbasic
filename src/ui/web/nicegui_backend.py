@@ -370,124 +370,38 @@ class StackDialog(ui.dialog):
 
 
 class OpenFileDialog(ui.dialog):
-    """Reusable dialog for opening files from the server filesystem.
-
-    Based on NiceGUI's local_file_picker example.
-    """
+    """Reusable dialog for uploading files from user's computer."""
 
     def __init__(self, backend):
         super().__init__()
         self.backend = backend
-        self.path = Path.cwd()
 
-        with self, ui.card().classes('w-full max-w-4xl'):
-            ui.label('Open BASIC Program').classes('text-h6 mb-4')
+        with self, ui.card().classes('w-full max-w-2xl'):
+            ui.label('Open BASIC Program from Your Computer').classes('text-h6 mb-4')
 
-            # Current path display
-            with ui.row().classes('w-full items-center mb-2'):
-                ui.label('Path:').classes('font-bold')
-                self.path_label = ui.label(str(self.path)).classes('flex-grow font-mono text-sm')
+            ui.label('Select a .BAS or .TXT file from your computer:').classes('mb-4')
 
-            # AG Grid file browser in fixed-height scrollable container
-            with ui.element('div').classes('w-full').style('height: 400px; overflow-y: auto'):
-                self.grid = ui.aggrid({
-                    'columnDefs': [
-                        {'field': 'name', 'headerName': 'File'},
-                        {'field': 'size', 'headerName': 'Size', 'width': 100}
-                    ],
-                    'rowSelection': {'mode': 'singleRow'},
-                    'domLayout': 'autoHeight',
-                }, html_columns=[0]).classes('w-full').on('cellDoubleClicked', self._handle_double_click)
+            # File upload component
+            self.upload = ui.upload(
+                on_upload=lambda e: self._handle_upload(e),
+                auto_upload=True,
+                label='Choose File'
+            ).props('accept=".bas,.BAS,.txt,.TXT"').classes('w-full')
 
-            # Action buttons - fixed at bottom
             with ui.row().classes('w-full justify-end gap-2 mt-4'):
                 ui.button('Cancel', on_click=self.close).props('outline no-caps')
-                ui.button('Open', on_click=self._handle_ok, icon='folder_open').props('no-caps')
-
-        # Populate grid with initial data
-        self._update_grid()
 
     def show(self):
-        """Show the file picker dialog."""
-        self.path = Path.cwd()  # Reset to CWD each time
-        self._update_grid()  # Refresh for current directory
+        """Show the file upload dialog."""
+        self.upload.reset()  # Clear any previous upload
         self.open()
 
-    def _build_row_data(self):
-        """Build row data for the current directory."""
+    async def _handle_upload(self, e):
+        """Handle file upload."""
         try:
-            # Get all items in directory
-            paths = list(self.path.glob('*'))
-
-            # Filter to only show directories and .bas/.txt files
-            paths = [p for p in paths if p.is_dir() or p.suffix.lower() in ['.bas', '.txt']]
-
-            # Sort: directories first (case-insensitive), then files
-            paths.sort(key=lambda p: p.name.lower())
-            paths.sort(key=lambda p: not p.is_dir())
-
-            # Build row data
-            row_data = [
-                {
-                    'name': f'📁 <strong>{p.name}</strong>' if p.is_dir() else f'📄 {p.name}',
-                    'size': '' if p.is_dir() else f'{p.stat().st_size / 1024:.1f} KB',
-                    'path': str(p),
-                    'is_dir': p.is_dir()
-                }
-                for p in paths
-            ]
-
-            # Add parent directory option if not at root
-            if self.path != self.path.parent:
-                row_data.insert(0, {
-                    'name': '📁 <strong>..</strong>',
-                    'size': '',
-                    'path': str(self.path.parent),
-                    'is_dir': True
-                })
-
-            return row_data
-
-        except PermissionError:
-            self.backend._notify('Permission denied', type='negative')
-            return []
-        except Exception as e:
-            self.backend._notify(f'Error: {e}', type='negative')
-            return []
-
-    def _update_grid(self) -> None:
-        """Update the grid with files from current directory."""
-        self.path_label.set_text(str(self.path))
-        row_data = self._build_row_data()
-        self.grid.options['rowData'] = row_data
-        self.grid.update()
-
-    def _handle_double_click(self, e) -> None:
-        """Handle double-click: navigate directories or open files."""
-        data = e.args['data']
-        self.path = Path(data['path'])
-
-        if data['is_dir']:
-            # Navigate into directory
-            self._update_grid()
-        else:
-            # Open the file
-            self._open_file(self.path)
-
-    async def _handle_ok(self):
-        """Handle OK button: open selected file."""
-        rows = await self.grid.get_selected_rows()
-        if rows:
-            path = Path(rows[0]['path'])
-            if not rows[0]['is_dir']:
-                self._open_file(path)
-            else:
-                self.backend._notify('Please select a file, not a directory', type='warning')
-
-    def _open_file(self, file_path: Path):
-        """Open a BASIC file into the editor."""
-        try:
-            content = file_path.read_text()
+            # Read uploaded file content
+            content_bytes = await e.content.read()
+            content = content_bytes.decode('utf-8')
 
             # Normalize line endings and remove CP/M EOF markers
             content = content.replace('\r\n', '\n').replace('\r', '\n').replace('\x1a', '')
@@ -509,32 +423,18 @@ class OpenFileDialog(ui.dialog):
             self.backend._save_editor_to_program()
 
             # Store filename
-            self.backend.current_file = file_path.name
+            self.backend.current_file = e.name
 
             # Add to recent files
-            self.backend._add_recent_file(file_path.name)
+            self.backend._add_recent_file(e.name)
 
-            self.backend._set_status(f'Opened: {file_path.name}')
-            self.backend._notify(f'Loaded {file_path.name}', type='positive')
+            self.backend._set_status(f'Opened: {e.name}')
+            self.backend._notify(f'Loaded {e.name}', type='positive')
             self.close()
 
         except Exception as ex:
-            self._log_error("_open_file", ex)
+            self.backend._log_error("_handle_upload", ex)
             self.backend._notify(f'Error loading file: {ex}', type='negative')
-
-    def _show_upload_option(self):
-        """Show upload dialog for uploading files from client computer."""
-        upload_dialog = ui.dialog()
-        with upload_dialog, ui.card():
-            ui.label('Upload from your computer').classes('text-h6 mb-4')
-            ui.label('Select a .BAS or .TXT file to upload:').classes('mb-2')
-            ui.upload(
-                on_upload=lambda e: self.backend._handle_file_upload(e, upload_dialog),
-                auto_upload=True
-            ).classes('w-full').props('accept=".bas,.txt"')
-            with ui.row().classes('w-full justify-end mt-4'):
-                ui.button('Cancel', on_click=upload_dialog.close).props('no-caps')
-        upload_dialog.open()
 
 
 class SaveAsDialog(ui.dialog):
