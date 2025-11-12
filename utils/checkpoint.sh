@@ -62,10 +62,18 @@ if [ -n "$HELP_CHANGED" ]; then
 fi
 
 # Check if docs were modified - validate mkdocs build
-# Check both staged and unstaged changes
-DOCS_CHANGED=$(git diff --name-only docs/ mkdocs.yml .github/workflows/docs.yml 2>/dev/null; git diff --cached --name-only docs/ mkdocs.yml .github/workflows/docs.yml 2>/dev/null || echo "")
+# Use SHA256 hashing to detect any changes to docs tree or config files
+# This is more comprehensive than file-by-file git diff
 
-if [ -n "$DOCS_CHANGED" ]; then
+# Calculate hash of current docs tree (includes all files, even untracked)
+CURRENT_DOCS_HASH=$(find docs/ -type f 2>/dev/null | sort | xargs -r sha256sum 2>/dev/null | sha256sum | cut -d' ' -f1)
+# Calculate hash of docs tree in git HEAD (committed version)
+HEAD_DOCS_HASH=$(git ls-tree -r HEAD docs/ 2>/dev/null | sha256sum | cut -d' ' -f1)
+
+# Check if mkdocs.yml or workflow file changed (staged or unstaged)
+MKDOCS_CONFIG_CHANGED=$(git diff --name-only mkdocs.yml .github/workflows/docs.yml 2>/dev/null; git diff --cached --name-only mkdocs.yml .github/workflows/docs.yml 2>/dev/null)
+
+if [ "$CURRENT_DOCS_HASH" != "$HEAD_DOCS_HASH" ] || [ -n "$MKDOCS_CONFIG_CHANGED" ]; then
     echo "Documentation changed - regenerating keyboard shortcuts..."
     python3 mbasic --dump-keymap > docs/user/keyboard-shortcuts.md
     if [ $? -eq 0 ]; then
