@@ -44,6 +44,5 @@ temp/
 .DS_Store
 Thumbs.db
 
-# BASIC programs (not needed in container)
-basic/
+# Examples (not needed in container)
 examples/
