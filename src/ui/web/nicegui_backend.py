@@ -2286,6 +2286,8 @@ class NiceGUIBackend(UIBackend):
     async def _menu_step_stmt(self):
         """Run > Step Statement - Execute one statement and pause."""
         try:
+            import sys
+            print(f"DEBUG _menu_step_stmt: running={self.running}, paused={self.paused}, PC={self.runtime.pc if self.runtime else 'None'}", file=sys.stderr)
             if not self.running and not self.paused:
                 # Not running - start program and step one statement
                 if not self._save_editor_to_program():

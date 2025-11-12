@@ -312,6 +312,10 @@ class Interpreter:
                 # Get current PC
                 pc = self.runtime.pc
 
+                import sys
+                if mode in ('step_statement', 'step_line'):
+                    print(f"DEBUG tick: Starting tick() with PC={pc}, is_running={pc.is_running()}, stop_reason={pc.stop_reason}", file=sys.stderr)
+
                 # Check if not running (stopped/halted/error)
                 # Allow execution to continue in step mode even if stopped at BREAK/USER
                 if not pc.is_running() and not (mode in ('step_statement', 'step_line') and pc.stop_reason in ('BREAK', 'USER')):
@@ -321,11 +325,11 @@ class Interpreter:
 
                 # In step mode from breakpoint: clear stop_reason without messing with flags
                 if mode in ('step_statement', 'step_line') and not pc.is_running():
-                    import sys
-                    print(f"DEBUG tick: Step from stopped PC {pc}, continuing execution", file=sys.stderr)
+                    print(f"DEBUG tick: Step from stopped PC {pc}, resuming", file=sys.stderr)
                     # Just clear the stop_reason to allow execution, don't touch flags
                     pc = pc.resume()
                     self.runtime.pc = pc
+                    print(f"DEBUG tick: After resume, PC={pc}", file=sys.stderr)
 
                 # Check for Ctrl+C break
                 if self.runtime.break_requested:
