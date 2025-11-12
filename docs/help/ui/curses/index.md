@@ -43,9 +43,6 @@ About this BASIC interpreter:
 Compile BASIC programs to native CP/M executables:
 
 - **[Compiler Guide](../../common/compiler/index.md)** - Generate .COM files for 8080 or Z80 systems (100% complete!)
-- [Features](../../common/compiler/features.md) - What the compiler supports
-- [Getting Started](../../common/compiler/getting-started.md) - Compile your first program
-- [Generated Code](../../common/compiler/generated-code.md) - Understanding compiler output
 
 ## 📕 BASIC-80 Language Reference
 
