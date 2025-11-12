@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2025-11-12
-**Total Documents:** 203
+**Total Documents:** 204
 
 ## What's Here
 
@@ -69,6 +69,7 @@ If you're contributing to MBASIC:
 
 ### Work in Progress
 
+- [For Loop Jump Todo](FOR_LOOP_JUMP_TODO.md)
 - [Work In Progress Final Summary](WORK_IN_PROGRESS_FINAL_SUMMARY.md)
 
 ### Other
