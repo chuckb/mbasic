@@ -314,9 +314,23 @@ class Interpreter:
 
                 # Check if not running (stopped/halted/error)
                 if not pc.is_running():
-                    # Already stopped - PC has stop_reason set
-                    self._restore_break_handler()
-                    return self.state
+                    # In step mode, auto-resume if stopped at BREAK or USER (allows stepping from breakpoints)
+                    if mode in ('step_statement', 'step_line') and pc.stop_reason in ('BREAK', 'USER'):
+                        import sys
+                        print(f"DEBUG tick: PC stopped at {pc}, resuming for step", file=sys.stderr)
+                        # Skip the current statement and move to the next one
+                        # When stopped at a breakpoint, we haven't executed the statement yet,
+                        # so we need to execute it, then stop at the next statement
+                        pc = pc.resume()
+                        self.runtime.pc = pc
+                        # Clear the skip flag so we can step past the breakpoint
+                        self.state.skip_next_breakpoint_check = False
+                        print(f"DEBUG tick: Resumed to {pc}", file=sys.stderr)
+                        # Continue to execute the statement
+                    else:
+                        # Already stopped - PC has stop_reason set
+                        self._restore_break_handler()
+                        return self.state
 
                 # Check for Ctrl+C break
                 if self.runtime.break_requested:
@@ -363,6 +377,9 @@ class Interpreter:
 
                 # Execute statement
                 try:
+                    import sys
+                    if mode in ('step_statement', 'step_line'):
+                        print(f"DEBUG tick: Executing statement at {pc}: {type(stmt).__name__}", file=sys.stderr)
                     self.execute_statement(stmt)
                     statements_in_tick += 1
                     self.state.statements_executed += 1
@@ -412,13 +429,22 @@ class Interpreter:
                 if self.runtime.npc is not None:
                     next_pc = self.runtime.npc
                     self.runtime.npc = None
+                    import sys
+                    if mode in ('step_statement', 'step_line'):
+                        print(f"DEBUG tick: NPC was set to {next_pc}", file=sys.stderr)
                 else:
                     next_pc = self.runtime.statement_table.next_pc(pc)
+                    import sys
+                    if mode in ('step_statement', 'step_line'):
+                        print(f"DEBUG tick: next_pc from statement_table: {next_pc}", file=sys.stderr)
 
                 # Check for step mode before updating PC
                 if mode == 'step_statement':
                     # Stop at next PC for stepping
+                    import sys
+                    print(f"DEBUG tick: Step mode, stopping at next_pc={next_pc}, is_running={next_pc.is_running()}", file=sys.stderr)
                     self.runtime.pc = next_pc.stop("BREAK") if next_pc.is_running() else next_pc
+                    print(f"DEBUG tick: Final PC set to {self.runtime.pc}", file=sys.stderr)
                     return self.state
                 elif mode == 'step_line' and pc.is_step_point(next_pc, 'step_line'):
                     # Stop at next line for stepping

@@ -2075,7 +2075,6 @@ class NiceGUIBackend(UIBackend):
 
             # If waiting for input, don't tick - wait for input to be provided
             if state.input_prompt:
-                self._set_status("Waiting for input...")
                 # Show prompt and focus the immediate mode input box
                 if not self.waiting_for_input:
                     self.waiting_for_input = True
@@ -2087,6 +2086,17 @@ class NiceGUIBackend(UIBackend):
                     self.immediate_entry.props('placeholder="Input: "')
                     # Focus the immediate input box for user to type
                     self.immediate_entry.run_method('focus')
+                    # Set status with line number and prompt
+                    self._set_status(f"at line {state.current_line}: {state.input_prompt}")
+                    # Highlight the INPUT statement in the editor
+                    if self.current_line_label and state.current_line:
+                        self.current_line_label.set_text(f'>>> INPUT at line {state.current_line}')
+                        self.current_line_label.visible = True
+                    # Highlight current statement in CodeMirror
+                    if state.current_line:
+                        char_start = state.current_statement_char_start if state.current_statement_char_start > 0 else None
+                        char_end = state.current_statement_char_end if state.current_statement_char_end > 0 else None
+                        self.editor.set_current_statement(state.current_line, char_start, char_end)
                 return
 
             # Execute one tick (up to 1000 statements)
@@ -2110,7 +2120,6 @@ class NiceGUIBackend(UIBackend):
                     self.exec_timer = None
             elif state.input_prompt:
                 # Pause execution until input is provided
-                self._set_status("Waiting for input...")
                 # Show prompt and focus the immediate mode input box
                 if not self.waiting_for_input:
                     self.waiting_for_input = True
@@ -2122,6 +2131,17 @@ class NiceGUIBackend(UIBackend):
                     self.immediate_entry.props('placeholder="Input: "')
                     # Focus the immediate input box for user to type
                     self.immediate_entry.run_method('focus')
+                    # Set status with line number and prompt
+                    self._set_status(f"at line {state.current_line}: {state.input_prompt}")
+                    # Highlight the INPUT statement in the editor
+                    if self.current_line_label and state.current_line:
+                        self.current_line_label.set_text(f'>>> INPUT at line {state.current_line}')
+                        self.current_line_label.visible = True
+                    # Highlight current statement in CodeMirror
+                    if state.current_line:
+                        char_start = state.current_statement_char_start if state.current_statement_char_start > 0 else None
+                        char_end = state.current_statement_char_end if state.current_statement_char_end > 0 else None
+                        self.editor.set_current_statement(state.current_line, char_start, char_end)
                 # Don't cancel timer - keep ticking to check when input is provided
             elif not self.runtime.pc.is_running():
                 # Check if done or paused at breakpoint
@@ -2336,13 +2356,18 @@ class NiceGUIBackend(UIBackend):
         # Use microprocessor model: check error_info, input_prompt, and pc.is_running()
         if state.input_prompt:
             # Waiting for input - show input UI
-            self._show_input_prompt(state.input_prompt)
+            self.waiting_for_input = True
+            self.input_prompt_text = state.input_prompt
             self.running = True
             self.paused = True
-            self._set_status(f"Waiting for input at line {state.current_line}")
+            # Focus the immediate input box for user to type
+            self.immediate_entry.props('placeholder="Input: "')
+            self.immediate_entry.run_method('focus')
+            # Set status with line number and prompt
+            self._set_status(f"at line {state.current_line}: {state.input_prompt}")
             # Show current line highlight
             if self.current_line_label:
-                self.current_line_label.set_text(f'>>> Waiting for input at line {state.current_line}')
+                self.current_line_label.set_text(f'>>> INPUT at line {state.current_line}')
                 self.current_line_label.visible = True
             # Highlight current statement
             char_start = state.current_statement_char_start if state.current_statement_char_start > 0 else None

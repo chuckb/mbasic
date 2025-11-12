@@ -3,14 +3,14 @@
 MBASIC 5.21 Interpreter
 
 Usage:
-    python3 mbasic.py                         # Interactive mode (curses screen editor)
-    python3 mbasic.py program.bas             # Execute program
-    python3 mbasic.py --ui curses             # Curses text UI (urwid, full-screen terminal) (default)
-    python3 mbasic.py --ui cli                # CLI backend (line-based)
-    python3 mbasic.py --ui tk                 # Tkinter GUI (graphical)
-    python3 mbasic.py --ui web                # Web UI (browser-based)
-    python3 mbasic.py --ui web --port 3000    # Web UI on custom port
-    python3 mbasic.py --debug                 # Enable debug output
+    ./mbasic                                  # Interactive mode (curses screen editor)
+    ./mbasic program.bas                      # Execute program
+    ./mbasic --ui curses                      # Curses text UI (urwid, full-screen terminal) (default)
+    ./mbasic --ui cli                         # CLI backend (line-based)
+    ./mbasic --ui tk                          # Tkinter GUI (graphical)
+    ./mbasic --ui web                         # Web UI (browser-based)
+    ./mbasic --ui web --port 3000             # Web UI on custom port
+    ./mbasic --debug                          # Enable debug output
 """
 
 import sys
@@ -70,7 +70,7 @@ def list_backends():
 
         print(f"  {name:10} {info['name']:12} {info['description']:30} {status}{install_help}")
 
-    print("\nUsage: python3 mbasic.py --ui <name>")
+    print("\nUsage: ./mbasic --ui <name>")
 
 
 def create_default_def_type_map():
@@ -131,7 +131,7 @@ def load_backend(backend_name, io_handler, program_manager):
                 "  • macOS/Windows: Reinstall Python from python.org\n"
                 "\n"
                 "Alternative: Use --ui cli or --ui curses\n"
-                "Run 'python3 mbasic.py --list-backends' to see all available UIs."
+                "Run './mbasic --list-backends' to see all available UIs."
             ),
             'curses': (
                 "\nCurses backend requires urwid library.\n"
@@ -139,7 +139,7 @@ def load_backend(backend_name, io_handler, program_manager):
                 "         or: pip install urwid>=2.0.0\n"
                 "\n"
                 "Alternative: Use --ui cli or --ui tk\n"
-                "Run 'python3 mbasic.py --list-backends' to see all available UIs."
+                "Run './mbasic --list-backends' to see all available UIs."
             ),
             'web': (
                 "\nWeb backend requires nicegui library.\n"
@@ -147,7 +147,7 @@ def load_backend(backend_name, io_handler, program_manager):
                 "         or: pip install nicegui>=3.2.0\n"
                 "\n"
                 "Alternative: Use --ui cli, --ui curses, or --ui tk\n"
-                "Run 'python3 mbasic.py --list-backends' to see all available UIs."
+                "Run './mbasic --list-backends' to see all available UIs."
             ),
         }
 
@@ -205,14 +205,14 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python3 mbasic.py                         # Interactive mode (curses screen editor)
-  python3 mbasic.py program.bas             # Run program and enter interactive mode
-  python3 mbasic.py --ui curses             # Curses text UI (urwid, full-screen terminal) (default)
-  python3 mbasic.py --ui cli                # CLI backend (line-based)
-  python3 mbasic.py --ui tk                 # Tkinter GUI (graphical)
-  python3 mbasic.py --ui web                # Web UI (browser-based)
-  python3 mbasic.py --ui web --port 3000    # Web UI on custom port
-  python3 mbasic.py --debug                 # Enable debug output
+  ./mbasic                                  # Interactive mode (curses screen editor)
+  ./mbasic program.bas                      # Run program and enter interactive mode
+  ./mbasic --ui curses                      # Curses text UI (urwid, full-screen terminal) (default)
+  ./mbasic --ui cli                         # CLI backend (line-based)
+  ./mbasic --ui tk                          # Tkinter GUI (graphical)
+  ./mbasic --ui web                         # Web UI (browser-based)
+  ./mbasic --ui web --port 3000             # Web UI on custom port
+  ./mbasic --debug                          # Enable debug output
         """
     )
 
