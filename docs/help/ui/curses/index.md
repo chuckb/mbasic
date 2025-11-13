@@ -38,11 +38,13 @@ About this BASIC interpreter:
 - [Compatibility](../../mbasic/compatibility.md) - MBASIC 5.21 differences
 - [Architecture](../../mbasic/architecture.md) - Interpreter vs compiler design
 
-## 📙 MBASIC Compiler
+## 📙 MBASIC Compilers
 
-Compile BASIC programs to native CP/M executables:
+Compile BASIC programs to native executables or JavaScript:
 
-- **[Compiler Guide](../../common/compiler/index.md)** - Generate .COM files for 8080 or Z80 systems (100% complete!)
+- **[Compiler Guide](../../common/compiler/index.md)** - TWO complete compilers:
+  - **Z80/8080 Compiler** - Generate .COM files for CP/M systems (100% complete!)
+  - **JavaScript Compiler** - Generate JavaScript for browsers and Node.js (100% complete!)
 
 ## 📕 BASIC-80 Language Reference
 
@@ -92,9 +94,11 @@ Press **/** to search across all help content. Results are grouped by section (U
 
 ## Beyond the Interpreter
 
-The Curses UI runs programs in **interpreter mode**. To compile BASIC programs to native CP/M executables:
+The Curses UI runs programs in **interpreter mode**. MBASIC-2025 also includes TWO complete compilers:
 
-**[MBASIC Compiler →](../../common/compiler/index.md)** - Generate native .COM files for 8080 or Z80 systems (100% complete!)
+**[MBASIC Compilers →](../../common/compiler/index.md)** - Generate native CP/M executables OR JavaScript:
+- **Z80/8080 Compiler** - Native .COM files for CP/M systems (100% complete!)
+- **JavaScript Compiler** - JavaScript for browsers and Node.js (100% complete!)
 
 ---
 
