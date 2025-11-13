@@ -1552,6 +1552,8 @@ class JavaScriptBackend(CodeGenBackend):
             code.extend(self._generate_get(stmt))
         elif isinstance(stmt, PutStatementNode):
             code.extend(self._generate_put(stmt))
+        elif isinstance(stmt, ChainStatementNode):
+            code.extend(self._generate_chain(stmt))
         elif isinstance(stmt, OnErrorStatementNode):
             code.extend(self._generate_on_error(stmt))
         elif isinstance(stmt, ErrorStatementNode):
@@ -2319,6 +2321,52 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + f'_fput({filenum_expr}, {rec_expr});')
         else:
             code.append(self.indent() + f'_fput({filenum_expr});')
+        return code
+
+    def _generate_chain(self, stmt: ChainStatementNode) -> List[str]:
+        """Generate CHAIN statement - chain to another program
+
+        Browser: Navigate to new HTML page (window.location.href)
+        Node.js: Spawn new process and exit (child_process.spawn)
+
+        Note: Like the Z80 backend, we only support basic CHAIN "filename"
+        MERGE, line number, ALL, and DELETE options are not supported.
+        """
+        code = []
+
+        # Warn about unsupported options
+        if stmt.merge:
+            code.append(self.indent() + '// MERGE option not supported in compiled code')
+        if stmt.start_line:
+            code.append(self.indent() + '// Start line not supported in compiled code')
+        if stmt.all_flag:
+            code.append(self.indent() + '// ALL option not supported - no COMMON in MBASIC 5.21')
+        if stmt.delete_range:
+            code.append(self.indent() + '// DELETE option not supported in compiled code')
+
+        filename_expr = self._generate_expression(stmt.filename)
+
+        code.append(self.indent() + '// CHAIN to another program')
+        code.append(self.indent() + 'if (typeof window !== "undefined") {')
+        self.indent_level += 1
+        code.append(self.indent() + '// Browser: Navigate to new HTML page')
+        code.append(self.indent() + f'window.location.href = {filename_expr} + ".html";')
+        self.indent_level -= 1
+        code.append(self.indent() + '} else if (typeof process !== "undefined") {')
+        self.indent_level += 1
+        code.append(self.indent() + '// Node.js: Spawn new program and exit')
+        code.append(self.indent() + 'const { spawn } = require("child_process");')
+        code.append(self.indent() + f'const newProgram = {filename_expr} + ".js";')
+        code.append(self.indent() + 'spawn("node", [newProgram], {')
+        self.indent_level += 1
+        code.append(self.indent() + 'stdio: "inherit",  // Pass through stdin/stdout/stderr')
+        code.append(self.indent() + 'detached: false')
+        self.indent_level -= 1
+        code.append(self.indent() + '});')
+        code.append(self.indent() + 'process.exit(0);  // Exit current program')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+
         return code
 
     def _generate_on_error(self, stmt: OnErrorStatementNode) -> List[str]:
