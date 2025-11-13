@@ -205,13 +205,23 @@ class ScrollingFiller(urwid.WidgetWrap):
         while hasattr(edit, 'original_widget'):
             edit = edit.original_widget
 
-        # Only adjust if this is an Edit widget with content
+        # Only adjust if this is an Edit widget
         if not isinstance(edit, urwid.Edit):
-            return super().render(size, focus)
+            # Fallback: render the wrapped widget directly with proper size
+            canvas = self.edit_widget.render((maxcol,), focus)
+            if canvas.rows() > maxrow:
+                canvas = urwid.CompositeCanvas(canvas)
+                canvas.trim_end(canvas.rows() - maxrow)
+            return canvas
 
         text = edit.get_edit_text()
         if not text:
-            return super().render(size, focus)
+            # Empty editor - just render and trim to fit
+            canvas = edit.render((maxcol,), focus)
+            if canvas.rows() > maxrow:
+                canvas = urwid.CompositeCanvas(canvas)
+                canvas.trim_end(canvas.rows() - maxrow)
+            return canvas
 
         # Calculate current cursor line
         edit_pos = edit.edit_pos
