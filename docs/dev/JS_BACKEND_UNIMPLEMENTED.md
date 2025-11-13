@@ -1,6 +1,6 @@
 # JavaScript Backend - Unimplemented Features
 
-## Status: Phase 8 (Formatted Output) Complete
+## Status: Phase 8 (Formatted Output) Complete ✅
 
 Phase 1-4: Core implementation ✓
 Phase 5-6: Enhanced features ✓
@@ -27,6 +27,10 @@ Phase 7: Error handling ✓
 Phase 8: Formatted output ✓
 - PRINT USING (simplified implementation)
 - Format specifiers: #, !, &, \\
+
+Bug Fixes (2025-11-13):
+- Fixed UnaryOpNode operator conversion (TokenType to string)
+- Fixed semantic analyzer crash on string comparisons in IF conditions
 
 This document tracks what's **not yet implemented** in the JavaScript backend.
 
