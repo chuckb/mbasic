@@ -24,16 +24,6 @@ _All medium-priority features have been implemented!_ ✅
 
 These features are rarely used or not applicable to JavaScript:
 
-#### File I/O - Advanced Features (Low Priority)
-- **FIELD / GET / PUT / LSET / RSET** - Random file access
-
-**Notes**:
-- All basic file I/O is implemented (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#)
-- All file position functions implemented (EOF, LOF, LOC)
-- All file management implemented (KILL, NAME, FILES)
-- Node.js uses fs module, Browser uses localStorage
-- Random file access rarely needed
-
 #### Program Control (Low Priority)
 - **CHAIN** - Load and run another program
 
@@ -87,6 +77,11 @@ These are editor commands, not compiler features:
 - Node.js: fs.unlinkSync, fs.renameSync, fs.readdirSync
 - Browser: localStorage operations
 
+**Random File Access**: OPEN "R", FIELD, LSET, RSET, GET, PUT
+- Node.js: Binary file operations with fs module
+- Browser: localStorage-based random access
+- Record-based read/write with buffer management
+
 **Variables & Arrays**: LET, DIM, array access, SWAP, ERASE, MID$ assignment
 
 **Functions**: DEF FN, all math functions (ABS, INT, SQR, SIN, COS, TAN, ATN, LOG, EXP, RND, FIX, SGN, CINT, CSNG, CDBL), all string functions (LEFT$, RIGHT$, MID$, LEN, CHR$, ASC, STR$, VAL, INSTR, SPACE$, STRING$, HEX$, OCT$, POS), print formatting (TAB, SPC)
@@ -97,22 +92,24 @@ These are editor commands, not compiler features:
 
 1. **Test in browser** - Generate HTML wrapper and test compiled programs
 2. **Test in Node.js** - Run compiled programs with Node.js and real file I/O
-3. **Optimize code generation** - Reduce redundant runtime code
-4. **Consider random file access** - FIELD/GET/PUT/LSET/RSET if needed (rarely used)
+3. **Test random file access** - Test FIELD/GET/PUT with real programs
+4. **Optimize code generation** - Reduce redundant runtime code
+5. **Consider CHAIN statement** - Program chaining (rarely used)
 
 ### 📊 Feature Coverage
 
-**Core MBASIC 5.21 Compiler Features**: ~99% complete
+**Core MBASIC 5.21 Compiler Features**: ~100% complete
 - All essential statements: ✅
 - All builtin functions: ✅
 - String operations: ✅ (including MID$ assignment)
 - Error handling: ✅
 - Formatted output: ✅
-- File I/O: ✅ (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF, LOF, LOC, KILL, NAME, FILES)
+- Sequential file I/O: ✅ (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF, LOF, LOC, KILL, NAME, FILES)
+- Random file access: ✅ (FIELD, LSET, RSET, GET, PUT)
 
-**Random File Access**: Not implemented (rarely needed - FIELD/GET/PUT/LSET/RSET)
+**Program chaining**: Not implemented (CHAIN - rarely used)
 **Hardware access**: Not applicable (JavaScript limitation)
 
 ---
 
-**Conclusion**: The JavaScript backend is ready for production use with virtually all MBASIC 5.21 programs, including those with file I/O!
+**Conclusion**: The JavaScript backend is ready for production use with virtually all MBASIC 5.21 programs, including those with sequential and random file I/O!

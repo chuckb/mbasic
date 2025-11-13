@@ -46,6 +46,11 @@ New Features (2025-11-13):
   - KILL: Delete file
   - NAME: Rename file
   - FILES: List directory (supports wildcards * and ?)
+- Random file access (FIELD, LSET, RSET, GET, PUT)
+  - OPEN "R" with record length support
+  - FIELD: Define buffer layout
+  - LSET/RSET: Left/right-justify strings in buffer
+  - GET/PUT: Read/write records by number
 
 This document tracks what's **not yet implemented** in the JavaScript backend.
 
@@ -84,6 +89,14 @@ This document tracks what's **not yet implemented** in the JavaScript backend.
 - ✓ NAME - Rename file (Node.js: fs.renameSync, Browser: copy + remove in localStorage)
 - ✓ FILES - List directory (Node.js: fs.readdirSync with wildcards, Browser: list localStorage keys)
 
+### Random File Access
+- ✓ OPEN "R" - Open file for random access with record length
+- ✓ FIELD - Define buffer layout for random file (map variables to buffer positions)
+- ✓ LSET - Left-justify string in field variable
+- ✓ RSET - Right-justify string in field variable
+- ✓ GET - Read record from random file into buffer
+- ✓ PUT - Write buffer to record in random file
+
 ### Variables & Arrays
 - ✓ LET (assignment)
 - ✓ DIM (array declarations)
@@ -118,11 +131,6 @@ _None currently - all previously stubbed features have been implemented_
 
 ## ❌ NOT IMPLEMENTED
 
-### File Operations (Advanced)
-- FIELD - Define random file buffer
-- GET - Read random file record
-- PUT - Write random file record
-- LSET / RSET - Format string for random files
 
 ### Program Control
 - CHAIN - Load and run another program
