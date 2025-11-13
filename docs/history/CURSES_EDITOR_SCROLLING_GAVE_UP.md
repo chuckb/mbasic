@@ -1,6 +1,8 @@
 # Curses Editor Scrolling Issues
 
-**Status**: TODO (attempted fix reverted - see below)
+**Status**: GAVE UP (2025-11-13)
+
+**Reason**: Attempted fix made things worse - caused complete scrolling breakage and color flipping. Reverted in commit 38263715. Original behavior, while not perfect, is acceptable. The complexity of urwid widget wrapping architecture makes this too difficult to fix safely.
 
 ## Attempted Fix (REVERTED)
 

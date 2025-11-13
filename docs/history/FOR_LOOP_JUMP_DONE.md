@@ -1,6 +1,16 @@
-# FOR Loop Jump Behavior TODO
+# FOR Loop Jump Behavior DONE
 
-## Issue
+**Status**: COMPLETED in v1.0.895 (2025-11-13)
+
+**Solution**: Implemented variable-indexed FOR loops. Each variable is bound to one FOR loop at a time via `Runtime.for_loop_states` dict. Jumping out of a loop and starting a new FOR with the same variable simply overwrites the binding. Super Star Trek now works perfectly.
+
+**Implementation Details**: See `docs/dev/FOR_LOOP_VARIABLE_INDEXED_IMPLEMENTATION.md`
+
+**Test Results**: All 6 test programs pass (for_test1-6.bas)
+
+---
+
+## Original Issue
 
 MBASIC interpreter raises error when jumping out of a FOR loop without completing it, then starting a new FOR loop with the same variable elsewhere.
 
