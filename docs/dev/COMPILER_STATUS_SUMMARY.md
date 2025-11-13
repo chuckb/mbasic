@@ -1,14 +1,22 @@
-# MBASIC Compiler - Actual Status (2025-11-11)
+# MBASIC Compilers - Status Summary (2025-11-13)
 
 ## Executive Summary
 
-**THE COMPILER IS 100% COMPLETE!** 🎉
+**BOTH COMPILERS ARE 100% COMPLETE!** 🎉
+
+MBASIC-2025 now has TWO production-ready compiler backends:
+1. **Z80/8080 Compiler** - Generates native CP/M executables (documented in this file)
+2. **JavaScript Compiler** - Generates JavaScript for browsers and Node.js (see JS_BACKEND_REMAINING.md)
+
+This file documents the **Z80/8080 Compiler Backend** which generates native CP/M executables.
 
 All features of Microsoft BASIC Compiler (BASCOM) are now implemented! Final implementations on 2025-11-11:
 - PEEK/POKE, INP/OUT, WAIT (hardware access)
 - CALL, USR, VARPTR (machine language interface)
 - RESET, NAME, FILES, WIDTH, LPRINT, CLEAR (system operations)
-- **CHAIN** - Program chaining using CP/M warm boot (implemented today!)
+- **CHAIN** - Program chaining using CP/M warm boot
+
+JavaScript compiler also implements CHAIN (2025-11-13) using browser navigation and process spawn!
 
 ## ✅ IMPLEMENTED AND WORKING
 

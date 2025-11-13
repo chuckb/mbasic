@@ -1,16 +1,22 @@
-# MBASIC Compiler
+# MBASIC Compilers
 
-**Status: 100% Complete!** - The MBASIC-2025 compiler is now 100% compatible with Microsoft BASCOM! Every feature supported by the original Microsoft BASIC Compiler is now implemented.
+**Status: 100% Complete!** - MBASIC-2025 now includes TWO production-ready compilers, both 100% complete!
 
 ## Overview
 
-The MBASIC compiler translates BASIC-80 programs into native CP/M executables for 8080 or Z80 processors. Unlike the interpreter, the compiler generates real machine code that runs directly on hardware or emulators.
+MBASIC-2025 includes TWO complete compiler backends:
+
+1. **Z80/8080 Compiler** - Generates native CP/M executables for vintage hardware
+2. **JavaScript Compiler** - Generates modern JavaScript for browsers and Node.js
+
+Unlike the interpreter, compilers generate standalone code that runs without the MBASIC runtime.
 
 ## What Makes It Special
 
-**Two Complete Implementations in One Project:**
+**THREE Complete Implementations in One Project:**
 - **Interpreter** - Run BASIC programs interactively with modern UIs
-- **Compiler** - Generate native .COM executables for CP/M systems
+- **Z80/8080 Compiler** - Generate native .COM executables for CP/M systems
+- **JavaScript Compiler** - Generate portable JS for modern platforms
 
 **Features Implemented (100% Microsoft BASCOM Compatible):**
 - All data types (INTEGER %, SINGLE !, DOUBLE #, STRING $)
@@ -22,7 +28,28 @@ The MBASIC compiler translates BASIC-80 programs into native CP/M executables fo
 - Machine language integration (CALL/USR/VARPTR) - **Works in compiled code!**
 - **CHAIN** - Program chaining using CP/M warm boot - **Just implemented!**
 
-## Getting Started
+## Choosing a Compiler
+
+### Z80/8080 Compiler (CP/M Targets)
+**Use when:**
+- Targeting vintage hardware (CP/M systems)
+- Need hardware access (PEEK/POKE/INP/OUT)
+- Building for embedded 8080/Z80 systems
+
+**Output:** Native .COM executables for CP/M
+
+### JavaScript Compiler (Modern Platforms)
+**Use when:**
+- Deploying to web browsers
+- Running on modern operating systems
+- Need cross-platform compatibility
+- Want standalone HTML applications
+
+**Output:** JavaScript files (.js) or HTML+JavaScript bundles
+
+---
+
+## Getting Started with Z80/8080 Compiler
 
 ### Requirements
 
@@ -33,7 +60,7 @@ The MBASIC compiler translates BASIC-80 programs into native CP/M executables fo
 2. **tnylpo** (optional) - CP/M emulator for testing
    - See [CP/M Emulator Setup](https://github.com/avwohl/mbasic/blob/main/docs/dev/TNYLPO_SETUP.md)
 
-### Quick Example
+### Quick Example (Z80/8080)
 
 ```bash
 # Write a BASIC program
@@ -51,12 +78,12 @@ python3 test_compile.py hello.bas
 #   HELLO.COM    - CP/M executable
 ```
 
-### Hardware Access Example
+### Hardware Access Example (Z80/8080 Only)
 
-These features only work in compiled code:
+These features only work in Z80/8080 compiled code:
 
 ```basic
-10 REM Hardware access - works in compiled code!
+10 REM Hardware access - works in Z80/8080 compiled code!
 20 A = PEEK(100)         ' Read memory
 30 POKE 100, 42          ' Write memory
 40 B = INP(255)          ' Read I/O port
@@ -65,6 +92,95 @@ These features only work in compiled code:
 70 ADDR = VARPTR(A)      ' Get variable address
 80 END
 ```
+
+---
+
+## Getting Started with JavaScript Compiler
+
+### Requirements
+
+**None!** The JavaScript compiler is built into MBASIC-2025 with zero dependencies.
+
+- No external compiler needed
+- Works on any platform with Python 3.8+
+- Generates standalone JavaScript files
+
+### Quick Example (JavaScript)
+
+```bash
+# Write a BASIC program
+cat > hello.bas << 'EOF'
+10 PRINT "Hello from compiled JavaScript!"
+20 END
+EOF
+
+# Compile to JavaScript for Node.js
+mbasic --compile-js hello.js hello.bas
+
+# Run with Node.js
+node hello.js
+
+# Or compile to standalone HTML
+mbasic --compile-js hello.js --html hello.bas
+
+# Open hello.html in any browser!
+```
+
+### Cross-Platform Output
+
+The JavaScript compiler generates code that works in **both** environments:
+
+**Node.js (Command Line):**
+- Real file I/O using fs module
+- Console input/output
+- Full file management (KILL, NAME, FILES)
+- Random file access with binary operations
+
+**Browser (Web Applications):**
+- Virtual file system using localStorage
+- Prompt-based INPUT
+- Retro terminal styling in HTML wrapper
+- Standalone HTML files (no server required)
+
+### What Works in JavaScript
+
+All core MBASIC 5.21 features compile successfully:
+
+```basic
+10 REM All MBASIC features work in JavaScript!
+20 DIM A(100), B$(50)
+30 INPUT "Name"; N$
+40 FOR I = 1 TO 10
+50   PRINT I; SQR(I)
+60 NEXT I
+70 GOSUB 1000
+80 ON ERROR GOTO 9000
+90 OPEN "DATA.TXT" FOR OUTPUT AS #1
+100 PRINT #1, "Hello, file!"
+110 CLOSE #1
+120 END
+1000 PRINT "Subroutine!"
+1010 RETURN
+9000 PRINT "Error:"; ERR(); "at line"; ERL()
+9010 RESUME NEXT
+```
+
+**Supported Features:**
+- ✅ All data types and operators
+- ✅ All control structures (FOR/NEXT, WHILE/WEND, IF/THEN/ELSE, GOTO, GOSUB)
+- ✅ All 50+ built-in functions
+- ✅ Sequential file I/O (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#)
+- ✅ Random file access (FIELD, LSET, RSET, GET, PUT)
+- ✅ File management (KILL, NAME, FILES)
+- ✅ Error handling (ON ERROR GOTO, RESUME, ERR, ERL)
+- ✅ User-defined functions (DEF FN)
+- ✅ String manipulation (MID$ assignment)
+- ✅ Program chaining (CHAIN)
+- ✅ Formatted output (PRINT USING)
+
+**Not Supported (JavaScript Limitations):**
+- ❌ Hardware access (PEEK/POKE/INP/OUT) - no direct memory access in JavaScript
+- ❌ Machine code (CALL/USR/VARPTR) - not applicable to JavaScript
 
 ## Topics
 

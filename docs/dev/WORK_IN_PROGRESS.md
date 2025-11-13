@@ -8,6 +8,7 @@ Design and implement JavaScript compiler backend
 
 ## Status
 Phase 1-8: Implementation - Complete
+Documentation Updates: In Progress
 
 ## Branch
 js-backend
@@ -147,12 +148,20 @@ Generated code should run in:
 - Random file access (FIELD, LSET, RSET, GET, PUT)
 - Program chaining (CHAIN statement)
 
-### Next Steps (Testing & Optimization)
-1. Test sequential file I/O with real programs in Node.js
-2. Test random file access with real programs in Node.js
-3. Test CHAIN statement in both Node.js and browser
-4. Test file I/O in browser with localStorage
-5. Optimize generated code (reduce redundant runtime functions)
+### Documentation Updates (2025-11-13)
+- [x] Updated PRESS_RELEASE.md with JavaScript compiler information
+- [x] Updated docs/help/common/compiler/index.md with JavaScript compiler section
+- [x] Updated docs/index.md (key features and compiler section)
+- [x] Updated docs/MBASIC_PROJECT_OVERVIEW.md (THREE implementations)
+- [ ] Search for and update other documentation files mentioning compilers
+
+### Next Steps
+1. Complete documentation updates across all manuals
+2. Test sequential file I/O with real programs in Node.js
+3. Test random file access with real programs in Node.js
+4. Test CHAIN statement in both Node.js and browser
+5. Test file I/O in browser with localStorage
+6. Optimize generated code (reduce redundant runtime functions)
 
 **Note:** Only implementing features from MBASIC 5.21 manual. CLS/LOCATE/COLOR are NOT in MBASIC 5.21 (those are GW-BASIC/QuickBASIC features).
 
