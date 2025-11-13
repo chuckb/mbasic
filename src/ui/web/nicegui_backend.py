@@ -4018,22 +4018,6 @@ def start_web_ui(port=8080):
 
         return health_status
 
-    # Landing page visit tracking endpoint
-    @app.post('/api/track-visit')
-    def track_visit(page: str = '/', referrer: str = None, userAgent: str = None, sessionId: str = None, request: Request = None):
-        """Track landing page visit."""
-        from starlette.requests import Request
-        tracker = get_usage_tracker()
-        if tracker:
-            try:
-                # Get real client IP (handles X-Forwarded-For from nginx ingress)
-                ip = get_client_ip(request) if request else 'unknown'
-                tracker.track_page_visit(page, referrer, userAgent, ip, sessionId)
-            except Exception as e:
-                sys.stderr.write(f"Warning: Failed to track page visit: {e}\n")
-                sys.stderr.flush()
-        return {'status': 'ok'}
-
     # Check if Redis is configured
     import os
     redis_url = os.environ.get('NICEGUI_REDIS_URL')
