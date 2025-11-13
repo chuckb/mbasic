@@ -183,18 +183,22 @@ class YesNoDialog(urwid.WidgetWrap):
         return None  # Consume all other keys
 
 
-class ScrollingFiller(urwid.WidgetWrap):
+class ScrollingFiller(urwid.Widget):
     """Custom container that tracks Edit widget cursor and maintains vim-style centering.
 
     Keeps cursor in middle ~50% of viewport when scrolling, but allows cursor
     to reach top/bottom edges when at file boundaries.
+
+    This is a Box widget (requires both width and height).
     """
+    _sizing = frozenset([urwid.BOX])
+    _selectable = True
 
     def __init__(self, edit_widget, valign='top'):
         """Initialize with an Edit widget to track."""
         self.edit_widget = edit_widget
         self._top_line = 0
-        super().__init__(edit_widget)
+        super().__init__()
 
     def render(self, size, focus=False):
         """Override render to adjust scroll position based on cursor location."""
@@ -268,6 +272,42 @@ class ScrollingFiller(urwid.WidgetWrap):
                 canvas.trim_end(canvas.rows() - maxrow)
 
         return canvas
+
+    def selectable(self):
+        """Widget is selectable (we want keyboard input)."""
+        return True
+
+    def keypress(self, size, key):
+        """Forward keypresses to the wrapped edit widget."""
+        return self.edit_widget.keypress((size[0],), key)
+
+    def get_cursor_coords(self, size):
+        """Get cursor coordinates from the wrapped edit widget."""
+        maxcol, maxrow = size
+
+        # Get coordinates from the edit widget
+        edit = self.edit_widget
+        while hasattr(edit, 'original_widget'):
+            edit = edit.original_widget
+
+        if not isinstance(edit, urwid.Edit):
+            return None
+
+        # Get cursor position from Edit widget
+        coords = edit.get_cursor_coords((maxcol,))
+        if coords is None:
+            return None
+
+        col, row = coords
+
+        # Adjust row based on our scrolling offset
+        adjusted_row = row - self._top_line
+
+        # Return None if cursor is outside visible area
+        if adjusted_row < 0 or adjusted_row >= maxrow:
+            return None
+
+        return (col, adjusted_row)
 
 
 class ProgramEditorWidget(urwid.WidgetWrap):
