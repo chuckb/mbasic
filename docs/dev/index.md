@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2025-11-13
-**Total Documents:** 213
+**Total Documents:** 211
 
 ## What's Here
 
@@ -36,8 +36,6 @@ If you're contributing to MBASIC:
 
 ### Language Features
 
-- [For Loop Compiler Vs Interpreter](FOR_LOOP_COMPILER_VS_INTERPRETER.md)
-- [For Loop Stack Findings](FOR_LOOP_STACK_FINDINGS.md)
 - [Keybinding Systems](KEYBINDING_SYSTEMS.md)
 - [Mb25 Runtime Library Plan](MB25_RUNTIME_LIBRARY_PLAN.md)
 
@@ -46,9 +44,6 @@ If you're contributing to MBASIC:
 - [Backup Nonversioned Files](BACKUP_NONVERSIONED_FILES.md)
 - [Checkpoint Validation](CHECKPOINT_VALIDATION.md)
 - [Docs Url Configuration](DOCS_URL_CONFIGURATION.md)
-- [For Loop Implementation Summary](FOR_LOOP_IMPLEMENTATION_SUMMARY.md)
-- [For Loop Stack Implementation Options](FOR_LOOP_STACK_IMPLEMENTATION_OPTIONS.md)
-- [For Loop Variable Indexed Implementation](FOR_LOOP_VARIABLE_INDEXED_IMPLEMENTATION.md)
 - [Keybinding Macros Migration](KEYBINDING_MACROS_MIGRATION.md)
 - [Medium Severity Session Report](MEDIUM_SEVERITY_SESSION_REPORT.md)
 - [Pip Install Resource Location Plan](PIP_INSTALL_RESOURCE_LOCATION_PLAN.md)
@@ -80,6 +75,7 @@ If you're contributing to MBASIC:
 ### Work in Progress
 
 - [Work In Progress Final Summary](WORK_IN_PROGRESS_FINAL_SUMMARY.md)
+- [Work In Progress](WORK_IN_PROGRESS.md)
 
 ### Other
 
@@ -90,6 +86,8 @@ If you're contributing to MBASIC:
 - [Compiler Status Summary](COMPILER_STATUS_SUMMARY.md)
 - [Compiler Z88Dk Path Change](COMPILER_Z88DK_PATH_CHANGE.md)
 - [Consistency Checker Convergence Proposal](CONSISTENCY_CHECKER_CONVERGENCE_PROPOSAL.md)
+- [Js Backend Remaining](JS_BACKEND_REMAINING.md)
+- [Js Backend Unimplemented](JS_BACKEND_UNIMPLEMENTED.md)
 - [Kubernetes Deployment Plan](KUBERNETES_DEPLOYMENT_PLAN.md)
 - [Kubernetes Deployment Setup](KUBERNETES_DEPLOYMENT_SETUP.md)
 - [Kubernetes Deployment Summary](KUBERNETES_DEPLOYMENT_SUMMARY.md)

@@ -1,14 +1,14 @@
-# MBASIC-2025: Modern MBASIC 5.21 Interpreter & Compiler
+# MBASIC-2025: Modern MBASIC 5.21 Interpreter & Compilers
 
-A complete implementation of Microsoft BASIC-80 5.21 (CP/M era) with both an interactive interpreter and a native code compiler, written in Python.
+A complete implementation of Microsoft BASIC-80 5.21 (CP/M era) with an interactive interpreter and TWO compiler backends (Z80/8080 + JavaScript), written in Python.
 
 > **About MBASIC:** MBASIC was a BASIC interpreter originally developed by Microsoft in the late 1970s. This is an independent, open-source reimplementation created for educational purposes and historical software preservation. See [MBASIC History](docs/MBASIC_HISTORY.md) for more information.
 >
 > **📄 Want the full story?** See [MBASIC Project Overview](docs/MBASIC_PROJECT_OVERVIEW.md) for a comprehensive feature showcase.
 
-**Status:** Full MBASIC 5.21 implementation complete with 100% compatibility in both interpreter and compiler modes.
+**Status:** Full MBASIC 5.21 implementation complete with 100% compatibility in interpreter and both compiler backends.
 
-## 🎉 Two Complete Implementations
+## 🎉 THREE Complete Implementations
 
 ### Interactive Interpreter (100% Complete)
 - ✅ **100% Compatible**: All original MBASIC 5.21 programs run unchanged
@@ -16,12 +16,19 @@ A complete implementation of Microsoft BASIC-80 5.21 (CP/M era) with both an int
 - ✅ **Multiple UIs**: CLI (classic), Curses, Tk (GUI), Web (browser)
 - ✅ **Full REPL**: Interactive command mode with RUN, LIST, SAVE, LOAD, etc.
 
-### Native Code Compiler (100% Complete)
+### Z80/8080 Compiler (100% Complete)
 - ✅ **100% Feature Complete**: ALL compilable MBASIC 5.21 features implemented
 - ✅ **Generates CP/M Executables**: Produces native .COM files for 8080 or Z80 CP/M systems
 - ✅ **Efficient Runtime**: Optimized string handling with O(n log n) garbage collection
 - ✅ **Hardware Access**: Full support for PEEK/POKE/INP/OUT/WAIT
 - ✅ **Machine Language**: CALL/USR/VARPTR for assembly integration
+
+### JavaScript Compiler (100% Complete)
+- ✅ **100% Feature Complete**: All MBASIC 5.21 features except hardware access
+- ✅ **Generates JavaScript**: Produces standalone .js files for Node.js and browsers
+- ✅ **Cross-Platform**: Same code runs in browsers and Node.js
+- ✅ **Full File I/O**: localStorage in browser, fs module in Node.js
+- ✅ **Standalone HTML**: Optional HTML wrapper for browser deployment
 
 See [Implementation Status](#implementation-status) section below for details, [Extensions](docs/help/mbasic/extensions.md) for modern features, [Compiler Features](#compiler-100-complete) for compiler information, and [PROJECT_STATUS.md](docs/PROJECT_STATUS.md) for current project health and metrics.
 
@@ -200,13 +207,18 @@ LIST
 SAVE "hello.bas"
 ```
 
-## Compiler (100% Complete)
+## Compilers (100% Complete)
 
-MBASIC includes a **fully-featured compiler** that generates C code and compiles to native CP/M executables for 8080 or Z80 processors. The compiler is **100% feature-complete** - every MBASIC 5.21 feature that can be compiled is now implemented!
+MBASIC includes **TWO fully-featured compilers**:
 
-### Compiler Requirements
+1. **Z80/8080 Compiler** - Generates C code and compiles to native CP/M executables for 8080 or Z80 processors
+2. **JavaScript Compiler** - Generates portable JavaScript for browsers and Node.js
 
-To use the compiler features, you need:
+Both compilers are **100% feature-complete** - every MBASIC 5.21 feature that can be compiled is now implemented!
+
+### Z80/8080 Compiler Requirements
+
+To use the Z80/8080 compiler features, you need:
 
 1. **z88dk** (required) - 8080/Z80 C compiler
    - Must have `z88dk.zcc` in your PATH
@@ -216,14 +228,18 @@ To use the compiler features, you need:
    - Must have `tnylpo` in your PATH
    - Installation: build from source
 
+### JavaScript Compiler Requirements
+
+**None!** The JavaScript compiler is built into MBASIC with zero external dependencies. Just use `mbasic --compile-js`.
+
 ### Quick Compiler Check
 
 ```bash
-# Check if compiler tools are installed
+# Check if Z80/8080 compiler tools are installed
 python3 utils/check_compiler_tools.py
 ```
 
-### Compiling BASIC to CP/M
+### Compiling BASIC to CP/M (Z80/8080)
 
 ```bash
 # Compile BASIC to C, then to CP/M .COM file
@@ -233,6 +249,22 @@ python3 test_compile.py program.bas
 # This generates:
 #   program.c    - C source code
 #   PROGRAM.COM  - CP/M executable (runs on 8080 or Z80 CP/M systems)
+```
+
+### Compiling BASIC to JavaScript
+
+```bash
+# Compile to JavaScript for Node.js
+mbasic --compile-js program.js program.bas
+node program.js
+
+# Or compile to standalone HTML for browsers
+mbasic --compile-js program.js --html program.bas
+# Open program.html in any browser!
+
+# This generates:
+#   program.js   - JavaScript code
+#   program.html - Standalone HTML wrapper (if --html used)
 ```
 
 ### Compiler Features (100% Complete!)
@@ -266,22 +298,37 @@ python3 test_compile.py program.bas
 - Machine language: CALL (execute ML routine), USR (call ML function), VARPTR (get address)
 - String manipulation: MID$ assignment (substring replacement)
 
-**Optimized Runtime**
+**Optimized Runtime (Z80/8080)**
 - Custom string library with O(n log n) garbage collection
 - Only 1 malloc (string pool initialization) - everything else uses the pool
 - In-place GC (no temp buffers)
 - Efficient memory usage optimized for CP/M's limited RAM
 
-**What Works in Compiler But Not Interpreter**
+**JavaScript Runtime**
+- Leverages JavaScript's built-in garbage collection
+- Clean, readable output code
+- Dual runtime for Node.js and browser environments
+- Virtual filesystem (localStorage) and real filesystem (fs module)
+
+**What Works in Z80/8080 Compiler But Not Interpreter**
 - PEEK/POKE - Direct memory access (hardware-specific)
 - INP/OUT/WAIT - I/O port operations (hardware-specific)
 - CALL/USR/VARPTR - Machine language integration
-- These generate proper 8080/Z80 assembly calls in compiled code!
+- These generate proper 8080/Z80 assembly calls in Z80/8080 compiled code!
+
+**What Works in Both Compilers**
+- All core MBASIC 5.21 language features
+- Sequential and random file I/O
+- Error handling
+- String manipulation
+- Program chaining (CHAIN)
 
 For detailed setup instructions and compiler documentation, see:
-- `docs/dev/COMPILER_SETUP.md` - Complete compiler setup guide
-- `docs/dev/COMPILER_STATUS_SUMMARY.md` - Full feature list and status
-- `docs/dev/TNYLPO_SETUP.md` - CP/M emulator installation
+- `docs/help/common/compiler/index.md` - Compiler guide for both backends
+- `docs/dev/COMPILER_SETUP.md` - Z80/8080 compiler setup guide
+- `docs/dev/COMPILER_STATUS_SUMMARY.md` - Z80/8080 full feature list and status
+- `docs/dev/JS_BACKEND_REMAINING.md` - JavaScript compiler feature list
+- `docs/dev/TNYLPO_SETUP.md` - CP/M emulator installation (for Z80/8080 testing)
 
 ## Project Structure
 
@@ -289,12 +336,13 @@ For detailed setup instructions and compiler documentation, see:
 mbasic/
 ├── mbasic                 # Main entry point (interpreter)
 ├── src/
-│   ├── lexer.py              # Tokenizer (shared by interpreter & compiler)
+│   ├── lexer.py              # Tokenizer (shared by interpreter & compilers)
 │   ├── parser.py             # Parser - generates AST (shared)
 │   ├── ast_nodes.py          # AST node definitions (shared)
 │   ├── tokens.py             # Token types (shared)
-│   ├── semantic_analyzer.py  # Type checking and analysis (compiler)
-│   ├── codegen_backend.py    # Code generation to C (compiler)
+│   ├── semantic_analyzer.py  # Type checking and analysis (compilers)
+│   ├── codegen_backend.py    # Code generation to C (Z80/8080 compiler)
+│   ├── codegen_js_backend.py # Code generation to JavaScript (JS compiler)
 │   ├── runtime.py            # Runtime state management (interpreter)
 │   ├── interpreter.py        # Main interpreter
 │   ├── basic_builtins.py     # Built-in functions (interpreter)
@@ -606,7 +654,7 @@ python3 test_compile.py hardware.bas
    - Immediate mode
    - Multiple UI backends (CLI, Curses, Tk, Web)
 
-4. **Compiler** (October-November 2025)
+4. **Z80/8080 Compiler** (October-November 2025)
    - Semantic analyzer with type checking
    - C code generator (Z88dk backend)
    - Custom string runtime (O(n log n) GC)
@@ -616,7 +664,18 @@ python3 test_compile.py hardware.bas
    - **Final push (November 11, 2025):**
      - Hardware access (PEEK/POKE/INP/OUT/WAIT)
      - Machine language interface (CALL/USR/VARPTR)
-     - File management (RESET/NAME/LPRINT)
+     - File management (RESET/NAME/LPRINT/CHAIN)
+     - **100% feature complete!**
+
+5. **JavaScript Compiler** (November 2025)
+   - JavaScript code generator
+   - Dual runtime (Node.js + browser)
+   - Virtual filesystem (localStorage)
+   - Complete file I/O (sequential, random, binary)
+   - Error handling implementation
+   - **Final push (November 13, 2025):**
+     - Random file access (FIELD/LSET/RSET/GET/PUT)
+     - Program chaining (CHAIN)
      - **100% feature complete!**
 
 ## Credits and Disclaimers

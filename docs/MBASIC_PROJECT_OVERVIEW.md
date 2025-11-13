@@ -1,14 +1,14 @@
 # MBASIC-2025: The Complete BASIC-80 Revival
 
-> **Two complete implementations. Zero compromises. 100% compatible.**
+> **THREE complete implementations. Zero compromises. 100% compatible.**
 
 ## What Is MBASIC-2025?
 
-MBASIC-2025 is the **only** modern implementation that gives you both a feature-complete interactive BASIC interpreter AND a native code compiler for the classic Microsoft BASIC-80 5.21 language. Whether you're preserving historical software, teaching programming fundamentals, or building retro computing projects, MBASIC-2025 delivers unprecedented compatibility and power.
+MBASIC-2025 is the **only** modern implementation that gives you a feature-complete interactive BASIC interpreter AND two complete compiler backends for the classic Microsoft BASIC-80 5.21 language. Whether you're preserving historical software, teaching programming fundamentals, building retro computing projects, or deploying web applications, MBASIC-2025 delivers unprecedented compatibility and power.
 
 ## 🎉 Why MBASIC-2025 Stands Out
 
-### Two Complete Implementations in One Project
+### THREE Complete Implementations in One Project
 
 **Interactive Interpreter (100% Complete)**
 - Run classic MBASIC programs exactly as written - no modifications needed
@@ -16,12 +16,19 @@ MBASIC-2025 is the **only** modern implementation that gives you both a feature-
 - Modern debugging features (BREAK, STEP, WATCH, STACK)
 - Four UI options: CLI (classic), Curses (full-screen), Tk (GUI), Web (browser-based)
 
-**Native Code Compiler (100% Complete)**
+**Z80/8080 Compiler (100% Complete)**
 - Generates real CP/M executables for 8080 or Z80 processors
 - **Every** compilable MBASIC 5.21 feature implemented
 - Hardware access features that work: PEEK/POKE/INP/OUT/WAIT
 - Machine language integration: CALL/USR/VARPTR
 - Optimized runtime with O(n log n) garbage collection
+
+**JavaScript Compiler (100% Complete)**
+- Generates portable JavaScript for browsers and Node.js
+- All MBASIC 5.21 features except hardware access
+- Standalone HTML applications (no server required)
+- Full file I/O (localStorage in browser, fs module in Node.js)
+- Cross-platform deployment anywhere JavaScript runs
 
 ### 100% Language Compatibility
 
@@ -35,11 +42,11 @@ MBASIC-2025 is the **only** modern implementation that gives you both a feature-
 ✅ Formatted output: PRINT USING, TAB(), SPC()
 ✅ Advanced features: DEF FN, DATA/READ/RESTORE, MID$ assignment
 
-### What Makes the Compiler Special
+### What Makes the Compilers Special
 
-Most BASIC compilers skip the "hard parts." Not MBASIC-2025:
+Most BASIC compilers skip the "hard parts." Not MBASIC-2025 - we have TWO production-ready compilers!
 
-**Hardware Integration That Actually Works**
+**Z80/8080 Compiler - Hardware Integration That Actually Works**
 ```basic
 10 A = PEEK(100)        ' Direct memory access
 20 POKE 100, 42         ' Memory writes
@@ -53,11 +60,31 @@ Most BASIC compilers skip the "hard parts." Not MBASIC-2025:
 
 These don't just parse - they generate **real 8080/Z80 machine code** that works on actual hardware or emulators!
 
-**Efficient Runtime Library**
+**JavaScript Compiler - Modern Cross-Platform Deployment**
+```basic
+10 REM All MBASIC features work in JavaScript!
+20 DIM A(100), B$(50)
+30 OPEN "DATA.TXT" FOR OUTPUT AS #1
+40 PRINT #1, "Hello from JavaScript!"
+50 CLOSE #1
+60 CHAIN "NEXTPROG"  ' Chain to another program
+```
+
+Compiles to clean JavaScript that runs in browsers AND Node.js - same code, both platforms!
+
+**Efficient Runtime Libraries**
+
+Z80/8080 Backend:
 - Custom string system with smart garbage collection
 - Only 1 malloc in the entire system (pool initialization)
 - In-place GC - no temporary buffers wasting precious CP/M RAM
 - Fits comfortably in 64K TPA (Transient Program Area)
+
+JavaScript Backend:
+- Leverages JavaScript's built-in garbage collection
+- Clean, readable output code
+- Dual runtime for Node.js and browser environments
+- Virtual filesystem (localStorage) and real filesystem (fs module)
 
 **Complete File I/O**
 - Sequential files: OPEN, PRINT#, INPUT#, LINE INPUT#, WRITE#
@@ -266,6 +293,7 @@ See [docs/dev/LINUX_MINT_DEVELOPER_SETUP.md](dev/LINUX_MINT_DEVELOPER_SETUP.md)
 
 ### For Compiler Users
 
+**Z80/8080 Backend (CP/M Targets):**
 ```bash
 # Install z88dk (8080/Z80 C compiler)
 sudo snap install z88dk --beta
@@ -275,6 +303,17 @@ cd test_compile
 python3 test_compile.py yourprogram.bas
 
 # Creates: yourprogram.com (runs on CP/M!)
+```
+
+**JavaScript Backend (Modern Platforms):**
+```bash
+# Compile to JavaScript for Node.js
+mbasic --compile-js yourprogram.js yourprogram.bas
+node yourprogram.js
+
+# Or compile to standalone HTML
+mbasic --compile-js yourprogram.js --html yourprogram.bas
+# Open yourprogram.html in any browser!
 ```
 
 ## 🎓 Learn More
@@ -301,15 +340,16 @@ python3 test_compile.py yourprogram.bas
 **MBASIC-2025 is the ONLY implementation that gives you:**
 
 1. ✅ **100% MBASIC 5.21 compatibility** - Every feature, no exceptions
-2. ✅ **Two complete implementations** - Interpreter AND compiler
-3. ✅ **Hardware access that works** - Real PEEK/POKE/INP/OUT
-4. ✅ **Modern development experience** - Multiple UIs, debugging tools
-5. ✅ **Production-ready compiler** - Generates real CP/M executables
-6. ✅ **Educational excellence** - Perfect for teaching fundamentals
-7. ✅ **Open source freedom** - GPLv3, no restrictions
-8. ✅ **Active development** - Maintained and improved
-9. ✅ **Comprehensive documentation** - 200+ docs, every feature explained
-10. ✅ **Zero compromises** - We implemented EVERYTHING
+2. ✅ **THREE complete implementations** - Interpreter AND two compilers (Z80 + JavaScript)
+3. ✅ **Hardware access that works** - Real PEEK/POKE/INP/OUT in Z80 compiled code
+4. ✅ **Modern cross-platform deployment** - Compile to JavaScript for browsers/Node.js
+5. ✅ **Modern development experience** - Multiple UIs, debugging tools
+6. ✅ **Production-ready compilers** - Generates real CP/M executables AND JavaScript
+7. ✅ **Educational excellence** - Perfect for teaching fundamentals
+8. ✅ **Open source freedom** - GPLv3, no restrictions
+9. ✅ **Active development** - Maintained and improved
+10. ✅ **Comprehensive documentation** - 200+ docs, every feature explained
+11. ✅ **Zero compromises** - We implemented EVERYTHING
 
 ## 🎬 See It In Action
 

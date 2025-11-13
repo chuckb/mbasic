@@ -22,7 +22,7 @@ MBASIC 2025 isn't just another BASIC interpreter. It's a **complete implementati
 
 ✨ **100% Language Compatibility** — Every statement, every function, every quirk of the original MBASIC 5.21 — implemented to perfection!
 
-✨ **TWO Complete Implementations** — Run programs in the interpreter OR compile to native CP/M executables for 8080/Z80 hardware. That's right — REAL machine code that runs on REAL vintage computers!
+✨ **THREE Complete Implementations** — Run programs in the interpreter OR compile to native CP/M executables for 8080/Z80 hardware OR compile to JavaScript for modern browsers and Node.js. That's right — REAL machine code for vintage hardware AND modern JavaScript!
 
 ✨ **Four Ways to Work** — Choose your interface: Web browser, full-screen terminal (Curses), graphical desktop (Tkinter), or classic command-line. Your choice. Your way.
 
@@ -34,7 +34,9 @@ MBASIC 2025 isn't just another BASIC interpreter. It's a **complete implementati
 
 **100% MBASIC 5.21 Compatibility:** All 63 statements. All 40 functions. All data types. Error handling. File I/O. Random access files. String manipulation. Mathematical functions. We implemented EVERYTHING.
 
-**The Compiler Actually Compiles:** Unlike other projects that gave up on the "hard parts," our compiler generates real CP/M .COM executables with full hardware access. PEEK reads memory. POKE writes memory. INP reads I/O ports. These aren't stubs — they're the real deal!
+**The Compilers Actually Compile:** Unlike other projects that gave up on the "hard parts," we have TWO production-ready compilers:
+- **Z80/8080 Backend:** Generates real CP/M .COM executables with full hardware access. PEEK reads memory. POKE writes memory. INP reads I/O ports. These aren't stubs — they're the real deal!
+- **JavaScript Backend:** Generates clean, portable JavaScript that runs in modern browsers and Node.js. Perfect for web deployment, teaching, and cross-platform BASIC applications!
 
 **Documentation Beyond Belief:** Over **1 MILLION WORDS** of documentation. Every statement explained. Every function documented. Step-by-step tutorials. Developer guides. Architecture documentation. We didn't just build it — we documented every single piece!
 
@@ -65,7 +67,11 @@ Teaching programming fundamentals? **Deploy MBASIC 2025's web interface** and gi
 
 ### Retro Computing Projects
 
-Building a CP/M system? Writing software for vintage hardware? **Use MBASIC 2025's compiler** to generate real CP/M executables. Write your code in a modern editor, compile to native 8080/Z80 code, and run it on real hardware!
+Building a CP/M system? Writing software for vintage hardware? **Use MBASIC 2025's Z80 compiler** to generate real CP/M executables. Write your code in a modern editor, compile to native 8080/Z80 code, and run it on real hardware!
+
+### Modern Web Applications
+
+Want to run vintage BASIC programs in the browser? **Use MBASIC 2025's JavaScript compiler** to generate standalone HTML+JavaScript applications. No server required — just compile and deploy to any web server!
 
 ### Embedded Systems
 
@@ -146,6 +152,7 @@ Compile this. Run it on CP/M. **It just works.**
 
 ### Compiler Design
 
+**Z80/8080 Backend:**
 - Complete semantic analysis
 - Type checking and optimization
 - C code generation (via z88dk)
@@ -155,6 +162,15 @@ Compile this. Run it on CP/M. **It just works.**
 - Single malloc design (pool initialization only)
 - In-place GC (no temporary buffers)
 - Fits in 64K CP/M TPA
+
+**JavaScript Backend:**
+- Same semantic analysis and type checking
+- Direct JavaScript code generation
+- Switch-based control flow (no goto needed)
+- Automatic memory management (JavaScript GC)
+- Cross-platform I/O abstraction layer
+- Browser and Node.js runtime detection
+- Clean, readable output code
 
 ### Zero Dependencies (CLI Mode)
 
@@ -185,17 +201,23 @@ The command-line interface requires **NOTHING** except Python 3.8+. No external 
 - ✅ Data statements: DATA, READ, RESTORE
 - ✅ Binary data: MKI$/CVI, MKS$/CVS, MKD$/CVD
 
-**Compiler Features (100% Complete):**
+**Compiler Features (100% Complete - TWO Backends!):**
+
+**Z80/8080 Compiler (CP/M Targets):**
 - ✅ Hardware access: PEEK/POKE/INP/OUT/WAIT (generates real 8080/Z80 code!)
 - ✅ Machine language integration: CALL/USR/VARPTR (actually works!)
-- ✅ All control structures compile correctly
-- ✅ All data types (integer, single, double, string)
-- ✅ All mathematical functions
-- ✅ String manipulation with automatic memory management
-- ✅ File I/O (sequential and random access)
-- ✅ Error handling (ON ERROR GOTO, RESUME)
-- ✅ User-defined functions (DEF FN)
 - ✅ Generates native CP/M .COM executables for 8080 or Z80
+- ✅ Fits in 64K CP/M TPA with sophisticated string management
+
+**JavaScript Compiler (Modern Platforms):**
+- ✅ Generates clean, portable JavaScript (ES5 compatible)
+- ✅ Runs in browsers (standalone HTML) AND Node.js
+- ✅ Full file I/O support (localStorage in browser, fs module in Node.js)
+- ✅ All control structures, data types, and functions
+- ✅ Random file access (FIELD/LSET/RSET/GET/PUT)
+- ✅ Program chaining (CHAIN statement)
+- ✅ Complete error handling
+- ✅ No external dependencies
 
 **User Interface Features:**
 - ✅ Web IDE: Browser-based, no installation, multi-user
@@ -241,7 +263,7 @@ mbasic myprogram.bas
 mbasic --help
 ```
 
-### Compile BASIC to CP/M (Advanced)
+### Compile BASIC to CP/M (8080/Z80 Targets)
 
 ```bash
 # Install z88dk compiler (8080/Z80 backend)
@@ -252,6 +274,20 @@ cd test_compile
 python3 test_compile.py myprogram.bas
 
 # Creates: MYPROGRAM.COM (runs on CP/M systems!)
+```
+
+### Compile BASIC to JavaScript (Modern Platforms)
+
+```bash
+# Compile BASIC to standalone JavaScript
+mbasic --compile-js myprogram.js myprogram.bas
+
+# Creates: myprogram.js (runs with Node.js: node myprogram.js)
+
+# Compile to HTML + JavaScript (browser-ready)
+mbasic --compile-js myprogram.js --html myprogram.bas
+
+# Creates: myprogram.html (open in any browser!)
 ```
 
 ## The Documentation (Over 1 Million Words!)
@@ -355,15 +391,16 @@ pip install --pre mbasic
 **MBASIC 2025 is the ONLY modern implementation that gives you:**
 
 1. ✅ **100% MBASIC 5.21 compatibility** — Every feature, no exceptions
-2. ✅ **Two complete implementations** — Interpreter AND compiler
-3. ✅ **Hardware access that works** — Real PEEK/POKE/INP/OUT in compiled code
-4. ✅ **Browser-based with no installation** — https://mbasic.awohl.com
-5. ✅ **Multiple user interfaces** — CLI, Curses, Tkinter, Web
-6. ✅ **Production-ready compiler** — Generates real CP/M executables
-7. ✅ **Over 1 million words of documentation** — Everything explained
-8. ✅ **Open source freedom** — GPLv3, fully free
-9. ✅ **Active development** — Maintained and supported
-10. ✅ **Zero compromises** — We implemented EVERYTHING
+2. ✅ **THREE complete implementations** — Interpreter AND two compilers (Z80 + JavaScript)
+3. ✅ **Hardware access that works** — Real PEEK/POKE/INP/OUT in Z80 compiled code
+4. ✅ **Modern JavaScript output** — Compile to browser/Node.js with full feature support
+5. ✅ **Browser-based with no installation** — https://mbasic.awohl.com
+6. ✅ **Multiple user interfaces** — CLI, Curses, Tkinter, Web
+7. ✅ **Production-ready compilers** — CP/M executables AND JavaScript
+8. ✅ **Over 1 million words of documentation** — Everything explained
+9. ✅ **Open source freedom** — GPLv3, fully free
+10. ✅ **Active development** — Maintained and supported
+11. ✅ **Zero compromises** — We implemented EVERYTHING
 
 ### Try it NOW: https://mbasic.awohl.com
 

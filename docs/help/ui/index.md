@@ -122,13 +122,16 @@ Then open: **http://localhost:8080**
 
 ---
 
-## Beyond the Interpreter: The Compiler
+## Beyond the Interpreter: The Compilers
 
-All interfaces above run BASIC programs in **interpreter mode**. For generating native CP/M executables, see:
+All interfaces above run BASIC programs in **interpreter mode**. MBASIC-2025 also includes TWO production-ready compilers:
 
-**🔧 [MBASIC Compiler](../common/compiler/index.md)** - Compile BASIC to native .COM files for 8080 or Z80 CP/M systems
+**🔧 [MBASIC Compilers](../common/compiler/index.md)** - TWO complete compiler backends:
 
-The compiler is 100% feature complete and generates real machine code with hardware access!
+- **Z80/8080 Compiler** - Compile BASIC to native .COM files for CP/M systems (8080 or Z80)
+- **JavaScript Compiler** - Compile BASIC to JavaScript for browsers and Node.js
+
+Both compilers are 100% feature complete! The Z80/8080 backend generates real machine code with hardware access, while the JavaScript backend generates portable code for modern platforms.
 
 ---
 

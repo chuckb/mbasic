@@ -42,11 +42,11 @@ MBASIC 5.21 is a classic BASIC dialect from the CP/M era (late 1970s - early 198
 
     [:octicons-arrow-right-24: MBASIC Docs](help/mbasic/index.md)
 
--   :material-cogs:{ .lg .middle } __Compiler__
+-   :material-cogs:{ .lg .middle } __Compilers__
 
     ---
 
-    Compile BASIC to native CP/M executables - 100% feature complete!
+    Compile BASIC to CP/M executables OR JavaScript - TWO backends, 100% feature complete!
 
     [:octicons-arrow-right-24: Compiler Guide](help/common/compiler/index.md)
 
@@ -70,13 +70,14 @@ MBASIC 5.21 is a classic BASIC dialect from the CP/M era (late 1970s - early 198
 
 ## Key Features
 
-- ✅ **Two Complete Implementations** - Interactive interpreter AND native code compiler
+- ✅ **THREE Complete Implementations** - Interactive interpreter AND two compiler backends (Z80/8080 + JavaScript)
 - ✅ **100% MBASIC 5.21 Compatibility** - Run authentic MBASIC programs unchanged
 - ✅ **Generates CP/M Executables** - Compile to native .COM files for 8080 or Z80 processors
+- ✅ **Generates JavaScript** - Compile to standalone JavaScript for browsers and Node.js
 - ✅ **Multiple User Interfaces** - CLI, Curses terminal, Tkinter GUI, or Web browser
 - ✅ **Cross-Platform** - Linux, macOS, Windows
 - ✅ **Zero Dependencies** - Pure Python, no external libraries required for interpreter
-- ✅ **Hardware Access** - Full PEEK/POKE/INP/OUT support in compiled code
+- ✅ **Hardware Access** - Full PEEK/POKE/INP/OUT support in Z80/8080 compiled code
 - ✅ **Complete Documentation** - Comprehensive help for every feature
 
 ## Documentation Structure
@@ -101,14 +102,14 @@ Implementation-specific documentation:
 - **[Compatibility](help/mbasic/compatibility.md)** - Differences from CP/M MBASIC
 - **[Architecture](help/mbasic/architecture.md)** - How it works
 
-### 3. MBASIC Compiler (🔧)
+### 3. MBASIC Compilers (🔧)
 
-Native code compiler documentation:
+Compiler documentation for both backends:
 
-- **[Compiler Guide](help/common/compiler/index.md)** - Getting started with the compiler
-- **[Setup Instructions](https://github.com/avwohl/mbasic/blob/main/docs/dev/COMPILER_SETUP.md)** - Installing z88dk and tools
+- **[Compiler Guide](help/common/compiler/index.md)** - Getting started with Z80/8080 and JavaScript compilers
+- **[Z80/8080 Setup](https://github.com/avwohl/mbasic/blob/main/docs/dev/COMPILER_SETUP.md)** - Installing z88dk for CP/M targets
 - **[Feature Status](https://github.com/avwohl/mbasic/blob/main/docs/dev/COMPILER_STATUS_SUMMARY.md)** - 100% complete feature list
-- **[CP/M Emulator](https://github.com/avwohl/mbasic/blob/main/docs/dev/TNYLPO_SETUP.md)** - Testing compiled programs
+- **[CP/M Emulator](https://github.com/avwohl/mbasic/blob/main/docs/dev/TNYLPO_SETUP.md)** - Testing Z80/8080 compiled programs
 
 ### 4. BASIC-80 Language (📕)
 

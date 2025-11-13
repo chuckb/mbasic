@@ -1,0 +1,7 @@
+10 REM Simple hello world test
+20 PRINT "HELLO, WORLD!"
+30 FOR I = 1 TO 5
+40   PRINT "COUNT: "; I
+50 NEXT I
+60 PRINT "DONE"
+70 END
