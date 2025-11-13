@@ -25,16 +25,14 @@ _All medium-priority features have been implemented!_ ✅
 These features are rarely used or not applicable to JavaScript:
 
 #### File I/O - Advanced Features (Low Priority)
-- **KILL** - Delete file
-- **NAME** - Rename file
-- **FILES** - List directory
 - **FIELD / GET / PUT / LSET / RSET** - Random file access
 
 **Notes**:
 - All basic file I/O is implemented (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#)
 - All file position functions implemented (EOF, LOF, LOC)
+- All file management implemented (KILL, NAME, FILES)
 - Node.js uses fs module, Browser uses localStorage
-- Advanced features rarely needed
+- Random file access rarely needed
 
 #### Program Control (Low Priority)
 - **CHAIN** - Load and run another program
@@ -85,6 +83,10 @@ These are editor commands, not compiler features:
 
 **File Functions**: EOF(), LOF(), LOC()
 
+**File Management**: KILL (delete), NAME (rename), FILES (list directory)
+- Node.js: fs.unlinkSync, fs.renameSync, fs.readdirSync
+- Browser: localStorage operations
+
 **Variables & Arrays**: LET, DIM, array access, SWAP, ERASE, MID$ assignment
 
 **Functions**: DEF FN, all math functions (ABS, INT, SQR, SIN, COS, TAN, ATN, LOG, EXP, RND, FIX, SGN, CINT, CSNG, CDBL), all string functions (LEFT$, RIGHT$, MID$, LEN, CHR$, ASC, STR$, VAL, INSTR, SPACE$, STRING$, HEX$, OCT$, POS), print formatting (TAB, SPC)
@@ -96,7 +98,7 @@ These are editor commands, not compiler features:
 1. **Test in browser** - Generate HTML wrapper and test compiled programs
 2. **Test in Node.js** - Run compiled programs with Node.js and real file I/O
 3. **Optimize code generation** - Reduce redundant runtime code
-4. **Consider advanced file features** - WRITE#, KILL, NAME, EOF, LOF if needed
+4. **Consider random file access** - FIELD/GET/PUT/LSET/RSET if needed (rarely used)
 
 ### 📊 Feature Coverage
 
@@ -106,9 +108,9 @@ These are editor commands, not compiler features:
 - String operations: ✅ (including MID$ assignment)
 - Error handling: ✅
 - Formatted output: ✅
-- Basic file I/O: ✅ (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#)
+- File I/O: ✅ (OPEN, CLOSE, PRINT#, INPUT#, LINE INPUT#, WRITE#, EOF, LOF, LOC, KILL, NAME, FILES)
 
-**Advanced File I/O**: Not implemented (rarely needed - WRITE#, KILL, NAME, EOF, LOF, LOC)
+**Random File Access**: Not implemented (rarely needed - FIELD/GET/PUT/LSET/RSET)
 **Hardware access**: Not applicable (JavaScript limitation)
 
 ---

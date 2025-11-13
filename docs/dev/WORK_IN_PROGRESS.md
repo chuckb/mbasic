@@ -110,6 +110,10 @@ Generated code should run in:
   - Node.js: Real filesystem using fs module (readFileSync/writeFileSync)
   - Browser: Virtual filesystem using localStorage
 - [x] Implemented file position functions (EOF, LOF, LOC)
+- [x] Implemented file management statements (KILL, NAME, FILES)
+  - KILL: Delete file (fs.unlinkSync / localStorage.removeItem)
+  - NAME: Rename file (fs.renameSync / localStorage copy+remove)
+  - FILES: List directory with wildcards (fs.readdirSync / localStorage enumeration)
 
 ### Testing Results
 - [x] Super Star Trek - 3524 lines of JavaScript generated successfully
@@ -121,19 +125,20 @@ Generated code should run in:
 - [x] HTML wrapper generation working with retro terminal styling
 
 ### Completion Status
-✅ **Phase 1-8 COMPLETE + File I/O**
+✅ **Phase 1-8 COMPLETE + File I/O + File Management**
 - All core MBASIC 5.21 features implemented (~99% coverage)
 - Successfully compiles complex programs including Super Star Trek
 - Generates clean, working JavaScript for browser and Node.js
 - HTML wrapper with retro terminal styling
 - Comprehensive error handling
 - File I/O support (Node.js: fs module, Browser: localStorage)
+- File management (KILL, NAME, FILES with wildcard support)
 
 ### Next Steps (Optional Enhancements)
-1. Test file I/O with real programs in Node.js
-2. Test file I/O in browser with localStorage
+1. Test file I/O and file management with real programs in Node.js
+2. Test file I/O and file management in browser with localStorage
 3. Optimize generated code (reduce redundant runtime functions)
-4. Consider advanced file features (WRITE#, KILL, NAME, EOF, LOF) - Low priority
+4. Consider random file access (FIELD/GET/PUT/LSET/RSET) - Low priority
 5. Consider CHAIN statement for program chaining - Low priority
 
 **Note:** Only implementing features from MBASIC 5.21 manual. CLS/LOCATE/COLOR are NOT in MBASIC 5.21 (those are GW-BASIC/QuickBASIC features).

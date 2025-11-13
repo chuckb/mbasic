@@ -42,6 +42,10 @@ New Features (2025-11-13):
   - Node.js: Uses fs module for real file operations
   - Browser: Uses localStorage as virtual filesystem
 - File position functions (EOF, LOF, LOC)
+- File management (KILL, NAME, FILES)
+  - KILL: Delete file
+  - NAME: Rename file
+  - FILES: List directory (supports wildcards * and ?)
 
 This document tracks what's **not yet implemented** in the JavaScript backend.
 
@@ -74,6 +78,11 @@ This document tracks what's **not yet implemented** in the JavaScript backend.
 - ✓ EOF() - Test for end of file
 - ✓ LOF() - Length of file in bytes
 - ✓ LOC() - Current position in file
+
+### File Management
+- ✓ KILL - Delete file (Node.js: fs.unlinkSync, Browser: localStorage.removeItem)
+- ✓ NAME - Rename file (Node.js: fs.renameSync, Browser: copy + remove in localStorage)
+- ✓ FILES - List directory (Node.js: fs.readdirSync with wildcards, Browser: list localStorage keys)
 
 ### Variables & Arrays
 - ✓ LET (assignment)
@@ -110,9 +119,6 @@ _None currently - all previously stubbed features have been implemented_
 ## ❌ NOT IMPLEMENTED
 
 ### File Operations (Advanced)
-- KILL - Delete file
-- NAME - Rename file
-- FILES - List directory
 - FIELD - Define random file buffer
 - GET - Read random file record
 - PUT - Write random file record
