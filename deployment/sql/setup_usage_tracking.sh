@@ -53,7 +53,6 @@ if [ $? -eq 0 ]; then
     echo "✓ Usage tracking database setup complete!"
     echo
     echo "Tables created:"
-    echo "  - page_visits"
     echo "  - ide_sessions"
     echo "  - program_executions"
     echo "  - feature_usage"

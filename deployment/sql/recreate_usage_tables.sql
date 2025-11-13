@@ -1,19 +1,6 @@
 -- Recreate MBASIC usage tracking tables (without touching existing error logging tables)
 USE mbasic_logs;
 
-CREATE TABLE IF NOT EXISTS page_visits (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    page_path VARCHAR(255) NOT NULL,
-    referrer VARCHAR(512),
-    user_agent VARCHAR(512),
-    ip_address VARCHAR(45),
-    session_id VARCHAR(64),
-    INDEX idx_timestamp (timestamp),
-    INDEX idx_page_path (page_path),
-    INDEX idx_session_id (session_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 CREATE TABLE IF NOT EXISTS ide_sessions (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     session_id VARCHAR(64) NOT NULL UNIQUE,
@@ -59,7 +46,6 @@ CREATE TABLE IF NOT EXISTS feature_usage (
 
 CREATE TABLE IF NOT EXISTS daily_usage_summary (
     date DATE PRIMARY KEY,
-    page_visits INT DEFAULT 0,
     unique_visitors INT DEFAULT 0,
     ide_sessions INT DEFAULT 0,
     programs_run INT DEFAULT 0,

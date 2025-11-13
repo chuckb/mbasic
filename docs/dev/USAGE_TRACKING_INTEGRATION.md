@@ -1,7 +1,9 @@
 # Usage Tracking Integration
 
+> **Note**: The `page_visits` table and `/api/track-visit` endpoint mentioned in this document have been removed as dead code (2025-11-13). See `docs/dev/PAGE_VISITS_CLEANUP.md` for details. Only IDE session tracking is currently active.
+
 ## Overview
-Custom usage tracking has been added to log website and IDE usage to MySQL database.
+Custom usage tracking has been added to log IDE usage to MySQL database.
 
 ## Database Schema
 Location: `deployment/sql/usage_tracking_schema.sql`
