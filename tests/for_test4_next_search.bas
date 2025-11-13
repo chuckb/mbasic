@@ -1,0 +1,14 @@
+10 REM Test: NEXT searches up stack
+20 PRINT "Testing NEXT stack search..."
+30 FOR I=1 TO 2
+40 PRINT "Outer I=";I
+50 GOTO 100
+60 FOR I=1 TO 3
+70 PRINT "Inner I=";I
+80 NEXT I
+90 GOTO 120
+100 FOR I=1 TO 3
+110 PRINT "Middle I=";I
+120 NEXT I
+130 PRINT "After NEXT, I=";I
+140 SYSTEM
