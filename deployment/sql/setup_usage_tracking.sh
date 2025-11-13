@@ -55,7 +55,6 @@ if [ $? -eq 0 ]; then
     echo "Tables created:"
     echo "  - ide_sessions"
     echo "  - program_executions"
-    echo "  - feature_usage"
     echo "  - daily_usage_summary"
     echo
     echo "Next steps:"

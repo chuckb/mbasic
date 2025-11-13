@@ -32,18 +32,6 @@ CREATE TABLE IF NOT EXISTS program_executions (
     FOREIGN KEY (session_id) REFERENCES ide_sessions(session_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS feature_usage (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    session_id VARCHAR(64) NOT NULL,
-    timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    feature_name VARCHAR(64) NOT NULL,
-    feature_data JSON,
-    INDEX idx_session_id (session_id),
-    INDEX idx_feature_name (feature_name),
-    INDEX idx_timestamp (timestamp),
-    FOREIGN KEY (session_id) REFERENCES ide_sessions(session_id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 CREATE TABLE IF NOT EXISTS daily_usage_summary (
     date DATE PRIMARY KEY,
     unique_visitors INT DEFAULT 0,
