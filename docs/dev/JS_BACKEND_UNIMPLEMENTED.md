@@ -1,6 +1,6 @@
 # JavaScript Backend - Unimplemented Features
 
-## Status: Phase 7 (Error Handling) Complete
+## Status: Phase 8 (Formatted Output) Complete
 
 Phase 1-4: Core implementation ✓
 Phase 5-6: Enhanced features ✓
@@ -24,6 +24,10 @@ Phase 7: Error handling ✓
 - ERROR statement
 - ERL() and ERR() functions
 
+Phase 8: Formatted output ✓
+- PRINT USING (simplified implementation)
+- Format specifiers: #, !, &, \\
+
 This document tracks what's **not yet implemented** in the JavaScript backend.
 
 ---
@@ -39,6 +43,7 @@ This document tracks what's **not yet implemented** in the JavaScript backend.
 
 ### I/O
 - ✓ PRINT (with separators)
+- ✓ PRINT USING (formatted output - simplified, basic format specifiers)
 - ✓ READ / DATA / RESTORE
 - ✓ INPUT (browser: prompt, Node.js: readline - note: async in Node.js)
 
@@ -80,7 +85,6 @@ _None currently - all previously stubbed features have been implemented_
 - LINE INPUT - Read entire line including commas/quotes
 - INPUT # - Read from file
 - PRINT # - Write to file
-- PRINT USING - Formatted output
 - LPRINT - Print to line printer (could map to console)
 - WRITE - CSV-formatted output
 - WRITE # - Write to file
@@ -181,7 +185,7 @@ _None currently - all previously stubbed features have been implemented_
 
 ## 📊 Implementation Priority
 
-### ✅ COMPLETED (Phase 2-7)
+### ✅ COMPLETED (Phase 2-8)
 1. ✓ INPUT - User input (browser: prompt, Node.js: readline)
 2. ✓ RANDOMIZE - Proper random seeding
 3. ✓ TAB() / SPC() - Print formatting
@@ -194,10 +198,10 @@ _None currently - all previously stubbed features have been implemented_
 10. ✓ ON GOSUB - Computed subroutine calls
 11. ✓ ERASE - Reset arrays
 12. ✓ Error handling (ON ERROR, RESUME, ERROR, ERL, ERR)
+13. ✓ PRINT USING - Formatted output (simplified)
 
 ### MEDIUM (Nice to have)
 1. MID$ assignment - String modification
-2. PRINT USING - Formatted output
 
 ### LOW (Specialized/Advanced)
 1. File I/O (OPEN, CLOSE, etc.)

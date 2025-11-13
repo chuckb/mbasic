@@ -7,7 +7,7 @@
 Design and implement JavaScript compiler backend
 
 ## Status
-Phase 1-7: Implementation - Complete
+Phase 1-8: Implementation - Complete
 
 ## Branch
 js-backend
@@ -86,6 +86,15 @@ Generated code should run in:
 - [x] Added error handler state tracking
 - [x] Prevent recursive errors in error handler
 - [x] Successfully compiled test_error_handling.bas
+
+### Phase 8: Formatted Output (Complete)
+- [x] Implemented PRINT USING statement
+- [x] Implemented _print_using runtime function
+- [x] Support for # (numeric fields with width and decimals)
+- [x] Support for ! (first character of string)
+- [x] Support for & (entire string)
+- [x] Support for \\ (fixed-width string field)
+- [x] Successfully compiled aceyducey and hammurabi with PRINT USING
 
 ### Next Steps
 1. ✓ Test Super Star Trek (ultimate test!) - SUCCESS

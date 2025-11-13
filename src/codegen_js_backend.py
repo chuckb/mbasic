@@ -350,6 +350,80 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + '}')
         code.append('')
 
+        # PRINT USING function (simplified)
+        code.append(self.indent() + 'function _print_using(format, values) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// Simplified PRINT USING - handles basic numeric and string formatting')
+        code.append(self.indent() + 'let result = "";')
+        code.append(self.indent() + 'let valueIdx = 0;')
+        code.append(self.indent() + 'let i = 0;')
+        code.append(self.indent() + 'while (i < format.length) {')
+        self.indent_level += 1
+        code.append(self.indent() + 'const ch = format[i];')
+        code.append(self.indent() + 'if (ch === "#") {')
+        self.indent_level += 1
+        code.append(self.indent() + '// Numeric field - count # symbols')
+        code.append(self.indent() + 'let fieldWidth = 0;')
+        code.append(self.indent() + 'let decimals = 0;')
+        code.append(self.indent() + 'let sawDecimal = false;')
+        code.append(self.indent() + 'while (i < format.length && (format[i] === "#" || format[i] === ".")) {')
+        self.indent_level += 1
+        code.append(self.indent() + 'if (format[i] === ".") sawDecimal = true;')
+        code.append(self.indent() + 'else if (sawDecimal) decimals++;')
+        code.append(self.indent() + 'else fieldWidth++;')
+        code.append(self.indent() + 'i++;')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'if (valueIdx < values.length) {')
+        self.indent_level += 1
+        code.append(self.indent() + 'const val = Number(values[valueIdx++]);')
+        code.append(self.indent() + 'result += val.toFixed(decimals).padStart(fieldWidth + decimals + (decimals > 0 ? 1 : 0));')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'continue;')
+        self.indent_level -= 1
+        code.append(self.indent() + '} else if (ch === "!" && valueIdx < values.length) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// First character of string')
+        code.append(self.indent() + 'result += String(values[valueIdx++]).charAt(0);')
+        code.append(self.indent() + 'i++;')
+        code.append(self.indent() + 'continue;')
+        self.indent_level -= 1
+        code.append(self.indent() + '} else if (ch === "&" && valueIdx < values.length) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// Entire string')
+        code.append(self.indent() + 'result += String(values[valueIdx++]);')
+        code.append(self.indent() + 'i++;')
+        code.append(self.indent() + 'continue;')
+        self.indent_level -= 1
+        code.append(self.indent() + '} else if (ch === "\\\\" && i + 1 < format.length && format[i + 1] === "\\\\") {')
+        self.indent_level += 1
+        code.append(self.indent() + '// String field \\\\...\\\\')
+        code.append(self.indent() + 'let width = 2;')
+        code.append(self.indent() + 'i += 2;')
+        code.append(self.indent() + 'while (i < format.length && format[i] !== "\\\\") { width++; i++; }')
+        code.append(self.indent() + 'if (i < format.length) i++;')
+        code.append(self.indent() + 'if (valueIdx < values.length) {')
+        self.indent_level += 1
+        code.append(self.indent() + 'result += String(values[valueIdx++]).substring(0, width);')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'continue;')
+        self.indent_level -= 1
+        code.append(self.indent() + '} else {')
+        self.indent_level += 1
+        code.append(self.indent() + '// Literal character')
+        code.append(self.indent() + 'result += ch;')
+        code.append(self.indent() + 'i++;')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'return result;')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append('')
+
         # Math functions
         code.append(self.indent() + '// Math functions')
         code.append(self.indent() + 'const _abs = Math.abs;')
@@ -750,6 +824,8 @@ class JavaScriptBackend(CodeGenBackend):
 
         if isinstance(stmt, PrintStatementNode):
             code.extend(self._generate_print(stmt))
+        elif isinstance(stmt, PrintUsingStatementNode):
+            code.extend(self._generate_print_using(stmt))
         elif isinstance(stmt, LetStatementNode):
             code.extend(self._generate_let(stmt))
         elif isinstance(stmt, EndStatementNode):
@@ -853,6 +929,26 @@ class JavaScriptBackend(CodeGenBackend):
                 elif separator == ';':
                     # Semicolon means no space - already handled
                     pass
+
+        return code
+
+    def _generate_print_using(self, stmt: PrintUsingStatementNode) -> List[str]:
+        """Generate PRINT USING statement"""
+        code = []
+
+        # Skip file I/O for now
+        if stmt.file_number:
+            code.append(self.indent() + '// PRINT #file, USING not supported')
+            return code
+
+        format_expr = self._generate_expression(stmt.format_string)
+
+        # Generate array of expressions to format
+        expr_codes = [self._generate_expression(expr) for expr in stmt.expressions]
+        expr_array = '[' + ', '.join(expr_codes) + ']'
+
+        # Call _print_using runtime function
+        code.append(self.indent() + f'_print(_print_using({format_expr}, {expr_array}));')
 
         return code
 
