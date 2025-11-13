@@ -2,8 +2,8 @@
 
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
-**Last Updated:** 2025-11-12
-**Total Documents:** 206
+**Last Updated:** 2025-11-13
+**Total Documents:** 213
 
 ## What's Here
 
@@ -31,12 +31,13 @@ If you're contributing to MBASIC:
 
 ### UI Implementation
 
-- [Curses Editor Scrolling Todo](CURSES_EDITOR_SCROLLING_TODO.md)
 - [Web Error Logging](WEB_ERROR_LOGGING.md)
 - [Web Multiuser Deployment](WEB_MULTIUSER_DEPLOYMENT.md)
 
 ### Language Features
 
+- [For Loop Compiler Vs Interpreter](FOR_LOOP_COMPILER_VS_INTERPRETER.md)
+- [For Loop Stack Findings](FOR_LOOP_STACK_FINDINGS.md)
 - [Keybinding Systems](KEYBINDING_SYSTEMS.md)
 - [Mb25 Runtime Library Plan](MB25_RUNTIME_LIBRARY_PLAN.md)
 
@@ -44,6 +45,9 @@ If you're contributing to MBASIC:
 
 - [Backup Nonversioned Files](BACKUP_NONVERSIONED_FILES.md)
 - [Docs Url Configuration](DOCS_URL_CONFIGURATION.md)
+- [For Loop Implementation Summary](FOR_LOOP_IMPLEMENTATION_SUMMARY.md)
+- [For Loop Stack Implementation Options](FOR_LOOP_STACK_IMPLEMENTATION_OPTIONS.md)
+- [For Loop Variable Indexed Implementation](FOR_LOOP_VARIABLE_INDEXED_IMPLEMENTATION.md)
 - [Keybinding Macros Migration](KEYBINDING_MACROS_MIGRATION.md)
 - [Medium Severity Session Report](MEDIUM_SEVERITY_SESSION_REPORT.md)
 - [Pip Install Resource Location Plan](PIP_INSTALL_RESOURCE_LOCATION_PLAN.md)
@@ -56,9 +60,12 @@ If you're contributing to MBASIC:
 
 - [Debugger Issues Todo](DEBUGGER_ISSUES_TODO.md)
 - [Import Consistency Fix](IMPORT_CONSISTENCY_FIX.md)
+- [Ip Logging Fix](IP_LOGGING_FIX.md)
 - [Low Severity Fix Report](LOW_SEVERITY_FIX_REPORT.md)
 - [Random Fixes Todo](RANDOM_FIXES_TODO.md)
 - [Redis Storage Bug Fix](REDIS_STORAGE_BUG_FIX.md)
+- [Usage Tracking Debug](USAGE_TRACKING_DEBUG.md)
+- [Usage Tracking Enhanced Debug](USAGE_TRACKING_ENHANCED_DEBUG.md)
 
 ### Settings & Configuration
 
@@ -67,10 +74,10 @@ If you're contributing to MBASIC:
 ### Refactoring & Cleanup
 
 - [Architecture Cleanup Todo](ARCHITECTURE_CLEANUP_TODO.md)
+- [Page Visits Cleanup](PAGE_VISITS_CLEANUP.md)
 
 ### Work in Progress
 
-- [For Loop Jump Todo](FOR_LOOP_JUMP_TODO.md)
 - [Work In Progress Final Summary](WORK_IN_PROGRESS_FINAL_SUMMARY.md)
 - [Work In Progress](WORK_IN_PROGRESS.md)
 

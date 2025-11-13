@@ -7,7 +7,7 @@
 Design and implement JavaScript compiler backend
 
 ## Status
-Phase 0: Design and Specification - Complete
+Phase 1-4: Implementation - Complete
 
 ## Branch
 js-backend
@@ -18,22 +18,47 @@ Generated code should run in:
 - Browser (standalone HTML + JS)
 - Node.js (command-line via npm/node)
 
-## Current Phase: Design Complete
+## Completed
 
-### Completed
-- [x] Created design specification document
+### Phase 0: Design
+- [x] Created design specification document (docs/design/JAVASCRIPT_BACKEND_SPEC.md)
 - [x] Defined code generation strategy
 - [x] Planned control flow handling (switch-based PC)
 - [x] Designed runtime library structure
 - [x] Specified I/O handling for browser vs Node.js
-- [x] Outlined implementation phases
+
+### Phase 1-4: Implementation
+- [x] Created `src/codegen_js_backend.py` (800+ lines)
+- [x] Implemented variable declarations and array initialization
+- [x] Implemented expression generation (arithmetic, logic, strings, arrays)
+- [x] Implemented all statement types:
+  - [x] PRINT (with separators)
+  - [x] LET (including array assignment)
+  - [x] FOR/NEXT (variable-indexed with state tracking)
+  - [x] GOTO/ON GOTO
+  - [x] GOSUB/RETURN
+  - [x] IF/THEN/ELSE
+  - [x] WHILE/WEND
+  - [x] READ/DATA/RESTORE
+  - [x] END
+- [x] Implemented runtime library:
+  - [x] Print functions (browser and Node.js)
+  - [x] Math functions (ABS, INT, SQR, SIN, COS, TAN, ATN, LOG, EXP)
+  - [x] String functions (LEFT$, RIGHT$, MID$, LEN, CHR$, ASC, STR$, VAL)
+  - [x] RND function with seeding
+  - [x] GOSUB/RETURN stack
+  - [x] FOR/NEXT state tracking
+  - [x] DATA/READ/RESTORE support
+- [x] Added CLI integration (`--compile-js` and `--html` flags)
+- [x] Implemented HTML wrapper generation
+- [x] Tested with hello world program - successful compilation!
 
 ### Next Steps
-1. Create `src/codegen_js_backend.py` skeleton
-2. Implement basic code generation (variables, expressions)
-3. Implement control flow (FOR, GOTO, GOSUB)
-4. Create runtime library template
-5. Test with simple programs
+1. Test with more complex programs (loops, arrays, strings)
+2. Test Super Star Trek (ultimate test!)
+3. Fix any bugs discovered during testing
+4. Add INPUT support (currently stubbed out)
+5. Optimize generated code
 
 ## Key Design Decisions
 
