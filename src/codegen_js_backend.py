@@ -44,6 +44,7 @@ class JavaScriptBackend(CodeGenBackend):
         self.uses_data = False
         self.uses_random = False
         self.uses_error_handling = False
+        self.uses_file_io = False
 
         # DATA/READ/RESTORE support
         self.data_values: List[Any] = []
@@ -270,13 +271,30 @@ class JavaScriptBackend(CodeGenBackend):
         for line in program.lines:
             for stmt in line.statements:
                 if isinstance(stmt, InputStatementNode):
-                    self.uses_input = True
+                    if stmt.file_number:
+                        self.uses_file_io = True
+                    else:
+                        self.uses_input = True
                 elif isinstance(stmt, LineInputStatementNode):
-                    self.uses_line_input = True
+                    if stmt.file_number:
+                        self.uses_file_io = True
+                    else:
+                        self.uses_line_input = True
+                elif isinstance(stmt, (PrintStatementNode, PrintUsingStatementNode)):
+                    if stmt.file_number:
+                        self.uses_file_io = True
                 elif isinstance(stmt, WriteStatementNode):
-                    self.uses_write = True
+                    if stmt.file_number:
+                        self.uses_file_io = True
+                    else:
+                        self.uses_write = True
                 elif isinstance(stmt, LprintStatementNode):
-                    self.uses_lprint = True
+                    if stmt.file_number:
+                        self.uses_file_io = True
+                    else:
+                        self.uses_lprint = True
+                elif isinstance(stmt, (OpenStatementNode, CloseStatementNode, ResetStatementNode)):
+                    self.uses_file_io = True
                 elif isinstance(stmt, GosubStatementNode):
                     self.uses_gosub = True
                 elif isinstance(stmt, ReadStatementNode):
@@ -694,6 +712,203 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '}')
             code.append('')
 
+        # File I/O support
+        if self.uses_file_io:
+            code.append(self.indent() + '// File I/O support')
+            code.append(self.indent() + 'const _files = {};  // Map file number -> file object')
+            code.append('')
+
+            # File operations wrapper
+            code.append(self.indent() + '// File operations')
+            code.append(self.indent() + 'const _fileOps = {')
+            self.indent_level += 1
+
+            # Node.js file operations
+            code.append(self.indent() + 'nodejs: {')
+            self.indent_level += 1
+            code.append(self.indent() + 'open: (filenum, filename, mode) => {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const fs = require("fs");')
+            code.append(self.indent() + 'if (mode === "I") {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Input mode - read entire file')
+            code.append(self.indent() + 'const content = fs.readFileSync(filename, "utf8");')
+            code.append(self.indent() + '_files[filenum] = { mode: "I", content, pos: 0, filename };')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else if (mode === "O") {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Output mode - write to file')
+            code.append(self.indent() + '_files[filenum] = { mode: "O", content: "", filename };')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else if (mode === "A") {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Append mode')
+            code.append(self.indent() + 'let content = "";')
+            code.append(self.indent() + 'try { content = fs.readFileSync(filename, "utf8"); } catch(e) {}')
+            code.append(self.indent() + '_files[filenum] = { mode: "A", content, filename };')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + '_error("Unsupported file mode: " + mode);')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '},')
+
+            code.append(self.indent() + 'close: (filenum) => {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const file = _files[filenum];')
+            code.append(self.indent() + 'if (file && (file.mode === "O" || file.mode === "A")) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const fs = require("fs");')
+            code.append(self.indent() + 'fs.writeFileSync(file.filename, file.content, "utf8");')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append(self.indent() + 'delete _files[filenum];')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '},')
+
+            # Browser file operations (using localStorage)
+            code.append(self.indent() + 'browser: {')
+            self.indent_level += 1
+            code.append(self.indent() + 'open: (filenum, filename, mode) => {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const key = "mbasic_file_" + filename;')
+            code.append(self.indent() + 'if (mode === "I") {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const content = localStorage.getItem(key) || "";')
+            code.append(self.indent() + '_files[filenum] = { mode: "I", content, pos: 0, filename };')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else if (mode === "O") {')
+            self.indent_level += 1
+            code.append(self.indent() + '_files[filenum] = { mode: "O", content: "", filename };')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else if (mode === "A") {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const content = localStorage.getItem(key) || "";')
+            code.append(self.indent() + '_files[filenum] = { mode: "A", content, filename };')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + '_error("Unsupported file mode: " + mode);')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '},')
+
+            code.append(self.indent() + 'close: (filenum) => {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const file = _files[filenum];')
+            code.append(self.indent() + 'if (file && (file.mode === "O" || file.mode === "A")) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const key = "mbasic_file_" + file.filename;')
+            code.append(self.indent() + 'localStorage.setItem(key, file.content);')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append(self.indent() + 'delete _files[filenum];')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '};')
+            code.append('')
+
+            # Helper functions
+            code.append(self.indent() + 'function _fopen(filenum, filename, mode) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'if (typeof process !== "undefined") {')
+            self.indent_level += 1
+            code.append(self.indent() + '_fileOps.nodejs.open(filenum, filename, mode);')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + '_fileOps.browser.open(filenum, filename, mode);')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
+            code.append(self.indent() + 'function _fclose(filenum) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'if (filenum === undefined) {')
+            self.indent_level += 1
+            code.append(self.indent() + '// CLOSE with no arguments - close all files')
+            code.append(self.indent() + 'for (const fn in _files) {')
+            self.indent_level += 1
+            code.append(self.indent() + '_fclose(parseInt(fn));')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + 'if (typeof process !== "undefined") {')
+            self.indent_level += 1
+            code.append(self.indent() + '_fileOps.nodejs.close(filenum);')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + '_fileOps.browser.close(filenum);')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
+            code.append(self.indent() + 'function _fprint(filenum, str, newline = true) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const file = _files[filenum];')
+            code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
+            code.append(self.indent() + 'if (file.mode !== "O" && file.mode !== "A") _error("File #" + filenum + " not open for output");')
+            code.append(self.indent() + 'file.content += String(str);')
+            code.append(self.indent() + 'if (newline) file.content += "\\n";')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
+            code.append(self.indent() + 'function _finput(filenum) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const file = _files[filenum];')
+            code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
+            code.append(self.indent() + 'if (file.mode !== "I") _error("File #" + filenum + " not open for input");')
+            code.append(self.indent() + '// Read one value (comma or newline delimited)')
+            code.append(self.indent() + 'let value = "";')
+            code.append(self.indent() + 'while (file.pos < file.content.length) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const ch = file.content[file.pos++];')
+            code.append(self.indent() + 'if (ch === "," || ch === "\\n") break;')
+            code.append(self.indent() + 'value += ch;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append(self.indent() + 'return value.trim();')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
+            code.append(self.indent() + 'function _fline_input(filenum) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const file = _files[filenum];')
+            code.append(self.indent() + 'if (!file) _error("File #" + filenum + " not open");')
+            code.append(self.indent() + 'if (file.mode !== "I") _error("File #" + filenum + " not open for input");')
+            code.append(self.indent() + '// Read one line')
+            code.append(self.indent() + 'let line = "";')
+            code.append(self.indent() + 'while (file.pos < file.content.length) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const ch = file.content[file.pos++];')
+            code.append(self.indent() + 'if (ch === "\\n") break;')
+            code.append(self.indent() + 'line += ch;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append(self.indent() + 'return line;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
         # GOSUB/RETURN
         if self.uses_gosub:
             code.append(self.indent() + '// GOSUB/RETURN stack')
@@ -990,6 +1205,12 @@ class JavaScriptBackend(CodeGenBackend):
             code.extend(self._generate_mid_assignment(stmt))
         elif isinstance(stmt, EraseStatementNode):
             code.extend(self._generate_erase(stmt))
+        elif isinstance(stmt, OpenStatementNode):
+            code.extend(self._generate_open(stmt))
+        elif isinstance(stmt, CloseStatementNode):
+            code.extend(self._generate_close(stmt))
+        elif isinstance(stmt, ResetStatementNode):
+            code.extend(self._generate_reset(stmt))
         elif isinstance(stmt, OnErrorStatementNode):
             code.extend(self._generate_on_error(stmt))
         elif isinstance(stmt, ErrorStatementNode):
@@ -1014,9 +1235,16 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate PRINT statement"""
         code = []
 
+        # Choose print function based on file number
+        if stmt.file_number:
+            filenum_expr = self._generate_expression(stmt.file_number)
+            print_func = f'_fprint({filenum_expr}, '
+        else:
+            print_func = '_print('
+
         if not stmt.expressions:
             # Empty PRINT - just newline
-            code.append(self.indent() + '_print("");')
+            code.append(self.indent() + f'{print_func}"");')
         else:
             for i, expr in enumerate(stmt.expressions):
                 is_last = (i == len(stmt.expressions) - 1)
@@ -1028,11 +1256,11 @@ class JavaScriptBackend(CodeGenBackend):
                 # Newline if last item and no separator, or separator is None
                 newline = 'true' if (is_last and separator is None) else 'false'
 
-                code.append(self.indent() + f'_print({expr_code}, {newline});')
+                code.append(self.indent() + f'{print_func}{expr_code}, {newline});')
 
                 # Handle separator (comma for tab, semicolon for no space)
                 if separator == ',':
-                    code.append(self.indent() + '_print("\\t", false);')
+                    code.append(self.indent() + f'{print_func}"\\t", false);')
                 elif separator == ';':
                     # Semicolon means no space - already handled
                     pass
@@ -1406,26 +1634,45 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate INPUT statement"""
         code = []
 
-        # Build prompt string
-        if stmt.prompt:
-            prompt_str = self._escape_string(stmt.prompt)
+        # Check for file I/O
+        if stmt.file_number:
+            filenum_expr = self._generate_expression(stmt.file_number)
+            # Generate input for each variable from file
+            for var in stmt.variables:
+                var_name = self._mangle_var_name(var.name + (var.type_suffix or ''))
+                var_type = var.type_suffix or ''
+
+                if var_type == '$':
+                    # String input from file
+                    code.append(self.indent() + f'{var_name} = _finput({filenum_expr});')
+                elif var_type == '%':
+                    # Integer input from file
+                    code.append(self.indent() + f'{var_name} = parseInt(_finput({filenum_expr})) || 0;')
+                else:
+                    # Numeric input from file
+                    code.append(self.indent() + f'{var_name} = parseFloat(_finput({filenum_expr})) || 0;')
         else:
-            prompt_str = "? "
-
-        # Generate input for each variable
-        for var in stmt.variables:
-            var_name = self._mangle_var_name(var.name + (var.type_suffix or ''))
-            var_type = var.type_suffix or ''
-
-            if var_type == '$':
-                # String input
-                code.append(self.indent() + f'{var_name} = _input_str("{prompt_str}");')
-            elif var_type == '%':
-                # Integer input
-                code.append(self.indent() + f'{var_name} = _input_int("{prompt_str}");')
+            # Interactive input
+            # Build prompt string
+            if stmt.prompt:
+                prompt_str = self._escape_string(stmt.prompt)
             else:
-                # Numeric input (single/double precision)
-                code.append(self.indent() + f'{var_name} = _input_num("{prompt_str}");')
+                prompt_str = "? "
+
+            # Generate input for each variable
+            for var in stmt.variables:
+                var_name = self._mangle_var_name(var.name + (var.type_suffix or ''))
+                var_type = var.type_suffix or ''
+
+                if var_type == '$':
+                    # String input
+                    code.append(self.indent() + f'{var_name} = _input_str("{prompt_str}");')
+                elif var_type == '%':
+                    # Integer input
+                    code.append(self.indent() + f'{var_name} = _input_int("{prompt_str}");')
+                else:
+                    # Numeric input (single/double precision)
+                    code.append(self.indent() + f'{var_name} = _input_num("{prompt_str}");')
 
         return code
 
@@ -1433,20 +1680,22 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate LINE INPUT statement - reads entire line without parsing"""
         code = []
 
-        # Skip file I/O for now
-        if stmt.file_number:
-            code.append(self.indent() + '// LINE INPUT #file not supported')
-            return code
-
-        # Build prompt string
-        if stmt.prompt:
-            prompt_expr = self._generate_expression(stmt.prompt)
-        else:
-            prompt_expr = '"? "'
-
         # LINE INPUT always reads into a string variable
         var_name = self._mangle_var_name(stmt.variable.name + (stmt.variable.type_suffix or ''))
-        code.append(self.indent() + f'{var_name} = _line_input({prompt_expr});')
+
+        # Check for file I/O
+        if stmt.file_number:
+            filenum_expr = self._generate_expression(stmt.file_number)
+            code.append(self.indent() + f'{var_name} = _fline_input({filenum_expr});')
+        else:
+            # Interactive input
+            # Build prompt string
+            if stmt.prompt:
+                prompt_expr = self._generate_expression(stmt.prompt)
+            else:
+                prompt_expr = '"? "'
+
+            code.append(self.indent() + f'{var_name} = _line_input({prompt_expr});')
 
         return code
 
@@ -1610,6 +1859,35 @@ class JavaScriptBackend(CodeGenBackend):
 
                 # Recreate the array with default values
                 code.append(self.indent() + f'{js_name} = {self._create_array_init(dimensions, init_value)};')
+        return code
+
+    def _generate_open(self, stmt: OpenStatementNode) -> List[str]:
+        """Generate OPEN statement - open file for I/O"""
+        code = []
+        filenum_expr = self._generate_expression(stmt.file_number)
+        filename_expr = self._generate_expression(stmt.filename)
+        mode = stmt.mode  # "I", "O", "A", or "R"
+
+        code.append(self.indent() + f'_fopen({filenum_expr}, {filename_expr}, "{mode}");')
+        return code
+
+    def _generate_close(self, stmt: CloseStatementNode) -> List[str]:
+        """Generate CLOSE statement - close file(s)"""
+        code = []
+        if not stmt.file_numbers:
+            # CLOSE with no arguments - close all files
+            code.append(self.indent() + '_fclose();')
+        else:
+            # CLOSE #1, #2, ...
+            for file_number in stmt.file_numbers:
+                filenum_expr = self._generate_expression(file_number)
+                code.append(self.indent() + f'_fclose({filenum_expr});')
+        return code
+
+    def _generate_reset(self, stmt: ResetStatementNode) -> List[str]:
+        """Generate RESET statement - close all open files"""
+        code = []
+        code.append(self.indent() + '_fclose();  // RESET - close all files')
         return code
 
     def _generate_on_error(self, stmt: OnErrorStatementNode) -> List[str]:

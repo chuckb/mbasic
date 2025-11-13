@@ -105,6 +105,9 @@ Generated code should run in:
 - [x] Implemented WRITE statement (CSV-formatted output with automatic quoting)
 - [x] Implemented LPRINT statement (print to line printer / console.log)
 - [x] Implemented MID$ assignment (modify substring in place)
+- [x] Implemented file I/O (OPEN, CLOSE, RESET, PRINT#, INPUT#, LINE INPUT#)
+  - Node.js: Real filesystem using fs module (readFileSync/writeFileSync)
+  - Browser: Virtual filesystem using localStorage
 
 ### Testing Results
 - [x] Super Star Trek - 3524 lines of JavaScript generated successfully
@@ -116,18 +119,20 @@ Generated code should run in:
 - [x] HTML wrapper generation working with retro terminal styling
 
 ### Completion Status
-✅ **Phase 1-8 COMPLETE**
-- All core MBASIC 5.21 features implemented (~95% coverage)
+✅ **Phase 1-8 COMPLETE + File I/O**
+- All core MBASIC 5.21 features implemented (~99% coverage)
 - Successfully compiles complex programs including Super Star Trek
 - Generates clean, working JavaScript for browser and Node.js
 - HTML wrapper with retro terminal styling
 - Comprehensive error handling
+- File I/O support (Node.js: fs module, Browser: localStorage)
 
 ### Next Steps (Optional Enhancements)
-1. Add file I/O support (OPEN, CLOSE, PRINT #, INPUT #) - Low priority
-2. Optimize generated code (reduce redundant runtime functions)
-3. Test in real browsers with complex programs
-4. Consider CHAIN statement for program chaining - Low priority
+1. Test file I/O with real programs in Node.js
+2. Test file I/O in browser with localStorage
+3. Optimize generated code (reduce redundant runtime functions)
+4. Consider advanced file features (WRITE#, KILL, NAME, EOF, LOF) - Low priority
+5. Consider CHAIN statement for program chaining - Low priority
 
 **Note:** Only implementing features from MBASIC 5.21 manual. CLS/LOCATE/COLOR are NOT in MBASIC 5.21 (those are GW-BASIC/QuickBASIC features).
 

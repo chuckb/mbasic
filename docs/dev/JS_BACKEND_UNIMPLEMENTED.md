@@ -37,6 +37,9 @@ New Features (2025-11-13):
 - WRITE statement (CSV-formatted output with automatic quoting)
 - LPRINT statement (print to line printer / console.log)
 - MID$ assignment (modify substring in place)
+- File I/O support (OPEN, CLOSE, RESET, PRINT#, INPUT#, LINE INPUT#)
+  - Node.js: Uses fs module for real file operations
+  - Browser: Uses localStorage as virtual filesystem
 
 This document tracks what's **not yet implemented** in the JavaScript backend.
 
@@ -54,11 +57,15 @@ This document tracks what's **not yet implemented** in the JavaScript backend.
 ### I/O
 - ✓ PRINT (with separators)
 - ✓ PRINT USING (formatted output - simplified, basic format specifiers)
+- ✓ PRINT# (write to file)
 - ✓ WRITE (CSV-formatted output with automatic quoting)
 - ✓ LPRINT (print to line printer / console.log)
 - ✓ READ / DATA / RESTORE
 - ✓ INPUT (browser: prompt, Node.js: readline - note: async in Node.js)
+- ✓ INPUT# (read from file)
 - ✓ LINE INPUT (reads entire line without parsing, browser & Node.js)
+- ✓ LINE INPUT# (read line from file)
+- ✓ OPEN / CLOSE / RESET (file operations - Node.js: fs, Browser: localStorage)
 
 ### Variables & Arrays
 - ✓ LET (assignment)
@@ -94,15 +101,8 @@ _None currently - all previously stubbed features have been implemented_
 
 ## ❌ NOT IMPLEMENTED
 
-### I/O Statements
-- INPUT # - Read from file
-- PRINT # - Write to file
-- WRITE # - Write to file
-
-### File Operations
-- OPEN - Open file for I/O
-- CLOSE - Close file
-- RESET - Close all files
+### File Operations (Advanced)
+- WRITE # - Write to file (CSV format)
 - KILL - Delete file
 - NAME - Rename file
 - FILES - List directory
