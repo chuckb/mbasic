@@ -941,6 +941,139 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '}')
             code.append('')
 
+            # File management functions
+            code.append(self.indent() + 'function _fkill(filename) {')
+            self.indent_level += 1
+            code.append(self.indent() + '// KILL - Delete file')
+            code.append(self.indent() + 'if (typeof process !== "undefined") {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const fs = require("fs");')
+            code.append(self.indent() + 'try {')
+            self.indent_level += 1
+            code.append(self.indent() + 'fs.unlinkSync(filename);')
+            self.indent_level -= 1
+            code.append(self.indent() + '} catch (e) {')
+            self.indent_level += 1
+            code.append(self.indent() + '_error("Cannot delete file: " + filename);')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Browser - remove from localStorage')
+            code.append(self.indent() + 'const key = "mbasic_file_" + filename;')
+            code.append(self.indent() + 'if (localStorage.getItem(key) !== null) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'localStorage.removeItem(key);')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + '_error("File not found: " + filename);')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
+            code.append(self.indent() + 'function _fname(oldname, newname) {')
+            self.indent_level += 1
+            code.append(self.indent() + '// NAME - Rename file')
+            code.append(self.indent() + 'if (typeof process !== "undefined") {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const fs = require("fs");')
+            code.append(self.indent() + 'try {')
+            self.indent_level += 1
+            code.append(self.indent() + 'fs.renameSync(oldname, newname);')
+            self.indent_level -= 1
+            code.append(self.indent() + '} catch (e) {')
+            self.indent_level += 1
+            code.append(self.indent() + '_error("Cannot rename file: " + oldname);')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Browser - rename in localStorage')
+            code.append(self.indent() + 'const oldkey = "mbasic_file_" + oldname;')
+            code.append(self.indent() + 'const newkey = "mbasic_file_" + newname;')
+            code.append(self.indent() + 'const content = localStorage.getItem(oldkey);')
+            code.append(self.indent() + 'if (content !== null) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'localStorage.setItem(newkey, content);')
+            code.append(self.indent() + 'localStorage.removeItem(oldkey);')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + '_error("File not found: " + oldname);')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
+            code.append(self.indent() + 'function _ffiles(filespec) {')
+            self.indent_level += 1
+            code.append(self.indent() + '// FILES - List directory')
+            code.append(self.indent() + 'if (typeof process !== "undefined") {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const fs = require("fs");')
+            code.append(self.indent() + 'try {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const files = fs.readdirSync(".");')
+            code.append(self.indent() + '// Simple pattern matching (* and ?)')
+            code.append(self.indent() + 'const pattern = filespec.replace(/\\*/g, ".*").replace(/\\?/g, ".");')
+            code.append(self.indent() + 'const regex = new RegExp("^" + pattern + "$", "i");')
+            code.append(self.indent() + 'const matches = files.filter(f => regex.test(f));')
+            code.append(self.indent() + 'if (matches.length > 0) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'console.log(matches.join("  "));')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + 'console.log("File not found");')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '} catch (e) {')
+            self.indent_level += 1
+            code.append(self.indent() + '_error("Cannot list directory");')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + '// Browser - list files in localStorage')
+            code.append(self.indent() + 'const prefix = "mbasic_file_";')
+            code.append(self.indent() + 'const files = [];')
+            code.append(self.indent() + 'for (let i = 0; i < localStorage.length; i++) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'const key = localStorage.key(i);')
+            code.append(self.indent() + 'if (key.startsWith(prefix)) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'files.push(key.substring(prefix.length));')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append(self.indent() + 'if (files.length > 0) {')
+            self.indent_level += 1
+            code.append(self.indent() + 'console.log(files.join("  "));')
+            self.indent_level -= 1
+            code.append(self.indent() + '} else {')
+            self.indent_level += 1
+            code.append(self.indent() + 'console.log("File not found");')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
+            code.append('')
+
         # GOSUB/RETURN
         if self.uses_gosub:
             code.append(self.indent() + '// GOSUB/RETURN stack')
@@ -1243,6 +1376,12 @@ class JavaScriptBackend(CodeGenBackend):
             code.extend(self._generate_close(stmt))
         elif isinstance(stmt, ResetStatementNode):
             code.extend(self._generate_reset(stmt))
+        elif isinstance(stmt, KillStatementNode):
+            code.extend(self._generate_kill(stmt))
+        elif isinstance(stmt, NameStatementNode):
+            code.extend(self._generate_name(stmt))
+        elif isinstance(stmt, FilesStatementNode):
+            code.extend(self._generate_files(stmt))
         elif isinstance(stmt, OnErrorStatementNode):
             code.extend(self._generate_on_error(stmt))
         elif isinstance(stmt, ErrorStatementNode):
@@ -1926,6 +2065,31 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate RESET statement - close all open files"""
         code = []
         code.append(self.indent() + '_fclose();  // RESET - close all files')
+        return code
+
+    def _generate_kill(self, stmt: KillStatementNode) -> List[str]:
+        """Generate KILL statement - delete file"""
+        code = []
+        filename_expr = self._generate_expression(stmt.filename)
+        code.append(self.indent() + f'_fkill({filename_expr});')
+        return code
+
+    def _generate_name(self, stmt: NameStatementNode) -> List[str]:
+        """Generate NAME statement - rename file"""
+        code = []
+        old_filename_expr = self._generate_expression(stmt.old_filename)
+        new_filename_expr = self._generate_expression(stmt.new_filename)
+        code.append(self.indent() + f'_fname({old_filename_expr}, {new_filename_expr});')
+        return code
+
+    def _generate_files(self, stmt: FilesStatementNode) -> List[str]:
+        """Generate FILES statement - list directory"""
+        code = []
+        if stmt.filespec:
+            filespec_expr = self._generate_expression(stmt.filespec)
+            code.append(self.indent() + f'_ffiles({filespec_expr});')
+        else:
+            code.append(self.indent() + '_ffiles("*");')
         return code
 
     def _generate_on_error(self, stmt: OnErrorStatementNode) -> List[str]:
