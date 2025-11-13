@@ -32,19 +32,35 @@ def get_client_ip(request) -> str:
     Returns:
         Client IP address (from X-Forwarded-For if available, else direct connection IP)
     """
+    import sys
+
+    # Debug: Log all headers to see what we're receiving
+    if hasattr(request, 'headers'):
+        sys.stderr.write(f"DEBUG: Request headers: {dict(request.headers)}\n")
+        sys.stderr.flush()
+
     # Check X-Forwarded-For header (set by nginx ingress in k8s cluster)
     forwarded = request.headers.get('X-Forwarded-For') or request.headers.get('x-forwarded-for')
     if forwarded:
         # Take first IP (real client IP before proxies)
-        return forwarded.split(',')[0].strip()
+        client_ip = forwarded.split(',')[0].strip()
+        sys.stderr.write(f"DEBUG: Using X-Forwarded-For IP: {client_ip}\n")
+        sys.stderr.flush()
+        return client_ip
 
     # Check X-Real-IP header (alternative header used by some proxies)
     real_ip = request.headers.get('X-Real-IP') or request.headers.get('x-real-ip')
     if real_ip:
-        return real_ip.strip()
+        client_ip = real_ip.strip()
+        sys.stderr.write(f"DEBUG: Using X-Real-IP: {client_ip}\n")
+        sys.stderr.flush()
+        return client_ip
 
     # Fall back to direct connection IP (will be ingress IP in k8s)
-    return request.client.host if request.client else 'unknown'
+    fallback_ip = request.client.host if request.client else 'unknown'
+    sys.stderr.write(f"DEBUG: Using fallback IP (request.client.host): {fallback_ip}\n")
+    sys.stderr.flush()
+    return fallback_ip
 
 
 class SimpleWebIOHandler(IOHandler):
