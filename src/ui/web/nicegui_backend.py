@@ -1201,8 +1201,9 @@ class NiceGUIBackend(UIBackend):
             # Get lines executed from runtime
             lines_executed = self.runtime.lines_executed if hasattr(self.runtime, 'lines_executed') else 0
 
-            # Get session ID
-            session_id = app.storage.client.id if app.storage.client else 'unknown'
+            # Get session ID from context (not app.storage.client.id which doesn't exist)
+            from nicegui import context
+            session_id = context.client.id if context.client else 'unknown'
 
             # Track the execution
             tracker.track_program_execution(
@@ -3865,27 +3866,19 @@ def start_web_ui(port=8080):
 
         # Track IDE session start
         tracker = get_usage_tracker()
-        sys.stderr.write(f"DEBUG: Tracker object: {tracker}, enabled: {tracker.enabled if tracker else 'N/A'}\n")
-        sys.stderr.flush()
         if tracker:
             try:
                 from nicegui import context
-                session_id = app.storage.client.id
-                user_agent = context.client.request.headers.get('user-agent') if context.client.request else None
-                ip = context.client.request.client.host if context.client.request and context.client.request.client else None
-                sys.stderr.write(f"DEBUG: About to call start_ide_session(session_id={session_id})\n")
-                sys.stderr.flush()
+                # Use context.client.id for session ID (not app.storage.client.id)
+                session_id = context.client.id if context.client else 'unknown'
+                user_agent = context.client.request.headers.get('user-agent') if context.client and context.client.request else None
+                ip = context.client.request.client.host if context.client and context.client.request and context.client.request.client else None
                 tracker.start_ide_session(session_id, user_agent, ip)
-                sys.stderr.write(f"DEBUG: start_ide_session() completed\n")
-                sys.stderr.flush()
             except Exception as e:
                 sys.stderr.write(f"ERROR: Failed to track session start: {e}\n")
                 import traceback
                 sys.stderr.write(f"Traceback: {traceback.format_exc()}\n")
                 sys.stderr.flush()
-        else:
-            sys.stderr.write(f"DEBUG: Tracker is None, not tracking session\n")
-            sys.stderr.flush()
 
         # Restore state if available
         if saved_state:
@@ -3922,7 +3915,9 @@ def start_web_ui(port=8080):
             tracker = get_usage_tracker()
             if tracker:
                 try:
-                    tracker.end_ide_session(app.storage.client.id)
+                    from nicegui import context
+                    session_id = context.client.id if context.client else 'unknown'
+                    tracker.end_ide_session(session_id)
                 except Exception as e:
                     sys.stderr.write(f"Warning: Failed to track session end: {e}\n")
                     sys.stderr.flush()
