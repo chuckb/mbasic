@@ -986,6 +986,8 @@ class JavaScriptBackend(CodeGenBackend):
             code.extend(self._generate_stop(stmt))
         elif isinstance(stmt, SwapStatementNode):
             code.extend(self._generate_swap(stmt))
+        elif isinstance(stmt, MidAssignmentStatementNode):
+            code.extend(self._generate_mid_assignment(stmt))
         elif isinstance(stmt, EraseStatementNode):
             code.extend(self._generate_erase(stmt))
         elif isinstance(stmt, OnErrorStatementNode):
@@ -1551,6 +1553,43 @@ class JavaScriptBackend(CodeGenBackend):
 
         # Use destructuring assignment for clean swap
         code.append(self.indent() + f'[{var1_name}, {var2_name}] = [{var2_name}, {var1_name}];')
+        return code
+
+    def _generate_mid_assignment(self, stmt: MidAssignmentStatementNode) -> List[str]:
+        """Generate MID$ assignment - modifies substring in place
+
+        Syntax: MID$(string_var, start, length) = value
+        Replaces 'length' characters starting at 'start' (1-based) with 'value'
+        """
+        code = []
+
+        # Generate the variable reference (can be simple variable or array element)
+        var_expr = self._generate_expression(stmt.string_var)
+        start_expr = self._generate_expression(stmt.start)
+        length_expr = self._generate_expression(stmt.length)
+        value_expr = self._generate_expression(stmt.value)
+
+        # MID$ assignment in JavaScript:
+        # var = var.substring(0, start-1) + value.substring(0, length) + var.substring(start-1+length)
+        # Need to handle the case where value is shorter/longer than length
+
+        code.append(self.indent() + '{')
+        self.indent_level += 1
+
+        # Save the expressions to temporary variables to avoid re-evaluation
+        code.append(self.indent() + f'const _mid_start = {start_expr};')
+        code.append(self.indent() + f'const _mid_len = {length_expr};')
+        code.append(self.indent() + f'const _mid_val = String({value_expr}).substring(0, _mid_len);')
+        code.append(self.indent() + f'const _mid_str = String({var_expr});')
+
+        # Build the new string
+        code.append(self.indent() +
+                   f'{var_expr} = _mid_str.substring(0, _mid_start - 1) + ' +
+                   f'_mid_val + _mid_str.substring(_mid_start - 1 + _mid_len);')
+
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+
         return code
 
     def _generate_erase(self, stmt: EraseStatementNode) -> List[str]:

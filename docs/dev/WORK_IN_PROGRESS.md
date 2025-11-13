@@ -104,6 +104,7 @@ Generated code should run in:
 - [x] Implemented LINE INPUT statement (reads entire line without parsing, browser & Node.js)
 - [x] Implemented WRITE statement (CSV-formatted output with automatic quoting)
 - [x] Implemented LPRINT statement (print to line printer / console.log)
+- [x] Implemented MID$ assignment (modify substring in place)
 
 ### Testing Results
 - [x] Super Star Trek - 3524 lines of JavaScript generated successfully
@@ -123,10 +124,10 @@ Generated code should run in:
 - Comprehensive error handling
 
 ### Next Steps (Optional Enhancements)
-1. Implement medium-priority MBASIC 5.21 features (MID$ assignment)
-2. Add file I/O support (OPEN, CLOSE, PRINT #, INPUT #)
-3. Optimize generated code (reduce redundant runtime functions)
-4. Test in real browsers with complex programs
+1. Add file I/O support (OPEN, CLOSE, PRINT #, INPUT #) - Low priority
+2. Optimize generated code (reduce redundant runtime functions)
+3. Test in real browsers with complex programs
+4. Consider CHAIN statement for program chaining - Low priority
 
 **Note:** Only implementing features from MBASIC 5.21 manual. CLS/LOCATE/COLOR are NOT in MBASIC 5.21 (those are GW-BASIC/QuickBASIC features).
 

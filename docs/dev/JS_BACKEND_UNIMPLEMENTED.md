@@ -36,6 +36,7 @@ New Features (2025-11-13):
 - LINE INPUT statement (reads entire line without parsing, browser & Node.js support)
 - WRITE statement (CSV-formatted output with automatic quoting)
 - LPRINT statement (print to line printer / console.log)
+- MID$ assignment (modify substring in place)
 
 This document tracks what's **not yet implemented** in the JavaScript backend.
 
@@ -112,9 +113,6 @@ _None currently - all previously stubbed features have been implemented_
 - LOF - Length of file (would be function)
 - EOF - End of file test (would be function)
 - LOC - Current file position (would be function)
-
-### String Operations
-- MID$ assignment - Modify substring in place
 
 ### Program Control
 - STOP - Halt execution (like END but different)
