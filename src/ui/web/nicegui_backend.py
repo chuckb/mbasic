@@ -1336,11 +1336,30 @@ class NiceGUIBackend(UIBackend):
                         left: 0;
                         overflow: hidden !important;
                     }
+                    /* Reverse splitter order - put output on top, editor on bottom */
+                    .q-splitter__panel {
+                        display: flex;
+                        flex-direction: column-reverse;
+                    }
+                    /* Make output pane larger on mobile - 60% vs 40% */
+                    .q-splitter__before {
+                        order: 2 !important;
+                        flex: 0 0 60% !important;
+                        max-height: 60vh !important;
+                    }
+                    .q-splitter__after {
+                        order: 1 !important;
+                        flex: 0 0 40% !important;
+                        max-height: 40vh !important;
+                    }
                     /* Allow vertical scrolling in output textarea only */
                     [data-marker="output"] textarea {
                         touch-action: pan-y !important;
                         -webkit-overflow-scrolling: touch;
-                        max-height: 50vh; /* Reserve space for keyboard */
+                    }
+                    /* Hide splitter separator on mobile - no need to resize */
+                    .q-splitter__separator {
+                        display: none !important;
                     }
                 }
             </style>
