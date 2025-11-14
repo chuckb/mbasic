@@ -1,80 +1,114 @@
 # iOS/iPad Web UI Issues - TODO
 
-## Current Status
-Multiple attempts to fix iOS/iPad Safari scrolling and keyboard issues have not resolved the problems. The site works fine on desktop Chrome/Firefox but has serious UX issues on iPad.
+## Current Status (2025-11-14)
+Implemented new approach using CSS media queries and smart scroll tracking to fix iOS/iPad issues without breaking desktop.
+
+**Previous attempts:** Multiple iOS fixes broke desktop by applying `position: fixed` and `max-height: 40vh` globally.
+
+**New implementation (dev branch):**
+1. CSS media queries (max-width: 768px) - iOS fixes only apply to mobile
+2. Smart scroll tracking - respects user scroll position, only auto-scrolls when at bottom
+3. Desktop unaffected - no changes to desktop layout
+
+**Testing needed:** iPad Safari to verify fixes work
 
 ## Problems to Solve
 
 ### 0. Desktop Regression - Blank Area at Bottom
-**Issue:** The attempts to fix iOS have broken desktop browsers. There is now a blank area at the bottom of the screen on desktop Chrome/Firefox. This was fixed previously and took days to get rid of.
+**Status:** ✅ FIXED - Reverted all global iOS fixes, desktop works perfectly again
 
-**What caused it:** The iOS fixes added:
-- `max-height: 40vh` on output pane (line ~1438)
-- `position: fixed` on main container
-- `touch-action: none` on body
+**Solution:** All iOS-specific CSS now in `@media (max-width: 768px)` block (lines ~1321-1345)
 
-**Current code:** `src/ui/web/nicegui_backend.py` lines ~1298-1337, ~1358, ~1438
-
-**Priority:** HIGH - Desktop was working perfectly before iOS attempts. Need to restore desktop functionality while keeping iOS fixes separate (media queries or user-agent detection).
+**Commit:** 0ca9813b - Revert all iOS/iPad scrolling fixes - they broke desktop Chrome
 
 ### 1. Output Pane Does Not Auto-Scroll
-**Issue:** When new output appears (e.g., running Super Star Trek), the output pane does not automatically scroll to show the latest output at the bottom.
+**Status:** 🔧 IN PROGRESS - New implementation using scroll event tracking
 
-**What was tried:**
-- Multiple `setTimeout()` calls at different intervals (0ms, 10ms, 50ms, 100ms, 200ms)
-- `requestAnimationFrame()` for scroll timing
-- Removing `.update()` to avoid re-render
-- Adding `.update()` back
-- Scroll event listeners to track user position
-- Always scrolling vs conditional scrolling
+**Solution implemented (dev branch):**
+- JavaScript scroll event listener tracks if user is at bottom (within 50px)
+- Auto-scroll only happens if user hasn't manually scrolled up
+- Uses `textarea.dataset.userScrolledUp` to persist state
+- Event listener installed once per textarea on first output
 
-**Current code:** `src/ui/web/nicegui_backend.py` lines ~3234-3260
+**Code:** `src/ui/web/nicegui_backend.py` lines ~3245-3272
+
+**Testing needed:** Verify auto-scroll works on iPad Safari
 
 ### 2. Window/Page Scrolling Instead of Output Pane
-**Issue:** The entire page scrolls (showing/hiding menu/toolbar) instead of only the output pane scrolling.
+**Status:** 🔧 IN PROGRESS - Media query solution implemented
 
-**What was tried:**
-- `position: fixed` on html/body
-- `overflow: hidden !important` on html/body/#app
-- `touch-action: none` on html/body
-- `touch-action: pan-y` on output textarea
-- Changed from `height: 100vh` to `height: 100%`
-- Multiple combinations of the above
+**Solution implemented (dev branch):**
+- CSS media query `@media (max-width: 768px)` for mobile only
+- `position: fixed` on html/body/#app (mobile only)
+- `touch-action: none` on body, `touch-action: pan-y` on output textarea (mobile only)
+- Desktop unaffected - keeps original simple CSS
 
-**Current code:** `src/ui/web/nicegui_backend.py` lines ~1298-1337
+**Code:** `src/ui/web/nicegui_backend.py` lines ~1322-1345
+
+**Testing needed:** Verify page doesn't scroll on iPad Safari, only output pane scrolls
 
 ### 3. iOS Keyboard Accessory Bars Cover Output
-**Issue:** When input field is focused (for INPUT statement), iOS shows:
-- Formatting toolbar (B, I, microphone icons)
-- AutoFill bar (passwords, credit card, location icons)
+**Status:** 🔧 IN PROGRESS - Reserved space with media query
 
-These bars cover the bottom 2-3 lines of output.
+**Solution implemented (dev branch):**
+- `max-height: 50vh` on output textarea (mobile only via media query)
+- Reserves top half of screen for output, bottom half for keyboard
+- Desktop keeps full height since media query doesn't apply
 
-**What was tried:**
-- Disabling auto-focus on input fields
-- Re-enabling auto-focus after shrinking output pane
-- `max-height: 40vh` on output pane
-- Aggressive blur after input completes
-- `autocomplete=off autocorrect=off autocapitalize=off spellcheck=false`
+**Code:** `src/ui/web/nicegui_backend.py` line ~1343
 
-**Current code:** Output pane height limit in line ~1438, input props in line ~1360
+**Testing needed:** Verify keyboard doesn't cover output on iPad Safari
 
 ### 4. Manual Scroll "Snaps Back"
-**Issue:** When user manually scrolls output pane to review old output, it briefly shows the scrolled position then snaps back to middle or top.
+**Status:** 🔧 IN PROGRESS - Fixed with scroll event tracking
 
-**What was tried:**
-- Scroll event listeners to detect user scroll
-- Tracking `userScrolledUp` state to disable auto-scroll
-- Removing auto-scroll entirely
-- Various timing of scroll attempts
+**Solution implemented (dev branch):**
+- Scroll event listener detects when user scrolls up
+- Auto-scroll is disabled when `userScrolledUp` is true
+- Automatically re-enables when user scrolls back to bottom
+- No more fighting between user scroll and auto-scroll
+
+**Code:** `src/ui/web/nicegui_backend.py` lines ~3260-3264
+
+**Testing needed:** Verify can scroll up on iPad and position is maintained
 
 ## Environment
 - **Device:** iPad (iOS Safari)
-- **Site:** https://mbasic.awohl.com
-- **Current Version:** 1.0.937
-- **Working On:** Desktop Chrome/Firefox (Windows)
+- **Site:** https://mbasic.awohl.com (main branch), dev branch for testing
+- **Current Version:** main: 1.0.938, dev: testing new approach
+- **Desktop Status:** ✅ Working perfectly on Chrome/Firefox (Windows/Linux)
 
-## Next Steps (For Test Machine)
+## Implementation Summary (Dev Branch)
+
+### Changes Made
+1. **CSS Media Queries** - All iOS fixes now in `@media (max-width: 768px)`:
+   - `position: fixed` on html/body/#app (prevents page scroll)
+   - `touch-action: none` on body (blocks page gestures)
+   - `touch-action: pan-y` on output textarea (allows vertical scroll)
+   - `max-height: 50vh` on output textarea (reserves space for keyboard)
+
+2. **Smart Scroll Tracking** - JavaScript detects user scroll intent:
+   - Scroll event listener tracks position
+   - `userScrolledUp` flag prevents auto-scroll when user scrolls up
+   - Auto-scroll only when user is at bottom (within 50px)
+   - State persists via `dataset` attributes
+
+### Advantages of This Approach
+- ✅ Desktop completely unaffected (no media query match)
+- ✅ No global CSS changes that break layout
+- ✅ Respects user scroll position
+- ✅ Easier to debug (inspect media query in Safari DevTools)
+- ✅ Can adjust breakpoint if 768px isn't ideal
+
+### Testing Checklist (iPad Safari)
+- [ ] Output auto-scrolls when program runs
+- [ ] Can manually scroll up to review old output
+- [ ] Manual scroll position is maintained (doesn't snap back)
+- [ ] Page doesn't scroll (menu/toolbar stay visible)
+- [ ] Keyboard doesn't cover output when typing INPUT
+- [ ] Desktop Chrome still works (no blank area)
+
+## Next Steps
 
 ### Approach 1: Use Native Mobile Framework
 Consider building a dedicated iOS app using:

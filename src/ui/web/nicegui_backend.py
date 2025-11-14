@@ -1298,6 +1298,7 @@ class NiceGUIBackend(UIBackend):
         # Add global CSS to ensure full viewport height in both Firefox and Chrome
         ui.add_head_html('''
             <style>
+                /* Base styles for all devices */
                 html, body {
                     height: 100%;
                     margin: 0;
@@ -1315,6 +1316,32 @@ class NiceGUIBackend(UIBackend):
                 }
                 .q-field__control-container {
                     height: 100% !important;
+                }
+
+                /* iOS/iPad specific fixes - only apply to mobile devices */
+                @media (max-width: 768px) {
+                    html, body {
+                        position: fixed;
+                        width: 100%;
+                        top: 0;
+                        left: 0;
+                        overflow: hidden !important;
+                        touch-action: none;
+                        -webkit-overflow-scrolling: touch;
+                    }
+                    #app, .q-page {
+                        position: fixed;
+                        width: 100%;
+                        top: 0;
+                        left: 0;
+                        overflow: hidden !important;
+                    }
+                    /* Allow vertical scrolling in output textarea only */
+                    [data-marker="output"] textarea {
+                        touch-action: pan-y !important;
+                        -webkit-overflow-scrolling: touch;
+                        max-height: 50vh; /* Reserve space for keyboard */
+                    }
                 }
             </style>
         ''')
@@ -3215,18 +3242,33 @@ class NiceGUIBackend(UIBackend):
             self.output.value = self.output_text
             self.output.update()
 
-            # Auto-scroll to bottom using JavaScript
+            # Auto-scroll to bottom with smart scroll tracking
             ui.run_javascript('''
-                setTimeout(() => {
+                (function() {
                     let textarea = document.querySelector('[data-marker="output"] textarea');
                     if (!textarea) {
                         const textareas = document.querySelectorAll('textarea[readonly]');
                         textarea = textareas[textareas.length - 1];
                     }
-                    if (textarea) {
+                    if (!textarea) return;
+
+                    // Set up scroll event listener if not already done
+                    if (!textarea.dataset.scrollTrackerInstalled) {
+                        textarea.dataset.scrollTrackerInstalled = 'true';
+                        textarea.dataset.userScrolledUp = 'false';
+
+                        textarea.addEventListener('scroll', function() {
+                            // Check if user is within 50px of bottom
+                            const isAtBottom = this.scrollTop >= this.scrollHeight - this.clientHeight - 50;
+                            this.dataset.userScrolledUp = isAtBottom ? 'false' : 'true';
+                        });
+                    }
+
+                    // Only auto-scroll if user hasn't manually scrolled up
+                    if (textarea.dataset.userScrolledUp !== 'true') {
                         textarea.scrollTop = textarea.scrollHeight;
                     }
-                }, 10);
+                })();
             ''')
 
     def _handle_output_enter(self, e):
