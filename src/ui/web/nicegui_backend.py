@@ -3198,11 +3198,28 @@ class NiceGUIBackend(UIBackend):
 
         # Update the textarea directly
         if self.output:
+            # Check scroll position BEFORE updating value (to detect if user was following output)
+            # Then restore or scroll to bottom based on that
+            ui.run_javascript('''
+                (function() {
+                    let textarea = document.querySelector('[data-marker="output"] textarea');
+                    if (!textarea) {
+                        const textareas = document.querySelectorAll('textarea[readonly]');
+                        textarea = textareas[textareas.length - 1];
+                    }
+                    if (textarea) {
+                        // Check if user was near bottom BEFORE update
+                        const wasNearBottom = (textarea.scrollHeight - textarea.scrollTop - textarea.clientHeight) < 100;
+                        // Store in element for next step
+                        textarea.dataset.wasNearBottom = wasNearBottom;
+                    }
+                })();
+            ''')
+
             self.output.value = self.output_text
             self.output.update()
 
-            # Auto-scroll to bottom only if user was already at/near bottom
-            # This prevents fighting with user's manual scroll position (especially on iPad)
+            # Now apply scroll based on whether user was following output
             ui.run_javascript('''
                 setTimeout(() => {
                     let textarea = document.querySelector('[data-marker="output"] textarea');
@@ -3211,12 +3228,11 @@ class NiceGUIBackend(UIBackend):
                         textarea = textareas[textareas.length - 1];
                     }
                     if (textarea) {
-                        // Only auto-scroll if user was already near bottom (within 100px threshold)
-                        // This lets users scroll up to review output without fighting auto-scroll
-                        const wasNearBottom = (textarea.scrollHeight - textarea.scrollTop - textarea.clientHeight) < 100;
-                        if (wasNearBottom) {
+                        // Only auto-scroll if user was following output before update
+                        if (textarea.dataset.wasNearBottom === 'true') {
                             textarea.scrollTop = textarea.scrollHeight;
                         }
+                        // Otherwise preserve scroll position (browser should handle this)
                     }
                 }, 10);
             ''')
