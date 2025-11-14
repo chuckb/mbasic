@@ -1,2 +1,1 @@
-VERSION = '1.0.938'
-# Test comment
+VERSION = '1.0.953'

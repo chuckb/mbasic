@@ -1242,8 +1242,12 @@ class NiceGUIBackend(UIBackend):
             sys.stderr.write(f"Warning: Failed to track program execution: {e}\n")
             sys.stderr.flush()
 
-    def build_ui(self):
+    def build_ui(self, mobile_layout: bool = False):
         """Build the NiceGUI interface.
+
+        Args:
+            mobile_layout: If True, puts output on top and editor on bottom (for tablets/mobile).
+                          If False (default), puts editor on top and output on bottom (desktop layout).
 
         Creates the main UI with:
         - Menu bar
@@ -1295,75 +1299,117 @@ class NiceGUIBackend(UIBackend):
         # Set page title ('5.21' is MBASIC language version, intentionally hardcoded)
         ui.page_title('MBASIC 5.21 - Web IDE')
 
-        # Add global CSS to ensure full viewport height in both Firefox and Chrome
-        ui.add_head_html('''
-            <style>
-                /* Base styles for all devices */
-                html, body {
-                    height: 100%;
-                    margin: 0;
-                    padding: 0;
-                    overflow: hidden;
-                }
-                #app, .q-page {
-                    height: 100%;
-                    display: flex;
-                    flex-direction: column;
-                }
-                /* Force Quasar textarea to fill flex container in Chrome */
-                .q-textarea, .q-field__control {
-                    height: 100% !important;
-                }
-                .q-field__control-container {
-                    height: 100% !important;
-                }
-
-                /* iOS/iPad specific fixes - only apply to mobile devices */
-                @media (max-width: 768px) {
+        # Add global CSS - base styles for all devices, mobile fixes only if mobile_layout=True
+        if mobile_layout:
+            # Mobile/tablet layout with position:fixed to prevent page scrolling
+            ui.add_head_html('''
+                <style>
+                    /* Base styles - lock viewport */
                     html, body {
+                        height: 100vh;
+                        height: 100dvh; /* Dynamic viewport height for mobile browsers */
+                        max-height: 100vh;
+                        max-height: 100dvh;
+                        margin: 0;
+                        padding: 0;
+                        overflow: hidden !important;
                         position: fixed;
                         width: 100%;
                         top: 0;
                         left: 0;
-                        overflow: hidden !important;
-                        touch-action: none;
-                        -webkit-overflow-scrolling: touch;
                     }
-                    #app, .q-page {
-                        position: fixed;
-                        width: 100%;
-                        top: 0;
-                        left: 0;
-                        overflow: hidden !important;
-                    }
-                    /* Reverse splitter order - put output on top, editor on bottom */
-                    .q-splitter__panel {
+                    #app, .q-page, .q-layout, .q-page-container {
+                        height: 100vh;
+                        height: 100dvh;
+                        max-height: 100vh;
+                        max-height: 100dvh;
                         display: flex;
-                        flex-direction: column-reverse;
+                        flex-direction: column;
+                        position: fixed;
+                        width: 100%;
+                        top: 0;
+                        left: 0;
+                        overflow: hidden !important;
                     }
-                    /* Make output pane larger on mobile - 60% vs 40% */
-                    .q-splitter__before {
-                        order: 2 !important;
-                        flex: 0 0 60% !important;
-                        max-height: 60vh !important;
+                    /* Prevent any element from causing page scroll */
+                    * {
+                        scroll-margin: 0 !important;
+                        scroll-padding: 0 !important;
                     }
-                    .q-splitter__after {
-                        order: 1 !important;
-                        flex: 0 0 40% !important;
-                        max-height: 40vh !important;
+                    /* Force Quasar textarea to fill flex container */
+                    .q-textarea, .q-field__control {
+                        height: 100% !important;
                     }
-                    /* Allow vertical scrolling in output textarea only */
-                    [data-marker="output"] textarea {
+                    .q-field__control-container {
+                        height: 100% !important;
+                    }
+                    /* Allow vertical scrolling in textareas only */
+                    textarea {
                         touch-action: pan-y !important;
                         -webkit-overflow-scrolling: touch;
                     }
-                    /* Hide splitter separator on mobile - no need to resize */
-                    .q-splitter__separator {
-                        display: none !important;
+                    /* Prevent focus from scrolling page */
+                    input, textarea, select, button {
+                        scroll-margin-block-end: 0 !important;
+                        scroll-margin-block-start: 0 !important;
                     }
-                }
-            </style>
-        ''')
+                </style>
+                <script>
+                    // Aggressively prevent all scrolling on mobile
+                    (function() {
+                        // Prevent scroll on touch move (except within textareas)
+                        document.addEventListener('touchmove', function(e) {
+                            // Allow scrolling within textarea elements
+                            if (e.target.tagName === 'TEXTAREA') {
+                                return;
+                            }
+                            e.preventDefault();
+                        }, { passive: false });
+
+                        // Force scroll to top on any scroll event
+                        window.addEventListener('scroll', function() {
+                            window.scrollTo(0, 0);
+                        }, { passive: false });
+
+                        // Force scroll to top on load
+                        window.addEventListener('load', function() {
+                            window.scrollTo(0, 0);
+                        });
+
+                        // Reset scroll position continuously (iOS sometimes scrolls anyway)
+                        setInterval(function() {
+                            if (window.scrollY !== 0 || window.scrollX !== 0) {
+                                window.scrollTo(0, 0);
+                            }
+                        }, 100);
+                    })();
+                </script>
+            ''')
+        else:
+            # Desktop layout - simple CSS
+            ui.add_head_html('''
+                <style>
+                    /* Base styles for desktop */
+                    html, body {
+                        height: 100%;
+                        margin: 0;
+                        padding: 0;
+                        overflow: hidden;
+                    }
+                    #app, .q-page {
+                        height: 100%;
+                        display: flex;
+                        flex-direction: column;
+                    }
+                    /* Force Quasar textarea to fill flex container */
+                    .q-textarea, .q-field__control {
+                        height: 100% !important;
+                    }
+                    .q-field__control-container {
+                        height: 100% !important;
+                    }
+                </style>
+            ''')
 
         # Create reusable dialog instances (NiceGUI best practice: create once, reuse)
         self.variables_dialog = VariablesDialog(self)
@@ -1386,12 +1432,15 @@ class NiceGUIBackend(UIBackend):
 
         # Wrap top rows in column with zero gap to eliminate spacing between them
         # Use height: 100vh and display: flex to work in both Firefox and Chrome
-        with ui.column().style('row-gap: 0; width: 100%; height: 100vh; display: flex; flex-direction: column; overflow: hidden;'):
+        # Use 100dvh for mobile to account for dynamic viewport (browser chrome)
+        main_height = '100dvh' if mobile_layout else '100vh'
+        with ui.column().style(f'row-gap: 0; width: 100%; height: {main_height}; max-height: {main_height}; display: flex; flex-direction: column; overflow: hidden;'):
             # Menu bar
-            self._create_menu()
+            self._create_menu(mobile_layout=mobile_layout)
 
-            # Toolbar
-            with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 36px; margin: 2px 0;'):
+            # Toolbar - use fixed height for mobile to prevent growth
+            toolbar_height = 'height: 40px; min-height: 40px; max-height: 40px;' if mobile_layout else 'min-height: 36px;'
+            with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style(f'align-items: center; {toolbar_height} margin: 2px 0; flex-shrink: 0;'):
                 ui.button('Run', on_click=self._menu_run, icon='play_arrow', color='green').mark('btn_run')
                 ui.button('Stop', on_click=self._menu_stop, icon='stop', color='red').mark('btn_stop')
                 ui.button('Step', on_click=self._menu_step_line, icon='skip_next').mark('btn_step_line')
@@ -1400,15 +1449,17 @@ class NiceGUIBackend(UIBackend):
                 ui.separator().props('vertical')
                 ui.button(icon='check_circle', on_click=self._check_syntax).mark('btn_check_syntax').props('flat').tooltip('Check Syntax')
 
-            # Command input row - single line like status bar
-            with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 32px; margin: 0;'):
+            # Command input row - use fixed height for mobile
+            cmd_height = 'height: 36px; min-height: 36px; max-height: 36px;' if mobile_layout else 'min-height: 32px;'
+            with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style(f'align-items: center; {cmd_height} margin: 0; flex-shrink: 0;'):
                 ui.label('>').classes('font-mono')
                 self.immediate_entry = ui.input(placeholder='BASIC command...').classes('flex-grow').props('dense outlined autocomplete=off autocorrect=off autocapitalize=off spellcheck=false').mark('immediate_entry')
                 self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
                 ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').props('dense flat').mark('btn_immediate')
 
-            # Status bar
-            with ui.row().classes('w-full bg-gray-200 px-2').style('justify-content: space-between; min-height: 28px; align-items: center; margin: 0;'):
+            # Status bar - use fixed height for mobile
+            status_height = 'height: 32px; min-height: 32px; max-height: 32px;' if mobile_layout else 'min-height: 28px;'
+            with ui.row().classes('w-full bg-gray-200 px-2').style(f'justify-content: space-between; {status_height} align-items: center; margin: 0; flex-shrink: 0;'):
                 self.status_label = ui.label('Ready').mark('status')
                 with ui.row().classes('gap-4'):
                     self.auto_line_label = ui.label('').classes('text-gray-600 font-mono')
@@ -1417,59 +1468,118 @@ class NiceGUIBackend(UIBackend):
 
             # Main content area - use splitter for resizable editor/output
             # horizontal=True means top/bottom split with horizontal drag bar
-            with ui.splitter(value=40, horizontal=True).style('width: 100%; flex: 1; min-height: 0;') as splitter:
-                with splitter.before:
-                    # Editor panel
-                    with ui.column().style('width: 100%; height: 100%; display: flex; flex-direction: column; gap: 0;'):
-                        # Editor - using CodeMirror 5 (legacy, no ES6 modules)
-                        self.editor = CodeMirror5Editor(
-                            value='',
-                            on_change=self._on_editor_change
-                        ).style('width: 100%; flex: 1; min-height: 0; border: 1px solid #ccc;').mark('editor')
+            # For mobile layout: output on top (50%), editor on bottom (50%) - even split for keyboard
+            # For desktop layout: editor on top (60%), output on bottom (40%)
+            # User can adjust with draggable separator
 
-                        # Restore editor content if restoring from saved state
-                        if self._pending_editor_content is not None:
-                            self.editor.set_value(self._pending_editor_content)
-                            self._pending_editor_content = None
+            if mobile_layout:
+                # Mobile/tablet: Output on top, editor on bottom - 50/50 split to accommodate keyboard
+                with ui.splitter(value=50, horizontal=True).style('width: 100%; flex: 1; min-height: 0;') as splitter:
+                    with splitter.before:
+                        # Output panel (on top for mobile)
+                        self.output = ui.textarea(
+                            value=f'MBASIC 5.21 Web IDE (Mobile) - {VERSION}\n',
+                            placeholder='Output'
+                        ).style('width: 100%; height: 100%; flex: 1 1 auto !important; min-height: 0 !important;').props('readonly outlined dense spellcheck=false').mark('output')
 
-                        # Add auto-numbering handlers
-                        # Track last edited line for auto-numbering
-                        self.last_edited_line_index = None
-                        self.last_edited_line_text = None
-                        self.last_line_count = 0  # Track number of lines to detect Enter
-                        self.auto_numbering_in_progress = False  # Prevent recursive calls
-                        self.editor_has_been_used = False  # Track if user has typed anything
+                        # Restore output if restoring from saved state
+                        if hasattr(self, 'output_text') and self.output_text:
+                            self.output.value = self.output_text
 
-                        # Content change handlers via CodeMirror's on_change callback
-                        # The _on_editor_change method handles:
-                        # - Removing blank lines
-                        # - Auto-numbering
-                        # - Placeholder clearing
-                        # (Note: Method defined later in this class - search for 'def _on_editor_change')
+                    with splitter.after:
+                        # Editor panel (on bottom for mobile)
+                        with ui.column().style('width: 100%; height: 100%; display: flex; flex-direction: column; gap: 0;'):
+                            # Editor - using CodeMirror 5 (legacy, no ES6 modules)
+                            self.editor = CodeMirror5Editor(
+                                value='',
+                                on_change=self._on_editor_change
+                            ).style('width: 100%; flex: 1; min-height: 0; border: 1px solid #ccc;').mark('editor')
 
-                        # Click and blur handlers registered separately
-                        self.editor.on('click', self._on_editor_click, throttle=0.05)
-                        self.editor.on('blur', self._on_editor_blur)
+                            # Restore editor content if restoring from saved state
+                            if self._pending_editor_content is not None:
+                                self.editor.set_value(self._pending_editor_content)
+                                self._pending_editor_content = None
 
-                        # Current line indicator
-                        self.current_line_label = ui.label('').classes('text-sm font-mono bg-yellow-100 p-1')
-                        self.current_line_label.visible = False
+                            # Add auto-numbering handlers
+                            # Track last edited line for auto-numbering
+                            self.last_edited_line_index = None
+                            self.last_edited_line_text = None
+                            self.last_line_count = 0  # Track number of lines to detect Enter
+                            self.auto_numbering_in_progress = False  # Prevent recursive calls
+                            self.editor_has_been_used = False  # Track if user has typed anything
 
-                        # Syntax error indicator
-                        self.syntax_error_label = ui.label('').classes('text-sm font-mono bg-red-100 text-red-700 p-1')
-                        self.syntax_error_label.visible = False
+                            # Content change handlers via CodeMirror's on_change callback
+                            # The _on_editor_change method handles:
+                            # - Removing blank lines
+                            # - Auto-numbering
+                            # - Placeholder clearing
+                            # (Note: Method defined later in this class - search for 'def _on_editor_change')
 
-                with splitter.after:
-                    # Output panel
-                    # Use important to override Quasar defaults in Chrome
-                    self.output = ui.textarea(
-                        value=f'MBASIC 5.21 Web IDE - {VERSION}\n',
-                        placeholder='Output'
-                    ).style('width: 100%; height: 100%; flex: 1 1 auto !important; min-height: 0 !important;').props('readonly outlined dense spellcheck=false').mark('output')
+                            # Click and blur handlers registered separately
+                            self.editor.on('click', self._on_editor_click, throttle=0.05)
+                            self.editor.on('blur', self._on_editor_blur)
 
-                    # Restore output if restoring from saved state
-                    if hasattr(self, 'output_text') and self.output_text:
-                        self.output.value = self.output_text
+                            # Current line indicator
+                            self.current_line_label = ui.label('').classes('text-sm font-mono bg-yellow-100 p-1')
+                            self.current_line_label.visible = False
+
+                            # Syntax error indicator
+                            self.syntax_error_label = ui.label('').classes('text-sm font-mono bg-red-100 text-red-700 p-1')
+                            self.syntax_error_label.visible = False
+            else:
+                # Desktop: Editor on top, output on bottom
+                with ui.splitter(value=60, horizontal=True).style('width: 100%; flex: 1; min-height: 0;') as splitter:
+                    with splitter.before:
+                        # Editor panel (on top for desktop)
+                        with ui.column().style('width: 100%; height: 100%; display: flex; flex-direction: column; gap: 0;'):
+                            # Editor - using CodeMirror 5 (legacy, no ES6 modules)
+                            self.editor = CodeMirror5Editor(
+                                value='',
+                                on_change=self._on_editor_change
+                            ).style('width: 100%; flex: 1; min-height: 0; border: 1px solid #ccc;').mark('editor')
+
+                            # Restore editor content if restoring from saved state
+                            if self._pending_editor_content is not None:
+                                self.editor.set_value(self._pending_editor_content)
+                                self._pending_editor_content = None
+
+                            # Add auto-numbering handlers
+                            # Track last edited line for auto-numbering
+                            self.last_edited_line_index = None
+                            self.last_edited_line_text = None
+                            self.last_line_count = 0  # Track number of lines to detect Enter
+                            self.auto_numbering_in_progress = False  # Prevent recursive calls
+                            self.editor_has_been_used = False  # Track if user has typed anything
+
+                            # Content change handlers via CodeMirror's on_change callback
+                            # The _on_editor_change method handles:
+                            # - Removing blank lines
+                            # - Auto-numbering
+                            # - Placeholder clearing
+                            # (Note: Method defined later in this class - search for 'def _on_editor_change')
+
+                            # Click and blur handlers registered separately
+                            self.editor.on('click', self._on_editor_click, throttle=0.05)
+                            self.editor.on('blur', self._on_editor_blur)
+
+                            # Current line indicator
+                            self.current_line_label = ui.label('').classes('text-sm font-mono bg-yellow-100 p-1')
+                            self.current_line_label.visible = False
+
+                            # Syntax error indicator
+                            self.syntax_error_label = ui.label('').classes('text-sm font-mono bg-red-100 text-red-700 p-1')
+                            self.syntax_error_label.visible = False
+
+                    with splitter.after:
+                        # Output panel (on bottom for desktop)
+                        self.output = ui.textarea(
+                            value=f'MBASIC 5.21 Web IDE - {VERSION}\n',
+                            placeholder='Output'
+                        ).style('width: 100%; height: 100%; flex: 1 1 auto !important; min-height: 0 !important;').props('readonly outlined dense spellcheck=false').mark('output')
+
+                        # Restore output if restoring from saved state
+                        if hasattr(self, 'output_text') and self.output_text:
+                            self.output.value = self.output_text
 
         # INPUT handling: When INPUT statement executes, the immediate_entry input box
         # is focused for user input (see _execute_tick() at line 1932).
@@ -1491,17 +1601,22 @@ class NiceGUIBackend(UIBackend):
             self.editor.run_method('setValueAndCursor', '10 ', 0, 3)
             self.editor._value = '10 '
             self.last_line_count = 1  # Initialize line count
-        else:
-            # Set initial focus to program editor (now safe with smaller output pane)
+        elif not mobile_layout:
+            # Set initial focus to program editor (desktop only - prevents keyboard from causing scroll on mobile)
             self.editor.run_method('focus')
+            self.last_line_count = 0
+        else:
+            # Mobile layout - don't auto-focus to prevent page scroll
             self.last_line_count = 0
 
         # Update auto-line indicator
         self._update_auto_line_indicator()
 
-    def _create_menu(self):
+    def _create_menu(self, mobile_layout: bool = False):
         """Create menu bar."""
-        with ui.row().classes('w-full bg-gray-800 text-white px-2 gap-4').style('min-height: 36px; align-items: center; margin: 0;'):
+        # Use fixed height for mobile to prevent growth
+        menu_height = 'height: 40px; min-height: 40px; max-height: 40px;' if mobile_layout else 'min-height: 36px;'
+        with ui.row().classes('w-full bg-gray-800 text-white px-2 gap-4').style(f'{menu_height} align-items: center; margin: 0; flex-shrink: 0;'):
             # File menu
             with ui.button('File', icon='menu').props('flat color=white'):
                 with ui.menu() as file_menu:
@@ -3971,16 +4086,105 @@ def start_web_ui(port=8080):
             sys.stderr.write(f"Warning: Failed to initialize usage tracking: {e}\n")
             sys.stderr.flush()
 
-    # Redirect root to IDE
+    # Redirect root to IDE (auto-detects and applies correct layout)
     @ui.page('/')
     def landing():
         from fastapi.responses import RedirectResponse
         return RedirectResponse(url='/ide')
 
-    # Serve IDE on /ide path
+    # Serve IDE on /ide path (auto-detects desktop vs mobile layout)
     @ui.page('/ide', viewport='width=device-width, initial-scale=1.0')
     def main_page():
         """Create or restore backend instance for each client."""
+        import os
+        from src.editing.manager import ProgramManager
+        from src.ast_nodes import TypeInfo
+        from nicegui import context
+
+        # Detect tablet/mobile devices via user-agent
+        request = context.client.request if context.client else None
+        user_agent = request.headers.get('user-agent', '').lower() if request else ''
+        is_tablet = any(keyword in user_agent for keyword in ['ipad', 'android', 'tablet'])
+
+        # Try to restore existing session state
+        saved_state = app.storage.client.get('session_state')
+
+        # Initialize DEF type map with all letters as SINGLE precision
+        def_type_map = {}
+        for letter in 'abcdefghijklmnopqrstuvwxyz':
+            def_type_map[letter] = TypeInfo.SINGLE
+
+        # Create new program manager for this client
+        program_manager = ProgramManager(def_type_map)
+
+        # Create new backend instance
+        backend = NiceGUIBackend(None, program_manager)
+
+        # Track IDE session start
+        tracker = get_usage_tracker()
+        if tracker:
+            try:
+                from nicegui import context
+                # Use context.client.id for session ID (not app.storage.client.id)
+                session_id = context.client.id if context.client else 'unknown'
+                user_agent = context.client.request.headers.get('user-agent') if context.client and context.client.request else None
+                # Get real client IP (handles X-Forwarded-For from nginx ingress)
+                ip = get_client_ip(context.client.request) if context.client and context.client.request else 'unknown'
+                tracker.start_ide_session(session_id, user_agent, ip)
+            except Exception as e:
+                sys.stderr.write(f"ERROR: Failed to track session start: {e}\n")
+                import traceback
+                sys.stderr.write(f"Traceback: {traceback.format_exc()}\n")
+                sys.stderr.flush()
+
+        # Restore state if available
+        if saved_state:
+            try:
+                backend.restore_state(saved_state)
+            except Exception as e:
+                sys.stderr.write(f"Warning: Failed to restore session state: {e}\n")
+                sys.stderr.flush()
+                # Continue with fresh state
+
+        # Build the UI for this client (mobile layout for tablets, desktop for others)
+        backend.build_ui(mobile_layout=is_tablet)
+
+        # Set up periodic state saving (every 5 seconds while connected)
+        def save_state_periodic():
+            try:
+                app.storage.client['session_state'] = backend.serialize_state()
+            except Exception as e:
+                sys.stderr.write(f"Warning: Failed to save session state: {e}\n")
+                sys.stderr.flush()
+
+        # Save state periodically (errors are caught and logged, won't crash the UI)
+        ui.timer(5.0, save_state_periodic)
+
+        # Save state on disconnect
+        def save_on_disconnect():
+            try:
+                app.storage.client['session_state'] = backend.serialize_state()
+            except Exception as e:
+                sys.stderr.write(f"Warning: Failed to save final session state: {e}\n")
+                sys.stderr.flush()
+
+            # Track session end
+            tracker = get_usage_tracker()
+            if tracker:
+                try:
+                    from nicegui import context
+                    session_id = context.client.id if context.client else 'unknown'
+                    tracker.end_ide_session(session_id)
+                except Exception as e:
+                    sys.stderr.write(f"Warning: Failed to track session end: {e}\n")
+                    sys.stderr.flush()
+
+        ui.context.client.on_disconnect(save_on_disconnect)
+
+    # Serve mobile-optimized IDE on /mobile path (mobile layout: output on top, editor on bottom)
+    @ui.page('/mobile', viewport='width=device-width, initial-scale=1.0')
+    def mobile_page():
+        """Create or restore backend instance for mobile/tablet clients with swapped panes."""
         import os
         from src.editing.manager import ProgramManager
         from src.ast_nodes import TypeInfo
@@ -4025,8 +4229,8 @@ def start_web_ui(port=8080):
                 sys.stderr.flush()
                 # Continue with fresh state
 
-        # Build the UI for this client
-        backend.build_ui()
+        # Build the UI for this client WITH MOBILE LAYOUT (swapped panes)
+        backend.build_ui(mobile_layout=True)
 
         # Set up periodic state saving (every 5 seconds while connected)
         def save_state_periodic():
