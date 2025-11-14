@@ -2229,6 +2229,9 @@ class NiceGUIBackend(UIBackend):
         if self.waiting_for_input:
             self.waiting_for_input = False
             self.input_prompt_text = None
+            # Blur input field to dismiss mobile keyboard
+            if self.immediate_entry:
+                self.immediate_entry.run_method('blur')
             # Make output readonly again - use JavaScript to set readonly attribute
             self.output.run_method('''() => {
                 const el = this.$el.querySelector('textarea');
@@ -3198,8 +3201,7 @@ class NiceGUIBackend(UIBackend):
 
         # Update the textarea directly
         if self.output:
-            # Check scroll position BEFORE updating value (to detect if user was following output)
-            # Then restore or scroll to bottom based on that
+            # Auto-scroll to bottom, but track user scroll interactions to disable if user scrolls up
             ui.run_javascript('''
                 (function() {
                     let textarea = document.querySelector('[data-marker="output"] textarea');
@@ -3208,10 +3210,23 @@ class NiceGUIBackend(UIBackend):
                         textarea = textareas[textareas.length - 1];
                     }
                     if (textarea) {
-                        // Check if user was near bottom BEFORE update
-                        const wasNearBottom = (textarea.scrollHeight - textarea.scrollTop - textarea.clientHeight) < 100;
-                        // Store in element for next step
-                        textarea.dataset.wasNearBottom = wasNearBottom;
+                        // Set up scroll listener on first run
+                        if (!textarea.dataset.scrollListenerAdded) {
+                            textarea.dataset.scrollListenerAdded = 'true';
+                            textarea.dataset.userScrolledUp = 'false';  // Default to auto-scroll
+
+                            // Track when user manually scrolls up (away from bottom)
+                            textarea.addEventListener('scroll', function() {
+                                const isNearBottom = (this.scrollHeight - this.scrollTop - this.clientHeight) < 100;
+                                if (!isNearBottom && this.scrollTop > 0) {
+                                    // User scrolled away from bottom - disable auto-scroll
+                                    this.dataset.userScrolledUp = 'true';
+                                } else if (isNearBottom) {
+                                    // User scrolled back to bottom - re-enable auto-scroll
+                                    this.dataset.userScrolledUp = 'false';
+                                }
+                            });
+                        }
                     }
                 })();
             ''')
@@ -3219,7 +3234,7 @@ class NiceGUIBackend(UIBackend):
             self.output.value = self.output_text
             self.output.update()
 
-            # Now apply scroll based on whether user was following output
+            # Auto-scroll to bottom unless user has manually scrolled up
             ui.run_javascript('''
                 setTimeout(() => {
                     let textarea = document.querySelector('[data-marker="output"] textarea');
@@ -3228,11 +3243,10 @@ class NiceGUIBackend(UIBackend):
                         textarea = textareas[textareas.length - 1];
                     }
                     if (textarea) {
-                        // Only auto-scroll if user was following output before update
-                        if (textarea.dataset.wasNearBottom === 'true') {
+                        // Auto-scroll unless user has explicitly scrolled up
+                        if (textarea.dataset.userScrolledUp !== 'true') {
                             textarea.scrollTop = textarea.scrollHeight;
                         }
-                        // Otherwise preserve scroll position (browser should handle this)
                     }
                 }, 10);
             ''')
@@ -3272,6 +3286,10 @@ class NiceGUIBackend(UIBackend):
         # Mark that we're no longer waiting
         self.waiting_for_input = False
         self.input_prompt_text = None
+
+        # Blur input field to dismiss mobile keyboard and accessory bar
+        if self.immediate_entry:
+            self.immediate_entry.run_method('blur')
 
         # Provide input to interpreter via TWO mechanisms (we check both in case either is active):
         # 1. interpreter.provide_input() - Used when interpreter is waiting synchronously
@@ -3363,6 +3381,8 @@ class NiceGUIBackend(UIBackend):
             self.waiting_for_input = False
             self.input_prompt_text = None
             self.immediate_entry.props('placeholder="BASIC command..."')
+            # Blur input field to dismiss mobile keyboard and accessory bar
+            self.immediate_entry.run_method('blur')
             return
 
         # Normal immediate mode command
