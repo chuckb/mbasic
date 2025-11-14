@@ -10,7 +10,7 @@
 
 **Source Code:** https://github.com/avwohl/mbasic
 **Documentation:** https://avwohl.github.io/mbasic/
-**Install:** `pip install --pre mbasic`
+**Install:** `pip install mbasic`
 
 ---
 
@@ -93,11 +93,11 @@ Need a simple language for 8080/Z80 projects? **BASIC is easier than assembly** 
 ### 2. Install Locally (For Power Users)
 
 ```bash
-pip install --pre mbasic
+pip install mbasic
 mbasic
 ```
 
-That's it! The `--pre` flag is required because this is the beta release (1.0.0b1). Full release coming soon!
+That's it!
 
 **Four interfaces included:**
 - **CLI Mode:** Classic MBASIC command-line (zero dependencies!)
@@ -245,7 +245,7 @@ The command-line interface requires **NOTHING** except Python 3.8+. No external 
 
 ```bash
 # Install (requires Python 3.8+)
-pip install --pre mbasic
+pip install mbasic
 
 # Run with default interface (Curses full-screen)
 mbasic
@@ -356,7 +356,7 @@ Don't wait. Don't hesitate. **Try MBASIC 2025 right now in your browser:**
 Or install locally:
 
 ```bash
-pip install --pre mbasic
+pip install mbasic
 ```
 
 **Browse the docs:** https://avwohl.github.io/mbasic/
@@ -382,7 +382,7 @@ pip install --pre mbasic
 - Over 1 million words of documentation
 - Thousands of hours of development
 
-**Project Status:** Beta release (1.0.0b1) — Interpreter 100% complete, Compiler 100% complete, Documentation extensive, ready for real-world use!
+**Project Status:** Production release — Interpreter 100% complete, Compiler 100% complete, Documentation extensive, ready for real-world use!
 
 ---
 
@@ -404,7 +404,7 @@ pip install --pre mbasic
 
 ### Try it NOW: https://mbasic.awohl.com
 
-### Install it NOW: `pip install --pre mbasic`
+### Install it NOW: `pip install mbasic`
 
 ### Browse it NOW: https://avwohl.github.io/mbasic/
 

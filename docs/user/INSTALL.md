@@ -38,22 +38,20 @@ Only needed if you want to use the Tkinter GUI backend. Skip this if you only ne
 
 **On other systems** (Fedora, macOS, Windows), virtual environment support and tkinter are usually included with Python.
 
-## Quick Install from PyPI (Beta)
+## Quick Install from PyPI
 
 **If you just want to install and use MBASIC**, the easiest method is via PyPI:
 
 ```bash
-# Install the beta version (requires --pre flag)
-pip install --pre mbasic
+# Install MBASIC
+pip install mbasic
 
 # Or with full-screen terminal UI support
-pip install --pre mbasic[curses]
+pip install mbasic[curses]
 
 # Or with all UI backends
-pip install --pre mbasic[all]
+pip install mbasic[all]
 ```
-
-> **Beta Note**: We're currently in BETA (version 1.0.0b1) and gathering feedback. The `--pre` flag is required to install beta releases. Once we release stable 1.0.0, the `--pre` flag will no longer be necessary.
 
 After installation, run:
 ```bash
