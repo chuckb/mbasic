@@ -1357,7 +1357,7 @@ class NiceGUIBackend(UIBackend):
             # Command input row - single line like status bar
             with ui.row().classes('w-full bg-gray-100 px-2 gap-2').style('align-items: center; min-height: 32px; margin: 0;'):
                 ui.label('>').classes('font-mono')
-                self.immediate_entry = ui.input(placeholder='BASIC command...').classes('flex-grow').props('dense outlined').mark('immediate_entry')
+                self.immediate_entry = ui.input(placeholder='BASIC command...').classes('flex-grow').props('dense outlined autocomplete=off autocorrect=off autocapitalize=off spellcheck=false').mark('immediate_entry')
                 self.immediate_entry.on('keydown.enter', self._on_immediate_enter)
                 ui.button('Execute', on_click=self._execute_immediate, icon='play_arrow', color='green').props('dense flat').mark('btn_immediate')
 
@@ -2229,9 +2229,20 @@ class NiceGUIBackend(UIBackend):
         if self.waiting_for_input:
             self.waiting_for_input = False
             self.input_prompt_text = None
-            # Blur input field to dismiss mobile keyboard
+            # Aggressively blur input field to dismiss mobile keyboard
             if self.immediate_entry:
                 self.immediate_entry.run_method('blur')
+                ui.run_javascript('''
+                    setTimeout(() => {
+                        const input = document.querySelector('[data-marker="immediate_entry"] input');
+                        if (input) {
+                            input.blur();
+                            if (document.activeElement) {
+                                document.activeElement.blur();
+                            }
+                        }
+                    }, 0);
+                ''')
             # Make output readonly again - use JavaScript to set readonly attribute
             self.output.run_method('''() => {
                 const el = this.$el.querySelector('textarea');
@@ -3201,55 +3212,45 @@ class NiceGUIBackend(UIBackend):
 
         # Update the textarea directly
         if self.output:
-            # Auto-scroll to bottom, but track user scroll interactions to disable if user scrolls up
-            ui.run_javascript('''
-                (function() {
+            self.output.value = self.output_text
+            # Don't call .update() - it triggers re-render that resets scroll on iOS
+
+            # Update and scroll in one JavaScript call to avoid iOS fighting us
+            ui.run_javascript(f'''
+                (function() {{
                     let textarea = document.querySelector('[data-marker="output"] textarea');
-                    if (!textarea) {
+                    if (!textarea) {{
                         const textareas = document.querySelectorAll('textarea[readonly]');
                         textarea = textareas[textareas.length - 1];
-                    }
-                    if (textarea) {
-                        // Set up scroll listener on first run
-                        if (!textarea.dataset.scrollListenerAdded) {
+                    }}
+                    if (textarea) {{
+                        // Set up scroll listener on first run only
+                        if (!textarea.dataset.scrollListenerAdded) {{
                             textarea.dataset.scrollListenerAdded = 'true';
                             textarea.dataset.userScrolledUp = 'false';  // Default to auto-scroll
 
                             // Track when user manually scrolls up (away from bottom)
-                            textarea.addEventListener('scroll', function() {
+                            textarea.addEventListener('scroll', function() {{
                                 const isNearBottom = (this.scrollHeight - this.scrollTop - this.clientHeight) < 100;
-                                if (!isNearBottom && this.scrollTop > 0) {
+                                if (!isNearBottom && this.scrollTop > 0) {{
                                     // User scrolled away from bottom - disable auto-scroll
                                     this.dataset.userScrolledUp = 'true';
-                                } else if (isNearBottom) {
+                                }} else if (isNearBottom) {{
                                     // User scrolled back to bottom - re-enable auto-scroll
                                     this.dataset.userScrolledUp = 'false';
-                                }
-                            });
-                        }
-                    }
-                })();
-            ''')
+                                }}
+                            }}, {{ passive: true }});
+                        }}
 
-            self.output.value = self.output_text
-            self.output.update()
-
-            # Auto-scroll to bottom unless user has manually scrolled up
-            ui.run_javascript('''
-                setTimeout(() => {
-                    let textarea = document.querySelector('[data-marker="output"] textarea');
-                    if (!textarea) {
-                        const textareas = document.querySelectorAll('textarea[readonly]');
-                        textarea = textareas[textareas.length - 1];
-                    }
-                    if (textarea) {
-                        // Auto-scroll by default (if userScrolledUp not set or is 'false')
-                        // This ensures initial output scrolls to bottom
-                        if (!textarea.dataset.userScrolledUp || textarea.dataset.userScrolledUp !== 'true') {
+                        // Always scroll to bottom unless user explicitly scrolled up
+                        if (!textarea.dataset.userScrolledUp || textarea.dataset.userScrolledUp !== 'true') {{
+                            // Force scroll for iOS - use multiple methods
                             textarea.scrollTop = textarea.scrollHeight;
-                        }
-                    }
-                }, 10);
+                            setTimeout(() => {{ textarea.scrollTop = textarea.scrollHeight; }}, 0);
+                            setTimeout(() => {{ textarea.scrollTop = textarea.scrollHeight; }}, 50);
+                        }}
+                    }}
+                }})();
             ''')
 
     def _handle_output_enter(self, e):
@@ -3288,9 +3289,22 @@ class NiceGUIBackend(UIBackend):
         self.waiting_for_input = False
         self.input_prompt_text = None
 
-        # Blur input field to dismiss mobile keyboard and accessory bar
+        # Aggressively blur input field to dismiss mobile keyboard and accessory bar
         if self.immediate_entry:
             self.immediate_entry.run_method('blur')
+            # Also use JavaScript to really force the blur on iOS
+            ui.run_javascript('''
+                setTimeout(() => {
+                    const input = document.querySelector('[data-marker="immediate_entry"] input');
+                    if (input) {
+                        input.blur();
+                        // Remove focus from any active element
+                        if (document.activeElement) {
+                            document.activeElement.blur();
+                        }
+                    }
+                }, 0);
+            ''')
 
         # Provide input to interpreter via TWO mechanisms (we check both in case either is active):
         # 1. interpreter.provide_input() - Used when interpreter is waiting synchronously
@@ -3382,8 +3396,19 @@ class NiceGUIBackend(UIBackend):
             self.waiting_for_input = False
             self.input_prompt_text = None
             self.immediate_entry.props('placeholder="BASIC command..."')
-            # Blur input field to dismiss mobile keyboard and accessory bar
+            # Aggressively blur input field to dismiss mobile keyboard and accessory bar
             self.immediate_entry.run_method('blur')
+            ui.run_javascript('''
+                setTimeout(() => {
+                    const input = document.querySelector('[data-marker="immediate_entry"] input');
+                    if (input) {
+                        input.blur();
+                        if (document.activeElement) {
+                            document.activeElement.blur();
+                        }
+                    }
+                }, 0);
+            ''')
             return
 
         # Normal immediate mode command
