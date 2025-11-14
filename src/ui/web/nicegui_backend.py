@@ -3201,7 +3201,8 @@ class NiceGUIBackend(UIBackend):
             self.output.value = self.output_text
             self.output.update()
 
-            # Auto-scroll to bottom using JavaScript
+            # Auto-scroll to bottom only if user was already at/near bottom
+            # This prevents fighting with user's manual scroll position (especially on iPad)
             ui.run_javascript('''
                 setTimeout(() => {
                     let textarea = document.querySelector('[data-marker="output"] textarea');
@@ -3210,7 +3211,12 @@ class NiceGUIBackend(UIBackend):
                         textarea = textareas[textareas.length - 1];
                     }
                     if (textarea) {
-                        textarea.scrollTop = textarea.scrollHeight;
+                        // Only auto-scroll if user was already near bottom (within 100px threshold)
+                        // This lets users scroll up to review output without fighting auto-scroll
+                        const wasNearBottom = (textarea.scrollHeight - textarea.scrollTop - textarea.clientHeight) < 100;
+                        if (wasNearBottom) {
+                            textarea.scrollTop = textarea.scrollHeight;
+                        }
                     }
                 }, 10);
             ''')
