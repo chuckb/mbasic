@@ -3243,8 +3243,9 @@ class NiceGUIBackend(UIBackend):
                         textarea = textareas[textareas.length - 1];
                     }
                     if (textarea) {
-                        // Auto-scroll unless user has explicitly scrolled up
-                        if (textarea.dataset.userScrolledUp !== 'true') {
+                        // Auto-scroll by default (if userScrolledUp not set or is 'false')
+                        // This ensures initial output scrolls to bottom
+                        if (!textarea.dataset.userScrolledUp || textarea.dataset.userScrolledUp !== 'true') {
                             textarea.scrollTop = textarea.scrollHeight;
                         }
                     }
