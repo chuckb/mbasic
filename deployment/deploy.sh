@@ -13,7 +13,7 @@ echo -e "${GREEN}=== MBASIC Kubernetes Deployment ===${NC}"
 echo
 
 # Configuration
-REGISTRY="registry.digitalocean.com/YOUR_REGISTRY"  # CHANGE THIS
+REGISTRY="registry.digitalocean.com/awohl-mbasic"
 IMAGE_NAME="mbasic-web"
 VERSION="${1:-latest}"
 NAMESPACE="mbasic"
