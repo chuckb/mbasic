@@ -81,9 +81,9 @@ class UsageTracker:
             # Verify tables exist
             try:
                 cursor = self.db_connection.cursor()
-                cursor.execute("SHOW TABLES LIKE 'page_visits'")
+                cursor.execute("SHOW TABLES LIKE 'ide_sessions'")
                 if not cursor.fetchone():
-                    logger.warning("⚠ Usage tracking table 'page_visits' does not exist - schema may not be created")
+                    logger.warning("⚠ Usage tracking table 'ide_sessions' does not exist - schema may not be created")
                 else:
                     logger.info("✓ Usage tracking tables verified")
                 cursor.close()
