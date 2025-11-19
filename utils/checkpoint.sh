@@ -131,6 +131,12 @@ if [ "$DOCS_CHANGED" = true ]; then
 
         echo "✓ User docs build validation passed (no warnings or errors)"
 
+        # Copy sitemap.xml to sitemap1.xml for user docs
+        if [ -f "site/sitemap.xml" ]; then
+            cp site/sitemap.xml site/sitemap1.xml
+            echo "✓ Copied sitemap.xml to sitemap1.xml"
+        fi
+
         # Build developer docs (full search indexing)
         echo "Building developer documentation (site-dev/)..."
         BUILD_OUTPUT_DEV=$(mkdocs build --strict -f mkdocs-dev.yml 2>&1)
@@ -158,6 +164,12 @@ if [ "$DOCS_CHANGED" = true ]; then
         fi
 
         echo "✓ Developer docs build validation passed"
+
+        # Copy sitemap.xml to sitemap1.xml for developer docs
+        if [ -f "site-dev/sitemap.xml" ]; then
+            cp site-dev/sitemap.xml site-dev/sitemap1.xml
+            echo "✓ Copied sitemap.xml to sitemap1.xml (dev)"
+        fi
     else
         echo "❌ ERROR: mkdocs not installed!"
         echo ""
