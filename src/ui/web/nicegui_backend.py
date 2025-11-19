@@ -4075,6 +4075,10 @@ def start_web_ui(port=8080):
     - No shared state between clients
     - UI elements naturally isolated per client
     """
+    # Install global crash handler
+    from src.crash_handler import setup_crash_handler
+    setup_crash_handler()
+
     # Log version to debug output
     sys.stderr.write(f"\n{'='*70}\n")
     sys.stderr.write(f"MBASIC Web UI Starting - Version {VERSION}\n")
