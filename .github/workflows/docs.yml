@@ -53,6 +53,12 @@ jobs:
         run: mkdocs build --strict --verbose -f mkdocs-dev.yml
         # Builds to ./site-dev with full navigation (includes dev/)
 
+      - name: Copy sitemap.xml to sitemap1.xml
+        run: |
+          cp site/sitemap.xml site/sitemap1.xml
+          cp site-dev/sitemap.xml site-dev/sitemap1.xml
+        # Create sitemap1.xml as a copy of the auto-generated sitemap.xml
+
       - name: Merge documentation sites
         run: |
           mkdir -p site/dev-docs
