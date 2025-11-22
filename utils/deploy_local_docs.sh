@@ -14,8 +14,12 @@ mkdocs build --strict -f mkdocs-local.yml > /dev/null 2>&1
 find site/ -type f \( -name "*.html" -o -name "*.xml" -o -name "*.txt" -o -name "*.js" -o -name "*.json" \) \
     -exec sed -i "s|${GITHUB_URL}|${LOCAL_URL}|g" {} +
 
-# Deploy to nginx serving directory
-rm -rf /local/site
-cp -r site /local/site
+# Deploy atomically to nginx serving directory
+rm -rf /local/site.new
+cp -r site /local/site.new
+rm -rf /local/site.old
+mv /local/site /local/site.old 2>/dev/null || true
+mv /local/site.new /local/site
+rm -rf /local/site.old
 
 echo "✓ Local docs deployed to /local/site"
