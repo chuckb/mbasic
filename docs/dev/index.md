@@ -3,7 +3,7 @@
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
 **Last Updated:** 2025-11-22
-**Total Documents:** 213
+**Total Documents:** 196
 
 ## What's Here
 
@@ -38,16 +38,12 @@ If you're contributing to MBASIC:
 ### Language Features
 
 - [Keybinding Systems](KEYBINDING_SYSTEMS.md)
-- [Mb25 Runtime Library Plan](MB25_RUNTIME_LIBRARY_PLAN.md)
 
 ### File I/O
 
 - [Backup Nonversioned Files](BACKUP_NONVERSIONED_FILES.md)
 - [Checkpoint Validation](CHECKPOINT_VALIDATION.md)
 - [Docs Url Configuration](DOCS_URL_CONFIGURATION.md)
-- [Keybinding Macros Migration](KEYBINDING_MACROS_MIGRATION.md)
-- [Medium Severity Session Report](MEDIUM_SEVERITY_SESSION_REPORT.md)
-- [Pip Install Resource Location Plan](PIP_INSTALL_RESOURCE_LOCATION_PLAN.md)
 - [Printf Elimination Todo](PRINTF_ELIMINATION_TODO.md)
 - [Redis Per Session Settings](REDIS_PER_SESSION_SETTINGS.md)
 - [Redis Session Storage Setup](REDIS_SESSION_STORAGE_SETUP.md)
@@ -55,12 +51,7 @@ If you're contributing to MBASIC:
 
 ### Debugging & Errors
 
-- [Debugger Issues Todo](DEBUGGER_ISSUES_TODO.md)
-- [Import Consistency Fix](IMPORT_CONSISTENCY_FIX.md)
-- [Ip Logging Fix](IP_LOGGING_FIX.md)
-- [Low Severity Fix Report](LOW_SEVERITY_FIX_REPORT.md)
 - [Random Fixes Todo](RANDOM_FIXES_TODO.md)
-- [Redis Storage Bug Fix](REDIS_STORAGE_BUG_FIX.md)
 - [Usage Tracking Debug](USAGE_TRACKING_DEBUG.md)
 - [Usage Tracking Enhanced Debug](USAGE_TRACKING_ENHANCED_DEBUG.md)
 
@@ -76,20 +67,12 @@ If you're contributing to MBASIC:
 ### Work in Progress
 
 - [Dynamic String Pool Todo](DYNAMIC_STRING_POOL_TODO.md)
-- [Work In Progress Final Summary](WORK_IN_PROGRESS_FINAL_SUMMARY.md)
-- [Work In Progress](WORK_IN_PROGRESS.md)
 
 ### Other
 
 - [Compiler Cpu Targets](COMPILER_CPU_TARGETS.md)
-- [Compiler Missing Features](COMPILER_MISSING_FEATURES.md)
-- [Compiler Remaining Work](COMPILER_REMAINING_WORK.md)
 - [Compiler Setup](COMPILER_SETUP.md)
-- [Compiler Status Summary](COMPILER_STATUS_SUMMARY.md)
 - [Compiler Z88Dk Path Change](COMPILER_Z88DK_PATH_CHANGE.md)
-- [Consistency Checker Convergence Proposal](CONSISTENCY_CHECKER_CONVERGENCE_PROPOSAL.md)
-- [Js Backend Remaining](JS_BACKEND_REMAINING.md)
-- [Js Backend Unimplemented](JS_BACKEND_UNIMPLEMENTED.md)
 - [Kubernetes Deployment Plan](KUBERNETES_DEPLOYMENT_PLAN.md)
 - [Kubernetes Deployment Setup](KUBERNETES_DEPLOYMENT_SETUP.md)
 - [Kubernetes Deployment Summary](KUBERNETES_DEPLOYMENT_SUMMARY.md)

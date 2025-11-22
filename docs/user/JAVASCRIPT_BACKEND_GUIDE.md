@@ -384,11 +384,7 @@ Then load both:
 ## See Also
 
 - [JavaScript Backend Spec](../design/JAVASCRIPT_BACKEND_SPEC.md) - Design documentation
-- [Unimplemented Features](../dev/JS_BACKEND_UNIMPLEMENTED.md) - What's not yet implemented
-- [Remaining Features](../dev/JS_BACKEND_REMAINING.md) - Prioritized feature list
 
 ## Version
 
-This guide is for MBASIC-2025 version 1.0.908 (2025-11-13)
-
-JavaScript backend: **Phase 1-8 Complete** (~95% MBASIC 5.21 coverage)
+JavaScript backend is **100% Complete** - all MBASIC 5.21 features implemented.

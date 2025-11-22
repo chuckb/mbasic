@@ -319,10 +319,8 @@ nav:
   - Developer:
     - dev/index.md
     - dev/KEYBINDING_SYSTEMS.md
-    - dev/IMPORT_CONSISTENCY_FIX.md
     - dev/REDIS_PER_SESSION_SETTINGS.md
     - dev/REDIS_SESSION_STORAGE_SETUP.md
-    - dev/REDIS_STORAGE_BUG_FIX.md
   - Project Status: PROJECT_STATUS.md
 
 extra:

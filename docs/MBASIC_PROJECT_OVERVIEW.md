@@ -321,7 +321,7 @@ mbasic --compile-js yourprogram.js --html yourprogram.bas
 ### Documentation
 - **[Quick Start Guide](user/QUICK_REFERENCE.md)** - Get running in 5 minutes
 - **[Language Reference](help/common/language/index.md)** - Every BASIC feature documented
-- **[Compiler Guide](dev/COMPILER_STATUS_SUMMARY.md)** - 100% feature list
+- **[JavaScript Compiler](user/JAVASCRIPT_BACKEND_GUIDE.md)** - Compile BASIC to JavaScript
 - **[Developer Docs](dev/index.md)** - Architecture and implementation
 
 ### Community
