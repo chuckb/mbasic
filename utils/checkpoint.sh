@@ -129,46 +129,12 @@ if [ "$DOCS_CHANGED" = true ]; then
             exit 1
         fi
 
-        echo "✓ User docs build validation passed (no warnings or errors)"
+        echo "✓ Docs build validation passed (no warnings or errors)"
 
-        # Copy sitemap.xml to sitemap1.xml for user docs
+        # Copy sitemap.xml to sitemap1.xml
         if [ -f "site/sitemap.xml" ]; then
             cp site/sitemap.xml site/sitemap1.xml
             echo "✓ Copied sitemap.xml to sitemap1.xml"
-        fi
-
-        # Build developer docs (full search indexing)
-        echo "Building developer documentation (site-dev/)..."
-        BUILD_OUTPUT_DEV=$(mkdocs build --strict -f mkdocs-dev.yml 2>&1)
-        BUILD_EXIT_CODE_DEV=$?
-
-        if [ $BUILD_EXIT_CODE_DEV -ne 0 ]; then
-            echo "❌ ERROR: mkdocs-dev build failed!"
-            echo ""
-            echo "$BUILD_OUTPUT_DEV"
-            echo ""
-            echo "Fix the errors above before committing"
-            exit 1
-        fi
-
-        # Check for strict mode warnings in dev docs too
-        if echo "$BUILD_OUTPUT_DEV" | grep -E "contains an unrecognized relative link|does not contain an anchor|contains an absolute link" > /dev/null; then
-            echo "❌ ERROR: mkdocs-dev build has strict mode warnings!"
-            echo ""
-            echo "The following warnings will cause GitHub deployment to fail:"
-            echo ""
-            echo "$BUILD_OUTPUT_DEV" | grep -E "contains an unrecognized relative link|does not contain an anchor|contains an absolute link"
-            echo ""
-            echo "Run 'mkdocs build --strict -f mkdocs-dev.yml' to see full details"
-            exit 1
-        fi
-
-        echo "✓ Developer docs build validation passed"
-
-        # Copy sitemap.xml to sitemap1.xml for developer docs
-        if [ -f "site-dev/sitemap.xml" ]; then
-            cp site-dev/sitemap.xml site-dev/sitemap1.xml
-            echo "✓ Copied sitemap.xml to sitemap1.xml (dev)"
         fi
     else
         echo "❌ ERROR: mkdocs not installed!"

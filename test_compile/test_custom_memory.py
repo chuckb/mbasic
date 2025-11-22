@@ -2,8 +2,10 @@
 """
 Example: Compiling with custom memory configuration
 
-This demonstrates how to customize stack, heap, and string pool sizes
+This demonstrates how to customize stack and string pool sizes
 when compiling BASIC programs.
+
+Note: Heap size is auto-detected at runtime via -DAMALLOC (~75% of TPA)
 """
 import sys
 import os
@@ -34,18 +36,16 @@ analyzer = SemanticAnalyzer()
 analyzer.analyze(program)
 
 # Custom memory configuration
+# Note: Stack pointer and heap size are auto-detected at runtime
 custom_config = {
-    'stack_pointer': '0xFC00',      # 63K - for systems with more RAM
     'stack_size': 1024,              # 1KB stack (double the default)
-    'heap_size': 4096,               # 4KB heap (double the default)
-    'string_pool_size': 2048,        # 2KB string pool (double the default)
+    'string_pool_size': 4096,        # 4KB string pool (double the default)
 }
 
 print("=== Compiling with custom memory config ===")
-print(f"Stack pointer:    {custom_config['stack_pointer']} (63K)")
 print(f"Stack size:       {custom_config['stack_size']} bytes")
-print(f"Heap size:        {custom_config['heap_size']} bytes")
 print(f"String pool size: {custom_config['string_pool_size']} bytes")
+print("(Heap auto-detected at runtime via -DAMALLOC)")
 print()
 
 # Generate code with custom config

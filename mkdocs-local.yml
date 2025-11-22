@@ -1,0 +1,4 @@
+INHERIT: mkdocs.yml
+
+# Override for local deployment at mbasic.awohl.com
+site_url: https://mbasic.awohl.com/docs/

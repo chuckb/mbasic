@@ -316,6 +316,13 @@ nav:
     - Data Management: library/data_management/index.md
     - Telecommunications: library/telecommunications/index.md
     - Demos: library/demos/index.md
+  - Developer:
+    - dev/index.md
+    - dev/KEYBINDING_SYSTEMS.md
+    - dev/IMPORT_CONSISTENCY_FIX.md
+    - dev/REDIS_PER_SESSION_SETTINGS.md
+    - dev/REDIS_SESSION_STORAGE_SETUP.md
+    - dev/REDIS_STORAGE_BUG_FIX.md
   - Project Status: PROJECT_STATUS.md
 
 extra:

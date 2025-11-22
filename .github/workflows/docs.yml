@@ -44,26 +44,12 @@ jobs:
         run: python3 utils/build_library_docs.py
         # Generates docs/library/games/ with current .bas files
 
-      - name: Build user documentation
+      - name: Build documentation
         run: mkdocs build --strict --verbose
         # Strict mode enforces zero broken links
-        # Builds to ./site with limited navigation (help/, library/)
-
-      - name: Build developer documentation
-        run: mkdocs build --strict --verbose -f mkdocs-dev.yml
-        # Builds to ./site-dev with full navigation (includes dev/)
 
       - name: Copy sitemap.xml to sitemap1.xml
-        run: |
-          cp site/sitemap.xml site/sitemap1.xml
-          cp site-dev/sitemap.xml site-dev/sitemap1.xml
-        # Create sitemap1.xml as a copy of the auto-generated sitemap.xml
-
-      - name: Merge documentation sites
-        run: |
-          mkdir -p site/dev-docs
-          cp -r site-dev/* site/dev-docs/
-        # Copy dev docs into site/dev-docs/ so both are deployed
+        run: cp site/sitemap.xml site/sitemap1.xml
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

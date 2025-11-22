@@ -2,8 +2,8 @@
 
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
-**Last Updated:** 2025-11-13
-**Total Documents:** 211
+**Last Updated:** 2025-11-22
+**Total Documents:** 213
 
 ## What's Here
 
@@ -31,6 +31,7 @@ If you're contributing to MBASIC:
 
 ### UI Implementation
 
+- [Ios Ipad Web Ui Todo](IOS_IPAD_WEB_UI_TODO.md)
 - [Web Error Logging](WEB_ERROR_LOGGING.md)
 - [Web Multiuser Deployment](WEB_MULTIUSER_DEPLOYMENT.md)
 
@@ -74,6 +75,7 @@ If you're contributing to MBASIC:
 
 ### Work in Progress
 
+- [Dynamic String Pool Todo](DYNAMIC_STRING_POOL_TODO.md)
 - [Work In Progress Final Summary](WORK_IN_PROGRESS_FINAL_SUMMARY.md)
 - [Work In Progress](WORK_IN_PROGRESS.md)
 

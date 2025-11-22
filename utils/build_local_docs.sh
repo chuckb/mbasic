@@ -1,15 +1,14 @@
 #!/bin/bash
-# Build documentation for local nginx deployment
+# Build documentation for local nginx deployment at https://mbasic.awohl.com/docs/
 
 cd /home/mbasic/cl/mbasic
 
-# Build with GitHub URL
-mkdocs build --strict
+LOCAL_URL="https://mbasic.awohl.com/docs"
 
-# Replace URLs in sitemap for local deployment
-sed -i 's|https://avwohl.github.io/mbasic|https://mbasic.awohl.com/docs|g' site/sitemap.xml
+# Build all docs with local URL
+mkdocs build --strict -f mkdocs-local.yml
 
 # Copy sitemap to sitemap1.xml
 cp site/sitemap.xml site/sitemap1.xml
 
-echo "✓ Local documentation built with updated sitemap URLs"
+echo "✓ Local documentation built for $LOCAL_URL"

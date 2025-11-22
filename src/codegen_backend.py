@@ -115,16 +115,10 @@ class Z88dkCBackend(CodeGenBackend):
 
         # Memory configuration (can be overridden via config)
         self.config = config or {}
-        # CP/M: Stack pointer is AUTO-DETECTED by z88dk from BDOS entry (at 0x0006)
-        # We only configure stack SIZE and heap SIZE
-        # Note: String pool is malloc'd FROM heap, so heap must be >= pool + overhead
+        # CP/M: Stack pointer auto-detected by z88dk from BDOS entry (0x0006)
+        # Heap size auto-detected at runtime via -DAMALLOC (~75% of TPA)
         self.stack_size = self.config.get('stack_size', 512)  # GOSUB/function call stack
-        self.string_pool_size = self.config.get('string_pool_size', 2048)  # BASIC string data
-        # Heap usage: pool_permanent + GC_temp + C_string_temps + file_I/O_buffers
-        #           = pool_size   + pool_size + ~512          + ~512
-        #           = 2 * pool_size + 1024
-        default_heap = max(self.string_pool_size * 2 + 1024, 1024)
-        self.heap_size = self.config.get('heap_size', default_heap)
+        self.string_pool_size = self.config.get('string_pool_size', 2048)  # String pool from heap
 
     def get_file_extension(self) -> str:
         return '.c'
