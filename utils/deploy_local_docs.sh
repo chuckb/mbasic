@@ -14,12 +14,18 @@ mkdocs build --strict -f mkdocs-local.yml > /dev/null 2>&1
 find site/ -type f \( -name "*.html" -o -name "*.xml" -o -name "*.txt" -o -name "*.js" -o -name "*.json" \) \
     -exec sed -i "s|${GITHUB_URL}|${LOCAL_URL}|g" {} +
 
-# Deploy atomically to nginx serving directory
-rm -rf /local/site.new
-cp -r site /local/site.new
-rm -rf /local/site.old
-mv /local/site /local/site.old 2>/dev/null || true
-mv /local/site.new /local/site
-rm -rf /local/site.old
+# Deploy atomically using symlink swap
+# /local/site is a symlink to /local/site-a or /local/site-b
+TIMESTAMP=$(date +%s)
+NEW_DIR="/local/site-${TIMESTAMP}"
+cp -r site "$NEW_DIR"
 
-echo "✓ Local docs deployed to /local/site"
+# Atomic symlink update (ln -sfn atomically replaces symlink target)
+ln -sfn "$NEW_DIR" /local/site
+
+# Clean up old versions (keep only current)
+for old in /local/site-*; do
+    [ "$old" != "$NEW_DIR" ] && rm -rf "$old"
+done
+
+echo "✓ Local docs deployed to /local/site -> $NEW_DIR"
