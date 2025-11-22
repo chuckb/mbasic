@@ -48,9 +48,6 @@ jobs:
         run: mkdocs build --strict --verbose
         # Strict mode enforces zero broken links
 
-      - name: Copy sitemap.xml to sitemap1.xml
-        run: cp site/sitemap.xml site/sitemap1.xml
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

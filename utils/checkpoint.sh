@@ -131,25 +131,8 @@ if [ "$DOCS_CHANGED" = true ]; then
 
         echo "✓ Docs build validation passed (no warnings or errors)"
 
-        # Copy sitemap.xml to sitemap1.xml
-        if [ -f "site/sitemap.xml" ]; then
-            cp site/sitemap.xml site/sitemap1.xml
-            echo "✓ Copied sitemap.xml to sitemap1.xml"
-        fi
-
-        # Build local site with correct URLs for mbasic.awohl.com
-        echo "Building local documentation (site/ with local URLs)..."
-        LOCAL_URL="https://mbasic.awohl.com/docs"
-        GITHUB_URL="https://avwohl.github.io/mbasic"
-        mkdocs build --strict -f mkdocs-local.yml > /dev/null 2>&1
-        find site/ -type f \( -name "*.html" -o -name "*.xml" -o -name "*.txt" -o -name "*.js" -o -name "*.json" \) \
-            -exec sed -i "s|${GITHUB_URL}|${LOCAL_URL}|g" {} +
-        cp site/sitemap.xml site/sitemap1.xml
-
-        # Deploy to nginx serving directory
-        rm -rf /local/site
-        cp -r site /local/site
-        echo "✓ Local site built and deployed to /local/site"
+        # Build and deploy local site with correct URLs
+        ./utils/deploy_local_docs.sh
     else
         echo "❌ ERROR: mkdocs not installed!"
         echo ""
