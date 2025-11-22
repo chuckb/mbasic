@@ -136,6 +136,16 @@ if [ "$DOCS_CHANGED" = true ]; then
             cp site/sitemap.xml site/sitemap1.xml
             echo "✓ Copied sitemap.xml to sitemap1.xml"
         fi
+
+        # Build local site with correct URLs for mbasic.awohl.com
+        echo "Building local documentation (site/ with local URLs)..."
+        LOCAL_URL="https://mbasic.awohl.com/docs"
+        GITHUB_URL="https://avwohl.github.io/mbasic"
+        mkdocs build --strict -f mkdocs-local.yml > /dev/null 2>&1
+        find site/ -type f \( -name "*.html" -o -name "*.xml" -o -name "*.txt" -o -name "*.js" -o -name "*.json" \) \
+            -exec sed -i "s|${GITHUB_URL}|${LOCAL_URL}|g" {} +
+        cp site/sitemap.xml site/sitemap1.xml
+        echo "✓ Local site built for $LOCAL_URL"
     else
         echo "❌ ERROR: mkdocs not installed!"
         echo ""
