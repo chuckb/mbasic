@@ -34,7 +34,7 @@ sudo snap connect doctl:dot-docker
 ### 1. Create DigitalOcean Container Registry
 ```bash
 # Create the registry with starter tier (free)
-doctl registry create awohl-mbasic --subscription-tier starter --region nyc3
+doctl registry create <YOUR_REGISTRY_NAME> --subscription-tier starter --region nyc3
 ```
 
 ### 2. Configure Docker Authentication
@@ -53,15 +53,14 @@ kubectl apply -f deployment/k8s_templates/namespace.yaml
 # Create the secrets with MySQL and hCaptcha credentials
 kubectl create secret generic mbasic-secrets \
   --namespace=mbasic \
-  --from-literal=MYSQL_HOST=10.136.0.2 \
+  --from-literal=MYSQL_HOST=<YOUR_MYSQL_PRIVATE_IP> \
   --from-literal=MYSQL_USER=mbasic \
-  --from-literal=MYSQL_PASSWORD='[REDACTED]' \
-  --from-literal=HCAPTCHA_SITE_KEY=[REDACTED] \
-  --from-literal=HCAPTCHA_SECRET_KEY=[REDACTED]
+  --from-literal=MYSQL_PASSWORD='<YOUR_PASSWORD>' \
+  --from-literal=HCAPTCHA_SITE_KEY=<YOUR_SITE_KEY> \
+  --from-literal=HCAPTCHA_SECRET_KEY=<YOUR_SECRET_KEY>
 
-# Note: Using private network IP (10.136.0.2) for MySQL connection
-# Both awohl4 droplet and k8s cluster are in same VPC (b3756118-dc84-11e8-8650-3cfdfea9f8c8)
-# No SSL is used for MySQL connection (firewall-based security on private network)
+# Note: Use private network IP for MySQL connection if in same VPC
+# No SSL needed for MySQL connection (firewall-based security on private network)
 ```
 
 ## Docker Image Build and Push
@@ -69,13 +68,13 @@ kubectl create secret generic mbasic-secrets \
 ### 4. Build Docker Image
 ```bash
 # Build the Docker image
-docker build -t registry.digitalocean.com/awohl-mbasic/mbasic-web:latest .
+docker build -t registry.digitalocean.com/<YOUR_REGISTRY>/mbasic-web:latest .
 ```
 
 ### 5. Push to Registry
 ```bash
 # Push the image to DigitalOcean registry
-docker push registry.digitalocean.com/awohl-mbasic/mbasic-web:latest
+docker push registry.digitalocean.com/<YOUR_REGISTRY>/mbasic-web:latest
 ```
 
 ## Deployment
@@ -115,15 +114,14 @@ kubectl logs -n mbasic -l app=mbasic-web --tail=50
 
 ## Configuration Summary
 
-- **Registry:** `registry.digitalocean.com/awohl-mbasic`
-- **Image:** `registry.digitalocean.com/awohl-mbasic/mbasic-web:latest`
-- **Domain:** `mbasic.awohl.com`
-- **MySQL Host:** `10.136.0.2` (private network, no SSL)
+- **Registry:** `registry.digitalocean.com/<YOUR_REGISTRY>`
+- **Image:** `registry.digitalocean.com/<YOUR_REGISTRY>/mbasic-web:latest`
+- **Domain:** Your domain
+- **MySQL Host:** Private network IP (if using VPC)
 - **MySQL User:** `mbasic`
 - **MySQL Database:** `mbasic_logs`
-- **VPC:** `b3756118-dc84-11e8-8650-3cfdfea9f8c8` (shared between awohl4 droplet and k8s cluster)
-- **Let's Encrypt Email:** `xlets@awohl.com`
-- **hCaptcha Site Key:** `849ee574-ddc4-468c-b8be-bdb2936cd808`
+- **Let's Encrypt Email:** Your email for certificate notifications
+- **hCaptcha:** Get keys from https://www.hcaptcha.com/
 
 ---
 **Last Updated:** 2025-11-12
