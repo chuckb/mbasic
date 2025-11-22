@@ -18,4 +18,8 @@ find site/ -type f \( -name "*.html" -o -name "*.xml" -o -name "*.txt" -o -name 
 # Copy sitemap to sitemap1.xml
 cp site/sitemap.xml site/sitemap1.xml
 
-echo "✓ Local documentation built for $LOCAL_URL"
+# Deploy to nginx serving directory
+rm -rf /local/site
+cp -r site /local/site
+
+echo "✓ Local documentation built and deployed to /local/site"

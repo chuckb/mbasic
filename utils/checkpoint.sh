@@ -145,7 +145,11 @@ if [ "$DOCS_CHANGED" = true ]; then
         find site/ -type f \( -name "*.html" -o -name "*.xml" -o -name "*.txt" -o -name "*.js" -o -name "*.json" \) \
             -exec sed -i "s|${GITHUB_URL}|${LOCAL_URL}|g" {} +
         cp site/sitemap.xml site/sitemap1.xml
-        echo "✓ Local site built for $LOCAL_URL"
+
+        # Deploy to nginx serving directory
+        rm -rf /local/site
+        cp -r site /local/site
+        echo "✓ Local site built and deployed to /local/site"
     else
         echo "❌ ERROR: mkdocs not installed!"
         echo ""
