@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://avwohl.github.io/mbasic/sitemap.xml
