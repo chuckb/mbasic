@@ -14,6 +14,11 @@ mkdocs build --strict -f mkdocs-local.yml > /dev/null 2>&1
 find site/ -type f \( -name "*.html" -o -name "*.xml" -o -name "*.txt" -o -name "*.js" -o -name "*.json" \) \
     -exec sed -i "s|${GITHUB_URL}|${LOCAL_URL}|g" {} +
 
+# Copy Google site verification file for local site (mbasic.awohl.com)
+if [ -d "verification_files/local" ]; then
+    cp verification_files/local/google*.html site/ 2>/dev/null || true
+fi
+
 # Deploy atomically using symlink swap
 # /local/site is a symlink to /local/site-a or /local/site-b
 TIMESTAMP=$(date +%s)

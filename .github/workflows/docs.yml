@@ -48,6 +48,9 @@ jobs:
         run: mkdocs build --strict --verbose
         # Strict mode enforces zero broken links
 
+      - name: Copy Google verification file
+        run: cp verification_files/github/google*.html site/ 2>/dev/null || true
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
