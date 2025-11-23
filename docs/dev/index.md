@@ -67,6 +67,7 @@ If you're contributing to MBASIC:
 
 - [Compiler Cpu Targets](COMPILER_CPU_TARGETS.md)
 - [Compiler Setup](COMPILER_SETUP.md)
+- [Compiler Variable Types](COMPILER_VARIABLE_TYPES.md)
 - [Compiler Z88Dk Path Change](COMPILER_Z88DK_PATH_CHANGE.md)
 - [Kubernetes Deployment Plan](KUBERNETES_DEPLOYMENT_PLAN.md)
 - [Kubernetes Deployment Setup](KUBERNETES_DEPLOYMENT_SETUP.md)

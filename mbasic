@@ -163,6 +163,174 @@ def compile_to_javascript(input_file, output_file, generate_html=False, debug=Fa
         sys.exit(1)
 
 
+def sanitize_cpm_filename(name):
+    """Sanitize filename for CP/M 8.3 format.
+
+    CP/M filenames must:
+    - Be max 8 characters (before extension)
+    - Use only A-Z, 0-9 (no underscores, hyphens, etc.)
+    - tnylpo requires lowercase filenames
+
+    Args:
+        name: Input filename (without extension)
+
+    Returns:
+        Sanitized filename suitable for tnylpo/CP/M
+    """
+    import re
+    # Remove extension if present
+    name = os.path.splitext(name)[0]
+    # Replace underscores/hyphens with nothing
+    name = re.sub(r'[_\-]', '', name)
+    # Keep only alphanumeric
+    name = re.sub(r'[^a-zA-Z0-9]', '', name)
+    # Truncate to 8 characters
+    name = name[:8]
+    # Lowercase (tnylpo requires this)
+    name = name.lower()
+    # Default if empty
+    if not name:
+        name = 'program'
+    return name
+
+
+def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False):
+    """Compile BASIC program to C for z88dk/CP/M
+
+    Args:
+        input_file: Path to BASIC source file
+        output_file: Path to output (without extension - generates .c and .com)
+        cpu: Target CPU - 'z80' (default) or '8080'
+        run: Run the compiled program with tnylpo after compilation
+        debug: Enable debug output
+    """
+    import subprocess
+
+    try:
+        # Import required modules
+        from lexer import Lexer
+        from parser import Parser
+        from semantic_analyzer import SemanticAnalyzer
+        from src.codegen_backend import Z88dkCBackend
+
+        # Read source file
+        with open(input_file, 'r') as f:
+            source = f.read()
+
+        if debug:
+            print(f"Compiling {input_file} to C ({cpu})...", file=sys.stderr)
+
+        # Lex
+        lexer = Lexer(source)
+        tokens = lexer.tokenize()
+
+        if debug:
+            print(f"  Lexed {len(tokens)} tokens", file=sys.stderr)
+
+        # Parse
+        parser = Parser(tokens)
+        ast = parser.parse()
+
+        if debug:
+            print(f"  Parsed {len(ast.lines)} lines", file=sys.stderr)
+
+        # Semantic analysis
+        analyzer = SemanticAnalyzer()
+        success = analyzer.analyze(ast)
+
+        if not success:
+            print("Semantic analysis failed", file=sys.stderr)
+            for err in analyzer.errors:
+                print(f"  {err}", file=sys.stderr)
+            sys.exit(1)
+
+        if analyzer.warnings:
+            for warn in analyzer.warnings:
+                print(f"Warning: {warn}", file=sys.stderr)
+
+        if debug:
+            print(f"  Semantic analysis complete", file=sys.stderr)
+
+        # Generate C code
+        config = {
+            'source_file': os.path.basename(input_file),
+            'cpu_target': cpu
+        }
+        backend = Z88dkCBackend(analyzer.symbols, config)
+        c_code = backend.generate(ast)
+
+        # Write C file
+        c_file = output_file + '.c'
+        with open(c_file, 'w') as f:
+            f.write(c_code)
+
+        print(f"Generated C: {c_file}")
+
+        # Compile with z88dk
+        com_file = output_file + '.com'
+
+        # Find runtime library path
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        runtime_dir = os.path.join(script_dir, 'runtime', 'strings')
+        runtime_c = os.path.join(runtime_dir, 'mb25_string.c')
+
+        if cpu == '8080':
+            zcc_cmd = ['z88dk.zcc', '+cpm', '-clib=8080', '--math-mbf32',
+                       f'-I{runtime_dir}', c_file, runtime_c,
+                       '-o', output_file, '-create-app']
+        else:
+            zcc_cmd = ['z88dk.zcc', '+cpm', f'-I{runtime_dir}',
+                       c_file, runtime_c, '-o', output_file, '-create-app']
+
+        if debug:
+            print(f"  Running: {' '.join(zcc_cmd)}", file=sys.stderr)
+
+        result = subprocess.run(zcc_cmd, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            print(f"z88dk compilation failed:", file=sys.stderr)
+            print(result.stderr, file=sys.stderr)
+            sys.exit(1)
+
+        print(f"Generated COM: {com_file}")
+
+        # Run with tnylpo if requested
+        if run and os.path.exists(com_file):
+            # tnylpo requires CP/M 8.3 filenames - sanitize if needed
+            basename = os.path.basename(output_file)
+            safe_name = sanitize_cpm_filename(basename)
+            run_file = com_file
+
+            # If filename isn't CP/M safe, copy to safe name in current dir
+            if safe_name != basename.lower():
+                import shutil
+                run_file = f'{safe_name}.com'
+                shutil.copy(com_file, run_file)
+                if debug:
+                    print(f"  Copied to CP/M-safe name: {run_file}", file=sys.stderr)
+
+            print(f"\nRunning {run_file}...")
+            print("-" * 40)
+            try:
+                subprocess.run(['tnylpo', run_file], check=True)
+            except FileNotFoundError:
+                print("tnylpo not found - install tnylpo to run CP/M programs")
+                print("See docs/dev/TNYLPO_SETUP.md for installation instructions")
+            except subprocess.CalledProcessError as e:
+                print(f"Execution failed: {e}", file=sys.stderr)
+
+    except FileNotFoundError:
+        print(f"Error: File not found: {input_file}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        if debug:
+            import traceback
+            traceback.print_exc()
+        else:
+            print(f"Compilation error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
 def generate_html_wrapper(js_file, html_file, source_name):
     """Generate HTML wrapper for JavaScript output
 
@@ -386,15 +554,36 @@ Examples:
     )
 
     parser.add_argument(
-        '--compile-js',
+        '--compile-js', '--js',
         metavar='OUTPUT',
+        dest='compile_js',
         help='Compile BASIC program to JavaScript (specify output file)'
     )
 
     parser.add_argument(
         '--html',
         action='store_true',
-        help='Generate HTML wrapper for JavaScript output (use with --compile-js)'
+        help='Generate HTML wrapper for JavaScript output (use with --js)'
+    )
+
+    parser.add_argument(
+        '--compile-c', '--cpm',
+        metavar='OUTPUT',
+        dest='compile_c',
+        help='Compile BASIC program to C/Z80 for CP/M (specify output name without extension)'
+    )
+
+    parser.add_argument(
+        '--cpu',
+        choices=['z80', '8080'],
+        default='z80',
+        help='Target CPU for C compilation (default: z80)'
+    )
+
+    parser.add_argument(
+        '--run',
+        action='store_true',
+        help='Run compiled program with tnylpo after compilation (use with --compile-c)'
     )
 
     args = parser.parse_args()
@@ -420,6 +609,21 @@ Examples:
             args.program,
             args.compile_js,
             generate_html=args.html,
+            debug=args.debug
+        )
+        sys.exit(0)
+
+    # Handle --compile-c (compile to C/Z80 and exit)
+    if args.compile_c:
+        if not args.program:
+            print("Error: --compile-c requires a BASIC program file", file=sys.stderr)
+            sys.exit(1)
+
+        compile_to_c(
+            args.program,
+            args.compile_c,
+            cpu=args.cpu,
+            run=args.run,
             debug=args.debug
         )
         sys.exit(0)

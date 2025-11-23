@@ -1,20 +1,18 @@
 # MBASIC Compiler CPU Target Options
 
-## Current Status: Z80 Default
+## 8080 Target
 
-The MBASIC compiler currently generates **Z80 code by default** due to z88dk's +cpm target defaulting to Z80.
+The 8080 target works correctly with z88dk:
 
-### Known Issue with 8080 Target
-
-The `-m8080` flag has linking problems with printf functions in current z88dk versions, producing errors like:
-```
-error: undefined symbol: __printf_get_flags_impl
-error: undefined symbol: fputc_cons_native
+```bash
+z88dk.zcc +cpm -clib=8080 --math-mbf32 program.c -o program -create-app
 ```
 
-Until this is resolved, we use the default Z80 target.
+**Key flags:**
+- `-clib=8080` - Use the classic 8080 library
+- `--math-mbf32` - Include Microsoft Binary Format 32-bit math (needed for floating point)
 
-### Why We Wanted 8080
+### Why 8080
 
 1. **Original CP/M processor** - CP/M was designed for the Intel 8080
 2. **Maximum compatibility** - Works on:
