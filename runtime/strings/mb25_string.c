@@ -8,7 +8,6 @@
  */
 
 #include "mb25_string.h"
-#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -39,21 +38,16 @@ const char *mb25_error_string(mb25_error_t error) {
     }
 }
 
-/* ===== Initialization and Cleanup ===== */
+/* ===== Initialization ===== */
 
-mb25_error_t mb25_init(uint16_t pool_size) {
-    /* Clean up any existing state */
-    if (mb25_global.pool != NULL) {
-        mb25_cleanup();
-    }
-
-    /* Allocate string pool */
-    mb25_global.pool = (uint8_t *)malloc(pool_size);
-    if (mb25_global.pool == NULL) {
+mb25_error_t mb25_init(uint8_t *pool, uint16_t pool_size) {
+    /* Validate pool */
+    if (pool == NULL || pool_size < 256) {
         return MB25_ERR_OUT_OF_MEMORY;
     }
 
-    /* Initialize state */
+    /* Initialize state - pool provided by caller, no malloc needed */
+    mb25_global.pool = pool;
     mb25_global.pool_size = pool_size;
     mb25_global.allocator = 0;
     mb25_global.total_allocs = 0;
@@ -70,22 +64,6 @@ mb25_error_t mb25_init(uint16_t pool_size) {
     }
 
     return MB25_SUCCESS;
-}
-
-void mb25_cleanup(void) {
-    if (mb25_global.pool != NULL) {
-        free(mb25_global.pool);
-        mb25_global.pool = NULL;
-    }
-    memset(&mb25_global, 0, sizeof(mb25_global));
-
-    /* Clear static string descriptors */
-    for (uint16_t i = 0; i < MB25_NUM_STRINGS; i++) {
-        mb25_strings[i].is_const = 0;
-        mb25_strings[i].writeable = 0;
-        mb25_strings[i].len = 0;
-        mb25_strings[i].data = NULL;
-    }
 }
 
 void mb25_reset(void) {
@@ -571,37 +549,55 @@ bool mb25_is_writeable(uint16_t str_id) {
 
 /* ===== Garbage Collection ===== */
 
-static int compare_by_data_ptr(const void *a, const void *b) {
-    const mb25_string_t *pa = (const mb25_string_t *)a;
-    const mb25_string_t *pb = (const mb25_string_t *)b;
-
+/* Compare two strings by data pointer (for sorting before compaction) */
+/* Returns true if a should come before b */
+static bool data_ptr_less(const mb25_string_t *a, const mb25_string_t *b) {
     /* Null pointers sort to the end */
-    if (pa->data == NULL) return 1;
-    if (pb->data == NULL) return -1;
-
+    if (a->data == NULL) return false;
+    if (b->data == NULL) return true;
     /* Skip constant strings (not in pool) */
-    if (pa->is_const) return 1;
-    if (pb->is_const) return -1;
-
+    if (a->is_const) return false;
+    if (b->is_const) return true;
     /* Compare addresses */
-    if (pa->data < pb->data) return -1;
-    if (pa->data > pb->data) return 1;
-
-    /* If addresses are the same, sort longer string first */
-    /* This ensures parent strings are moved before substrings */
-    if (pa->len > pb->len) return -1;
-    if (pa->len < pb->len) return 1;
-
-    return 0;
+    if (a->data < b->data) return true;
+    if (a->data > b->data) return false;
+    /* Same address: longer string first (parent before substring) */
+    return (a->len > b->len);
 }
 
-static int compare_by_str_id(const void *a, const void *b) {
-    const mb25_string_t *pa = (const mb25_string_t *)a;
-    const mb25_string_t *pb = (const mb25_string_t *)b;
+/* Shell sort by data pointer - avoids qsort overhead */
+static void sort_by_data_ptr(void) {
+    uint16_t n = MB25_NUM_STRINGS;
+    uint16_t gap, i, j;
+    mb25_string_t temp;
 
-    if (pa->str_id < pb->str_id) return -1;
-    if (pa->str_id > pb->str_id) return 1;
-    return 0;
+    /* Shell sort gaps: 701, 301, 132, 57, 23, 10, 4, 1 */
+    for (gap = n / 2; gap > 0; gap /= 2) {
+        for (i = gap; i < n; i++) {
+            temp = mb25_strings[i];
+            for (j = i; j >= gap && data_ptr_less(&temp, &mb25_strings[j - gap]); j -= gap) {
+                mb25_strings[j] = mb25_strings[j - gap];
+            }
+            mb25_strings[j] = temp;
+        }
+    }
+}
+
+/* Shell sort by str_id - restore original order after compaction */
+static void sort_by_str_id(void) {
+    uint16_t n = MB25_NUM_STRINGS;
+    uint16_t gap, i, j;
+    mb25_string_t temp;
+
+    for (gap = n / 2; gap > 0; gap /= 2) {
+        for (i = gap; i < n; i++) {
+            temp = mb25_strings[i];
+            for (j = i; j >= gap && temp.str_id < mb25_strings[j - gap].str_id; j -= gap) {
+                mb25_strings[j] = mb25_strings[j - gap];
+            }
+            mb25_strings[j] = temp;
+        }
+    }
 }
 
 static void compact_strings(void) {
@@ -677,16 +673,14 @@ static void compact_strings(void) {
 }
 
 void mb25_garbage_collect(void) {
-    /* Sort descriptors in place by data pointer address - O(n log n) */
-    qsort(mb25_strings, MB25_NUM_STRINGS,
-          sizeof(mb25_string_t), compare_by_data_ptr);
+    /* Sort descriptors by data pointer address - O(n log n) shell sort */
+    sort_by_data_ptr();
 
     /* Compact strings in single pass - O(n) */
     compact_strings();
 
     /* Sort back by str_id to restore normal access order - O(n log n) */
-    qsort(mb25_strings, MB25_NUM_STRINGS,
-          sizeof(mb25_string_t), compare_by_str_id);
+    sort_by_str_id();
 
     /* Update statistics */
     mb25_global.total_gcs++;
@@ -728,6 +722,9 @@ uint8_t mb25_get_fragmentation(void) {
 
 /* ===== Utility Functions ===== */
 
+/* mb25_to_c_string uses malloc - only available on host (not CP/M) */
+#ifndef __Z88DK
+#include <stdlib.h>
 char *mb25_to_c_string(uint16_t str_id) {
     if (!MB25_VALID_ID(str_id)) {
         return NULL;
@@ -747,6 +744,7 @@ char *mb25_to_c_string(uint16_t str_id) {
 
     return result;
 }
+#endif /* __Z88DK */
 
 mb25_error_t mb25_from_c_string(uint16_t str_id, const char *c_str) {
     if (c_str == NULL) {

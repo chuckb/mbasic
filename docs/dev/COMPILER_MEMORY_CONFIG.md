@@ -2,7 +2,7 @@
 
 ## Overview
 
-The MBASIC-2025 compiler generates CP/M programs that automatically detect available memory at runtime.
+The MBASIC-2025 compiler generates CP/M programs that use all available memory for strings.
 
 ## CP/M Memory Layout
 
@@ -26,37 +26,38 @@ CP/M Memory Map:
        │  Static Variables       │
        │  String Descriptors     │
        │  GOSUB Return Stack     │ ← int gosub_stack[100] array
+       │  File Control Blocks    │ ← z88dk FCBs are static, not heap
+       ├─────────────────────────┤ __BSS_tail
+       │                         │
+       │  STRING POOL            │ ← All available memory (~56KB on 64K)
+       │  (dynamic size)         │
+       │                         │
+       ├─────────────────────────┤ SP - 1024 (stack reserve)
+       │  Stack reserve          │
+       ├─────────────────────────┤ SP
+       │  ↑ Stack (grows down)   │
        ├─────────────────────────┤
-       │                         │
-       │  Heap (~75% of TPA)     │ ← Runtime allocated via -DAMALLOC
-       │                         │
-       │  Contains:              │
-       │  - String pool          │
-       │  - File I/O buffers     │
-       │                         │
-       ├─────────────────────────┤
-       │  Free Space             │
-       ├─────────────────────────┤ ← SP (from BDOS entry at 0x0006)
-       │  ↑ Stack (grows down)   │ ← For C library calls only
-       ├─────────────────────────┤
-       │                         │
        │  BDOS                   │
-       │                         │
-       ├─────────────────────────┤
-       │  CCP                    │
 0xFFFF └─────────────────────────┘
 ```
 
-## Runtime Memory Detection
+## String Pool Allocation
 
-The compiler uses z88dk's `-DAMALLOC` flag which:
+The string pool uses **all available memory** from `__BSS_tail` to `SP - stack_reserve`.
 
-1. Reads the BDOS entry point from address 0x0006
-2. Calculates available TPA (Transient Program Area)
-3. Allocates approximately 75% of TPA as heap
-4. Adapts to actual system memory (works on 16K, 32K, 48K, 64K systems)
+**No heap/malloc needed** - the pool is allocated directly at startup:
 
-**Heap size is dynamic** - adapts to the system at runtime.
+```c
+extern unsigned char __BSS_tail;
+uint16_t pool_size = SP - 1024 - (uint16_t)&__BSS_tail;
+mb25_init((uint8_t *)&__BSS_tail, pool_size);
+```
+
+Key points:
+- `__BSS_tail` is the z88dk symbol marking end of BSS (end of program data)
+- File I/O buffers (FCBs) are in BSS, not heap - already counted in `__BSS_tail`
+- 1024 bytes reserved for stack safety margin
+- Typical pool size: ~56KB on 64K CP/M system
 
 ## GOSUB Stack
 
@@ -69,17 +70,7 @@ int gosub_sp = 0;      /* Stack pointer */
 
 The C stack (CRT_STACK_SIZE) is only for z88dk library function calls.
 
-## String Pool
-
-**STATUS: Partially implemented - needs work**
-
-The string pool is allocated from the heap at startup via `mb25_init()`.
-
-Currently the pool size is fixed at compile time (2048 bytes). This should be changed to use most of available heap dynamically, like original MBASIC.
-
-See: [DYNAMIC_STRING_POOL_TODO.md](DYNAMIC_STRING_POOL_TODO.md)
-
-### Garbage Collection
+## Garbage Collection
 
 GC uses in-place compaction:
 
@@ -98,7 +89,8 @@ GC uses in-place compaction:
 
 `FRE("")` returns free space in the string pool.
 
-## See Also
+## Implementation Files
 
-- [DYNAMIC_STRING_POOL_TODO.md](DYNAMIC_STRING_POOL_TODO.md) - Fix string pool to be dynamic
-- [runtime/strings/mb25_string.c](https://github.com/avwohl/mbasic/blob/main/runtime/strings/mb25_string.c) - String system implementation
+- `runtime/strings/mb25_string.c` - String system implementation
+- `runtime/strings/mb25_string.h` - String system header
+- `src/codegen_backend.py` - Code generation (pool initialization)

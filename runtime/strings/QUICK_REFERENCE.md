@@ -35,7 +35,7 @@ mb25_cleanup();
 | `LEN(A$)` | `mb25_get_length(STR_A)` | Returns uint8_t |
 | `IF A$ = B$` | `if (mb25_string_compare(STR_A, STR_B) == 0)` | |
 | `IF A$ < B$` | `if (mb25_string_compare(STR_A, STR_B) < 0)` | |
-| `PRINT A$` | `char *s = mb25_to_c_string(STR_A);`<br>`printf("%s", s); free(s);` | Must free |
+| `PRINT A$` | `mb25_print_string(STR_A)` | Direct output |
 | `INPUT A$` | `fgets(buf, 256, stdin);`<br>`mb25_string_alloc_init(STR_A, buf)` | |
 
 ## String ID Assignment Strategy
@@ -145,8 +145,7 @@ if (mb25_get_length(STR_A) > 5) {
 
 - ✓ Count ALL strings at compile time
 - ✓ Include temporaries for complex expressions
-- ✓ Call `mb25_init()` at program start
-- ✓ Call `mb25_cleanup()` at program end
-- ✓ Free result from `mb25_to_c_string()`
+- ✓ Call `mb25_init(pool_addr, pool_size)` at program start
+- ✓ Use `mb25_print_string()` for output (not mb25_to_c_string)
 - ✓ Use 1-based indexing for MID$
 - ✓ String IDs are 0-based array indices

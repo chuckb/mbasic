@@ -195,10 +195,20 @@ mb25_string_right(2, 0, 3);  /* Points to "HIJ" */
 #define STR_TEMP2 13
 
 int main(void) {
-    /* Initialize string system */
-    if (mb25_init(MB25_POOL_SIZE, MB25_NUM_STRINGS) != MB25_SUCCESS) {
-        fprintf(stderr, "Failed to initialize string system\n");
-        return 1;
+    /* Initialize string pool using all available memory */
+    {
+        extern unsigned char __BSS_tail;
+        uint16_t _sp;
+        #asm
+        ld hl, 0
+        add hl, sp
+        ld (__sp), hl
+        #endasm
+        uint16_t _pool_size = _sp - 1024 - (uint16_t)&__BSS_tail;
+        if (mb25_init((uint8_t *)&__BSS_tail, _pool_size) != MB25_SUCCESS) {
+            fprintf(stderr, "Failed to initialize string system\n");
+            return 1;
+        }
     }
 
     /* Line 30: INPUT "Enter text: ", TEXT$ */

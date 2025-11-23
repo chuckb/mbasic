@@ -115,10 +115,10 @@ class Z88dkCBackend(CodeGenBackend):
 
         # Memory configuration (can be overridden via config)
         self.config = config or {}
-        # CP/M: Stack pointer auto-detected by z88dk from BDOS entry (0x0006)
-        # Heap size auto-detected at runtime via -DAMALLOC (~75% of TPA)
+        # CP/M: String pool uses all available memory from __BSS_tail to SP-stack_reserve
+        # No heap/malloc needed - pool address calculated at runtime
         self.stack_size = self.config.get('stack_size', 512)  # GOSUB/function call stack
-        self.string_pool_size = self.config.get('string_pool_size', 2048)  # String pool from heap
+        self.stack_reserve = self.config.get('stack_reserve', 1024)  # Safety margin for stack
 
     def get_file_extension(self) -> str:
         return '.c'
@@ -174,8 +174,8 @@ class Z88dkCBackend(CodeGenBackend):
                 cmd.extend(['-I' + mb25_include_dir])
 
         # Add compiler flags
-        # -DAMALLOC: Allocate ~75% of available TPA as heap at runtime
-        cmd.extend(['-create-app', '-lm', '-DAMALLOC', '-o', output_file])
+        # No -DAMALLOC: String pool allocated directly from __BSS_tail, no heap needed
+        cmd.extend(['-create-app', '-lm', '-o', output_file])
 
         return cmd
 
@@ -216,8 +216,7 @@ class Z88dkCBackend(CodeGenBackend):
         code.append('/* Target: CP/M via z88dk */')
         code.append('')
         code.append('/* Memory configuration */')
-        code.append(f'/* Stack pointer auto-detected by z88dk from BDOS (address 0x0006) */')
-        code.append(f'/* Heap size auto-detected at runtime using -DAMALLOC (75% of TPA) */')
+        code.append(f'/* String pool: __BSS_tail to SP-{self.stack_reserve} (all available memory) */')
         code.append(f'#pragma output CRT_STACK_SIZE = {self.stack_size}')
         code.append('')
 
@@ -239,6 +238,27 @@ class Z88dkCBackend(CodeGenBackend):
         if self.needs_error_handling:
             code.append('#include <setjmp.h>')
         code.append('')
+
+        # Helpers for string pool initialization (get SP and BSS_tail)
+        if self.string_count > 0:
+            code.append('/* Get current stack pointer */')
+            code.append('static uint16_t _mb25_get_sp(void) __naked {')
+            code.append('#asm')
+            code.append('    ld hl, 0')
+            code.append('    add hl, sp')
+            code.append('    ret')
+            code.append('#endasm')
+            code.append('}')
+            code.append('')
+            code.append('/* Get end of BSS (start of free memory) */')
+            code.append('static uint16_t _mb25_get_bss_tail(void) __naked {')
+            code.append('#asm')
+            code.append('    EXTERN __BSS_tail')
+            code.append('    ld hl, __BSS_tail')
+            code.append('    ret')
+            code.append('#endasm')
+            code.append('}')
+            code.append('')
 
         # Generate binary data conversion helper functions if needed
         if self.needs_mki_helper or self.needs_mks_helper or self.needs_mkd_helper or \
@@ -310,12 +330,17 @@ class Z88dkCBackend(CodeGenBackend):
 
         # Initialize string system
         if self.string_count > 0:
-            code.append(self.indent() + '/* Initialize string system */')
-            code.append(self.indent() + '/* With -DAMALLOC, heap is ~75% of TPA. Use fixed pool that fits comfortably. */')
-            code.append(self.indent() + f'if (mb25_init({self.string_pool_size}) != MB25_SUCCESS) {{')
+            code.append(self.indent() + '/* Initialize string pool using all available memory */')
+            code.append(self.indent() + '{')
+            self.indent_level += 1
+            code.append(self.indent() + 'uint16_t _bss_tail = _mb25_get_bss_tail();')
+            code.append(self.indent() + 'uint16_t _pool_size = _mb25_get_sp() - ' + str(self.stack_reserve) + ' - _bss_tail;')
+            code.append(self.indent() + 'if (mb25_init((uint8_t *)_bss_tail, _pool_size) != MB25_SUCCESS) {')
             self.indent_level += 1
             code.append(self.indent() + 'fprintf(stderr, "?Out of memory\\n");')
             code.append(self.indent() + 'return 1;')
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append('')
@@ -425,11 +450,6 @@ class Z88dkCBackend(CodeGenBackend):
         # End main
         code.append('')
         code.append('program_end:')
-
-        # Cleanup string system if needed
-        if self.string_count > 0:
-            code.append('    mb25_cleanup();')
-
         code.append('    return 0;')
         self.indent_level -= 1
         code.append('}')

@@ -42,7 +42,7 @@ typedef mb25_string_t *mb25_string_pt;
 struct mb25_globals_R {
     uint16_t pool_size;       // Total size of string pool
     uint16_t allocator;       // Current allocation position
-    uint8_t  *pool;           // Pointer to malloc'd string pool
+    uint8_t  *pool;           // Pointer to string pool (from __BSS_tail)
     uint16_t num_strings;     // Total number of string descriptors
     mb25_string_t *strings;   // Array of string descriptors
 };

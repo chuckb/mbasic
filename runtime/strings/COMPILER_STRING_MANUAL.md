@@ -227,17 +227,25 @@ mb25_string_alloc_const(STR_NAMES_0 + 5, "John");
 At program start:
 ```c
 int main(void) {
-    /* Initialize string system */
-    if (mb25_init(MB25_POOL_SIZE) != MB25_SUCCESS) {
-        fprintf(stderr, "Out of memory\n");
-        return 1;
+    /* Initialize string pool using all available memory */
+    {
+        extern unsigned char __BSS_tail;
+        uint16_t _sp;
+        #asm
+        ld hl, 0
+        add hl, sp
+        ld (__sp), hl
+        #endasm
+        uint16_t _pool_size = _sp - 1024 - (uint16_t)&__BSS_tail;
+        if (mb25_init((uint8_t *)&__BSS_tail, _pool_size) != MB25_SUCCESS) {
+            fprintf(stderr, "Out of memory\n");
+            return 1;
+        }
     }
 
     /* Main program */
     /* ... */
 
-    /* Cleanup */
-    mb25_cleanup();
     return 0;
 }
 ```
@@ -344,10 +352,20 @@ int main(void) {
     char input_buffer[256];
     char *temp_str;
 
-    /* Initialize string system */
-    if (mb25_init(MB25_POOL_SIZE) != MB25_SUCCESS) {
-        fprintf(stderr, "?Out of memory\n");
-        return 1;
+    /* Initialize string pool using all available memory */
+    {
+        extern unsigned char __BSS_tail;
+        uint16_t _sp;
+        #asm
+        ld hl, 0
+        add hl, sp
+        ld (__sp), hl
+        #endasm
+        uint16_t _pool_size = _sp - 1024 - (uint16_t)&__BSS_tail;
+        if (mb25_init((uint8_t *)&__BSS_tail, _pool_size) != MB25_SUCCESS) {
+            fprintf(stderr, "?Out of memory\n");
+            return 1;
+        }
     }
 
     /* Line 10: INPUT "Name: ", NAME$ */

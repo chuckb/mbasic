@@ -2,7 +2,7 @@
 
 This section contains implementation notes, design decisions, and development history for the MBASIC project.
 
-**Last Updated:** 2025-11-22
+**Last Updated:** 2025-11-23
 **Total Documents:** 196
 
 ## What's Here
@@ -64,10 +64,6 @@ If you're contributing to MBASIC:
 - [Architecture Cleanup Todo](ARCHITECTURE_CLEANUP_TODO.md)
 - [Page Visits Cleanup](PAGE_VISITS_CLEANUP.md)
 
-### Work in Progress
-
-- [Dynamic String Pool Todo](DYNAMIC_STRING_POOL_TODO.md)
-
 ### Other
 
 - [Compiler Cpu Targets](COMPILER_CPU_TARGETS.md)
@@ -81,6 +77,7 @@ If you're contributing to MBASIC:
 - [Persistent Issues Analysis](PERSISTENT_ISSUES_ANALYSIS.md)
 - [Persistent Issues Answer](PERSISTENT_ISSUES_ANSWER.md)
 - [Persistent Issues Summary](PERSISTENT_ISSUES_SUMMARY.md)
+- [String Pool Changes 2025 11 23](STRING_POOL_CHANGES_2025_11_23.md)
 - [Tnylpo Setup](TNYLPO_SETUP.md)
 
 ## Subdirectories

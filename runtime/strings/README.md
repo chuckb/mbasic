@@ -128,13 +128,15 @@ The compiler should:
 ### Example Usage
 
 ```c
-// Initialize system
-mb25_init(8192, 100);  // 8KB pool, 100 strings
+// Initialize system with pool from __BSS_tail to SP-1024
+extern unsigned char __BSS_tail;
+uint16_t pool_size = get_sp() - 1024 - (uint16_t)&__BSS_tail;
+mb25_init((uint8_t *)&__BSS_tail, pool_size);
 
-// Constant string (no heap)
+// Constant string (no pool space used)
 mb25_string_alloc_const(0, "Hello");
 
-// Dynamic string
+// Dynamic string (allocated from pool)
 mb25_string_alloc_init(1, "World");
 
 // Concatenation
@@ -145,9 +147,6 @@ mb25_string_left(3, 2, 5);    // Result: "Hello"
 
 // Garbage collection (automatic or manual)
 mb25_garbage_collect();
-
-// Cleanup
-mb25_cleanup();
 ```
 
 ### Performance Validation

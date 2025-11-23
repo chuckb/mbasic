@@ -21,10 +21,6 @@
 #define MB25_NUM_STRINGS      100    /* Default number of string descriptors */
 #endif
 
-#ifndef MB25_POOL_SIZE
-#define MB25_POOL_SIZE        8192   /* Default string pool size in bytes */
-#endif
-
 #define MB25_MAX_STRING_LEN   255    /* Maximum string length (BASIC limit) */
 #define MB25_INVALID_STR_ID   0xFFFF /* Invalid string ID marker */
 
@@ -74,11 +70,10 @@ extern mb25_globals_t mb25_global;
 
 /* ===== Initialization and Cleanup ===== */
 
-/* Initialize the string system with given pool size */
-mb25_error_t mb25_init(uint16_t pool_size);
-
-/* Cleanup and free all resources */
-void mb25_cleanup(void);
+/* Initialize the string system with pool at given address and size.
+ * Pool memory is provided by caller (typically from __BSS_tail to SP-stack_reserve).
+ * No malloc/heap required. */
+mb25_error_t mb25_init(uint8_t *pool, uint16_t pool_size);
 
 /* Reset the string system (clear all strings, reset allocator) */
 void mb25_reset(void);
@@ -104,6 +99,9 @@ mb25_error_t mb25_string_copy(uint16_t dest_id, uint16_t src_id);
 
 /* Assign string value (may reuse space if writeable) */
 mb25_error_t mb25_string_assign(uint16_t dest_id, const uint8_t *data, uint8_t len);
+
+/* Set string from fixed-width buffer (trims trailing spaces) */
+mb25_error_t mb25_string_set_from_buf(uint16_t dest_id, const uint8_t *buf, uint8_t width);
 
 /* Concatenate two strings into destination */
 mb25_error_t mb25_string_concat(uint16_t dest_id, uint16_t str1_id, uint16_t str2_id);
@@ -161,8 +159,11 @@ uint8_t mb25_get_fragmentation(void);
 
 /* ===== Utility Functions ===== */
 
-/* Convert string to C string (null-terminated) - caller must free */
+/* Convert string to C string (null-terminated) - caller must free.
+ * Only available on host builds (uses malloc). Not available on CP/M. */
+#ifndef __Z88DK
 char *mb25_to_c_string(uint16_t str_id);
+#endif
 
 /* Create string from C string */
 mb25_error_t mb25_from_c_string(uint16_t str_id, const char *c_str);
