@@ -1329,6 +1329,127 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + '}')
             code.append('')
 
+        # Binary data conversion functions (MKI$/MKS$/MKD$, CVI/CVS/CVD)
+        code.append(self.indent() + '// Binary data conversion functions')
+        code.append(self.indent() + 'function _mki(n) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// MKI$ - Convert integer to 2-byte string')
+        code.append(self.indent() + 'n = _toInt(n);')
+        code.append(self.indent() + 'if (n < 0) n = 65536 + n;  // Two\'s complement')
+        code.append(self.indent() + 'return String.fromCharCode(n & 0xFF, (n >> 8) & 0xFF);')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _mks(n) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// MKS$ - Convert single to 4-byte string')
+        code.append(self.indent() + 'const buf = new ArrayBuffer(4);')
+        code.append(self.indent() + 'new DataView(buf).setFloat32(0, n, true);  // little-endian')
+        code.append(self.indent() + 'const arr = new Uint8Array(buf);')
+        code.append(self.indent() + 'return String.fromCharCode(...arr);')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _mkd(n) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// MKD$ - Convert double to 8-byte string')
+        code.append(self.indent() + 'const buf = new ArrayBuffer(8);')
+        code.append(self.indent() + 'new DataView(buf).setFloat64(0, n, true);  // little-endian')
+        code.append(self.indent() + 'const arr = new Uint8Array(buf);')
+        code.append(self.indent() + 'return String.fromCharCode(...arr);')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _cvi(s) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// CVI - Convert 2-byte string to integer')
+        code.append(self.indent() + 'let n = s.charCodeAt(0) | (s.charCodeAt(1) << 8);')
+        code.append(self.indent() + 'if (n >= 32768) n = n - 65536;  // Two\'s complement')
+        code.append(self.indent() + 'return n;')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _cvs(s) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// CVS - Convert 4-byte string to single')
+        code.append(self.indent() + 'const buf = new ArrayBuffer(4);')
+        code.append(self.indent() + 'const arr = new Uint8Array(buf);')
+        code.append(self.indent() + 'for (let i = 0; i < 4; i++) arr[i] = s.charCodeAt(i) || 0;')
+        code.append(self.indent() + 'return new DataView(buf).getFloat32(0, true);')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _cvd(s) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// CVD - Convert 8-byte string to double')
+        code.append(self.indent() + 'const buf = new ArrayBuffer(8);')
+        code.append(self.indent() + 'const arr = new Uint8Array(buf);')
+        code.append(self.indent() + 'for (let i = 0; i < 8; i++) arr[i] = s.charCodeAt(i) || 0;')
+        code.append(self.indent() + 'return new DataView(buf).getFloat64(0, true);')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append('')
+
+        # Memory and system functions (stubs - no direct hardware in JS)
+        code.append(self.indent() + '// Memory/system functions (stubs - no hardware access in JavaScript)')
+        code.append(self.indent() + 'function _fre(n) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// FRE - Returns free memory (stub: always returns 32767)')
+        code.append(self.indent() + 'return 32767;')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _peek(addr) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// PEEK - Read memory location (returns random byte like interpreter)')
+        code.append(self.indent() + 'return (Math.random() * 256) | 0;')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _inp(port) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// INP - Read I/O port (stub: returns 0)')
+        code.append(self.indent() + 'console.warn("INP not supported in JavaScript - returning 0");')
+        code.append(self.indent() + 'return 0;')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _varptr(v) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// VARPTR - Get variable address (stub: returns 0)')
+        code.append(self.indent() + 'console.warn("VARPTR not supported in JavaScript - returning 0");')
+        code.append(self.indent() + 'return 0;')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _usr(n) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// USR - Call machine code routine (stub: returns argument)')
+        code.append(self.indent() + 'console.warn("USR not supported in JavaScript - returning argument");')
+        code.append(self.indent() + 'return n;')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append('')
+
+        # INKEY$ function
+        code.append(self.indent() + '// INKEY$ - Get key without waiting')
+        code.append(self.indent() + 'let _inkey_buffer = "";')
+        code.append(self.indent() + 'function _inkey() {')
+        self.indent_level += 1
+        code.append(self.indent() + '// Returns empty string if no key pressed, otherwise the key')
+        code.append(self.indent() + 'if (_inkey_buffer.length > 0) {')
+        self.indent_level += 1
+        code.append(self.indent() + 'const key = _inkey_buffer[0];')
+        code.append(self.indent() + '_inkey_buffer = _inkey_buffer.slice(1);')
+        code.append(self.indent() + 'return key;')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'return "";')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + '// Setup keyboard handler for browser')
+        code.append(self.indent() + 'if (typeof window !== "undefined") {')
+        self.indent_level += 1
+        code.append(self.indent() + 'document.addEventListener("keypress", (e) => {')
+        self.indent_level += 1
+        code.append(self.indent() + '_inkey_buffer += e.key;')
+        self.indent_level -= 1
+        code.append(self.indent() + '});')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append('')
+
         return code
 
     def _format_data_array(self) -> str:
@@ -1602,6 +1723,23 @@ class JavaScriptBackend(CodeGenBackend):
         elif isinstance(stmt, RemarkStatementNode):
             # Comments are skipped
             pass
+        elif isinstance(stmt, PokeStatementNode):
+            code.extend(self._generate_poke(stmt))
+        elif isinstance(stmt, OutStatementNode):
+            code.extend(self._generate_out(stmt))
+        elif isinstance(stmt, WaitStatementNode):
+            code.extend(self._generate_wait(stmt))
+        elif isinstance(stmt, CallStatementNode):
+            code.extend(self._generate_call(stmt))
+        elif isinstance(stmt, WidthStatementNode):
+            code.extend(self._generate_width(stmt))
+        elif isinstance(stmt, ClearStatementNode):
+            code.extend(self._generate_clear(stmt))
+        elif isinstance(stmt, CommonStatementNode):
+            code.extend(self._generate_common(stmt))
+        elif isinstance(stmt, DefTypeStatementNode):
+            # DEF type statements are processed during variable analysis
+            pass
         else:
             code.append(self.indent() + f'// Unsupported: {type(stmt).__name__}')
 
@@ -1629,8 +1767,8 @@ class JavaScriptBackend(CodeGenBackend):
                 expr_code = self._generate_expression(expr)
 
                 # Determine if we should add a newline
-                # Newline if last item and no separator, or separator is None
-                newline = 'true' if (is_last and separator is None) else 'false'
+                # Newline if last item and no separator (None or '\n' means end of statement)
+                newline = 'true' if (is_last and separator in (None, '\n')) else 'false'
 
                 code.append(self.indent() + f'{print_func}{expr_code}, {newline});')
 
@@ -1706,18 +1844,26 @@ class JavaScriptBackend(CodeGenBackend):
             return var_info.var_type
         return None
 
-    def _apply_type_coercion(self, expr_code: str, var_type: Optional[VarType]) -> str:
-        """Wrap expression with type coercion function based on target variable type"""
+    def _apply_type_coercion(self, expr_code: str, var_type) -> str:
+        """Wrap expression with type coercion function based on target variable type.
+
+        Note: We compare by .name attribute rather than identity to handle the case
+        where VarType is imported from different module paths (e.g., 'semantic_analyzer'
+        vs 'src.semantic_analyzer'). This can happen due to Python's module caching
+        when the same file is imported via different paths.
+        """
         if var_type is None:
             return expr_code
-        if var_type == VarType.INTEGER:
+        # Compare by name to handle cross-module enum comparison
+        type_name = var_type.name if hasattr(var_type, 'name') else str(var_type)
+        if type_name == 'INTEGER':
             return f'_toInt({expr_code})'
-        elif var_type == VarType.SINGLE:
+        elif type_name == 'SINGLE':
             return f'_toSingle({expr_code})'
-        elif var_type == VarType.DOUBLE:
+        elif type_name == 'DOUBLE':
             # No coercion needed - JS Number is already 64-bit double
             return expr_code
-        elif var_type == VarType.STRING:
+        elif type_name == 'STRING':
             # String assignments handled separately
             return expr_code
         return expr_code
@@ -1831,6 +1977,21 @@ class JavaScriptBackend(CodeGenBackend):
             'eof': '_eof',
             'lof': '_lof',
             'loc': '_loc',
+            # Binary data conversion
+            'mki$': '_mki',
+            'mks$': '_mks',
+            'mkd$': '_mkd',
+            'cvi': '_cvi',
+            'cvs': '_cvs',
+            'cvd': '_cvd',
+            # Memory/system functions
+            'fre': '_fre',
+            'peek': '_peek',
+            'inp': '_inp',
+            'varptr': '_varptr',
+            'usr': '_usr',
+            # Input
+            'inkey$': '_inkey',
         }
 
         js_func = js_func_map.get(func_name, func_name)
@@ -2189,8 +2350,8 @@ class JavaScriptBackend(CodeGenBackend):
                 expr_code = self._generate_expression(expr)
 
                 # Determine if we should add a newline
-                # Newline if last item and no separator, or separator is None
-                newline = 'true' if (is_last and separator is None) else 'false'
+                # Newline if last item and no separator (None or '\n' means end of statement)
+                newline = 'true' if (is_last and separator in (None, '\n')) else 'false'
 
                 code.append(self.indent() + f'_lprint({expr_code}, {newline});')
 
@@ -2518,4 +2679,74 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + f'_pc = {stmt.line_number};')
             code.append(self.indent() + 'break;')
 
+        return code
+
+    def _generate_poke(self, stmt: PokeStatementNode) -> List[str]:
+        """Generate POKE statement - write to memory address (stub: warning only)"""
+        code = []
+        addr = self._generate_expression(stmt.address)
+        val = self._generate_expression(stmt.value)
+        code.append(self.indent() + f'console.warn("POKE " + ({addr}) + "," + ({val}) + " - not supported in JavaScript");')
+        return code
+
+    def _generate_out(self, stmt: OutStatementNode) -> List[str]:
+        """Generate OUT statement - write to I/O port (stub: warning only)"""
+        code = []
+        port = self._generate_expression(stmt.port)
+        val = self._generate_expression(stmt.value)
+        code.append(self.indent() + f'console.warn("OUT " + ({port}) + "," + ({val}) + " - not supported in JavaScript");')
+        return code
+
+    def _generate_wait(self, stmt: WaitStatementNode) -> List[str]:
+        """Generate WAIT statement - wait for I/O port (stub: returns immediately)"""
+        code = []
+        port = self._generate_expression(stmt.port)
+        and_mask = self._generate_expression(stmt.and_mask)
+        code.append(self.indent() + f'console.warn("WAIT " + ({port}) + "," + ({and_mask}) + " - not supported in JavaScript, returning immediately");')
+        return code
+
+    def _generate_call(self, stmt: CallStatementNode) -> List[str]:
+        """Generate CALL statement - call machine code (stub: warning only)"""
+        code = []
+        addr = self._generate_expression(stmt.address)
+        code.append(self.indent() + f'console.warn("CALL " + ({addr}) + " - not supported in JavaScript");')
+        return code
+
+    def _generate_width(self, stmt: WidthStatementNode) -> List[str]:
+        """Generate WIDTH statement - set line width (stub: warning only)
+
+        In MBASIC, WIDTH sets the console/printer line width.
+        In JavaScript, console/browser output doesn't have fixed width.
+        """
+        code = []
+        if stmt.file_number:
+            filenum = self._generate_expression(stmt.file_number)
+            width = self._generate_expression(stmt.width)
+            code.append(self.indent() + f'// WIDTH #{filenum}, {width} - ignored in JavaScript')
+        else:
+            width = self._generate_expression(stmt.width)
+            code.append(self.indent() + f'// WIDTH {width} - ignored in JavaScript')
+        return code
+
+    def _generate_clear(self, stmt: ClearStatementNode) -> List[str]:
+        """Generate CLEAR statement - clear variables and set memory limits (stub)
+
+        In MBASIC, CLEAR resets all variables and optionally sets string/stack space.
+        In JavaScript, we just reinitialize variables (without actually doing anything
+        since JS handles memory automatically).
+        """
+        code = []
+        code.append(self.indent() + '// CLEAR - JavaScript manages memory automatically')
+        return code
+
+    def _generate_common(self, stmt: CommonStatementNode) -> List[str]:
+        """Generate COMMON statement - share variables between CHAINed programs (stub)
+
+        COMMON declares variables to be shared between CHAINed programs.
+        In JavaScript browser, we could use sessionStorage/localStorage.
+        For now, just warn that it's not fully supported.
+        """
+        code = []
+        var_names = ', '.join(v.name for v in stmt.variables)
+        code.append(self.indent() + f'// COMMON {var_names} - variable sharing not supported in JavaScript')
         return code
