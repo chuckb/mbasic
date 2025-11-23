@@ -44,7 +44,6 @@ If you're contributing to MBASIC:
 - [Backup Nonversioned Files](BACKUP_NONVERSIONED_FILES.md)
 - [Checkpoint Validation](CHECKPOINT_VALIDATION.md)
 - [Docs Url Configuration](DOCS_URL_CONFIGURATION.md)
-- [Printf Elimination Todo](PRINTF_ELIMINATION_TODO.md)
 - [Redis Per Session Settings](REDIS_PER_SESSION_SETTINGS.md)
 - [Redis Session Storage Setup](REDIS_SESSION_STORAGE_SETUP.md)
 - [Usage Tracking Integration](USAGE_TRACKING_INTEGRATION.md)

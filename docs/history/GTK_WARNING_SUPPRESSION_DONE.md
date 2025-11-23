@@ -1,6 +1,6 @@
-# GTK Warning Suppression
+# GTK Warning Suppression - DONE
 
-## Status: ⏸️ DEFERRED
+## Status: ✅ CLOSED - Accepted as harmless
 
 ## Issue
 

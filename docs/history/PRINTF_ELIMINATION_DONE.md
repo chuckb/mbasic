@@ -1,6 +1,6 @@
-# Printf Elimination Investigation - TODO
+# Printf Elimination Investigation - DONE
 
-## Status: Future Optimization - Investigate Later
+## Status: COMPLETED - No Action Needed
 
 ## Background
 
@@ -120,21 +120,9 @@ https://github.com/z88dk/z88dk/wiki/NewLib--Platform--Embedded
 
 **Conclusion:** Do NOT use `#pragma printf/scanf` - let z88dk's default linker optimization work.
 
-### Remaining Tasks (Low Priority)
+## Conclusion
 
-1. **Custom number formatting** (if size becomes critical)
-   - Write ftoa() to replace sprintf for %g
-   - Write itoa/itoah/itoo for integer formatting
-   - High effort, uncertain benefit
-
-## Recommendation
-
-**Defer this optimization** until:
-1. We've measured the actual size impact (investigation task #1)
-2. We've exhausted other optimization opportunities
-3. Code size is still a critical constraint
-
-The current approach (putchar for PRINT, sprintf for conversions) is a good balance of simplicity vs. optimization.
+**No further action needed.** The z88dk default behavior is already optimal - it only links the printf converters actually used in the code. Custom number formatting (ftoa, itoa) would be high effort for uncertain benefit and is not recommended.
 
 ## References
 
