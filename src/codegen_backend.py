@@ -2855,7 +2855,7 @@ class Z88dkCBackend(CodeGenBackend):
                 # FRE("") or FRE(string_var) - trigger GC and return string pool free space
                 # Evaluate the string argument (even though we don't use it, it may have side effects)
                 str_arg = self._generate_string_expression(expr.arguments[0])
-                return f'(mb25_garbage_collect(), mb25_get_free_space())'
+                return f'(mb25_garbage_collect(), (double)mb25_get_free_space())'
             else:
                 # FRE(0) or FRE(numeric) - return total free memory
                 # Evaluate the numeric argument (side effects)
