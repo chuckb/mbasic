@@ -783,25 +783,39 @@ class Z88dkCBackend(CodeGenBackend):
         """
         Convert BASIC variable name to valid C identifier.
 
-        BASIC allows names like "I!", "COUNT%", "VALUE#"
-        C needs alphanumeric + underscore, no type suffixes.
+        In BASIC, FOO%, FOO!, FOO#, FOO$ are all DIFFERENT variables.
+        We add type suffixes to distinguish them:
+        - FOO (SINGLE/!) -> foo
+        - FOO% (INTEGER) -> foo_int
+        - FOO# (DOUBLE) -> foo_dbl
+        - FOO$ (STRING) -> handled by string pool, not C variables
 
         Transformations applied:
-        1. Remove type suffix (!%#$)
+        1. Extract base name (without type suffix)
         2. Convert to lowercase for consistency
-        3. Add 'v_' prefix if name conflicts with C keywords
+        3. Add type suffix (_int, _dbl) to distinguish typed variables
+        4. Add 'v_' prefix if name conflicts with C keywords
         """
-        # Remove type suffix
-        name = basic_name.rstrip('!%#$')
+        # Remove type suffix to get base name
+        base_name = basic_name.rstrip('!%#$')
 
         # Make lowercase for consistency
-        name = name.lower()
+        c_name = base_name.lower()
+
+        # Add type suffix to distinguish different typed variables
+        if basic_name.endswith('%'):
+            c_name = c_name + '_int'
+        elif basic_name.endswith('#'):
+            c_name = c_name + '_dbl'
+        # SINGLE (! or no suffix) gets no suffix - it's the default
+        # STRING ($) is handled by string pool, not as C variables
 
         # Add prefix to avoid C keyword conflicts
-        if name in ('int', 'float', 'double', 'char', 'void', 'if', 'for', 'while', 'return'):
-            name = 'v_' + name
+        if c_name in ('int', 'float', 'double', 'char', 'void', 'if', 'for', 'while', 'return',
+                      'int_int', 'float_int', 'double_int', 'double_dbl'):
+            c_name = 'v_' + c_name
 
-        return name
+        return c_name
 
     def _generate_line(self, line_node: LineNode) -> List[str]:
         """Generate code for one line of BASIC"""

@@ -63,11 +63,14 @@ chmod +x program.js
 - READ/DATA/RESTORE
 
 **Variables & Arrays:**
-- LET assignments
+- LET assignments with type coercion
+- All variable types: INTEGER (%), SINGLE (!), DOUBLE (#), STRING ($)
+- Same name with different suffixes = different variables (FOO vs FOO% vs FOO$)
 - DIM arrays (multi-dimensional)
 - Array subscripts (0-based or 1-based via OPTION BASE)
 - SWAP variable exchange
 - ERASE array reset
+- DEFINT, DEFSNG, DEFDBL, DEFSTR type declarations
 
 **Functions:**
 - DEF FN user-defined functions
@@ -83,20 +86,21 @@ chmod +x program.js
 - ERROR statement
 - ERL() and ERR() functions
 
-### ⚠️ Not Implemented
+### ⚠️ Limited or Not Implemented
 
-**Medium Priority (rarely used):**
+**Browser Limitations:**
+- File I/O (OPEN, CLOSE, PRINT #, INPUT #) - browsers can't access filesystem
+- CHAIN - limited support (uses browser navigation)
+- Hardware access (POKE, PEEK, OUT, INP, CALL, USR) - no direct hardware access
+
+**Not Yet Implemented:**
 - MID$ assignment (modifying substrings in place)
-- LINE INPUT
+- LINE INPUT (use regular INPUT for now)
 - WRITE statement
-- LPRINT
+- LPRINT (line printer)
+- Random file I/O (FIELD, GET, PUT, LSET, RSET)
 
-**Low Priority (advanced/specialized):**
-- File I/O (OPEN, CLOSE, PRINT #, INPUT #, etc.)
-- CHAIN and COMMON
-- Hardware access (POKE, PEEK, OUT, INP, CALL, USR)
-
-**Not Applicable:**
+**Not Applicable (interpreter-only):**
 - Interactive commands (LIST, NEW, RUN, LOAD, SAVE, RENUM)
 - Debugger commands (TRON, TROFF, STEP, CONT)
 
@@ -190,6 +194,25 @@ The compiled JavaScript follows this structure:
 ```
 
 ### Key Implementation Details
+
+**Variable Types and Naming:**
+
+In BASIC, `FOO`, `FOO%`, `FOO#`, and `FOO$` are ALL different variables:
+
+| BASIC | JS Variable | Type | Coercion |
+|-------|-------------|------|----------|
+| `FOO` or `FOO!` | `foo` | SINGLE | None (default) |
+| `FOO%` | `foo_int` | INTEGER | `_toInt()` truncates, clamps -32768..32767 |
+| `FOO#` | `foo_dbl` | DOUBLE | None (JS Number is 64-bit) |
+| `FOO$` | `foo_str` | STRING | None |
+
+Type coercion happens at assignment:
+```basic
+I% = 3.7      ' Stored as 3 (truncated toward zero)
+I% = 32768    ' Stored as 32767 (clamped to max)
+X! = 1/3      ' Single precision: 0.3333333
+D# = 1/3      ' Double precision: 0.333333333333333
+```
 
 **Control Flow:**
 - Uses a switch statement with program counter (`_pc`)
@@ -384,7 +407,10 @@ Then load both:
 ## See Also
 
 - [JavaScript Backend Spec](../design/JAVASCRIPT_BACKEND_SPEC.md) - Design documentation
+- [Variable Types](../dev/COMPILER_VARIABLE_TYPES.md) - Detailed variable type handling
 
 ## Version
 
-JavaScript backend is **100% Complete** - all MBASIC 5.21 features implemented.
+JavaScript backend supports core MBASIC 5.21 features. The compiler produces semantically equivalent output to the C/Z80 backend - the same BASIC program compiled to JS or C will produce identical numeric results.
+
+**Type System:** Full support for INTEGER (%), SINGLE (!), DOUBLE (#), and STRING ($) with proper type coercion at assignment time.

@@ -465,8 +465,21 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + 'function _sgn(n) { return n > 0 ? 1 : n < 0 ? -1 : 0; }')
         code.append(self.indent() + 'function _fix(n) { return n >= 0 ? Math.floor(n) : Math.ceil(n); }')
         code.append(self.indent() + 'function _cint(n) { return Math.round(n); }')
-        code.append(self.indent() + 'function _csng(n) { return n; }  // Single precision (already JS number)')
+        code.append(self.indent() + 'function _csng(n) { return Math.fround(n); }  // Single precision via ES6')
         code.append(self.indent() + 'function _cdbl(n) { return n; }  // Double precision (already JS number)')
+        code.append('')
+        code.append(self.indent() + '// Type coercion for DEFINT/DEFSNG/DEFDBL variable assignment')
+        code.append(self.indent() + 'function _toInt(n) {')
+        self.indent_level += 1
+        code.append(self.indent() + '// BASIC INTEGER: truncate toward zero, clamp to -32768..32767')
+        code.append(self.indent() + 'n = n >= 0 ? Math.floor(n) : Math.ceil(n);')
+        code.append(self.indent() + 'if (n > 32767) return 32767;')
+        code.append(self.indent() + 'if (n < -32768) return -32768;')
+        code.append(self.indent() + 'return n;')
+        self.indent_level -= 1
+        code.append(self.indent() + '}')
+        code.append(self.indent() + 'function _toSingle(n) { return Math.fround(n); }  // ES6 single-precision')
+        code.append(self.indent() + 'function _toDouble(n) { return n; }  // JS Number is already 64-bit double')
         code.append('')
 
         # RND function
@@ -617,7 +630,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + 'function _input_int(prompt) {')
             self.indent_level += 1
             code.append(self.indent() + 'const str = _input_str(prompt);')
-            code.append(self.indent() + 'return parseInt(str) || 0;')
+            code.append(self.indent() + 'return _toInt(parseFloat(str) || 0);')
             self.indent_level -= 1
             code.append(self.indent() + '}')
             code.append('')
@@ -1344,6 +1357,7 @@ class JavaScriptBackend(CodeGenBackend):
         code = []
 
         for var_name, var_info in sorted(self.symbols.variables.items()):
+            # Use simple lowercase name - type coercion happens at assignment time
             js_name = self._mangle_var_name(var_name)
 
             # Skip arrays - they're handled separately
@@ -1377,19 +1391,38 @@ class JavaScriptBackend(CodeGenBackend):
             return f'Array.from({{length: {size}}}, () => {inner})'
 
     def _mangle_var_name(self, name: str) -> str:
-        """Convert BASIC variable name to JavaScript identifier"""
-        # Remove type suffix and convert
+        """Convert BASIC variable name to JavaScript identifier.
+
+        In BASIC, FOO%, FOO!, FOO#, FOO$ are all DIFFERENT variables.
+        We add type suffixes to distinguish them:
+        - FOO (SINGLE/default) -> foo
+        - FOO% (INTEGER) -> foo_int
+        - FOO# (DOUBLE) -> foo_dbl
+        - FOO$ (STRING) -> foo_str
+        """
+        # Remove type suffix to get base name
         base_name = name.rstrip('$%!#')
 
-        # Add suffix for type
+        # Make lowercase for consistency
+        js_name = base_name.lower()
+
+        # Add type suffix to distinguish different typed variables
         if name.endswith('$'):
-            return base_name.lower() + '_str'
+            js_name = js_name + '_str'
         elif name.endswith('%'):
-            return base_name.lower() + '_int'
+            js_name = js_name + '_int'
         elif name.endswith('#'):
-            return base_name.lower() + '_dbl'
-        else:
-            return base_name.lower()
+            js_name = js_name + '_dbl'
+        # SINGLE (! or no suffix) gets no suffix - it's the default
+
+        # Prefix to avoid JS keyword conflicts
+        if js_name in ('if', 'for', 'while', 'return', 'function', 'var', 'let', 'const',
+                       'class', 'new', 'delete', 'typeof', 'void', 'this', 'with',
+                       'switch', 'case', 'default', 'break', 'continue', 'throw', 'try',
+                       'catch', 'finally', 'do', 'in', 'of', 'import', 'export', 'null'):
+            js_name = 'v_' + js_name
+
+        return js_name
 
     def _generate_def_fn_functions(self) -> List[str]:
         """Generate DEF FN functions"""
@@ -1634,21 +1667,60 @@ class JavaScriptBackend(CodeGenBackend):
         """Generate LET statement (assignment)"""
         code = []
 
+        # Get variable type for coercion
+        var_key = stmt.variable.name + (stmt.variable.type_suffix or '')
+        var_type = self._get_var_type(var_key)
+
         # Check if assigning to array element
         if stmt.variable.subscripts:
-            var_name = self._mangle_var_name(stmt.variable.name + (stmt.variable.type_suffix or ''))
+            var_name = self._mangle_var_name(var_key)
             access = var_name
             for idx_expr in stmt.variable.subscripts:
                 idx = self._generate_expression(idx_expr)
                 access = f'{access}[{idx}]'
             expr_code = self._generate_expression(stmt.expression)
+            expr_code = self._apply_type_coercion(expr_code, var_type)
             code.append(self.indent() + f'{access} = {expr_code};')
         else:
-            var_name = self._mangle_var_name(stmt.variable.name + (stmt.variable.type_suffix or ''))
+            var_name = self._mangle_var_name(var_key)
             expr_code = self._generate_expression(stmt.expression)
+            expr_code = self._apply_type_coercion(expr_code, var_type)
             code.append(self.indent() + f'{var_name} = {expr_code};')
 
         return code
+
+    def _get_var_type(self, var_key: str) -> Optional[VarType]:
+        """Look up variable type from symbol table.
+
+        Symbol table uses uppercase names, so we uppercase the lookup key.
+        """
+        # Symbol table uses uppercase
+        upper_key = var_key.upper()
+        var_info = self.symbols.variables.get(upper_key)
+        if var_info:
+            return var_info.var_type
+        # Check without suffix (might be stored differently)
+        base_name = upper_key.rstrip('$%!#')
+        var_info = self.symbols.variables.get(base_name)
+        if var_info:
+            return var_info.var_type
+        return None
+
+    def _apply_type_coercion(self, expr_code: str, var_type: Optional[VarType]) -> str:
+        """Wrap expression with type coercion function based on target variable type"""
+        if var_type is None:
+            return expr_code
+        if var_type == VarType.INTEGER:
+            return f'_toInt({expr_code})'
+        elif var_type == VarType.SINGLE:
+            return f'_toSingle({expr_code})'
+        elif var_type == VarType.DOUBLE:
+            # No coercion needed - JS Number is already 64-bit double
+            return expr_code
+        elif var_type == VarType.STRING:
+            # String assignments handled separately
+            return expr_code
+        return expr_code
 
     def _generate_expression(self, expr) -> str:
         """Generate JavaScript expression"""
@@ -1834,7 +1906,9 @@ class JavaScriptBackend(CodeGenBackend):
     def _generate_for(self, stmt: ForStatementNode, for_line: int, return_line: Optional[int]) -> List[str]:
         """Generate FOR statement - variable-indexed approach"""
         code = []
-        var_name = self._mangle_var_name(stmt.variable.name + (stmt.variable.type_suffix or ''))
+        var_key = stmt.variable.name + (stmt.variable.type_suffix or '')
+        var_name = self._mangle_var_name(var_key)
+        var_type = self._get_var_type(var_key)
         start_expr = self._generate_expression(stmt.start_expr)
         end_expr = self._generate_expression(stmt.end_expr)
 
@@ -1842,6 +1916,9 @@ class JavaScriptBackend(CodeGenBackend):
             step_expr = self._generate_expression(stmt.step_expr)
         else:
             step_expr = '1'
+
+        # Apply type coercion to initial value
+        start_expr = self._apply_type_coercion(start_expr, var_type)
 
         # Initialize loop variable and store state
         code.append(self.indent() + f'{{')
@@ -1855,10 +1932,18 @@ class JavaScriptBackend(CodeGenBackend):
         code.append(self.indent() + f'if (_start_ok) {{')
         self.indent_level += 1
 
+        # Determine type coercion function name for NEXT increment
+        type_coerce_fn = 'null'
+        if var_type == VarType.INTEGER:
+            type_coerce_fn = '_toInt'
+        elif var_type == VarType.SINGLE:
+            type_coerce_fn = '_toSingle'
+
         code.append(self.indent() + f'_for_loops["{var_name}"] = {{')
         self.indent_level += 1
         code.append(self.indent() + f'end: _end,')
         code.append(self.indent() + f'step: _step,')
+        code.append(self.indent() + f'coerce: {type_coerce_fn},')
         if return_line is not None:
             code.append(self.indent() + f'line: {return_line}')
         else:
@@ -1913,7 +1998,7 @@ class JavaScriptBackend(CodeGenBackend):
             code.append(self.indent() + f'if (_for_loops["{var_name}"]) {{')
             self.indent_level += 1
             code.append(self.indent() + f'const _loop = _for_loops["{var_name}"];')
-            code.append(self.indent() + f'{var_name} += _loop.step;')
+            code.append(self.indent() + f'{var_name} = _loop.coerce ? _loop.coerce({var_name} + _loop.step) : ({var_name} + _loop.step);')
             code.append(self.indent() + f'const _continue = (_loop.step > 0) ? ({var_name} <= _loop.end) : ({var_name} >= _loop.end);')
             code.append(self.indent() + f'if (_continue) {{')
             self.indent_level += 1
@@ -1986,17 +2071,21 @@ class JavaScriptBackend(CodeGenBackend):
             filenum_expr = self._generate_expression(stmt.file_number)
             # Generate input for each variable from file
             for var in stmt.variables:
-                var_name = self._mangle_var_name(var.name + (var.type_suffix or ''))
-                var_type = var.type_suffix or ''
+                var_key = var.name + (var.type_suffix or '')
+                var_name = self._mangle_var_name(var_key)
+                var_type = self._get_var_type(var_key)
 
-                if var_type == '$':
+                if var_type == VarType.STRING:
                     # String input from file
                     code.append(self.indent() + f'{var_name} = _finput({filenum_expr});')
-                elif var_type == '%':
-                    # Integer input from file
-                    code.append(self.indent() + f'{var_name} = parseInt(_finput({filenum_expr})) || 0;')
+                elif var_type == VarType.INTEGER:
+                    # Integer input from file - use _toInt for proper truncation
+                    code.append(self.indent() + f'{var_name} = _toInt(parseFloat(_finput({filenum_expr})) || 0);')
+                elif var_type == VarType.SINGLE:
+                    # Single precision input from file
+                    code.append(self.indent() + f'{var_name} = _toSingle(parseFloat(_finput({filenum_expr})) || 0);')
                 else:
-                    # Numeric input from file
+                    # Double precision or unknown - no coercion needed
                     code.append(self.indent() + f'{var_name} = parseFloat(_finput({filenum_expr})) || 0;')
         else:
             # Interactive input
@@ -2008,17 +2097,21 @@ class JavaScriptBackend(CodeGenBackend):
 
             # Generate input for each variable
             for var in stmt.variables:
-                var_name = self._mangle_var_name(var.name + (var.type_suffix or ''))
-                var_type = var.type_suffix or ''
+                var_key = var.name + (var.type_suffix or '')
+                var_name = self._mangle_var_name(var_key)
+                var_type = self._get_var_type(var_key)
 
-                if var_type == '$':
+                if var_type == VarType.STRING:
                     # String input
                     code.append(self.indent() + f'{var_name} = _input_str("{prompt_str}");')
-                elif var_type == '%':
-                    # Integer input
+                elif var_type == VarType.INTEGER:
+                    # Integer input - _input_int already uses _toInt
                     code.append(self.indent() + f'{var_name} = _input_int("{prompt_str}");')
+                elif var_type == VarType.SINGLE:
+                    # Single precision input
+                    code.append(self.indent() + f'{var_name} = _toSingle(_input_num("{prompt_str}"));')
                 else:
-                    # Numeric input (single/double precision)
+                    # Double precision or unknown - no coercion needed
                     code.append(self.indent() + f'{var_name} = _input_num("{prompt_str}");')
 
         return code

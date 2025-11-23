@@ -1931,14 +1931,21 @@ class SemanticAnalyzer:
     def _analyze_dim(self, stmt: DimStatementNode):
         """Analyze DIM statement - evaluate subscripts as constants"""
         for array_decl in stmt.arrays:
-            var_name = array_decl.name.upper()
+            # Get full key with suffix from array name
+            # DIM A$(10) has name="A$", DIM B%(5) has name="B%"
+            name_upper = array_decl.name.upper()
+            # If no suffix, default to SINGLE (!)
+            if name_upper[-1] in '$%!#':
+                var_key = name_upper
+            else:
+                var_key = name_upper + '!'
 
             # Check if already dimensioned
-            if var_name in self.symbols.variables:
-                var_info = self.symbols.variables[var_name]
+            if var_key in self.symbols.variables:
+                var_info = self.symbols.variables[var_key]
                 if var_info.is_array:
                     raise SemanticError(
-                        f"Array {var_name} already dimensioned",
+                        f"Array {var_key} already dimensioned",
                         self.current_line
                     )
 
@@ -1959,18 +1966,18 @@ class SemanticAnalyzer:
                             )
                         else:
                             raise SemanticError(
-                                f"Array subscript in {var_name} uses variable {var_ref} which has no known constant value at this point",
+                                f"Array subscript in {var_key} uses variable {var_ref} which has no known constant value at this point",
                                 self.current_line
                             )
                     else:
                         raise SemanticError(
-                            f"Array subscript in {var_name} must be a constant expression or variable with known constant value",
+                            f"Array subscript in {var_key} must be a constant expression or variable with known constant value",
                             self.current_line
                         )
 
                 if const_val < 0:
                     raise SemanticError(
-                        f"Array subscript cannot be negative in {var_name} (evaluated to {const_val})",
+                        f"Array subscript cannot be negative in {var_key} (evaluated to {const_val})",
                         self.current_line
                     )
 
@@ -1990,8 +1997,8 @@ class SemanticAnalyzer:
 
             # Register the array
             var_type = self._get_type_from_name(array_decl.name)
-            self.symbols.variables[var_name] = VariableInfo(
-                name=var_name,
+            self.symbols.variables[var_key] = VariableInfo(
+                name=var_key,
                 var_type=var_type,
                 is_array=True,
                 dimensions=dimensions,
@@ -2001,16 +2008,17 @@ class SemanticAnalyzer:
 
     def _analyze_assignment(self, stmt: LetStatementNode):
         """Analyze assignment - track variable usage and constant values"""
-        var_name = stmt.variable.name.upper()
+        # Use full key with suffix - FOO%, FOO$, etc. are different variables
+        var_key = self._get_var_key(stmt.variable)
 
         # Register variable if not seen before
-        if var_name not in self.symbols.variables:
+        if var_key not in self.symbols.variables:
             var_type = self._get_type_from_variable_node(stmt.variable)
             # VariableNode with subscripts is an array
             is_array = stmt.variable.subscripts is not None
 
-            self.symbols.variables[var_name] = VariableInfo(
-                name=var_name,
+            self.symbols.variables[var_key] = VariableInfo(
+                name=var_key,
                 var_type=var_type,
                 is_array=is_array,
                 first_use_line=self.current_line
@@ -2018,28 +2026,28 @@ class SemanticAnalyzer:
 
         # Check if array used without DIM
         if stmt.variable.subscripts is not None:
-            var_info = self.symbols.variables[var_name]
+            var_info = self.symbols.variables[var_key]
             if not var_info.is_array or var_info.dimensions is None:
                 # Will use default dimension of 10
                 self.warnings.append(
-                    f"Line {self.current_line}: Array {var_name} used without explicit DIM (will default to 10)"
+                    f"Line {self.current_line}: Array {var_key} used without explicit DIM (will default to 10)"
                 )
 
         # Note: Expression analysis is handled by the generic check in _analyze_statement
 
         # Track that this variable is now initialized
         if stmt.variable.subscripts is None:
-            self.initialized_variables.add(var_name)
+            self.initialized_variables.add(var_key)
 
         # Track variable modification in current loop
         if self.current_loop:
-            self.current_loop.variables_modified.add(var_name)
+            self.current_loop.variables_modified.add(var_key)
 
         # Invalidate CSE: any expression using this variable is no longer available
-        self._invalidate_expressions(var_name)
+        self._invalidate_expressions(var_key)
 
         # Clear range information: variable is being reassigned
-        self._clear_range(var_name)
+        self._clear_range(var_key)
 
         # Track runtime constants: if this is a simple variable (not array) assignment
         # and the expression evaluates to a constant, track it
@@ -2047,67 +2055,67 @@ class SemanticAnalyzer:
             const_val = self.evaluator.evaluate(stmt.expression)
             if const_val is not None:
                 # Variable now has a known constant value
-                self.evaluator.set_constant(var_name, const_val)
+                self.evaluator.set_constant(var_key, const_val)
             else:
                 # Variable assigned a non-constant expression, clear it if it was constant
-                self.evaluator.clear_constant(var_name)
+                self.evaluator.clear_constant(var_key)
 
             # Copy propagation: Check if this is a simple copy (Y = X)
             # Only for simple variables (not arrays) assigned from simple variables
             if isinstance(stmt.expression, VariableNode) and stmt.expression.subscripts is None:
-                source_var = stmt.expression.name.upper()
+                source_var = self._get_var_key(stmt.expression)
                 # Don't track self-assignment (X = X)
-                if source_var != var_name:
+                if source_var != var_key:
                     # Record this as an active copy
-                    self.active_copies[var_name] = source_var
+                    self.active_copies[var_key] = source_var
                     # Create a copy propagation record
                     self.copy_propagations.append(CopyPropagation(
                         line=self.current_line,
-                        copy_var=var_name,
+                        copy_var=var_key,
                         source_var=source_var
                     ))
             else:
                 # Not a simple copy, invalidate if it was one
-                if var_name in self.active_copies:
-                    del self.active_copies[var_name]
+                if var_key in self.active_copies:
+                    del self.active_copies[var_key]
 
             # Induction variable detection: Check if this is a derived IV
             # Pattern: J = I * constant or J = I + constant (where I is primary IV)
             if self.current_loop:
-                self._detect_derived_induction_variable(var_name, stmt.expression)
+                self._detect_derived_induction_variable(var_key, stmt.expression)
 
             # Forward substitution tracking: Record this assignment
             # We'll analyze usage counts later in a second pass
             expr_desc = self._describe_expression(stmt.expression)
-            self.variable_assignments[var_name] = (self.current_line, stmt.expression, expr_desc)
+            self.variable_assignments[var_key] = (self.current_line, stmt.expression, expr_desc)
         else:
             # Array assignment, invalidate copy if it was one
-            if var_name in self.active_copies:
-                del self.active_copies[var_name]
+            if var_key in self.active_copies:
+                del self.active_copies[var_key]
 
     def _analyze_for(self, stmt: ForStatementNode):
         """Analyze FOR statement - comprehensive loop analysis"""
-        # stmt.variable is a VariableNode
-        var_name = stmt.variable.name.upper()
+        # Use full key with suffix - FOO%, FOO$, etc. are different variables
+        var_key = self._get_var_key(stmt.variable)
 
         # Register loop variable
-        if var_name not in self.symbols.variables:
+        if var_key not in self.symbols.variables:
             var_type = self._get_type_from_variable_node(stmt.variable)
-            self.symbols.variables[var_name] = VariableInfo(
-                name=var_name,
+            self.symbols.variables[var_key] = VariableInfo(
+                name=var_key,
                 var_type=var_type,
                 is_array=False,
                 first_use_line=self.current_line
             )
 
         # FOR loop variable is initialized by the loop
-        self.initialized_variables.add(var_name)
+        self.initialized_variables.add(var_key)
 
         # Create loop analysis structure
         loop_analysis = LoopAnalysis(
             loop_type=LoopType.FOR,
             start_line=self.current_line or 0,
-            control_variable=var_name
+            control_variable=var_key
         )
 
         # Try to determine loop bounds (for iteration count and unrolling)
@@ -2136,7 +2144,7 @@ class SemanticAnalyzer:
                 pass
 
         # Track that this variable is modified by the loop
-        loop_analysis.variables_modified.add(var_name)
+        loop_analysis.variables_modified.add(var_key)
 
         # Set up for nested loop tracking
         if self.current_loop:
@@ -2154,7 +2162,7 @@ class SemanticAnalyzer:
         # Push onto old loop stack for validation
         self.loop_stack.append(LoopInfo(
             loop_type="FOR",
-            variable=var_name,
+            variable=var_key,
             start_line=self.current_line or 0
         ))
 
@@ -2165,18 +2173,18 @@ class SemanticAnalyzer:
             self._analyze_expression(stmt.step_expr)
 
         # FOR loop variable is modified, so invalidate CSE and clear constant
-        self._invalidate_expressions(var_name)
-        self.evaluator.clear_constant(var_name)
+        self._invalidate_expressions(var_key)
+        self.evaluator.clear_constant(var_key)
 
         # Create primary induction variable
         iv = InductionVariable(
-            variable=var_name,
+            variable=var_key,
             loop_start_line=self.current_line or 0,
             is_primary=True,
             base_value=start_val,
             coefficient=step_val
         )
-        self.active_ivs[var_name] = iv
+        self.active_ivs[var_key] = iv
         self.induction_variables.append(iv)
 
     def _analyze_next(self, stmt: NextStatementNode):
@@ -2200,17 +2208,17 @@ class SemanticAnalyzer:
         # stmt.variables is List[VariableNode]
         if stmt.variables:
             for var_node in stmt.variables:
-                var_name = var_node.name.upper()
-                if var_name != loop_info.variable:
+                var_key = self._get_var_key(var_node)
+                if var_key != loop_info.variable:
                     raise SemanticError(
-                        f"NEXT {var_name} does not match FOR {loop_info.variable} (started at line {loop_info.start_line})",
+                        f"NEXT {var_key} does not match FOR {loop_info.variable} (started at line {loop_info.start_line})",
                         self.current_line
                     )
                 # Pop the loop
                 self.loop_stack.pop()
 
                 # Close loop analysis
-                if self.current_loop and self.current_loop.control_variable == var_name:
+                if self.current_loop and self.current_loop.control_variable == var_key:
                     self.current_loop.end_line = self.current_line
                     # Clear induction variables for this loop
                     self._clear_loop_ivs(self.current_loop.start_line)
@@ -2477,13 +2485,13 @@ class SemanticAnalyzer:
             self._track_expression_for_cse(expr)
 
         if isinstance(expr, VariableNode):
-            var_name = expr.name.upper()
-            if var_name not in self.symbols.variables:
+            var_key = self._get_var_key(expr)
+            if var_key not in self.symbols.variables:
                 var_type = self._get_type_from_variable_node(expr)
                 # Check if this is an array (has subscripts)
                 is_array = expr.subscripts is not None
-                self.symbols.variables[var_name] = VariableInfo(
-                    name=var_name,
+                self.symbols.variables[var_key] = VariableInfo(
+                    name=var_key,
                     var_type=var_type,
                     is_array=is_array,
                     first_use_line=self.current_line
@@ -2491,22 +2499,22 @@ class SemanticAnalyzer:
 
             # Check for uninitialized variable use (only for simple variables, not arrays)
             # Note: BASIC defaults all variables to 0, but this is still a useful warning
-            if expr.subscripts is None and var_name not in self.initialized_variables:
+            if expr.subscripts is None and var_key not in self.initialized_variables:
                 # Check if this is in a DIM statement or FOR loop (those initialize)
                 # Skip warnings for FOR loop variables as they're initialized by the FOR statement
                 if context not in ("DIM", "FOR start", "FOR end", "FOR step"):
                     self.uninitialized_warnings.append(UninitializedVariableWarning(
                         line=self.current_line or 0,
-                        variable=var_name,
+                        variable=var_key,
                         context=context
                     ))
 
             # Track copy propagation opportunities:
             # If this variable is a copy of another variable, record a propagation opportunity
-            if expr.subscripts is None and var_name in self.active_copies:
+            if expr.subscripts is None and var_key in self.active_copies:
                 # Find the copy record for this variable
                 for copy_rec in self.copy_propagations:
-                    if copy_rec.copy_var == var_name:
+                    if copy_rec.copy_var == var_key:
                         copy_rec.propagation_count += 1
                         copy_rec.propagated_lines.append(self.current_line)
                         break
@@ -5578,6 +5586,23 @@ class SemanticAnalyzer:
         else:
             # Default is SINGLE (can be overridden by DEF statements)
             return VarType.SINGLE
+
+    def _get_var_key(self, var_node) -> str:
+        """Get symbol table key for a variable node.
+
+        In BASIC, FOO%, FOO!, FOO#, FOO$ are all DIFFERENT variables.
+        The symbol table key includes the type suffix to distinguish them.
+        Variables without explicit suffix use '!' (SINGLE) as default.
+
+        Returns uppercase key like 'FOO%', 'FOO!', 'FOO#', 'FOO$'
+        """
+        name = var_node.name.upper()
+        suffix = var_node.type_suffix
+        if suffix:
+            return name + suffix
+        else:
+            # Default to SINGLE suffix for consistency
+            return name + '!'
 
     def get_report(self) -> str:
         """Generate a semantic analysis report"""
