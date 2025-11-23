@@ -49,7 +49,6 @@
   - `docs/user/` - External user guides, tutorials, quick references
   - `docs/history/` - Archived/completed work (move from dev/ when done)
   - `docs/future/` - Deferred/someday projects (move to dev/ when active)
-  - `docs/design/` - Architecture and design documents
   - `docs/external/` - External references (PDFs, specs)
 
 ## Code & UI Rules

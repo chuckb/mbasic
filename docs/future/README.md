@@ -13,7 +13,6 @@ This directory contains ideas and plans for features that are deferred for futur
 
 - **Active work** should be in `docs/dev/` with `*_TODO.md` files
 - **Completed work** should be in `docs/history/` with `*_DONE.md` files
-- **Design documents** should be in `docs/design/`
 - **User documentation** should be in `docs/user/`
 
 ## Moving Projects

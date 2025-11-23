@@ -1,13 +1,18 @@
 # JavaScript Backend Specification
 
+**Status: ✅ IMPLEMENTED** (November 2025)
+
 ## Date
-2025-11-13
+2025-11-13 (spec) → Implemented 2025-11
 
 ## Overview
 
-New compiler backend to generate JavaScript code from BASIC programs. Generated code runs in:
+Compiler backend that generates JavaScript code from BASIC programs. Generated code runs in:
 - **Browser**: Standalone HTML + JS files
 - **Node.js**: Command-line execution via npm/node
+
+**Implementation:** `src/codegen_js_backend.py`
+**Usage:** `mbasic --js program.bas` or `mbasic --compile-js program.bas`
 
 ## Goals
 
@@ -444,46 +449,46 @@ Can run with:
 
 ## Implementation Plan
 
-### Phase 1: Basic Structure
-- [ ] Create `src/codegen_js_backend.py`
-- [ ] Copy structure from `codegen_backend.py`
-- [ ] Implement JavaScript code generator class
-- [ ] Generate variables and simple expressions
+### Phase 1: Basic Structure ✅
+- [x] Create `src/codegen_js_backend.py`
+- [x] Copy structure from `codegen_backend.py`
+- [x] Implement JavaScript code generator class
+- [x] Generate variables and simple expressions
 
-### Phase 2: Control Flow
-- [ ] Implement switch-based PC execution
-- [ ] FOR/NEXT loops
-- [ ] WHILE/WEND
-- [ ] GOTO/ON GOTO
-- [ ] GOSUB/RETURN
+### Phase 2: Control Flow ✅
+- [x] Implement switch-based PC execution
+- [x] FOR/NEXT loops
+- [x] WHILE/WEND
+- [x] GOTO/ON GOTO
+- [x] GOSUB/RETURN
 
-### Phase 3: Built-in Functions
-- [ ] Math functions
-- [ ] String functions
-- [ ] Type conversions
+### Phase 3: Built-in Functions ✅
+- [x] Math functions
+- [x] String functions
+- [x] Type conversions
 
-### Phase 4: I/O
-- [ ] PRINT statements
-- [ ] INPUT statements
-- [ ] DATA/READ/RESTORE
+### Phase 4: I/O ✅
+- [x] PRINT statements
+- [x] INPUT statements
+- [x] DATA/READ/RESTORE
 
-### Phase 5: Runtime Library
-- [ ] Create `src/js_runtime.js` template
-- [ ] Browser compatibility
-- [ ] Node.js compatibility
-- [ ] Environment detection
+### Phase 5: Runtime Library ✅
+- [x] Runtime embedded in generated JS
+- [x] Browser compatibility
+- [x] Node.js compatibility
+- [x] Environment detection
 
-### Phase 6: Testing
-- [ ] Test with simple programs
-- [ ] Test control flow (FOR, GOTO, GOSUB)
-- [ ] Test Super Star Trek (the ultimate test!)
-- [ ] Browser testing
-- [ ] Node.js testing
+### Phase 6: Testing ✅
+- [x] Test with simple programs
+- [x] Test control flow (FOR, GOTO, GOSUB)
+- [x] Test Super Star Trek
+- [x] Browser testing
+- [x] Node.js testing
 
-### Phase 7: Integration
-- [ ] Add to mbasic CLI: `mbasic --compile-js program.bas`
-- [ ] Generate HTML wrapper option
-- [ ] Documentation
+### Phase 7: Integration ✅
+- [x] Add to mbasic CLI: `mbasic --js program.bas`
+- [x] Generate HTML wrapper option
+- [x] Documentation
 
 ## Advantages over Z88dk Backend
 
