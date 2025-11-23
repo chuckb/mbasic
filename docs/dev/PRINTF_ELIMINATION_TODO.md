@@ -102,24 +102,30 @@ Write custom number formatting to eliminate entire printf family:
 
 ## Investigation Tasks
 
-1. **Measure printf family code size**
-   - Compile minimal test with/without printf
-   - Compile minimal test with/without sprintf
-   - Determine actual size of printf formatting code
+### Completed (2025-11-23)
 
-2. **Check z88dk alternatives**
-   - Does z88dk provide lightweight printf variants?
-   - Are there #defines to reduce printf features?
-   - Research z88dk printf library options
+**z88dk printf pragma investigation:**
 
-3. **Profile actual usage**
-   - Which printf features are actually used? (%, g, d, X, o, .*f)
-   - Could we use a smaller printf subset?
+We tested the z88dk `#pragma printf` and `#pragma scanf` options documented at:
+https://github.com/z88dk/z88dk/wiki/NewLib--Platform--Embedded
 
-4. **Test feasibility**
-   - Implement basic ftoa() prototype
-   - Measure code size vs. printf
-   - Check if it's worth the complexity
+**Finding:** The pragmas actually **INCREASE** code size!
+
+| Configuration | Size |
+|--------------|------|
+| With `#pragma printf = "%s %d %g %X %o %f"` | 19,193 bytes |
+| Without pragma (default z88dk behavior) | 17,296 bytes |
+
+**Why:** The pragma "generates explicit references to printf/scanf cores regardless of actual usage" - it forces all specified converters to be linked even if not used. The default z88dk behavior is smarter - it only links converters that are actually referenced in the code.
+
+**Conclusion:** Do NOT use `#pragma printf/scanf` - let z88dk's default linker optimization work.
+
+### Remaining Tasks (Low Priority)
+
+1. **Custom number formatting** (if size becomes critical)
+   - Write ftoa() to replace sprintf for %g
+   - Write itoa/itoah/itoo for integer formatting
+   - High effort, uncertain benefit
 
 ## Recommendation
 

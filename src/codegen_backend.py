@@ -219,6 +219,9 @@ class Z88dkCBackend(CodeGenBackend):
         code.append(f'/* String pool: __BSS_tail to SP-{self.stack_reserve} (all available memory) */')
         code.append(f'#pragma output CRT_STACK_SIZE = {self.stack_size}')
         code.append('')
+        code.append('/* Note: z88dk automatically links only needed printf/scanf converters */')
+        code.append('/* Do NOT use #pragma printf/scanf - it forces inclusion and increases size */')
+        code.append('')
 
         # String system defines and includes
         if self.string_count > 0:
