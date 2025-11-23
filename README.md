@@ -652,7 +652,7 @@ python3 test_compile.py hardware.bas
    - Semantic analyzer with type checking
    - C code generator (Z88dk backend)
    - Custom string runtime (O(n log n) GC)
-   - Memory optimization (single malloc design)
+   - Memory optimization (zero malloc design)
    - Complete file I/O (sequential, random, binary)
    - Error handling implementation
    - **Final push (November 11, 2025):**

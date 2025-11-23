@@ -15,11 +15,14 @@
 
 #include "mb25_string.h"
 
+/* Static buffer for string pool (on CP/M, uses __BSS_tail to SP-1024) */
+static uint8_t string_pool_buffer[MB25_POOL_SIZE];
+
 int main(void) {
     printf("=== Testing String Sharing During Garbage Collection ===\n\n");
 
-    /* Initialize string system */
-    if (mb25_init(MB25_POOL_SIZE) != MB25_SUCCESS) {
+    /* Initialize string system - pool memory provided by caller (no malloc) */
+    if (mb25_init(string_pool_buffer, MB25_POOL_SIZE) != MB25_SUCCESS) {
         fprintf(stderr, "Failed to initialize\n");
         return 1;
     }
@@ -147,8 +150,7 @@ int main(void) {
 
     printf("✓ Substring of substring shares correctly\n");
 
-    /* Cleanup */
-    mb25_cleanup();
+    /* No cleanup needed - pool memory is static buffer */
 
     printf("\n=== All Sharing Tests Passed! ===\n");
     return 0;

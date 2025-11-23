@@ -60,7 +60,7 @@ Each string gets a unique ID from 0 to MB25_NUM_STRINGS-1:
 ```c
 mb25_string_alloc_const(STR_A, "Hello");
 ```
-- No heap allocation
+- No pool allocation
 - Points directly to string literal in program memory
 
 ### 2.2 String Assignment
@@ -292,8 +292,8 @@ if (err == MB25_ERR_OUT_OF_MEMORY) {
 
 ### 4.4 Constant Strings
 - String literals point to program memory
-- No heap allocation
-- Automatically copied to heap if modified
+- No pool allocation
+- Automatically copied to pool if modified
 
 ## 5. Optimization Opportunities
 
@@ -404,7 +404,7 @@ int main(void) {
     printf("\n");
 
     /* Line 50: END */
-    mb25_cleanup();
+    /* No cleanup needed - pool memory is from BSS to stack */
     return 0;
 }
 ```

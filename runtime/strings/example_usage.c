@@ -14,6 +14,9 @@
 
 #include "mb25_string.h"
 
+/* Static buffer for string pool (on CP/M, uses __BSS_tail to SP-1024) */
+static uint8_t string_pool_buffer[MB25_POOL_SIZE];
+
 /* String ID assignments (compiler-generated) */
 #define STR_NAME    0  /* NAME$ */
 #define STR_CITY    1  /* CITY$ */
@@ -23,8 +26,8 @@
 /* IDs 5-9 reserved for future use */
 
 int main(void) {
-    /* Initialize string system - only pool is allocated */
-    if (mb25_init(MB25_POOL_SIZE) != MB25_SUCCESS) {
+    /* Initialize string system - pool memory provided by caller (no malloc) */
+    if (mb25_init(string_pool_buffer, MB25_POOL_SIZE) != MB25_SUCCESS) {
         fprintf(stderr, "Failed to initialize string system\n");
         return 1;
     }
@@ -57,8 +60,7 @@ int main(void) {
         }
     }
 
-    /* Cleanup - only frees the pool, not the static array */
-    mb25_cleanup();
+    /* No cleanup needed - pool memory is static buffer */
 
     return 0;
 }
@@ -69,7 +71,8 @@ int main(void) {
  * 1. MB25_NUM_STRINGS is defined at compile time by the BASIC compiler
  * 2. The mb25_strings[] array is static - no malloc required
  * 3. String IDs are assigned by the compiler for each string variable
- * 4. During GC, the array is sorted in place by data pointer, then
- *    sorted back by str_id to restore original access order
- * 5. This design is optimal for microprocessors with limited memory
+ * 4. During GC, array is sorted in place by data pointer using shell sort,
+ *    then sorted back by str_id to restore original access order
+ * 5. Zero malloc design - pool uses direct memory from BSS to stack on CP/M
+ * 6. No stdlib dependency - shell sort instead of qsort
  */

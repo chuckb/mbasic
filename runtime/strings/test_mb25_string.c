@@ -19,6 +19,9 @@
 
 #include "mb25_string.h"
 
+/* Static buffer for string pool (simulates __BSS_tail to SP allocation on CP/M) */
+static uint8_t test_pool_buffer[MB25_POOL_SIZE];
+
 /* Test helper macros */
 #define TEST_START(name) printf("\n=== Testing %s ===\n", name)
 #define TEST_PASS(name) printf("✓ %s passed\n", name)
@@ -33,7 +36,8 @@
 void test_initialization(void) {
     TEST_START("Initialization");
 
-    mb25_error_t err = mb25_init(MB25_POOL_SIZE);
+    /* Initialize with caller-provided buffer (like CP/M does with __BSS_tail) */
+    mb25_error_t err = mb25_init(test_pool_buffer, MB25_POOL_SIZE);
     TEST_ASSERT(err == MB25_SUCCESS, "Failed to initialize");
 
     TEST_ASSERT(mb25_global.pool != NULL, "Pool not allocated");
@@ -57,26 +61,26 @@ void test_const_strings(void) {
     TEST_ASSERT(str->len == strlen(test_str), "Wrong length");
     TEST_ASSERT(str->data == (uint8_t *)test_str, "Data not pointing to const");
 
-    /* Verify no heap space used */
-    TEST_ASSERT(mb25_global.allocator == 0, "Heap space used for const string");
+    /* Verify no pool space used */
+    TEST_ASSERT(mb25_global.allocator == 0, "Pool space used for const string");
 
     TEST_PASS("Constant Strings");
 }
 
-/* Test heap string allocation */
-void test_heap_strings(void) {
-    TEST_START("Heap Strings");
+/* Test pool string allocation */
+void test_pool_strings(void) {
+    TEST_START("Pool Strings");
 
     /* Allocate and initialize a string */
     mb25_error_t err = mb25_string_alloc_init(1, "Dynamic String");
-    TEST_ASSERT(err == MB25_SUCCESS, "Failed to allocate heap string");
+    TEST_ASSERT(err == MB25_SUCCESS, "Failed to allocate pool string");
 
     mb25_string_pt str = mb25_get_string(1);
     TEST_ASSERT(str != NULL, "String not found");
-    TEST_ASSERT(str->is_const == 0, "Heap string marked as const");
-    TEST_ASSERT(str->writeable == 1, "Heap string not writeable");
+    TEST_ASSERT(str->is_const == 0, "Pool string marked as const");
+    TEST_ASSERT(str->writeable == 1, "Pool string not writeable");
     TEST_ASSERT(str->len == strlen("Dynamic String"), "Wrong length");
-    TEST_ASSERT(mb25_global.allocator > 0, "No heap space used");
+    TEST_ASSERT(mb25_global.allocator > 0, "No pool space used");
 
     /* Compare content */
     char *c_str = mb25_to_c_string(1);
@@ -84,7 +88,7 @@ void test_heap_strings(void) {
     TEST_ASSERT(strcmp(c_str, "Dynamic String") == 0, "Wrong content");
     free(c_str);
 
-    TEST_PASS("Heap Strings");
+    TEST_PASS("Pool Strings");
 }
 
 /* Test string copying and sharing */
@@ -341,7 +345,7 @@ int main(void) {
     /* Run all tests */
     test_initialization();
     test_const_strings();
-    test_heap_strings();
+    test_pool_strings();
     test_string_copying();
     test_substrings();
     test_concatenation();
@@ -352,8 +356,7 @@ int main(void) {
     test_performance();
     test_debug_output();
 
-    /* Cleanup */
-    mb25_cleanup();
+    /* No cleanup needed - pool memory is static buffer */
 
     printf("\n===========================================\n");
     printf("All tests passed successfully! ✓\n");

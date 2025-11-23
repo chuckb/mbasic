@@ -72,14 +72,15 @@ The C stack (CRT_STACK_SIZE) is only for z88dk library function calls.
 
 ## Garbage Collection
 
-GC uses in-place compaction:
+GC uses in-place compaction with shell sort (no stdlib required):
 
-1. Sort string descriptors by address (qsort - O(n log n))
+1. Sort string descriptors by address (shell sort - O(n log n))
 2. Compact strings forward using memmove (handles overlaps)
-3. Resort descriptors by ID
+3. Re-sort descriptors by ID (shell sort)
 4. Reset allocator to end of compacted data
 
 **No temporary buffer** - compaction happens in-place within the pool.
+**No stdlib** - inline shell sort avoids qsort function pointer overhead.
 
 ## Monitoring at Runtime
 

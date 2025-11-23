@@ -37,6 +37,9 @@
 #include <string.h>
 #include "mb25_string.h"
 
+/* Static buffer for string pool (on CP/M, uses __BSS_tail to SP-1024) */
+static uint8_t string_pool_buffer[MB25_POOL_SIZE];
+
 /* Step 2: Assign string IDs */
 #define STR_TEXT     0
 #define STR_FIRST    1
@@ -54,8 +57,8 @@ int main(void) {
     char *print_str;
     int i;  /* Loop variable */
 
-    /* Initialize string system */
-    if (mb25_init(MB25_POOL_SIZE) != MB25_SUCCESS) {
+    /* Initialize string system - pool memory provided by caller (no malloc) */
+    if (mb25_init(string_pool_buffer, MB25_POOL_SIZE) != MB25_SUCCESS) {
         fprintf(stderr, "?Out of memory error\n");
         return 1;
     }
@@ -116,8 +119,7 @@ int main(void) {
         printf("\n");
     }
 
-    /* Cleanup */
-    mb25_cleanup();
+    /* No cleanup needed - pool memory is static buffer */
     return 0;
 }
 
@@ -128,7 +130,7 @@ int main(void) {
  * 2. Each string variable gets a unique ID
  * 3. Arrays use contiguous IDs (WORDS$(i) = STR_WORDS_BASE + i)
  * 4. Temporaries reused where possible
- * 5. String literals use mb25_string_alloc_const (no heap)
+ * 5. String literals use mb25_string_alloc_const (no pool space)
  * 6. Substring operations create shared references
  * 7. MID$ statement handles copy-on-write transparently
  * 8. PRINT requires mb25_to_c_string + free
@@ -137,6 +139,6 @@ int main(void) {
  *
  * Memory efficiency:
  * - TEXT$ shares data with FIRST$, LAST$, and WORDS$(1..5)
- * - String literals (" ... ", "XXX") use no heap
+ * - String literals (" ... ", "XXX") use no pool space
  * - Garbage collection preserves sharing
  */

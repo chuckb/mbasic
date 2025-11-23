@@ -57,7 +57,7 @@ extern mb25_string_t mb25_strings[MB25_NUM_STRINGS];
 typedef struct mb25_globals_R {
     uint16_t pool_size;       /* Total size of string pool */
     uint16_t allocator;       /* Current allocation position */
-    uint8_t  *pool;          /* Pointer to malloc'd string pool */
+    uint8_t  *pool;          /* Pointer to string pool (provided by caller) */
 
     /* Statistics */
     uint32_t total_allocs;    /* Total allocations */
@@ -80,13 +80,13 @@ void mb25_reset(void);
 
 /* ===== Core Allocation Functions ===== */
 
-/* Allocate a constant string (no heap space used) */
+/* Allocate a constant string (no pool space used) */
 mb25_error_t mb25_string_alloc_const(uint16_t str_id, const char *cstr);
 
-/* Allocate a heap string with given size */
+/* Allocate a pool string with given size */
 mb25_error_t mb25_string_alloc(uint16_t str_id, uint16_t size);
 
-/* Allocate and initialize a heap string from C string */
+/* Allocate and initialize a pool string from C string */
 mb25_error_t mb25_string_alloc_init(uint16_t str_id, const char *init_str);
 
 /* Free a string (mark descriptor as unused) */

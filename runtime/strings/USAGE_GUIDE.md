@@ -120,13 +120,13 @@ mb25_string_mid_assign(STR_A, 3, (uint8_t *)"XXX", 3);
 
 ### 1. Constant String Optimization
 
-When a string is assigned a literal constant, no heap space is used:
+When a string is assigned a literal constant, no pool space is used:
 
 ```c
-/* This uses no heap space */
+/* This uses no pool space */
 mb25_string_alloc_const(0, "This is stored in program memory");
 
-/* Heap space only used for dynamic strings */
+/* Pool space only used for dynamic strings */
 mb25_string_alloc(1, 50);  /* Allocate 50 bytes */
 ```
 
@@ -250,8 +250,7 @@ int main(void) {
         free(result);
     }
 
-    /* Cleanup */
-    mb25_cleanup();
+    /* No cleanup needed - pool memory is from BSS to stack */
     return 0;
 }
 ```
@@ -300,7 +299,7 @@ mb25_validate_pool();     /* Check for corruption */
 |---------|-------|----------|
 | "Out of string space" | Pool too small | Increase MB25_POOL_SIZE |
 | Strings corrupted after GC | Invalid pointers | Check all string IDs are valid |
-| Memory leak | Strings not freed | Ensure mb25_cleanup() called |
+| Memory leak | Pool not compacting | Check GC is triggering properly |
 | Slow performance | Frequent GC | Increase pool size or reduce temps |
 
 ## Advanced Features
@@ -308,8 +307,10 @@ mb25_validate_pool();     /* Check for corruption */
 ### Custom Memory Management
 
 ```c
-/* Override pool size at runtime */
-mb25_error_t err = mb25_init(16384, 200);  /* 16KB pool, 200 strings */
+/* On CP/M, pool uses all available memory from __BSS_tail to SP-1024 */
+/* The pool address and size are determined at runtime */
+uint16_t pool_size = SP - 1024 - (uint16_t)&__BSS_tail;
+mb25_error_t err = mb25_init((uint8_t *)&__BSS_tail, pool_size);
 
 /* Monitor memory usage */
 uint16_t free_space = mb25_get_free_space();

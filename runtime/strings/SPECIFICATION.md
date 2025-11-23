@@ -14,10 +14,11 @@ The original MBASIC 5.21 string garbage collector suffered from quadratic time c
 ## New Design Goals
 
 1. **Linear or linearithmic performance**: O(n log n) worst case for garbage collection
-2. **Memory efficiency**: Support for constant strings without heap allocation
+2. **Memory efficiency**: Support for constant strings without pool allocation
 3. **Writeable optimization**: Reuse allocated space when possible
 4. **Substring sharing**: Allow LEFT$, RIGHT$, MID$ to share data when safe
 5. **Compile-time optimization**: Known string count at compile time
+6. **No malloc/heap**: Direct memory allocation from BSS_tail to stack
 
 ## Data Structures
 
@@ -54,7 +55,7 @@ struct mb25_globals_R {
 - Strings assigned from literal constants: `A$ = "foo"`
 - `is_const = 1`, `writeable = 0`
 - `data` points to constant data in ROM/program memory
-- No heap space used
+- No pool space used
 
 ### 2. Writeable Strings
 - Newly allocated strings from operations or user input
@@ -91,13 +92,13 @@ void mb25_string_alloc_const(uint16_t str_id, const char *const_str);
 ```
 - Sets is_const = 1
 - Points to constant data
-- No heap allocation
+- No pool allocation needed
 
-#### Allocating Heap String
+#### Allocating Pool String
 ```c
 void mb25_string_alloc(uint16_t str_id, uint16_t size);
 ```
-- Allocates from heap
+- Allocates from string pool
 - Triggers GC if insufficient space
 - Sets writeable = 1
 
@@ -110,19 +111,20 @@ void mb25_string_copy(uint16_t dest_id, uint16_t src_id);
 
 ### Garbage Collection Algorithm
 
-The new algorithm achieves O(n log n) performance:
+The new algorithm achieves O(n log n) performance using shell sort (no stdlib qsort):
 
 1. **Sort Phase** (O(n log n))
-   - Sort string descriptors by data pointer address
+   - Shell sort string descriptors by data pointer address
    - Identifies live strings in address order
+   - No function pointer overhead (inline comparison)
 
 2. **Compaction Phase** (O(n))
    - Single pass through sorted strings
-   - Move each string down to eliminate gaps
-   - Update data pointers
+   - Move each string down to eliminate gaps using memmove
+   - Update data pointers, preserve substring sharing
 
 3. **Restore Phase** (O(n log n))
-   - Sort descriptors back by str_id
+   - Shell sort descriptors back by str_id
    - Restores original access order
 
 ### String Operations
@@ -176,10 +178,16 @@ The new algorithm achieves O(n log n) performance:
 ## Compile-Time Configuration
 
 ```c
-#define MB25_NUM_STRINGS      100  // Total string descriptors
-#define MB25_POOL_SIZE        8192 // String pool size in bytes
+#define MB25_NUM_STRINGS      100  // Total string descriptors (set by codegen)
 #define MB25_MAX_STRING_LEN   255  // Maximum string length
 #define MB25_ENABLE_DEBUG     0    // Debug output enable
+```
+
+Pool size is calculated at runtime from available memory:
+```c
+pool_start = __BSS_tail;           // End of program BSS section
+pool_size = SP - 1024 - pool_start; // All memory up to stack reserve
+mb25_init((uint8_t*)pool_start, pool_size);
 ```
 
 ## Implementation Notes

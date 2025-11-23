@@ -158,9 +158,9 @@ Compile this. Run it on CP/M. **It just works.**
 - C code generation (via z88dk)
 - 8080 and Z80 backend support
 - Sophisticated string management
-- O(n log n) garbage collection
-- Single malloc design (pool initialization only)
-- In-place GC (no temporary buffers)
+- O(n log n) garbage collection (shell sort, no stdlib)
+- Zero malloc design (pool uses direct memory from BSS to stack)
+- In-place GC (no temporary buffers, shell sort by data pointer)
 - Fits in 64K CP/M TPA
 
 **JavaScript Backend:**

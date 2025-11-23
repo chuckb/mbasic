@@ -3,7 +3,6 @@
 ## Setup (at top of generated C file)
 ```c
 #define MB25_NUM_STRINGS <count>  /* Compiler calculates */
-#define MB25_POOL_SIZE <size>      /* Default 8192 */
 #include "mb25_string.h"
 
 /* String ID defines */
@@ -12,19 +11,21 @@
 
 ## Initialization
 ```c
-if (mb25_init(MB25_POOL_SIZE) != MB25_SUCCESS) {
+/* Pool uses all available memory from __BSS_tail to SP-1024 */
+uint16_t pool_size = SP - 1024 - __BSS_tail;
+if (mb25_init((uint8_t *)__BSS_tail, pool_size) != MB25_SUCCESS) {
     fprintf(stderr, "?Out of memory\n");
     return 1;
 }
 /* ... program ... */
-mb25_cleanup();
+/* No cleanup needed - pool memory is from BSS to stack */
 ```
 
 ## BASIC → C Translation Table
 
 | BASIC Operation | Generated C Code | Notes |
 |-----------------|------------------|-------|
-| `A$ = "literal"` | `mb25_string_alloc_const(STR_A, "literal")` | No heap use |
+| `A$ = "literal"` | `mb25_string_alloc_const(STR_A, "literal")` | No pool space |
 | `A$ = B$` | `mb25_string_copy(STR_A, STR_B)` | May share data |
 | `A$ = B$ + C$` | `mb25_string_concat(STR_A, STR_B, STR_C)` | |
 | `A$ = B$ + "x"` | `mb25_string_alloc_const(TEMP, "x");`<br>`mb25_string_concat(STR_A, STR_B, TEMP)` | Need temp |
@@ -78,7 +79,7 @@ mb25_cleanup();
 
 5. **String literals are free**
    - Use `mb25_string_alloc_const()`
-   - No heap allocation
+   - No pool allocation
    - Points to program memory
 
 6. **Substrings share memory**
@@ -92,7 +93,7 @@ mb25_cleanup();
 Static descriptor array (compile-time size):
 [0][1][2]...[MB25_NUM_STRINGS-1]
  ↓  ↓  ↓
-String pool (malloc'd at runtime):
+String pool (from __BSS_tail to SP-1024, no malloc):
 [string data...][free space]
 ```
 

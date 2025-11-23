@@ -199,9 +199,9 @@ Learn about the optimization techniques used by the compiler to improve performa
 The compiler includes a sophisticated runtime library:
 
 - **Custom string system** with O(n log n) garbage collection
-- **Single malloc** design (only pool initialization)
-- **In-place GC** (no temporary buffers)
-- **Optimized for CP/M** - fits comfortably in 64K TPA
+- **Zero malloc** design (pool uses direct memory from BSS to stack)
+- **In-place GC** with shell sort (no temporary buffers, no stdlib)
+- **Optimized for CP/M** - fits comfortably in 64K TPA (~56KB string space)
 
 ## What Works
 

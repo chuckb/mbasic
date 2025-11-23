@@ -76,8 +76,8 @@ Compiles to clean JavaScript that runs in browsers AND Node.js - same code, both
 
 Z80/8080 Backend:
 - Custom string system with smart garbage collection
-- Only 1 malloc in the entire system (pool initialization)
-- In-place GC - no temporary buffers wasting precious CP/M RAM
+- Zero malloc - string pool uses direct memory from __BSS_tail (~56KB on 64K system)
+- In-place GC with shell sort - no temporary buffers wasting precious CP/M RAM
 - Fits comfortably in 64K TPA (Transient Program Area)
 
 JavaScript Backend:

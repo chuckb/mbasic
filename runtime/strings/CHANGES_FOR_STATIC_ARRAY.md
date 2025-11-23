@@ -25,13 +25,23 @@ Updated the MBASIC 2025 string system to use a static array of string descriptor
 
 ### 4. Simplified Initialization
 - **Before**: `mb25_init(pool_size, num_strings)` with dynamic allocation
-- **After**: `mb25_init(pool_size)` - only allocates the string pool
-- **Benefit**: Simpler API, fewer failure points
+- **After**: `mb25_init(pool, pool_size)` - pool address provided by caller
+- **Benefit**: No malloc needed at all, pool uses memory from __BSS_tail to SP
+
+### 5. No Malloc/Heap Required (2025-11-23)
+- **Before**: Pool allocated via malloc() from z88dk heap
+- **After**: Pool memory provided directly from __BSS_tail
+- **Benefit**: ~56KB pool on 64K system (vs ~39KB with malloc), smaller binary
+
+### 6. Shell Sort Replaces qsort (2025-11-23)
+- **Before**: Used stdlib qsort() for sorting descriptors
+- **After**: Inline shell sort functions (sort_by_data_ptr, sort_by_str_id)
+- **Benefit**: No stdlib dependency, no function pointer overhead
 
 ## Performance Impact
-- **Memory**: Saves memory for sort buffer (was `num_strings * sizeof(pointer)`)
-- **Speed**: Same O(n log n) complexity but with better cache locality
-- **Code Size**: Smaller code without malloc/free for descriptors
+- **Memory**: No malloc overhead, pool uses all available memory
+- **Speed**: Same O(n log n) complexity with shell sort
+- **Code Size**: No malloc/free, no qsort linked in
 
 ## Files Modified
 - `mb25_string.h`: Updated structures and function signatures
@@ -50,4 +60,4 @@ This implementation now correctly follows the original proposal where:
 - String count is known at compile time
 - Descriptors are a static array
 - The str_id field enables sorting and restoration
-- No dynamic allocation except for the string pool itself
+- No dynamic allocation at all (pool uses direct memory from __BSS_tail)
