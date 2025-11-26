@@ -406,7 +406,6 @@ Then load both:
 
 ## See Also
 
-- [JavaScript Backend Spec](../design/JAVASCRIPT_BACKEND_SPEC.md) - Design documentation
 - [Variable Types](../dev/COMPILER_VARIABLE_TYPES.md) - Detailed variable type handling
 
 ## Version

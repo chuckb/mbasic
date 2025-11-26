@@ -216,7 +216,7 @@ string_pool_size = heap_size
 
 ## Related Documentation
 
-- [STRING_ALLOCATION_AND_GARBAGE_COLLECTION.md](../design/future_compiler/STRING_ALLOCATION_AND_GARBAGE_COLLECTION.md)
+- [STRING_ALLOCATION_AND_GARBAGE_COLLECTION.md](compiler_optimizations/STRING_ALLOCATION_AND_GARBAGE_COLLECTION.md)
 - [DYNAMIC_STRING_POOL_DONE.md](DYNAMIC_STRING_POOL_DONE.md)
 - [COMPILER_MEMORY_CONFIG.md](../dev/COMPILER_MEMORY_CONFIG.md)
 - z88dk wiki: https://github.com/z88dk/z88dk/wiki/CRT

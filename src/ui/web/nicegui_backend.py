@@ -47,6 +47,25 @@ def get_client_ip(request) -> str:
     return request.client.host if request.client else 'unknown'
 
 
+def is_uptime_probe(request) -> bool:
+    """Check if request is from an uptime monitoring probe.
+
+    These requests should not create sessions or be logged to avoid
+    cluttering the database and Redis with monitoring traffic.
+
+    Args:
+        request: NiceGUI/Starlette request object
+
+    Returns:
+        True if request is from an uptime probe
+    """
+    if not request:
+        return False
+    user_agent = request.headers.get('user-agent', '') or request.headers.get('User-Agent', '')
+    # DigitalOcean uptime probes use "DigitalOcean Uptime Probe <version>"
+    return user_agent.startswith('DigitalOcean Uptime Probe')
+
+
 class SimpleWebIOHandler(IOHandler):
     """Simple IO handler for NiceGUI that appends to textarea."""
 
@@ -4143,8 +4162,13 @@ def start_web_ui(port=8080):
         from src.ast_nodes import TypeInfo
         from nicegui import context
 
-        # Detect tablet/mobile devices via user-agent
+        # Check for uptime probes - return minimal response without creating session
         request = context.client.request if context.client else None
+        if is_uptime_probe(request):
+            ui.label('OK')  # Minimal response for uptime checks
+            return
+
+        # Detect tablet/mobile devices via user-agent
         user_agent = request.headers.get('user-agent', '').lower() if request else ''
         is_tablet = any(keyword in user_agent for keyword in ['ipad', 'android', 'tablet'])
 
@@ -4230,6 +4254,13 @@ def start_web_ui(port=8080):
         import os
         from src.editing.manager import ProgramManager
         from src.ast_nodes import TypeInfo
+        from nicegui import context
+
+        # Check for uptime probes - return minimal response without creating session
+        request = context.client.request if context.client else None
+        if is_uptime_probe(request):
+            ui.label('OK')  # Minimal response for uptime checks
+            return
 
         # Try to restore existing session state
         saved_state = app.storage.client.get('session_state')

@@ -1,6 +1,6 @@
 # Developer Installation Guide
 
-> **⚠️ NOTE:** This is an older, basic setup guide. For comprehensive Linux Mint/Ubuntu/Debian developer setup including compiler tools, web server, and all system packages, see **[../LINUX_MINT_DEVELOPER_SETUP.md](../LINUX_MINT_DEVELOPER_SETUP.md)**.
+> **⚠️ NOTE:** This is an older, basic setup guide. For comprehensive Linux Mint/Ubuntu/Debian developer setup including compiler tools, web server, and all system packages, see **[Linux Mint Developer Setup](../dev/LINUX_MINT_DEVELOPER_SETUP.md)**.
 
 Complete setup instructions for developing MBASIC on a clean Linux system.
 
