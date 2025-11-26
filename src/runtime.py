@@ -142,7 +142,8 @@ class Runtime:
         # Determine which lines to process from input
         if isinstance(self._ast_or_line_table, dict):
             # New style: dict {line_num: LineNode} already provided
-            lines_to_process = self._ast_or_line_table.values()
+            # Sort by line number since dict preserves insertion order, not numerical order
+            lines_to_process = [self._ast_or_line_table[k] for k in sorted(self._ast_or_line_table.keys())]
         else:
             # Old style: ProgramNode AST - extract lines
             lines_to_process = self._ast_or_line_table.lines
@@ -1568,7 +1569,8 @@ class Runtime:
 
         # Process program lines to rebuild statement table
         if isinstance(self._ast_or_line_table, dict):
-            lines_to_process = self._ast_or_line_table.values()
+            # Sort by line number since dict preserves insertion order, not numerical order
+            lines_to_process = [self._ast_or_line_table[k] for k in sorted(self._ast_or_line_table.keys())]
         else:
             lines_to_process = self._ast_or_line_table.lines
 
