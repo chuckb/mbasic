@@ -1256,8 +1256,8 @@ class NiceGUIBackend(UIBackend):
             # Get program size
             program_lines = self._exec_start_line_count if hasattr(self, '_exec_start_line_count') else 0
 
-            # Get lines executed from runtime
-            lines_executed = self.runtime.lines_executed if hasattr(self.runtime, 'lines_executed') else 0
+            # Get statements executed from interpreter state
+            lines_executed = self.interpreter.state.statements_executed if self.interpreter and self.interpreter.state else 0
 
             # Get session ID from context (not app.storage.client.id which doesn't exist)
             from nicegui import context
