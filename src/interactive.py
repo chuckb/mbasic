@@ -5,7 +5,7 @@ Modern implementation of MBASIC 5.21 interactive REPL
 Implements the interactive REPL with:
 - Line entry and editing
 - Direct commands: AUTO, EDIT, HELP (special-cased before parser, see execute_command())
-- Immediate mode statements: Most commands (RUN, LIST, SAVE, LOAD, NEW, MERGE, FILES,
+- Immediate mode statements: Most commands (RUN, LIST, SAVE, LOAD, AILOAD, NEW, MERGE, FILES,
   SYSTEM, DELETE, RENUM, CONT, CHAIN, etc.) are parsed as BASIC statements and executed via execute_immediate()
 - AUTO command for automatic line numbering with customizable start/step
 - EDIT command for character-by-character line editing (insert/delete/copy mode)
@@ -192,8 +192,9 @@ class InteractiveMode:
         matching MBASIC 5.21 behavior.
         """
         if self.program_runtime:
-            self.program_runtime.gosub_stack.clear()
-            self.program_runtime.for_loops.clear()
+            # Runtime uses execution_stack (GOSUB/WHILE) and for_loop_states (FOR).
+            self.program_runtime.execution_stack.clear()
+            self.program_runtime.for_loop_states.clear()
 
     def _setup_readline(self):
         """Configure readline for better line editing"""
@@ -234,7 +235,7 @@ class InteractiveMode:
         keywords = [
             'PRINT', 'INPUT', 'LET', 'IF', 'THEN', 'ELSE', 'FOR', 'TO', 'STEP', 'NEXT',
             'GOTO', 'GOSUB', 'RETURN', 'END', 'STOP', 'CONT', 'RUN', 'LIST', 'NEW',
-            'LOAD', 'SAVE', 'DELETE', 'RENUM', 'AUTO', 'EDIT', 'WHILE', 'WEND',
+            'LOAD', 'AILOAD', 'SAVE', 'DELETE', 'RENUM', 'AUTO', 'EDIT', 'WHILE', 'WEND',
             'DIM', 'READ', 'DATA', 'RESTORE', 'ON', 'REM', 'DEF', 'FN',
             'AND', 'OR', 'NOT', 'MOD',
             'DEFINT', 'DEFSNG', 'DEFDBL', 'DEFSTR',
@@ -623,6 +624,58 @@ class InteractiveMode:
             print(f"?File not found: {filename}")
         except Exception as e:
             print(f"?{type(e).__name__}: {e}")
+
+    def cmd_aiload(self, prompt: str):
+        """AILOAD \"prompt\" - Generate program via AI and load into memory"""
+        from src.trs_ai.backends import load_backend_from_env
+
+        if not prompt or not str(prompt).strip():
+            print("?Syntax error")
+            return
+
+        dialect = os.environ.get("TRS_AI_DIALECT_SPEC", "AIBASIC-0.1")
+
+        print("Contacting AI...")
+        backend = load_backend_from_env()
+        gen = backend.generate(str(prompt).strip(), dialect)
+        if not gen.ok:
+            print(f"?{gen.error or 'AI generation failed'}")
+            return
+
+        snapshot = dict(self.program.lines)
+        self.program.clear()
+        self.clear_execution_state()
+        self.current_file = None
+
+        errors = []
+        for raw_line in gen.lines:
+            line = raw_line.strip()
+            if not line:
+                continue
+            match = re.match(r"^(\d+)\s", line)
+            if not match:
+                errors.append(f"?Line must start with number: {line[:60]}")
+                continue
+            line_num = int(match.group(1))
+            ok, err = self.program.add_line(line_num, line)
+            if not ok:
+                errors.append(err or f"?Parse error at line {line_num}")
+
+        if errors or not self.program.lines:
+            self.program.clear()
+            for ln in sorted(snapshot.keys()):
+                self.program.add_line(ln, snapshot[ln])
+            self.clear_execution_state()
+            for msg in errors:
+                print(msg)
+            if not errors:
+                print("?No lines loaded")
+            else:
+                print("?No program loaded")
+            return
+
+        print("Program loaded.")
+        print("Ready")
 
     def cmd_merge(self, filename):
         """MERGE "filename" - Merge program from file into current program
@@ -1373,6 +1426,7 @@ class InteractiveMode:
         print("  NEW                - Clear program")
         print("  RUN [line]         - Run program")
         print("  LOAD \"file\"        - Load program")
+        print("  AILOAD \"prompt\"    - Load program from AI")
         print("  SAVE \"file\"        - Save program")
         print("  MERGE \"file\"       - Merge program")
         print("  LIST [range]       - List program lines")

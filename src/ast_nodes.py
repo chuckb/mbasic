@@ -694,6 +694,18 @@ class RunStatementNode:
 
 
 @dataclass
+class AILoadStatementNode:
+    """AILOAD statement - load program from AI backend
+
+    Syntax:
+        AILOAD "prompt"    - Generate and load program from prompt
+    """
+    prompt: 'ExpressionNode'  # String expression with user prompt
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
 class LoadStatementNode:
     """LOAD statement - load program from disk
 

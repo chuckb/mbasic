@@ -105,7 +105,7 @@ macro_expander = "utils.mkdocs_plugins.macro_expander:MacroExpanderPlugin"
 [tool.setuptools]
 # Include both the entry point module and the src package
 py-modules = ["mbasic"]  # Entry point: mbasic
-packages = ["src", "src.ui", "src.ui.web", "src.editing", "src.filesystem", "src.iohandler"]  # All src packages
+packages = ["src", "src.ui", "src.ui.web", "src.editing", "src.filesystem", "src.iohandler", "src.trs_ai"]  # All src packages
 
 [tool.setuptools.dynamic]
 version = {attr = "src.version.VERSION"}

@@ -542,6 +542,8 @@ class Parser:
             return self.parse_setsetting()
         elif token.type == TokenType.RUN:
             return self.parse_run()
+        elif token.type == TokenType.AILOAD:
+            return self.parse_aiload()
         elif token.type == TokenType.LOAD:
             return self.parse_load()
         elif token.type == TokenType.SAVE:
@@ -1746,6 +1748,20 @@ class Parser:
             target=target,
             line_num=token.line,
             column=token.column
+        )
+
+    def parse_aiload(self) -> AILoadStatementNode:
+        """Parse AILOAD statement
+
+        Syntax:
+            AILOAD "prompt"    - Generate program from AI from prompt string
+        """
+        token = self.advance()
+        prompt = self.parse_expression()
+        return AILoadStatementNode(
+            prompt=prompt,
+            line_num=token.line,
+            column=token.column,
         )
 
     def parse_load(self) -> LoadStatementNode:

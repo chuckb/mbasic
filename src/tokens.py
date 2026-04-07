@@ -29,6 +29,7 @@ class TokenType(Enum):
     RENUM = auto()
     RUN = auto()
     SAVE = auto()
+    AILOAD = auto()
 
     # Keywords - File Operations
     AS = auto()              # AS (used in OPEN and FIELD)
@@ -271,6 +272,7 @@ KEYWORDS = {
     'renum': TokenType.RENUM,
     'run': TokenType.RUN,
     'save': TokenType.SAVE,
+    'aiload': TokenType.AILOAD,
 
     # File operations
     'as': TokenType.AS,

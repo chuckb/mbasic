@@ -1962,6 +1962,17 @@ class Interpreter:
         else:
             raise RuntimeError("LOAD not available in this context")
 
+    def execute_aiload(self, stmt):
+        """Execute AILOAD statement"""
+        prompt = self.evaluate_expression(stmt.prompt)
+        if not isinstance(prompt, str):
+            raise RuntimeError("AILOAD requires string prompt")
+
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            self.interactive_mode.cmd_aiload(prompt)
+        else:
+            raise RuntimeError("AILOAD not available in this context")
+
     def execute_save(self, stmt):
         """Execute SAVE statement"""
         # Evaluate filename expression
