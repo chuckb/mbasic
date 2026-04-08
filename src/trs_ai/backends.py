@@ -39,6 +39,8 @@ class ProgramGeneratorBackend(Protocol):
         error_context: Optional[str],
         user_hint: Optional[str],
         dialect_spec: str,
+        *,
+        syntax_errors: Optional[str] = None,
         verbose: bool = False,
     ) -> GenerationResult:
         ...
@@ -191,6 +193,8 @@ class FixtureBackend:
         error_context: Optional[str],
         user_hint: Optional[str],
         dialect_spec: str,
+        *,
+        syntax_errors: Optional[str] = None,
         verbose: bool = False,
     ) -> GenerationResult:
         base = [ln.strip() for ln in existing_source.splitlines() if ln.strip()]
@@ -203,6 +207,7 @@ class FixtureBackend:
                 "fixture fix (request)",
                 f"dialect_spec={dialect_spec!r}\n"
                 f"error_context={error_context!r}\nuser_hint={user_hint!r}\n"
+                f"syntax_errors={syntax_errors!r}\n"
                 f"--- existing_source ---\n{existing_source}",
             )
             _verbose_section("fixture fix (response lines)", "\n".join(out))
@@ -355,14 +360,18 @@ class RemoteChatBackend:
         error_context: Optional[str],
         user_hint: Optional[str],
         dialect_spec: str,
+        *,
+        syntax_errors: Optional[str] = None,
         verbose: bool = False,
     ) -> GenerationResult:
         system = _system_prompt_fix(dialect_spec)
+        syn_part = syntax_errors or "(none)"
         err_part = error_context or "(none)"
         hint_part = user_hint or "(none)"
         user = (
             f"Current program:\n{existing_source}\n\n"
-            f"Error / failure context:\n{err_part}\n\n"
+            f"Syntax / parser messages:\n{syn_part}\n\n"
+            f"Runtime error context:\n{err_part}\n\n"
             f"User hint:\n{hint_part}\n"
         )
         ok, content, err = self._post_chat(system, user, verbose=verbose)
@@ -443,6 +452,8 @@ class _ErrorBackend:
         error_context: Optional[str],
         user_hint: Optional[str],
         dialect_spec: str,
+        *,
+        syntax_errors: Optional[str] = None,
         verbose: bool = False,
     ) -> GenerationResult:
         if verbose:

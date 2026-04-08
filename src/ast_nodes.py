@@ -735,6 +735,17 @@ class AIDiffStatementNode:
 
 
 @dataclass
+class AIListStatementNode:
+    """AILIST — list pending AI program (LIST-style optional range)."""
+
+    start: 'ExpressionNode' = None
+    end: 'ExpressionNode' = None
+    single_line: bool = False
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
 class AIApplyStatementNode:
     """AIAPPLY — commit pending AI program to current."""
 

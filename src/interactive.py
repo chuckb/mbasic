@@ -5,7 +5,7 @@ Modern implementation of MBASIC 5.21 interactive REPL
 Implements the interactive REPL with:
 - Line entry and editing
 - Direct commands: AUTO, EDIT, HELP (special-cased before parser, see execute_command())
-- Immediate mode statements: Most commands (RUN, LIST, SAVE, LOAD, AILOAD, NEW, MERGE, FILES,
+- Immediate mode statements: Most commands (RUN, LIST, SAVE, LOAD, AILOAD, AILIST, NEW, MERGE, FILES,
   SYSTEM, DELETE, RENUM, CONT, CHAIN, etc.) are parsed as BASIC statements and executed via execute_immediate()
 - AUTO command for automatic line numbering with customizable start/step
 - EDIT command for character-by-character line editing (insert/delete/copy mode)
@@ -131,7 +131,10 @@ class InteractiveMode:
 
         # M3: single pending AI program (full line dict), optional error context for AIFIX
         self.ai_pending_lines = None  # Optional[Dict[int, str]]
-        self.ai_last_error_context = None  # Optional[str]
+        # If set, iteration order for pending (failed AILOAD may use synthetic negative keys)
+        self.ai_pending_line_order = None  # Optional[List[int]]
+        self.ai_last_syntax_errors = None  # Optional[str]
+        self.ai_last_error_context = None  # Optional[str] — runtime / execution failures
         self.ai_last_operation_summary = None  # Optional[str]
 
         # I/O handler (defaults to console if not provided)
@@ -193,15 +196,32 @@ class InteractiveMode:
         """Drop pending AI proposal; if manual=True and there was pending, print discard notice."""
         had = self.ai_pending_lines is not None
         self.ai_pending_lines = None
+        self.ai_pending_line_order = None
+        self.ai_last_syntax_errors = None
         if had and manual:
             print("PENDING AI CHANGES DISCARDED DUE TO MANUAL EDIT")
+
+    def _pending_source_text(self) -> str:
+        """Full pending program text, preserving ai_pending_line_order when set."""
+        if not self.ai_pending_lines:
+            return ""
+        if self.ai_pending_line_order:
+            return "\n".join(self.ai_pending_lines[k] for k in self.ai_pending_line_order)
+        return "\n".join(self.ai_pending_lines[k] for k in sorted(self.ai_pending_lines.keys()))
+
+    def _pending_line_numbers_ordered(self):
+        if not self.ai_pending_lines:
+            return []
+        if self.ai_pending_line_order is not None:
+            return list(self.ai_pending_line_order)
+        return sorted(self.ai_pending_lines.keys())
 
     def _ai_merge_base_source(self):
         """Source text for next AIMERGE/AIFIX: pending program if any, else current."""
         if self.ai_pending_lines:
-            return self._program_source_from_dict(self.ai_pending_lines)
+            return self._pending_source_text().strip()
         if self.program.lines:
-            return self._program_source_from_dict(self.program.lines)
+            return self._program_source_from_dict(self.program.lines).strip()
         return None
 
     def _ai_try_set_pending_from_generation(self, gen, failure_label: str) -> bool:
@@ -226,8 +246,11 @@ class InteractiveMode:
             for msg in errors:
                 print(msg)
             print(f"?{failure_label}")
+            self.ai_last_syntax_errors = "\n".join(errors)
             return False
         self.ai_pending_lines = dict(tmp.lines)
+        self.ai_pending_line_order = None
+        self.ai_last_syntax_errors = None
         return True
 
     def _ai_record_run_failure(self, runtime, exc):
@@ -295,7 +318,7 @@ class InteractiveMode:
         keywords = [
             'PRINT', 'INPUT', 'LET', 'IF', 'THEN', 'ELSE', 'FOR', 'TO', 'STEP', 'NEXT',
             'GOTO', 'GOSUB', 'RETURN', 'END', 'STOP', 'CONT', 'RUN', 'LIST', 'NEW',
-            'LOAD', 'AILOAD', 'AIMERGE', 'AIFIX', 'AIDIFF', 'AIAPPLY', 'AICANCEL',
+            'LOAD', 'AILOAD', 'AIMERGE', 'AIFIX', 'AIDIFF', 'AILIST', 'AIAPPLY', 'AICANCEL',
             'AIEXPLAIN', 'AISTATUS', 'AIHELP',
             'SAVE', 'DELETE', 'RENUM', 'AUTO', 'EDIT', 'WHILE', 'WEND',
             'DIM', 'READ', 'DATA', 'RESTORE', 'ON', 'REM', 'DEF', 'FN',
@@ -718,32 +741,74 @@ class InteractiveMode:
         self.clear_execution_state()
         self.current_file = None
 
-        errors = []
+        from editing import ProgramManager
+
+        tmp = ProgramManager(self.def_type_map)
+        pending: dict = {}
+        order: list = []
+        syn = -1
+        errors: list = []
+        has_line = False
         for raw_line in gen.lines:
             line = raw_line.strip()
             if not line:
                 continue
+            has_line = True
             match = re.match(r"^(\d+)\s", line)
             if not match:
                 errors.append(f"?Line must start with number: {line[:60]}")
+                k = syn
+                syn -= 1
+                pending[k] = line
+                order.append(k)
                 continue
             line_num = int(match.group(1))
-            ok, err = self.program.add_line(line_num, line)
+            if line_num in pending:
+                order = [x for x in order if x != line_num]
+            pending[line_num] = line
+            order.append(line_num)
+            ok, err = tmp.add_line(line_num, line)
             if not ok:
-                errors.append(err or f"?Parse error at line {line_num}")
+                q = err or f"Parse error at line {line_num}"
+                errors.append(q if str(q).startswith("?") else f"?{q}")
 
-        if errors or not self.program.lines:
+        def _restore_snapshot():
             self.program.clear()
             for ln in sorted(snapshot.keys()):
                 self.program.add_line(ln, snapshot[ln])
             self.clear_execution_state()
+
+        if not has_line:
+            _restore_snapshot()
+            print("?No lines loaded")
+            print("Ready")
+            return
+
+        if errors:
+            _restore_snapshot()
+            self.ai_pending_lines = pending
+            self.ai_pending_line_order = order
+            self.ai_last_syntax_errors = "\n".join(errors)
+            self.ai_last_operation_summary = "AILOAD FAILED"
             for msg in errors:
                 print(msg)
-            if not errors:
-                print("?No lines loaded")
-            else:
-                print("?No program loaded")
+            print("?AILOAD FAILED — USE AIFIX TO REPAIR")
+            print("Ready")
             return
+
+        for ln in sorted(tmp.lines.keys()):
+            ok, err = self.program.add_line(ln, tmp.lines[ln])
+            if not ok:
+                _restore_snapshot()
+                self.ai_pending_lines = dict(tmp.lines)
+                self.ai_pending_line_order = None
+                q = err or f"Parse error at line {ln}"
+                self.ai_last_syntax_errors = q if str(q).startswith("?") else f"?{q}"
+                self.ai_last_operation_summary = "AILOAD FAILED"
+                print(self.ai_last_syntax_errors)
+                print("?AILOAD FAILED — USE AIFIX TO REPAIR")
+                print("Ready")
+                return
 
         self._ai_clear_pending()
         self.ai_last_error_context = None
@@ -800,7 +865,12 @@ class InteractiveMode:
         print("Contacting AI...")
         backend = load_backend_from_env()
         gen = backend.fix_program(
-            base, self.ai_last_error_context, hint_str, dialect, verbose=verbose
+            base,
+            self.ai_last_error_context,
+            hint_str,
+            dialect,
+            syntax_errors=self.ai_last_syntax_errors,
+            verbose=verbose,
         )
         if not gen.ok:
             self.ai_last_operation_summary = "AI FIX FAILED"
@@ -813,6 +883,35 @@ class InteractiveMode:
             return
         self.ai_last_operation_summary = "AI FIX OK"
         print("AI CHANGES PENDING")
+        print("Ready")
+
+    def cmd_ailist(self, args):
+        """AILIST [range] — list pending AI program (LIST-style range)."""
+        if not self.ai_pending_lines:
+            print("NO PENDING AI CHANGES")
+            print("Ready")
+            return
+
+        start = None
+        end = None
+        if args:
+            arg = str(args).strip()
+            if "-" in arg:
+                parts = arg.split("-", 1)
+                if parts[0]:
+                    start = int(parts[0])
+                if parts[1]:
+                    end = int(parts[1])
+            else:
+                start = int(arg)
+                end = start
+
+        for line_num in self._pending_line_numbers_ordered():
+            if start is not None and line_num < start:
+                continue
+            if end is not None and line_num > end:
+                continue
+            print(self.ai_pending_lines[line_num])
         print("Ready")
 
     def cmd_aidiff(self):
@@ -850,13 +949,19 @@ class InteractiveMode:
             for line_num in sorted(snapshot.keys()):
                 self.program.add_line(line_num, snapshot[line_num])
             self.clear_execution_state()
+            self.ai_last_syntax_errors = "\n".join(
+                m if str(m).startswith("?") else f"?{m}" for m in errors
+            )
             for msg in errors:
-                print(msg)
+                print(msg if str(msg).startswith("?") else f"?{msg}")
             print("?AI APPLY FAILED")
+            self.ai_last_operation_summary = "AI APPLY FAILED"
             print("Ready")
             return
 
         self.ai_pending_lines = None
+        self.ai_pending_line_order = None
+        self.ai_last_syntax_errors = None
         self.ai_last_operation_summary = "AI CHANGES APPLIED"
         print("AI CHANGES APPLIED")
         print("Ready")
@@ -867,6 +972,8 @@ class InteractiveMode:
             print("NO PENDING AI CHANGES")
         else:
             self.ai_pending_lines = None
+            self.ai_pending_line_order = None
+            self.ai_last_syntax_errors = None
             self.ai_last_operation_summary = "AI CHANGES CANCELED"
             print("AI CHANGES CANCELED")
         print("Ready")
@@ -906,6 +1013,7 @@ class InteractiveMode:
         if summary:
             print(f"LAST={summary}")
         print("ERROR_CONTEXT=YES" if self.ai_last_error_context else "ERROR_CONTEXT=NO")
+        print("SYNTAX_ERRORS=YES" if self.ai_last_syntax_errors else "SYNTAX_ERRORS=NO")
         print("Ready")
 
     def cmd_aihelp(self):
@@ -914,6 +1022,7 @@ class InteractiveMode:
         print("AIMERGE \"p\" [VERBOSE] AI edit -> pending")
         print("AIFIX [\"hint\"] [VERBOSE] AI fix -> pending")
         print("AIDIFF           diff current vs pending")
+        print("AILIST [range]   list pending program")
         print("AIAPPLY          commit pending -> current")
         print("AICANCEL         discard pending")
         print("AIEXPLAIN [n] [VERBOSE] explain line or program")
@@ -1677,7 +1786,7 @@ class InteractiveMode:
         print("  AILOAD \"prompt\" [VERBOSE] - Load program from AI (log LLM I/O)")
         print("  AIMERGE \"text\" [VERBOSE]  - AI edit (pending)")
         print("  AIFIX [\"hint\"] [VERBOSE]  - AI fix (pending)")
-        print("  AIDIFF / AIAPPLY / AICANCEL  - Review pending AI changes")
+        print("  AIDIFF / AILIST / AIAPPLY / AICANCEL  - Review pending AI changes")
         print("  AIEXPLAIN [line] [VERBOSE] - Explain program or line")
         print("  SAVE \"file\"        - Save program")
         print("  MERGE \"file\"       - Merge program")

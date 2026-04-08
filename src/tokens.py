@@ -33,6 +33,7 @@ class TokenType(Enum):
     AIMERGE = auto()
     AIFIX = auto()
     AIDIFF = auto()
+    AILIST = auto()
     AIAPPLY = auto()
     AICANCEL = auto()
     AIEXPLAIN = auto()
@@ -285,6 +286,7 @@ KEYWORDS = {
     'aimerge': TokenType.AIMERGE,
     'aifix': TokenType.AIFIX,
     'aidiff': TokenType.AIDIFF,
+    'ailist': TokenType.AILIST,
     'aiapply': TokenType.AIAPPLY,
     'aicancel': TokenType.AICANCEL,
     'aiexplain': TokenType.AIEXPLAIN,

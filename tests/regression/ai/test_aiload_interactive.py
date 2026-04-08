@@ -44,6 +44,10 @@ def test_aiload_rollback_on_bad_lines(im, monkeypatch):
     im.execute_immediate('AILOAD "x"')
     assert 10 in im.program.lines
     assert "KEEP" in im.program.lines[10]
+    assert im.ai_pending_lines is not None
+    assert -1 in im.ai_pending_lines
+    assert "not a numbered" in im.ai_pending_lines[-1]
+    assert im.ai_last_syntax_errors
 
 
 def test_aiload_verbose_emits_fixture_traffic(im, monkeypatch, capsys):

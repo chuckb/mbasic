@@ -1189,7 +1189,8 @@ class SemanticAnalyzer:
 
         # Check for unsupported compiler commands
         if isinstance(stmt, (ListStatementNode, AILoadStatementNode, AIMergeStatementNode,
-                            AIFixStatementNode, AIDiffStatementNode, AIApplyStatementNode,
+                            AIFixStatementNode, AIDiffStatementNode, AIListStatementNode,
+                            AIApplyStatementNode,
                             AICancelStatementNode, AIExplainStatementNode, AIStatusStatementNode,
                             AIHelpStatementNode, LoadStatementNode,
                             SaveStatementNode, MergeStatementNode,

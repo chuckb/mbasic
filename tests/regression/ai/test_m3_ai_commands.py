@@ -1,4 +1,4 @@
-"""Milestone 3: AIMERGE, AIFIX, AIDIFF, AIAPPLY, AICANCEL, AIEXPLAIN, pending buffer."""
+"""Milestone 3: AIMERGE, AIFIX, AIDIFF, AILIST, AIAPPLY, AICANCEL, AIEXPLAIN, pending buffer."""
 
 from __future__ import annotations
 
@@ -85,6 +85,40 @@ def test_aidiff_no_pending(fixture_env, capsys):
     m = InteractiveMode()
     m.cmd_aidiff()
     assert "NO PENDING AI CHANGES" in capsys.readouterr().out
+
+
+def test_ailist_pending(fixture_env, capsys):
+    m = InteractiveMode()
+    m.cmd_ailist("")
+    assert "NO PENDING AI CHANGES" in capsys.readouterr().out
+
+    m.ai_pending_lines = {10: '10 PRINT "X"', 20: "20 END"}
+    m.ai_pending_line_order = None
+    m.cmd_ailist("")
+    out = capsys.readouterr().out
+    assert '10 PRINT "X"' in out
+    assert "20 END" in out
+
+
+def test_ailist_immediate(fixture_env, capsys):
+    m = InteractiveMode()
+    m.ai_pending_lines = {100: "100 REM A", 200: "200 REM B"}
+    m.ai_pending_line_order = [200, 100]
+    m.execute_immediate("AILIST")
+    out = capsys.readouterr().out
+    assert out.index("200 REM B") < out.index("100 REM A")
+
+
+def test_aiapply_keeps_invalid_pending(fixture_env, capsys):
+    m = InteractiveMode()
+    m.process_line("10 REM SAFE")
+    m.ai_pending_lines = {10: "10 PRINT {{{"}
+    m.ai_pending_line_order = None
+    m.cmd_aiapply()
+    assert m.ai_pending_lines is not None
+    assert "SAFE" in m.program.lines.get(10, "")
+    assert "?AI APPLY FAILED" in capsys.readouterr().out
+    assert m.ai_last_syntax_errors
 
 
 def test_parse_explanation_content_json():

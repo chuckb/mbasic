@@ -548,6 +548,8 @@ class Parser:
             return self.parse_aimerge()
         elif token.type == TokenType.AIFIX:
             return self.parse_aifix()
+        elif token.type == TokenType.AILIST:
+            return self.parse_ailist()
         elif token.type == TokenType.AIDIFF:
             return self.parse_aidiff()
         elif token.type == TokenType.AIAPPLY:
@@ -1822,6 +1824,60 @@ class Parser:
         return AIFixStatementNode(
             hint=hint,
             verbose=verbose,
+            line_num=token.line,
+            column=token.column,
+        )
+
+    def parse_ailist(self) -> AIListStatementNode:
+        """Parse AILIST [ range ] — same forms as LIST."""
+        token = self.advance()
+        start = None
+        end = None
+        single_line = False
+        if self.at_end_of_line() or self.match(TokenType.COLON):
+            return AIListStatementNode(
+                start=None,
+                end=None,
+                single_line=False,
+                line_num=token.line,
+                column=token.column,
+            )
+        if self.match(TokenType.MINUS):
+            self.advance()
+            if self.match(TokenType.NUMBER):
+                end_token = self.advance()
+                end = NumberNode(
+                    value=end_token.value,
+                    literal=str(end_token.value),
+                    line_num=end_token.line,
+                    column=end_token.column,
+                )
+        else:
+            if self.match(TokenType.NUMBER):
+                start_token = self.advance()
+                start = NumberNode(
+                    value=start_token.value,
+                    literal=str(start_token.value),
+                    line_num=start_token.line,
+                    column=start_token.column,
+                )
+                if self.match(TokenType.MINUS):
+                    self.advance()
+                    if self.match(TokenType.NUMBER):
+                        end_token = self.advance()
+                        end = NumberNode(
+                            value=end_token.value,
+                            literal=str(end_token.value),
+                            line_num=end_token.line,
+                            column=end_token.column,
+                        )
+                else:
+                    single_line = True
+                    end = start
+        return AIListStatementNode(
+            start=start,
+            end=end,
+            single_line=single_line,
             line_num=token.line,
             column=token.column,
         )

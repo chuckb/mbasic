@@ -1999,6 +1999,26 @@ class Interpreter:
         else:
             raise RuntimeError("AIDIFF not available in this context")
 
+    def execute_ailist(self, stmt):
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            args = ""
+            if stmt.start and stmt.end:
+                start = int(self.evaluate_expression(stmt.start))
+                end = int(self.evaluate_expression(stmt.end))
+                args = f"{start}-{end}"
+            elif stmt.start:
+                start = int(self.evaluate_expression(stmt.start))
+                if stmt.single_line:
+                    args = f"{start}"
+                else:
+                    args = f"{start}-"
+            elif stmt.end:
+                end = int(self.evaluate_expression(stmt.end))
+                args = f"-{end}"
+            self.interactive_mode.cmd_ailist(args)
+        else:
+            raise RuntimeError("AILIST not available in this context")
+
     def execute_aiapply(self, stmt):
         if hasattr(self, 'interactive_mode') and self.interactive_mode:
             self.interactive_mode.cmd_aiapply()
