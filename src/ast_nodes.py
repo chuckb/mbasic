@@ -698,9 +698,10 @@ class AILoadStatementNode:
     """AILOAD statement - load program from AI backend
 
     Syntax:
-        AILOAD "prompt"    - Generate and load program from prompt
+        AILOAD "prompt" [VERBOSE]    - Generate and load program from prompt
     """
     prompt: 'ExpressionNode'  # String expression with user prompt
+    verbose: bool = False
     line_num: int = 0
     column: int = 0
 
@@ -710,6 +711,7 @@ class AIMergeStatementNode:
     """AIMERGE — AI revises program into pending buffer (M3)."""
 
     prompt: 'ExpressionNode'
+    verbose: bool = False
     line_num: int = 0
     column: int = 0
 
@@ -719,6 +721,7 @@ class AIFixStatementNode:
     """AIFIX — AI repair into pending buffer; optional string hint."""
 
     hint: Optional['ExpressionNode'] = None
+    verbose: bool = False
     line_num: int = 0
     column: int = 0
 
@@ -752,6 +755,7 @@ class AIExplainStatementNode:
     """AIEXPLAIN [line] — prose explanation (does not change program)."""
 
     line_ref: Optional['ExpressionNode'] = None
+    verbose: bool = False
     line_num: int = 0
     column: int = 0
 

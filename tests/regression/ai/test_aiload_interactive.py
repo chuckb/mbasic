@@ -32,7 +32,7 @@ def test_aiload_rollback_on_bad_lines(im, monkeypatch):
     im.process_line("20 END")
 
     class BadBackend:
-        def generate(self, prompt, dialect_spec):
+        def generate(self, prompt, dialect_spec, verbose=False):
             from src.trs_ai.types import GenerationResult
 
             return GenerationResult(ok=True, lines=["not a numbered line"])
@@ -44,3 +44,13 @@ def test_aiload_rollback_on_bad_lines(im, monkeypatch):
     im.execute_immediate('AILOAD "x"')
     assert 10 in im.program.lines
     assert "KEEP" in im.program.lines[10]
+
+
+def test_aiload_verbose_emits_fixture_traffic(im, monkeypatch, capsys):
+    im.execute_immediate('AILOAD "dbg" VERBOSE')
+    out = capsys.readouterr().out
+    assert "TRS-AI verbose" in out
+    assert "fixture generate (request)" in out
+    assert "dbg" in out
+    assert "fixture generate (response lines)" in out
+    assert "AILOAD_OK" in out

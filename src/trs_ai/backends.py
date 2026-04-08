@@ -13,12 +13,23 @@ from src.trs_ai.parse_response import parse_assistant_content, parse_explanation
 from src.trs_ai.types import ExplainResult, GenerationResult
 
 
+def _verbose_section(title: str, body: str) -> None:
+    print(f"--- TRS-AI verbose: {title} ---")
+    print(body)
+
+
 class ProgramGeneratorBackend(Protocol):
-    def generate(self, prompt: str, dialect_spec: str) -> GenerationResult:
+    def generate(
+        self, prompt: str, dialect_spec: str, verbose: bool = False
+    ) -> GenerationResult:
         ...
 
     def merge_program(
-        self, existing_source: str, user_prompt: str, dialect_spec: str
+        self,
+        existing_source: str,
+        user_prompt: str,
+        dialect_spec: str,
+        verbose: bool = False,
     ) -> GenerationResult:
         ...
 
@@ -28,6 +39,7 @@ class ProgramGeneratorBackend(Protocol):
         error_context: Optional[str],
         user_hint: Optional[str],
         dialect_spec: str,
+        verbose: bool = False,
     ) -> GenerationResult:
         ...
 
@@ -36,6 +48,7 @@ class ProgramGeneratorBackend(Protocol):
         existing_source: str,
         line_number: Optional[int],
         dialect_spec: str,
+        verbose: bool = False,
     ) -> ExplainResult:
         ...
 
@@ -136,11 +149,26 @@ def _fixture_next_line_num(source_lines: list[str]) -> int:
 class FixtureBackend:
     """Deterministic program for tests and keyless appliance smoke."""
 
-    def generate(self, prompt: str, dialect_spec: str) -> GenerationResult:
+    def generate(
+        self, prompt: str, dialect_spec: str, verbose: bool = False
+    ) -> GenerationResult:
+        if verbose:
+            _verbose_section(
+                "fixture generate (request)",
+                f"dialect_spec={dialect_spec!r}\nprompt={prompt!r}",
+            )
+            _verbose_section(
+                "fixture generate (response lines)",
+                "\n".join(FIXTURE_LINES),
+            )
         return GenerationResult(ok=True, lines=list(FIXTURE_LINES))
 
     def merge_program(
-        self, existing_source: str, user_prompt: str, dialect_spec: str
+        self,
+        existing_source: str,
+        user_prompt: str,
+        dialect_spec: str,
+        verbose: bool = False,
     ) -> GenerationResult:
         base = [ln.strip() for ln in existing_source.splitlines() if ln.strip()]
         if not base:
@@ -148,6 +176,13 @@ class FixtureBackend:
         n = _fixture_next_line_num(base)
         snippet = user_prompt.replace("\n", " ")[:60]
         out = base + [f"{n} REM AIMERGE: {snippet}"]
+        if verbose:
+            _verbose_section(
+                "fixture merge (request)",
+                f"dialect_spec={dialect_spec!r}\nuser_prompt={user_prompt!r}\n"
+                f"--- existing_source ---\n{existing_source}",
+            )
+            _verbose_section("fixture merge (response lines)", "\n".join(out))
         return GenerationResult(ok=True, lines=out)
 
     def fix_program(
@@ -156,12 +191,21 @@ class FixtureBackend:
         error_context: Optional[str],
         user_hint: Optional[str],
         dialect_spec: str,
+        verbose: bool = False,
     ) -> GenerationResult:
         base = [ln.strip() for ln in existing_source.splitlines() if ln.strip()]
         if not base:
             return GenerationResult(ok=False, lines=[], error="NO PROGRAM IN MEMORY")
         n = _fixture_next_line_num(base)
         out = base + [f"{n} REM AIFIX"]
+        if verbose:
+            _verbose_section(
+                "fixture fix (request)",
+                f"dialect_spec={dialect_spec!r}\n"
+                f"error_context={error_context!r}\nuser_hint={user_hint!r}\n"
+                f"--- existing_source ---\n{existing_source}",
+            )
+            _verbose_section("fixture fix (response lines)", "\n".join(out))
         return GenerationResult(ok=True, lines=out)
 
     def explain_program(
@@ -169,13 +213,20 @@ class FixtureBackend:
         existing_source: str,
         line_number: Optional[int],
         dialect_spec: str,
+        verbose: bool = False,
     ) -> ExplainResult:
         if line_number is not None:
-            return ExplainResult(
-                ok=True,
-                text=f"FIXTURE: Line {line_number} (program {len(existing_source)} chars).",
+            text = f"FIXTURE: Line {line_number} (program {len(existing_source)} chars)."
+        else:
+            text = "FIXTURE: Whole program summary (fixture backend)."
+        if verbose:
+            _verbose_section(
+                "fixture explain (request)",
+                f"dialect_spec={dialect_spec!r}\nline_number={line_number!r}\n"
+                f"--- existing_source ---\n{existing_source}",
             )
-        return ExplainResult(ok=True, text="FIXTURE: Whole program summary (fixture backend).")
+            _verbose_section("fixture explain (response text)", text)
+        return ExplainResult(ok=True, text=text)
 
 
 class RemoteChatBackend:
@@ -197,7 +248,9 @@ class RemoteChatBackend:
             os.environ.get("TRS_AI_TIMEOUT_SEC", str(timeout_sec))
         )
 
-    def _post_chat(self, system: str, user: str) -> Tuple[bool, str, Optional[str]]:
+    def _post_chat(
+        self, system: str, user: str, *, verbose: bool = False
+    ) -> Tuple[bool, str, Optional[str]]:
         body = {
             "model": self.model,
             "messages": [
@@ -206,6 +259,12 @@ class RemoteChatBackend:
             ],
             "temperature": 0.2,
         }
+        if verbose:
+            _verbose_section(
+                "remote chat request (JSON body; API key is only in HTTP headers)",
+                json.dumps(body, indent=2, ensure_ascii=False),
+            )
+            _verbose_section("remote chat endpoint", self.base_url)
         data = json.dumps(body).encode("utf-8")
         req = urllib.request.Request(
             self.base_url,
@@ -221,11 +280,23 @@ class RemoteChatBackend:
                 raw = resp.read().decode("utf-8", errors="replace")
         except urllib.error.HTTPError as e:
             detail = e.read().decode("utf-8", errors="replace")[:500]
+            if verbose:
+                _verbose_section(
+                    "remote chat HTTP error body (truncated)",
+                    detail or e.reason,
+                )
             return False, "", f"AI HTTP {e.code}: {detail or e.reason}"
         except urllib.error.URLError as e:
+            if verbose:
+                _verbose_section("remote chat URL error", str(e.reason))
             return False, "", f"AI network error: {e.reason}"
         except TimeoutError:
+            if verbose:
+                _verbose_section("remote chat", "request timed out")
             return False, "", "AI request timed out"
+
+        if verbose:
+            _verbose_section("remote chat HTTP response body", raw)
 
         try:
             payload = json.loads(raw)
@@ -242,11 +313,15 @@ class RemoteChatBackend:
         content = msg.get("content") if isinstance(msg, dict) else None
         if not isinstance(content, str):
             return False, "", "AI response missing message content"
+        if verbose:
+            _verbose_section("remote chat assistant message (extracted)", content)
         return True, content, None
 
-    def generate(self, prompt: str, dialect_spec: str) -> GenerationResult:
+    def generate(
+        self, prompt: str, dialect_spec: str, verbose: bool = False
+    ) -> GenerationResult:
         system = _system_prompt_generate(dialect_spec)
-        ok, content, err = self._post_chat(system, prompt)
+        ok, content, err = self._post_chat(system, prompt, verbose=verbose)
         if not ok:
             return GenerationResult(ok=False, lines=[], error=err)
         parsed_ok, lines, perr = parse_assistant_content(content)
@@ -255,14 +330,18 @@ class RemoteChatBackend:
         return GenerationResult(ok=True, lines=lines)
 
     def merge_program(
-        self, existing_source: str, user_prompt: str, dialect_spec: str
+        self,
+        existing_source: str,
+        user_prompt: str,
+        dialect_spec: str,
+        verbose: bool = False,
     ) -> GenerationResult:
         system = _system_prompt_merge(dialect_spec)
         user = (
             f"Current program:\n{existing_source}\n\n"
             f"Modification request:\n{user_prompt}\n"
         )
-        ok, content, err = self._post_chat(system, user)
+        ok, content, err = self._post_chat(system, user, verbose=verbose)
         if not ok:
             return GenerationResult(ok=False, lines=[], error=err)
         parsed_ok, lines, perr = parse_assistant_content(content)
@@ -276,6 +355,7 @@ class RemoteChatBackend:
         error_context: Optional[str],
         user_hint: Optional[str],
         dialect_spec: str,
+        verbose: bool = False,
     ) -> GenerationResult:
         system = _system_prompt_fix(dialect_spec)
         err_part = error_context or "(none)"
@@ -285,7 +365,7 @@ class RemoteChatBackend:
             f"Error / failure context:\n{err_part}\n\n"
             f"User hint:\n{hint_part}\n"
         )
-        ok, content, err = self._post_chat(system, user)
+        ok, content, err = self._post_chat(system, user, verbose=verbose)
         if not ok:
             return GenerationResult(ok=False, lines=[], error=err)
         parsed_ok, lines, perr = parse_assistant_content(content)
@@ -298,6 +378,7 @@ class RemoteChatBackend:
         existing_source: str,
         line_number: Optional[int],
         dialect_spec: str,
+        verbose: bool = False,
     ) -> ExplainResult:
         if line_number is not None:
             user = (
@@ -307,7 +388,7 @@ class RemoteChatBackend:
             )
         else:
             user = f"Dialect: {dialect_spec}\n\nProgram:\n{existing_source}\n"
-        ok, content, err = self._post_chat(EXPLAIN_SYSTEM, user)
+        ok, content, err = self._post_chat(EXPLAIN_SYSTEM, user, verbose=verbose)
         if not ok:
             return ExplainResult(ok=False, text="", error=err)
         parsed_ok, text, perr = parse_explanation_content(content)
@@ -338,12 +419,22 @@ class _ErrorBackend:
     def __init__(self, message: str):
         self._message = message
 
-    def generate(self, prompt: str, dialect_spec: str) -> GenerationResult:
+    def generate(
+        self, prompt: str, dialect_spec: str, verbose: bool = False
+    ) -> GenerationResult:
+        if verbose:
+            _verbose_section("error backend (no request sent)", self._message)
         return GenerationResult(ok=False, lines=[], error=self._message)
 
     def merge_program(
-        self, existing_source: str, user_prompt: str, dialect_spec: str
+        self,
+        existing_source: str,
+        user_prompt: str,
+        dialect_spec: str,
+        verbose: bool = False,
     ) -> GenerationResult:
+        if verbose:
+            _verbose_section("error backend (no request sent)", self._message)
         return GenerationResult(ok=False, lines=[], error=self._message)
 
     def fix_program(
@@ -352,7 +443,10 @@ class _ErrorBackend:
         error_context: Optional[str],
         user_hint: Optional[str],
         dialect_spec: str,
+        verbose: bool = False,
     ) -> GenerationResult:
+        if verbose:
+            _verbose_section("error backend (no request sent)", self._message)
         return GenerationResult(ok=False, lines=[], error=self._message)
 
     def explain_program(
@@ -360,5 +454,8 @@ class _ErrorBackend:
         existing_source: str,
         line_number: Optional[int],
         dialect_spec: str,
+        verbose: bool = False,
     ) -> ExplainResult:
+        if verbose:
+            _verbose_section("error backend (no request sent)", self._message)
         return ExplainResult(ok=False, text="", error=self._message)

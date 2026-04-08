@@ -1766,38 +1766,62 @@ class Parser:
             column=token.column
         )
 
+    def _parse_optional_trailing_verbose(self, context: str) -> bool:
+        """After required AI arguments: optional VERBOSE, then end of statement."""
+        if self.at_end_of_statement():
+            return False
+        self.expect(TokenType.VERBOSE)
+        if not self.at_end_of_statement():
+            t = self.current()
+            raise ParseError(f"Unexpected token after VERBOSE ({context})", t)
+        return True
+
     def parse_aiload(self) -> AILoadStatementNode:
         """Parse AILOAD statement
 
         Syntax:
-            AILOAD "prompt"    - Generate program from AI from prompt string
+            AILOAD "prompt" [VERBOSE]    - Generate program from AI from prompt string
         """
         token = self.advance()
         prompt = self.parse_expression()
+        verbose = self._parse_optional_trailing_verbose("AILOAD")
         return AILoadStatementNode(
             prompt=prompt,
+            verbose=verbose,
             line_num=token.line,
             column=token.column,
         )
 
     def parse_aimerge(self) -> AIMergeStatementNode:
-        """Parse AIMERGE \"prompt\" """
+        """Parse AIMERGE \"prompt\" [VERBOSE]"""
         token = self.advance()
         prompt = self.parse_expression()
+        verbose = self._parse_optional_trailing_verbose("AIMERGE")
         return AIMergeStatementNode(
             prompt=prompt,
+            verbose=verbose,
             line_num=token.line,
             column=token.column,
         )
 
     def parse_aifix(self) -> AIFixStatementNode:
-        """Parse AIFIX [ \"hint\" ]"""
+        """Parse AIFIX [ \"hint\" ] [VERBOSE]"""
         token = self.advance()
         hint = None
-        if not self.at_end_of_line() and not self.match(TokenType.COLON):
-            hint = self.parse_expression()
+        verbose = False
+        if not self.at_end_of_statement():
+            if self.match(TokenType.VERBOSE):
+                self.advance()
+                verbose = True
+            else:
+                hint = self.parse_expression()
+                verbose = self._parse_optional_trailing_verbose("AIFIX")
+        if not self.at_end_of_statement():
+            t = self.current()
+            raise ParseError("Unexpected token after AIFIX", t)
         return AIFixStatementNode(
             hint=hint,
+            verbose=verbose,
             line_num=token.line,
             column=token.column,
         )
@@ -1817,10 +1841,20 @@ class Parser:
     def parse_aiexplain(self) -> AIExplainStatementNode:
         token = self.advance()
         line_ref = None
-        if not self.at_end_of_line() and not self.match(TokenType.COLON):
-            line_ref = self.parse_expression()
+        verbose = False
+        if not self.at_end_of_statement():
+            if self.match(TokenType.VERBOSE):
+                self.advance()
+                verbose = True
+            else:
+                line_ref = self.parse_expression()
+                verbose = self._parse_optional_trailing_verbose("AIEXPLAIN")
+        if not self.at_end_of_statement():
+            t = self.current()
+            raise ParseError("Unexpected token after AIEXPLAIN", t)
         return AIExplainStatementNode(
             line_ref=line_ref,
+            verbose=verbose,
             line_num=token.line,
             column=token.column,
         )

@@ -38,6 +38,7 @@ class TokenType(Enum):
     AIEXPLAIN = auto()
     AISTATUS = auto()
     AIHELP = auto()
+    VERBOSE = auto()  # Trailing modifier for AI* commands (LLM traffic logging)
 
     # Keywords - File Operations
     AS = auto()              # AS (used in OPEN and FIELD)
@@ -289,6 +290,7 @@ KEYWORDS = {
     'aiexplain': TokenType.AIEXPLAIN,
     'aistatus': TokenType.AISTATUS,
     'aihelp': TokenType.AIHELP,
+    'verbose': TokenType.VERBOSE,
 
     # File operations
     'as': TokenType.AS,

@@ -696,8 +696,8 @@ class InteractiveMode:
         except Exception as e:
             print(f"?{type(e).__name__}: {e}")
 
-    def cmd_aiload(self, prompt: str):
-        """AILOAD \"prompt\" - Generate program via AI and load into memory"""
+    def cmd_aiload(self, prompt: str, verbose: bool = False):
+        """AILOAD \"prompt\" [VERBOSE] - Generate program via AI and load into memory"""
         from src.trs_ai.backends import load_backend_from_env
 
         if not prompt or not str(prompt).strip():
@@ -708,7 +708,7 @@ class InteractiveMode:
 
         print("Contacting AI...")
         backend = load_backend_from_env()
-        gen = backend.generate(str(prompt).strip(), dialect)
+        gen = backend.generate(str(prompt).strip(), dialect, verbose=verbose)
         if not gen.ok:
             print(f"?{gen.error or 'AI generation failed'}")
             return
@@ -751,8 +751,8 @@ class InteractiveMode:
         print("Program loaded.")
         print("Ready")
 
-    def cmd_aimerge(self, prompt: str):
-        """AIMERGE \"prompt\" — AI revision into pending buffer (M3)."""
+    def cmd_aimerge(self, prompt: str, verbose: bool = False):
+        """AIMERGE \"prompt\" [VERBOSE] — AI revision into pending buffer (M3)."""
         from src.trs_ai.backends import load_backend_from_env
 
         if not prompt or not str(prompt).strip():
@@ -768,7 +768,7 @@ class InteractiveMode:
         dialect = os.environ.get("TRS_AI_DIALECT_SPEC", "AIBASIC-0.1")
         print("Contacting AI...")
         backend = load_backend_from_env()
-        gen = backend.merge_program(base, str(prompt).strip(), dialect)
+        gen = backend.merge_program(base, str(prompt).strip(), dialect, verbose=verbose)
         if not gen.ok:
             self.ai_last_operation_summary = "AI MERGE FAILED"
             print(f"?{gen.error or 'AI MERGE FAILED'}")
@@ -782,8 +782,8 @@ class InteractiveMode:
         print("AI CHANGES PENDING")
         print("Ready")
 
-    def cmd_aifix(self, hint):
-        """AIFIX [ \"hint\" ] — AI fix into pending buffer."""
+    def cmd_aifix(self, hint, verbose: bool = False):
+        """AIFIX [ \"hint\" ] [VERBOSE] — AI fix into pending buffer."""
         from src.trs_ai.backends import load_backend_from_env
 
         base = self._ai_merge_base_source()
@@ -800,7 +800,7 @@ class InteractiveMode:
         print("Contacting AI...")
         backend = load_backend_from_env()
         gen = backend.fix_program(
-            base, self.ai_last_error_context, hint_str, dialect
+            base, self.ai_last_error_context, hint_str, dialect, verbose=verbose
         )
         if not gen.ok:
             self.ai_last_operation_summary = "AI FIX FAILED"
@@ -871,8 +871,8 @@ class InteractiveMode:
             print("AI CHANGES CANCELED")
         print("Ready")
 
-    def cmd_aiexplain(self, line_num):
-        """AIEXPLAIN [ line ] — short explanation (does not change program)."""
+    def cmd_aiexplain(self, line_num, verbose: bool = False):
+        """AIEXPLAIN [ line ] [VERBOSE] — short explanation (does not change program)."""
         from src.trs_ai.backends import load_backend_from_env
 
         if not self.program.lines:
@@ -884,7 +884,7 @@ class InteractiveMode:
         dialect = os.environ.get("TRS_AI_DIALECT_SPEC", "AIBASIC-0.1")
         print("Contacting AI...")
         backend = load_backend_from_env()
-        res = backend.explain_program(src, line_num, dialect)
+        res = backend.explain_program(src, line_num, dialect, verbose=verbose)
         if not res.ok:
             self.ai_last_operation_summary = "AI EXPLAIN FAILED"
             print(f"?{res.error or 'AI EXPLAIN FAILED'}")
@@ -910,13 +910,13 @@ class InteractiveMode:
 
     def cmd_aihelp(self):
         """AIHELP — list AI-related commands."""
-        print("AILOAD \"p\"     load program from AI (clears pending)")
-        print("AIMERGE \"p\"    AI edit -> pending")
-        print("AIFIX [\"hint\"] AI fix -> pending")
+        print("AILOAD \"p\" [VERBOSE]  load program from AI (clears pending)")
+        print("AIMERGE \"p\" [VERBOSE] AI edit -> pending")
+        print("AIFIX [\"hint\"] [VERBOSE] AI fix -> pending")
         print("AIDIFF           diff current vs pending")
         print("AIAPPLY          commit pending -> current")
         print("AICANCEL         discard pending")
-        print("AIEXPLAIN [n]    explain line or program")
+        print("AIEXPLAIN [n] [VERBOSE] explain line or program")
         print("AISTATUS         AI state")
         print("Ready")
 
@@ -1674,11 +1674,11 @@ class InteractiveMode:
         print("  NEW                - Clear program")
         print("  RUN [line]         - Run program")
         print("  LOAD \"file\"        - Load program")
-        print("  AILOAD \"prompt\"    - Load program from AI")
-        print("  AIMERGE \"text\"     - AI edit (pending)")
-        print("  AIFIX [\"hint\"]     - AI fix (pending)")
+        print("  AILOAD \"prompt\" [VERBOSE] - Load program from AI (log LLM I/O)")
+        print("  AIMERGE \"text\" [VERBOSE]  - AI edit (pending)")
+        print("  AIFIX [\"hint\"] [VERBOSE]  - AI fix (pending)")
         print("  AIDIFF / AIAPPLY / AICANCEL  - Review pending AI changes")
-        print("  AIEXPLAIN [line]   - Explain program or line")
+        print("  AIEXPLAIN [line] [VERBOSE] - Explain program or line")
         print("  SAVE \"file\"        - Save program")
         print("  MERGE \"file\"       - Merge program")
         print("  LIST [range]       - List program lines")

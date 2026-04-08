@@ -1969,7 +1969,7 @@ class Interpreter:
             raise RuntimeError("AILOAD requires string prompt")
 
         if hasattr(self, 'interactive_mode') and self.interactive_mode:
-            self.interactive_mode.cmd_aiload(prompt)
+            self.interactive_mode.cmd_aiload(prompt, verbose=stmt.verbose)
         else:
             raise RuntimeError("AILOAD not available in this context")
 
@@ -1978,7 +1978,7 @@ class Interpreter:
         if not isinstance(prompt, str):
             raise RuntimeError("AIMERGE requires string prompt")
         if hasattr(self, 'interactive_mode') and self.interactive_mode:
-            self.interactive_mode.cmd_aimerge(prompt)
+            self.interactive_mode.cmd_aimerge(prompt, verbose=stmt.verbose)
         else:
             raise RuntimeError("AIMERGE not available in this context")
 
@@ -1989,7 +1989,7 @@ class Interpreter:
             if hint is not None and not isinstance(hint, str):
                 hint = str(hint)
         if hasattr(self, 'interactive_mode') and self.interactive_mode:
-            self.interactive_mode.cmd_aifix(hint)
+            self.interactive_mode.cmd_aifix(hint, verbose=stmt.verbose)
         else:
             raise RuntimeError("AIFIX not available in this context")
 
@@ -2020,7 +2020,7 @@ class Interpreter:
             elif isinstance(v, (int, float)):
                 line_num = int(v)
         if hasattr(self, 'interactive_mode') and self.interactive_mode:
-            self.interactive_mode.cmd_aiexplain(line_num)
+            self.interactive_mode.cmd_aiexplain(line_num, verbose=stmt.verbose)
         else:
             raise RuntimeError("AIEXPLAIN not available in this context")
 
