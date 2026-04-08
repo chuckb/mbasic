@@ -9,8 +9,14 @@ import urllib.error
 import urllib.request
 from typing import Optional, Protocol, Tuple
 
-from src.trs_ai.parse_response import parse_assistant_content, parse_explanation_content
+from src.trs_ai.parse_response import parse_explanation_content
 from src.trs_ai.types import ExplainResult, GenerationResult
+from src.trs_ai.validate_output import (
+    ProgramValidationContext,
+    extract_program_from_content,
+    format_host_diagnostics_for_retry,
+    validate_ai_program,
+)
 
 
 def _verbose_section(title: str, body: str) -> None:
@@ -18,9 +24,45 @@ def _verbose_section(title: str, body: str) -> None:
     print(body)
 
 
+def _sorted_numbered_source_lines(source: str) -> list[str]:
+    """Strip blanks; sort by BASIC line number; compare full line text (post-strip)."""
+    rows: list[tuple[int, str]] = []
+    for raw in source.splitlines():
+        s = raw.strip()
+        if not s:
+            continue
+        m = re.match(r"^(\d+)\s", s)
+        if m:
+            rows.append((int(m.group(1)), s))
+    rows.sort(key=lambda t: t[0])
+    return [t[1] for t in rows]
+
+
+def merge_output_is_identical_to_base(
+    existing_source: str, validated_lines: list[str]
+) -> bool:
+    """True if merge result is the same program as the input (line numbers + text), ignoring blank lines."""
+    a = _sorted_numbered_source_lines(existing_source)
+    b = _sorted_numbered_source_lines("\n".join(validated_lines))
+    return a == b
+
+
+_MERGE_IDENTICAL_ERR = (
+    "AI MERGE REJECTED: model output is identical to the current program line-for-line "
+    "(after host validation repairs). The user asked for a modification — change at least one line: "
+    "fix the described bug, add EOF/INPUT# guards, or align PRINT#/LINE INPUT# so save/load use the same "
+    "number of lines per record."
+)
+
+
 class ProgramGeneratorBackend(Protocol):
     def generate(
-        self, prompt: str, dialect_spec: str, verbose: bool = False
+        self,
+        prompt: str,
+        dialect_spec: str,
+        verbose: bool = False,
+        *,
+        def_type_map: Optional[dict] = None,
     ) -> GenerationResult:
         ...
 
@@ -30,6 +72,8 @@ class ProgramGeneratorBackend(Protocol):
         user_prompt: str,
         dialect_spec: str,
         verbose: bool = False,
+        *,
+        def_type_map: Optional[dict] = None,
     ) -> GenerationResult:
         ...
 
@@ -42,6 +86,7 @@ class ProgramGeneratorBackend(Protocol):
         *,
         syntax_errors: Optional[str] = None,
         verbose: bool = False,
+        def_type_map: Optional[dict] = None,
     ) -> GenerationResult:
         ...
 
@@ -67,19 +112,75 @@ FIXTURE_LINES = [
 # Vocabulary is summarized from MBASIC help: docs/help/common/language/statements|functions
 # and docs/help/mbasic/features.md (MBASIC 5.21 / BASIC-80).
 
-# Shared by generate / merge / fix: what may appear in emitted BASIC lines.
+# Full vocabulary for AIEXPLAIN only (describing arbitrary user programs).
 MBASIC_LANGUAGE_RULES = """
-Language (statements and commands — use valid MBASIC 5.21 syntax only):
+Language (statements and commands — MBASIC 5.21 / BASIC-80 style):
 AUTO, CALL, CHAIN, CLEAR, CLOAD, CLOSE, COMMON, CONT, CSAVE, DATA, DEF FN, DEFINT, DEFSNG, DEFDBL, DEFSTR, DELETE, DIM, EDIT, END, ERASE, ERROR, FIELD, FILES, FOR, NEXT, GET, GOSUB, RETURN, GOTO, IF, THEN, ELSE, INPUT, INPUT#, LINE INPUT, LINE INPUT#, KILL, LET, LIST, LLIST, LOAD, LPRINT, MERGE, MID$ (assignment form), NAME, NEW, ON ERROR GOTO, ON...GOSUB, ON...GOTO, OPEN, OPTION BASE, OUT, POKE, PRINT, PRINT#, PRINT USING, PUT, RANDOMIZE, READ, REM, RENUM, RESET, RESTORE, RESUME, LSET, RSET, SAVE, STOP, SWAP, TRON, TROFF, WAIT, WHILE, WEND, WIDTH, WRITE, WRITE#
-Also available in this implementation (settings / help — avoid in games unless asked): LIMITS, SHOW SETTINGS, SET SETTING, HELP.
-Do not use DEF USR (not implemented). Prefer executable program code; for games and utilities avoid LIST, NEW, LOAD, SAVE, AUTO, EDIT, DELETE, RENUM, SYSTEM unless the user explicitly wants session or disk behavior.
+Also (settings / help): LIMITS, SHOW SETTINGS, SET SETTING, HELP.
 
-Intrinsic functions (may appear in expressions):
-ABS, ASC, ATN, CDBL, CHR$, CINT, COS, CSNG, CVD, CVI, CVS, EOF, EXP, FIX, FRE, HEX$, INKEY$, INP, INPUT$, INSTR, INT, LEFT$, LEN, LOC, LOF, LOG, LPOS, MID$, MKD$, MKI$, MKS$, OCT$, PEEK, POS, RIGHT$, RND, SGN, SIN, SPACE$, SPC, SQR, STR$, STRING$, TAB, TAN, USR, VAL, VARPTR
+Intrinsic functions (expressions): ABS, ASC, ATN, CDBL, CHR$, CINT, COS, CSNG, CVD, CVI, CVS, EOF, EXP, FIX, FRE, HEX$, INKEY$, INP, INPUT$, INSTR, INT, LEFT$, LEN, LOC, LOF, LOG, LPOS, MID$, MKD$, MKI$, MKS$, OCT$, PEEK, POS, RIGHT$, RND, SGN, SIN, SPACE$, SPC, SQR, STR$, STRING$, TAB, TAN, USR, VAL, VARPTR
 
-Types and variables: integer %, single !, double #, string $; arrays via DIM; OPTION BASE 0 or 1.
+Types: integer %, single !, double #, string $; DIM arrays; OPTION BASE 0 or 1.
+Operators: + - * / \\ ^ MOD; = <> < > <= >=; AND OR NOT XOR EQV IMP; string +.
+""".strip()
 
-Operators: arithmetic + - * / \\ ^ MOD; relational = <> < > <= >=; logical AND OR NOT XOR EQV IMP; string + for concatenation.
+# Generate / merge / fix only — conservative subset; avoids listing GET/PUT/FIELD that models misapply.
+MBASIC_AI_LINE_NUMBER_PLAN = """
+Mandatory line-number layout (follow this to avoid duplicate line numbers in one pass):
+- 10–89: REM, scalar setup (e.g. COUNT%=0), DIM arrays only. No GOSUB targets here.
+- 100–189: Menu loop only (PRINT menu, INPUT choice, IF...THEN GOSUB 200/300/400/500/600, GOTO back to ~100).
+- 200–289: First subroutine (e.g. add) through RETURN.
+- 300–389: Second subroutine (e.g. load) through RETURN.
+- 400–489: Third subroutine (e.g. save) through RETURN.
+- 500–589: Fourth subroutine (e.g. search) through RETURN.
+- 600–789: Fifth subroutine (e.g. delete) through RETURN.
+Use each hundreds block only once; never repeat a line number; never put menu lines and a subroutine in the same block.
+""".strip()
+
+MBASIC_AI_GENERATION_RULES = """
+You are generating code for the MBASIC-2025 interactive interpreter (strict parser), not for QuickBASIC, QB64, or Visual BASIC.
+
+Safe core statements (representative): REM, LET, DIM (arrays only — see below), END, STOP, PRINT, INPUT,
+IF...THEN...ELSE, GOTO, GOSUB, RETURN, FOR...NEXT, WHILE...WEND, ON...GOTO/GOSUB, DATA, READ, RESTORE,
+CLEAR, RANDOMIZE, CLOSE, OPEN (see file rules).
+
+DIM rule (parser requirement): DIM only declares arrays with parentheses, e.g. DIM N$(50), A%(10). Never DIM COUNT% or DIM X without ().
+Initialize scalars with LET or assignment: COUNT%=0, I=0.
+
+Hard bans (not in this parser or not for AI output): CLS (clear screen), SPLIT, DEF USR.
+
+Sequential disk I/O (use this when the user asks for save/load — do not use random/record APIs):
+- OPEN "filename" FOR OUTPUT AS #n — create/overwrite text file.
+- OPEN "filename" FOR INPUT AS #n — read existing file.
+- OPEN "filename" FOR APPEND AS #n — append (or classic OPEN "O",#n,"f" / OPEN "I",#n,"f" / OPEN "A",#n,"f").
+- CLOSE #n when done.
+
+SAVE/LOAD must use the SAME on-disk shape (most common model bug: mismatch → EOF / "Input past end of file"):
+- Recommended (clearest): one physical file line per field. SAVE: for each record, use one PRINT # per field
+  (e.g. PRINT #1, N$(I) then PRINT #1, E$(I) then …). LOAD: inside WHILE NOT EOF(1), use the same count of
+  LINE INPUT #1, var$ in the same order (never fewer or more reads per record than PRINTs per record).
+- Alternative: exactly ONE PRINT # line per record (semicolons join all fields on one file line), then exactly
+  ONE LINE INPUT #1, R$ per record and split fields with MID$/INSTR (or INPUT #1, a, b, c if types match).
+  Do not mix "one PRINT line for the whole record" with "four LINE INPUT lines per record" — that reads past
+  the record and fails at EOF.
+- Each iteration of a load loop must read a predictable number of lines; if EOF(1) is true before finishing
+  those reads, the file was truncated or the format does not match SAVE — fix SAVE or LOAD so counts match.
+- Read with LINE INPUT #n, var$ for one string per call (never LINE INPUT #1, A$; B$; C$ — that is invalid).
+- Or INPUT #n, vars for simple comma-separated numeric/string fields if you use the same layout with PRINT #.
+
+Hard bans for generated programs (the host rejects these; the model often hallucinates them from other BASICs):
+- Never CLS; never SPLIT ... INTO ... (not a statement here — use LINE INPUT # and MID$/INSTR).
+- Never OPEN ... FOR RANDOM, FOR BINARY, or any FOR-phrase except INPUT, OUTPUT, APPEND.
+- Never OPEN "R", #n, ... (random letter mode).
+- Never FIELD #, never GET #n, record, variable$ style (multiple commas after GET/PUT), never PUT #n, record, var$.
+- Do not fix file problems by switching to random access — use multiple LINE INPUT # / PRINT # lines and a simple text format instead.
+- Do not write one multi-field PRINT # line per record and then read four LINE INPUT # per record (or any unequal count); pair them.
+
+PRINT: prefer semicolons between items. Comma-separated PRINT zones inside long IF...THEN lines often fail parse — split into multiple PRINT lines or use GOSUB.
+
+Types: string $, integer %, single !, double # — keep suffixes consistent. DEF USR is not implemented.
+
+Intrinsic functions (when needed): ABS, ASC, CHR$, CINT, COS, EOF, EXP, INSTR, INT, LEFT$, LEN, MID$, RIGHT$, RND, SGN, SIN, SQR, STR$, VAL, LOF(n) on an open channel, INKEY$, etc. Do not invent functions from other dialects.
 """.strip()
 
 # Shared JSON contract for any response that returns a full BASIC program as JSON.
@@ -87,11 +188,81 @@ JSON_PROGRAM_ENVELOPE_RULES = """Output rules:
 - Reply with ONLY one JSON object. No markdown code fences, no prose before or after.
 - Schema: {{"dialect": "<string>", "program": ["<line>", ...]}}
 - Each "program" entry must be one complete source line starting with a line number (e.g. 10 PRINT \\"HELLO\\").
+- Line numbers must be UNIQUE in your output. List lines in ascending line-number order (10, 20, 30, ...). Leave gaps for GOSUB targets (e.g. jump to 500 means no other line may use 500).
+- The host may auto-renumber duplicate labels and fix GOTO/GOSUB/THEN targets, but you should still avoid duplicates — wrong duplicates can mis-route branches before repair.
 - Use double quotes for strings; escape internal quotes as \\"."""
 
 JSON_COMPLETE_PROGRAM_RULE = (
     "- Return the COMPLETE program (every numbered line), not a patch or diff."
 )
+
+SHARED_VALIDITY_DIRECTIVES = """
+Validity-first rules (strict parser / AIBASIC host):
+- Do not copy syntax from QuickBASIC, QB64, GW-BASIC extensions, or Visual BASIC unless it matches the rules below.
+- Prefer a smaller correct program over a large one that uses uncertain file or graphics features.
+- For persistence, use sequential text files (PRINT#/LINE INPUT#), not random/record I/O.
+- SAVE and LOAD are a pair: the number and order of fields written per record must match what each load iteration reads.
+""".strip()
+
+COMPACT_SYNTAX_CONTRACT = """
+Syntax reminders:
+- One physical line in the program = one line number. No duplicate line numbers anywhere (common model mistake: restarting at 200 after already using 200 for the menu).
+- ':' separates multiple statements on the same numbered line.
+- LET, IF...THEN...ELSE, FOR...NEXT, GOSUB/RETURN.
+- OPEN "name" FOR INPUT|OUTPUT|APPEND AS #n only (never FOR RANDOM/BINARY; never OPEN "R",...).
+""".strip()
+
+INTERNAL_CHECKLIST_GENERATE = """
+Before you answer, mentally verify: every line number is unique, numbers strictly increase down the program list,
+GOSUB targets do not collide with other sections (if menu uses 200–220, subroutines must start above 230 or below 190);
+names and type suffixes stay consistent; control flow is balanced; output is one JSON object with a complete runnable program.
+If the program saves and loads data: count PRINT # lines per record in SAVE and LINE INPUT # (or INPUT #) lines
+per record in LOAD — they must match.
+""".strip()
+
+INTERNAL_CHECKLIST_FIX = """
+Before you answer, mentally verify: any reported failing construct is changed, removed, or replaced;
+the full program has no duplicate line numbers; the output must not repeat a known-invalid line unchanged;
+variables and suffixes stay consistent; no previously reported invalid syntax remains; validity beats preserving risky syntax.
+If the failure is EOF / input past end of file on LINE INPUT#: reconcile SAVE (PRINT# count per record) with LOAD
+(LINE INPUT# count per loop iteration).
+""".strip()
+
+INTERNAL_CHECKLIST_MERGE = """
+Before you answer, mentally verify: you return the full revised program with every line number unique;
+unrelated lines stay stable; changes are minimal and additive where possible; you do not refactor into riskier syntax.
+If the user describes a bug, wrong behavior, or a runtime error, assume it is real: change the minimal lines
+needed to address it (e.g. EOF guards, matching PRINT#/LINE INPUT# record layout). Do not return the same
+program unchanged — the host will reject identical output on merge.
+If you change menu options or line numbers, re-check every IF CHOICE...THEN GOSUB so each option dispatches
+to the right REM/subroutine block (not to a different menu arm left over from old numbering).
+""".strip()
+
+RETRY_EXTRA_GENERATE = """
+IMPORTANT (retry): The previous output failed validation or parsing. Produce a SMALLER, SIMPLER program.
+If duplicate line number: follow the hundreds-block layout in the system prompt (menu 100–189, subs 200+, never reuse a number).
+If DIM/CLS/SPLIT: use DIM A(50) only for arrays; scalars as COUNT%=0; no CLS; no SPLIT — LINE INPUT # and string functions only.
+If OPEN/FOR/GET/PUT/COMMA: sequential files only (FOR INPUT/OUTPUT/APPEND; LINE INPUT#/PRINT#).
+If SAVE/LOAD mismatch or EOF on load: make the same number of file lines per record on write as on read
+(e.g. four PRINT # and four LINE INPUT # per entry, or one of each with parsing).
+If LINE INPUT#: one variable per statement only — never LINE INPUT #1, A$; B$; use four lines or LINE INPUT #1, R$ then MID$/INSTR.
+If PRINT then RETURN on the same line: use a colon before RETURN (e.g. PRINT \"x\": RETURN), not semicolon before RETURN.
+Preserve user intent with a dumb-but-valid design rather than repeating the same invalid constructs.
+""".strip()
+
+RETRY_EXTRA_FIX = """
+IMPORTANT (retry): The previous fix failed validation. The corrected program MUST differ from the input.
+The failing line or construct MUST change. Simplify aggressively if needed; validity comes first.
+""".strip()
+
+RETRY_EXTRA_MERGE = """
+IMPORTANT (retry): The previous merge failed validation or was rejected. Preserve most of the original program;
+make only minimal additive changes. Use simpler syntax when uncertain.
+If the rejection was IDENTICAL OUTPUT: you must change at least one numbered line versus the current program
+(fix the reported bug, add EOF/INPUT# guards, or align file I/O so save/load use the same record shape).
+If validation failed on menu GOSUB: each IF CHOICE=n THEN GOSUB x must target the subroutine for option n,
+not another IF CHOICE line (renumber subroutines or fix every GOSUB after changing the menu).
+""".strip()
 
 
 def _system_prompt_generate(dialect: str) -> str:
@@ -99,9 +270,16 @@ def _system_prompt_generate(dialect: str) -> str:
         "You are a code generator for MBASIC 5.21 / Microsoft BASIC-80 as implemented in "
         "MBASIC-2025.\n\n"
         f"{JSON_PROGRAM_ENVELOPE_RULES}\n"
-        "- Keep programs small unless the user asks otherwise.\n\n"
-        f"{MBASIC_LANGUAGE_RULES}\n\n"
-        f'Dialect label for JSON "dialect" field: {dialect}\n\n'
+        f"- {JSON_COMPLETE_PROGRAM_RULE}\n"
+        f"{SHARED_VALIDITY_DIRECTIVES}\n\n"
+        f"{COMPACT_SYNTAX_CONTRACT}\n\n"
+        f"{INTERNAL_CHECKLIST_GENERATE}\n\n"
+        f"{MBASIC_AI_LINE_NUMBER_PLAN}\n\n"
+        f"{MBASIC_AI_GENERATION_RULES}\n\n"
+        "Type suffixes: string $, integer %, single !, double #; keep names and suffixes consistent.\n"
+        "Tiny valid examples: 10 PRINT \"HELLO\" / 20 IF X = 1 THEN GOTO 100 / "
+        "30 FOR I = 1 TO 10 / 40 NEXT I\n\n"
+        f'JSON \"dialect\" field must be exactly: {dialect}\n\n'
         "User request (generate a program):"
     )
 
@@ -109,23 +287,49 @@ def _system_prompt_generate(dialect: str) -> str:
 def _system_prompt_merge(dialect: str) -> str:
     return (
         "You revise MBASIC 5.21 programs. The user sends the full current program and a "
-        "change request.\n\n"
+        "feature or change request (often a bug report or new behavior).\n\n"
         f"{JSON_PROGRAM_ENVELOPE_RULES}\n"
-        f"- {JSON_COMPLETE_PROGRAM_RULE}\n\n"
-        f"{MBASIC_LANGUAGE_RULES}\n\n"
-        f"Keep the program small unless the user asks otherwise.\n\n"
-        f'Dialect label for JSON "dialect" field: {dialect}'
+        f"- {JSON_COMPLETE_PROGRAM_RULE}\n"
+        f"{SHARED_VALIDITY_DIRECTIVES}\n"
+        "- Return the complete revised program, not a patch. Preserve existing structure where practical.\n"
+        "- Make only the changes needed; do not upgrade unrelated code into riskier syntax.\n"
+        "- Prefer additive edits over large rewrites; keep line numbering style where practical.\n"
+        "- If the request implies the program is wrong or misbehaves, your output must differ from the "
+        "input: edit the relevant routines. Returning the same source when the user asked for a fix is a "
+        "failed response (the host may reject it).\n"
+        "- When the user quotes a runtime error (line number, EOF, etc.), trace that path and fix it; "
+        "common issues: SAVE writes one line per record but LOAD uses multiple LINE INPUT# per record "
+        "(or vice versa) — make them match.\n"
+        "- Menu programs: every IF CHOICE=n THEN GOSUB label must jump to the correct subroutine entry "
+        "(the REM or first line of that routine). After you add menu lines or renumber, update ALL GOSUB "
+        "targets — do not leave GOSUB pointing at a line that is still part of the menu (another "
+        "IF CHOICE=... branch).\n\n"
+        f"{COMPACT_SYNTAX_CONTRACT}\n\n"
+        f"{INTERNAL_CHECKLIST_MERGE}\n\n"
+        f"{MBASIC_AI_LINE_NUMBER_PLAN}\n\n"
+        f"{MBASIC_AI_GENERATION_RULES}\n\n"
+        "Type suffixes: string $, integer %, single !, double #; keep names and suffixes consistent.\n"
+        f'JSON \"dialect\" field must be exactly: {dialect}\n'
     )
 
 
 def _system_prompt_fix(dialect: str) -> str:
     return (
-        "You fix MBASIC 5.21 programs. The user sends the full program, optional runtime "
-        "error context, and an optional hint.\n\n"
+        "You fix MBASIC 5.21 programs after parser failure, runtime failure, or user complaint.\n\n"
         f"{JSON_PROGRAM_ENVELOPE_RULES}\n"
-        f"- {JSON_COMPLETE_PROGRAM_RULE}\n\n"
-        f"{MBASIC_LANGUAGE_RULES}\n\n"
-        f'Dialect label for JSON "dialect" field: {dialect}'
+        f"- {JSON_COMPLETE_PROGRAM_RULE}\n"
+        f"{SHARED_VALIDITY_DIRECTIVES}\n"
+        "- Return a complete corrected program (JSON envelope requires every numbered line). "
+        "Make minimal edits: keep lines that are already valid unchanged when possible.\n"
+        "- If an error was reported, the output must be meaningfully "
+        "different from the input; do not repeat a known-invalid line unchanged.\n"
+        "- Preserve user intent where possible; when uncertain, simplify rather than keep risky syntax.\n\n"
+        f"{COMPACT_SYNTAX_CONTRACT}\n\n"
+        f"{INTERNAL_CHECKLIST_FIX}\n\n"
+        f"{MBASIC_AI_LINE_NUMBER_PLAN}\n\n"
+        f"{MBASIC_AI_GENERATION_RULES}\n\n"
+        "Type suffixes: string $, integer %, single !, double #; keep names and suffixes consistent.\n"
+        f'JSON \"dialect\" field must be exactly: {dialect}\n'
     )
 
 
@@ -152,7 +356,12 @@ class FixtureBackend:
     """Deterministic program for tests and keyless appliance smoke."""
 
     def generate(
-        self, prompt: str, dialect_spec: str, verbose: bool = False
+        self,
+        prompt: str,
+        dialect_spec: str,
+        verbose: bool = False,
+        *,
+        def_type_map: Optional[dict] = None,
     ) -> GenerationResult:
         if verbose:
             _verbose_section(
@@ -171,6 +380,8 @@ class FixtureBackend:
         user_prompt: str,
         dialect_spec: str,
         verbose: bool = False,
+        *,
+        def_type_map: Optional[dict] = None,
     ) -> GenerationResult:
         base = [ln.strip() for ln in existing_source.splitlines() if ln.strip()]
         if not base:
@@ -196,6 +407,7 @@ class FixtureBackend:
         *,
         syntax_errors: Optional[str] = None,
         verbose: bool = False,
+        def_type_map: Optional[dict] = None,
     ) -> GenerationResult:
         base = [ln.strip() for ln in existing_source.splitlines() if ln.strip()]
         if not base:
@@ -322,17 +534,130 @@ class RemoteChatBackend:
             _verbose_section("remote chat assistant message (extracted)", content)
         return True, content, None
 
-    def generate(
-        self, prompt: str, dialect_spec: str, verbose: bool = False
+    def _generate_with_validation_retry(
+        self,
+        *,
+        dialect_spec: str,
+        def_type_map: Optional[dict],
+        verbose: bool,
+        operation: str,
+        system_base: str,
+        retry_extra: str,
+        user: str,
+        fix_input_source: Optional[str] = None,
+        syntax_errors: Optional[str] = None,
+        merge_base_source: Optional[str] = None,
     ) -> GenerationResult:
-        system = _system_prompt_generate(dialect_spec)
-        ok, content, err = self._post_chat(system, prompt, verbose=verbose)
-        if not ok:
-            return GenerationResult(ok=False, lines=[], error=err)
-        parsed_ok, lines, perr = parse_assistant_content(content)
-        if not parsed_ok:
-            return GenerationResult(ok=False, lines=[], error=perr or "Could not parse AI program")
-        return GenerationResult(ok=True, lines=lines)
+        """Up to two model calls: first normal prompt, then one conservative retry on validation failure."""
+        last_err: Optional[str] = None
+        last_extracted: Optional[list[str]] = None
+        for attempt in range(2):
+            user_msg = user
+            if attempt == 1:
+                print("RETRYING AI REQUEST (CONSERVATIVE)")
+                retry_body = retry_extra
+                if last_err:
+                    retry_body += (
+                        "\n\nThe host rejected your previous program (summary below). "
+                        "The user message lists EVERY issue with BASIC line numbers where known — "
+                        "fix all of them, not only the first.\n\n"
+                        f"First failing check (summary): {last_err}"
+                    )
+                system = f"{system_base}\n\n{retry_body}"
+                if last_extracted:
+                    diag_ctx = ProgramValidationContext(
+                        dialect_spec=dialect_spec,
+                        def_type_map=def_type_map,
+                        operation=operation,
+                        fix_input_source=fix_input_source,
+                        syntax_errors=syntax_errors,
+                    )
+                    diag_block = format_host_diagnostics_for_retry(
+                        list(last_extracted), diag_ctx
+                    )
+                    parts = [user, "---"]
+                    if diag_block.strip():
+                        parts.append(
+                            "Host diagnostics — fix EVERY numbered item (BASIC line numbers refer to "
+                            "the failing program after host renumber, LINE INPUT expansion, and "
+                            "'; RETURN' -> ': RETURN' repair):\n"
+                            + diag_block
+                        )
+                        parts.append("---")
+                    parts.append(
+                        "Your previous model output (failed validation/parse). "
+                        "Return a corrected full program; change every invalid line; "
+                        "do not repeat the same mistakes:\n"
+                        + "\n".join(last_extracted)
+                    )
+                    user_msg = "\n\n".join(parts)
+            else:
+                system = system_base
+            ok, content, err = self._post_chat(system, user_msg, verbose=verbose)
+            if not ok:
+                return GenerationResult(
+                    ok=False,
+                    lines=list(last_extracted) if last_extracted else [],
+                    error=err or "AI REQUEST FAILED",
+                )
+            ext_ok, lines, perr = extract_program_from_content(content, dialect_spec)
+            if not ext_ok:
+                last_err = perr or "AI OUTPUT FAILED VALIDATION"
+                continue
+            last_extracted = lines
+            ctx = ProgramValidationContext(
+                dialect_spec=dialect_spec,
+                def_type_map=def_type_map,
+                operation=operation,
+                fix_input_source=fix_input_source,
+                syntax_errors=syntax_errors,
+            )
+            verr = validate_ai_program(lines, ctx)
+            if verr is None:
+                if (
+                    operation == "merge"
+                    and merge_base_source is not None
+                    and merge_output_is_identical_to_base(merge_base_source, lines)
+                ):
+                    last_err = _MERGE_IDENTICAL_ERR
+                    last_extracted = list(lines)
+                    continue
+                return GenerationResult(ok=True, lines=lines)
+            last_err = verr
+        if (
+            operation == "merge"
+            and merge_base_source is not None
+            and last_extracted is not None
+            and merge_output_is_identical_to_base(merge_base_source, last_extracted)
+        ):
+            return GenerationResult(
+                ok=False,
+                lines=list(last_extracted),
+                error=last_err or _MERGE_IDENTICAL_ERR,
+            )
+        return GenerationResult(
+            ok=False,
+            lines=list(last_extracted) if last_extracted else [],
+            error=last_err or "AI OUTPUT FAILED",
+        )
+
+    def generate(
+        self,
+        prompt: str,
+        dialect_spec: str,
+        verbose: bool = False,
+        *,
+        def_type_map: Optional[dict] = None,
+    ) -> GenerationResult:
+        return self._generate_with_validation_retry(
+            dialect_spec=dialect_spec,
+            def_type_map=def_type_map,
+            verbose=verbose,
+            operation="generate",
+            system_base=_system_prompt_generate(dialect_spec),
+            retry_extra=RETRY_EXTRA_GENERATE,
+            user=prompt,
+        )
 
     def merge_program(
         self,
@@ -340,19 +665,23 @@ class RemoteChatBackend:
         user_prompt: str,
         dialect_spec: str,
         verbose: bool = False,
+        *,
+        def_type_map: Optional[dict] = None,
     ) -> GenerationResult:
-        system = _system_prompt_merge(dialect_spec)
         user = (
             f"Current program:\n{existing_source}\n\n"
             f"Modification request:\n{user_prompt}\n"
         )
-        ok, content, err = self._post_chat(system, user, verbose=verbose)
-        if not ok:
-            return GenerationResult(ok=False, lines=[], error=err)
-        parsed_ok, lines, perr = parse_assistant_content(content)
-        if not parsed_ok:
-            return GenerationResult(ok=False, lines=[], error=perr or "Could not parse AI program")
-        return GenerationResult(ok=True, lines=lines)
+        return self._generate_with_validation_retry(
+            dialect_spec=dialect_spec,
+            def_type_map=def_type_map,
+            verbose=verbose,
+            operation="merge",
+            system_base=_system_prompt_merge(dialect_spec),
+            retry_extra=RETRY_EXTRA_MERGE,
+            user=user,
+            merge_base_source=existing_source.strip(),
+        )
 
     def fix_program(
         self,
@@ -363,8 +692,8 @@ class RemoteChatBackend:
         *,
         syntax_errors: Optional[str] = None,
         verbose: bool = False,
+        def_type_map: Optional[dict] = None,
     ) -> GenerationResult:
-        system = _system_prompt_fix(dialect_spec)
         syn_part = syntax_errors or "(none)"
         err_part = error_context or "(none)"
         hint_part = user_hint or "(none)"
@@ -374,13 +703,17 @@ class RemoteChatBackend:
             f"Runtime error context:\n{err_part}\n\n"
             f"User hint:\n{hint_part}\n"
         )
-        ok, content, err = self._post_chat(system, user, verbose=verbose)
-        if not ok:
-            return GenerationResult(ok=False, lines=[], error=err)
-        parsed_ok, lines, perr = parse_assistant_content(content)
-        if not parsed_ok:
-            return GenerationResult(ok=False, lines=[], error=perr or "Could not parse AI program")
-        return GenerationResult(ok=True, lines=lines)
+        return self._generate_with_validation_retry(
+            dialect_spec=dialect_spec,
+            def_type_map=def_type_map,
+            verbose=verbose,
+            operation="fix",
+            system_base=_system_prompt_fix(dialect_spec),
+            retry_extra=RETRY_EXTRA_FIX,
+            user=user,
+            fix_input_source=existing_source,
+            syntax_errors=syntax_errors,
+        )
 
     def explain_program(
         self,
@@ -429,7 +762,12 @@ class _ErrorBackend:
         self._message = message
 
     def generate(
-        self, prompt: str, dialect_spec: str, verbose: bool = False
+        self,
+        prompt: str,
+        dialect_spec: str,
+        verbose: bool = False,
+        *,
+        def_type_map: Optional[dict] = None,
     ) -> GenerationResult:
         if verbose:
             _verbose_section("error backend (no request sent)", self._message)
@@ -441,6 +779,8 @@ class _ErrorBackend:
         user_prompt: str,
         dialect_spec: str,
         verbose: bool = False,
+        *,
+        def_type_map: Optional[dict] = None,
     ) -> GenerationResult:
         if verbose:
             _verbose_section("error backend (no request sent)", self._message)
@@ -455,6 +795,7 @@ class _ErrorBackend:
         *,
         syntax_errors: Optional[str] = None,
         verbose: bool = False,
+        def_type_map: Optional[dict] = None,
     ) -> GenerationResult:
         if verbose:
             _verbose_section("error backend (no request sent)", self._message)

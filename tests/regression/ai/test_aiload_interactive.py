@@ -32,7 +32,7 @@ def test_aiload_rollback_on_bad_lines(im, monkeypatch):
     im.process_line("20 END")
 
     class BadBackend:
-        def generate(self, prompt, dialect_spec, verbose=False):
+        def generate(self, prompt, dialect_spec, verbose=False, **kwargs):
             from src.trs_ai.types import GenerationResult
 
             return GenerationResult(ok=True, lines=["not a numbered line"])
@@ -58,3 +58,27 @@ def test_aiload_verbose_emits_fixture_traffic(im, monkeypatch, capsys):
     assert "dbg" in out
     assert "fixture generate (response lines)" in out
     assert "AILOAD_OK" in out
+
+
+def test_aiload_backend_failure_with_lines_goes_to_pending(im, monkeypatch):
+    """M3: failed generation with extractable lines must land in pending for AILIST/AIFIX."""
+
+    class FailWithLines:
+        def generate(self, prompt, dialect_spec, verbose=False, **kwargs):
+            from src.trs_ai.types import GenerationResult
+
+            return GenerationResult(
+                ok=False,
+                lines=['10 PRINT "BROKEN {{{"', "20 END"],
+                error="AI OUTPUT FAILED PARSE: example",
+            )
+
+    monkeypatch.setattr(
+        "src.trs_ai.backends.load_backend_from_env", lambda: FailWithLines()
+    )
+    monkeypatch.setattr(sys, "stdout", StringIO())
+    im.execute_immediate('AILOAD "x"')
+    assert im.ai_pending_lines is not None
+    assert any("BROKEN" in im.ai_pending_lines[k] for k in im.ai_pending_lines)
+    assert im.ai_last_syntax_errors
+    assert "AILIST OR AIFIX" in sys.stdout.getvalue()

@@ -6,7 +6,11 @@ from typing import List, Optional
 
 @dataclass
 class GenerationResult:
-    """Result of a program generation request."""
+    """Result of a program generation request.
+
+    On failure, ``lines`` may still hold the last extracted model output so the UI can
+    store it in the pending AI buffer (M3: AILIST / AIFIX).
+    """
 
     ok: bool
     lines: List[str]

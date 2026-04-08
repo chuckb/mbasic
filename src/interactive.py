@@ -28,6 +28,7 @@ import src.ast_nodes as ast_nodes
 from src.input_sanitizer import sanitize_and_clear_parity
 from src.debug_logger import debug_log_error, is_debug_mode
 from src.ui.keybinding_loader import KeybindingLoader
+from src.trs_ai.program_diff import line_numbered_program_diff
 
 # Try to import readline for better line editing
 # This enhances input() with:
@@ -252,6 +253,68 @@ class InteractiveMode:
         self.ai_pending_line_order = None
         self.ai_last_syntax_errors = None
         return True
+
+    def _ai_build_pending_from_lines(self, line_strings: list):
+        """Turn raw AI program lines into pending dict/order/parse errors (same rules as AILOAD)."""
+        from editing import ProgramManager
+
+        tmp = ProgramManager(self.def_type_map)
+        pending: dict = {}
+        order: list = []
+        syn = -1
+        errors: list = []
+        has_line = False
+        for raw_line in line_strings:
+            line = raw_line.strip()
+            if not line:
+                continue
+            has_line = True
+            match = re.match(r"^(\d+)\s", line)
+            if not match:
+                errors.append(f"?Line must start with number: {line[:60]}")
+                k = syn
+                syn -= 1
+                pending[k] = line
+                order.append(k)
+                continue
+            line_num = int(match.group(1))
+            if line_num in pending:
+                order = [x for x in order if x != line_num]
+            pending[line_num] = line
+            order.append(line_num)
+            ok_p, err = tmp.add_line(line_num, line)
+            if not ok_p:
+                q = err or f"Parse error at line {line_num}"
+                errors.append(q if str(q).startswith("?") else f"?{q}")
+        return pending, order, errors, has_line, tmp
+
+    def _ai_fail_generation_into_pending(
+        self,
+        gen,
+        *,
+        operation_summary_failed: str,
+        user_hint: str,
+    ) -> None:
+        """M3: on AI failure with extractable lines, store them in pending for AILIST / AIFIX."""
+        pending, order, errors, has_line, _ = self._ai_build_pending_from_lines(gen.lines)
+        if not has_line:
+            err = gen.error or operation_summary_failed
+            print(err if str(err).startswith("?") else f"?{err}")
+            print("Ready")
+            return
+        parts: list = []
+        if gen.error:
+            ge = str(gen.error).strip()
+            parts.append(ge if ge.startswith("?") else f"?{ge}")
+        parts.extend(errors)
+        self.ai_pending_lines = pending
+        self.ai_pending_line_order = order
+        self.ai_last_syntax_errors = "\n".join(parts)
+        self.ai_last_operation_summary = operation_summary_failed
+        for msg in parts:
+            print(msg)
+        print(user_hint)
+        print("Ready")
 
     def _ai_record_run_failure(self, runtime, exc):
         parts = [str(exc)]
@@ -731,9 +794,23 @@ class InteractiveMode:
 
         print("Contacting AI...")
         backend = load_backend_from_env()
-        gen = backend.generate(str(prompt).strip(), dialect, verbose=verbose)
+        gen = backend.generate(
+            str(prompt).strip(),
+            dialect,
+            verbose=verbose,
+            def_type_map=self.def_type_map,
+        )
         if not gen.ok:
-            print(f"?{gen.error or 'AI generation failed'}")
+            if gen.lines:
+                self._ai_fail_generation_into_pending(
+                    gen,
+                    operation_summary_failed="AI GENERATION FAILED",
+                    user_hint="?AI GENERATION FAILED — USE AILIST OR AIFIX TO REPAIR",
+                )
+            else:
+                err = gen.error or "AI GENERATION FAILED"
+                print(err if str(err).startswith("?") else f"?{err}")
+                print("Ready")
             return
 
         snapshot = dict(self.program.lines)
@@ -741,36 +818,9 @@ class InteractiveMode:
         self.clear_execution_state()
         self.current_file = None
 
-        from editing import ProgramManager
-
-        tmp = ProgramManager(self.def_type_map)
-        pending: dict = {}
-        order: list = []
-        syn = -1
-        errors: list = []
-        has_line = False
-        for raw_line in gen.lines:
-            line = raw_line.strip()
-            if not line:
-                continue
-            has_line = True
-            match = re.match(r"^(\d+)\s", line)
-            if not match:
-                errors.append(f"?Line must start with number: {line[:60]}")
-                k = syn
-                syn -= 1
-                pending[k] = line
-                order.append(k)
-                continue
-            line_num = int(match.group(1))
-            if line_num in pending:
-                order = [x for x in order if x != line_num]
-            pending[line_num] = line
-            order.append(line_num)
-            ok, err = tmp.add_line(line_num, line)
-            if not ok:
-                q = err or f"Parse error at line {line_num}"
-                errors.append(q if str(q).startswith("?") else f"?{q}")
+        pending, order, errors, has_line, tmp = self._ai_build_pending_from_lines(
+            gen.lines
+        )
 
         def _restore_snapshot():
             self.program.clear()
@@ -789,10 +839,10 @@ class InteractiveMode:
             self.ai_pending_lines = pending
             self.ai_pending_line_order = order
             self.ai_last_syntax_errors = "\n".join(errors)
-            self.ai_last_operation_summary = "AILOAD FAILED"
+            self.ai_last_operation_summary = "AI GENERATION FAILED"
             for msg in errors:
                 print(msg)
-            print("?AILOAD FAILED — USE AIFIX TO REPAIR")
+            print("?AI GENERATION FAILED — USE AILIST OR AIFIX TO REPAIR")
             print("Ready")
             return
 
@@ -804,9 +854,9 @@ class InteractiveMode:
                 self.ai_pending_line_order = None
                 q = err or f"Parse error at line {ln}"
                 self.ai_last_syntax_errors = q if str(q).startswith("?") else f"?{q}"
-                self.ai_last_operation_summary = "AILOAD FAILED"
+                self.ai_last_operation_summary = "AI GENERATION FAILED"
                 print(self.ai_last_syntax_errors)
-                print("?AILOAD FAILED — USE AIFIX TO REPAIR")
+                print("?AI GENERATION FAILED — USE AILIST OR AIFIX TO REPAIR")
                 print("Ready")
                 return
 
@@ -833,18 +883,38 @@ class InteractiveMode:
         dialect = os.environ.get("TRS_AI_DIALECT_SPEC", "AIBASIC-0.1")
         print("Contacting AI...")
         backend = load_backend_from_env()
-        gen = backend.merge_program(base, str(prompt).strip(), dialect, verbose=verbose)
+        gen = backend.merge_program(
+            base,
+            str(prompt).strip(),
+            dialect,
+            verbose=verbose,
+            def_type_map=self.def_type_map,
+        )
         if not gen.ok:
             self.ai_last_operation_summary = "AI MERGE FAILED"
-            print(f"?{gen.error or 'AI MERGE FAILED'}")
-            print("Ready")
+            if gen.lines:
+                self._ai_fail_generation_into_pending(
+                    gen,
+                    operation_summary_failed="AI MERGE FAILED",
+                    user_hint="?AI MERGE FAILED — USE AILIST OR AIFIX TO REPAIR",
+                )
+            else:
+                err = gen.error or "AI MERGE FAILED"
+                print(err if str(err).startswith("?") else f"?{err}")
+                print("Ready")
             return
         if not self._ai_try_set_pending_from_generation(gen, "AI MERGE FAILED"):
             self.ai_last_operation_summary = "AI MERGE FAILED"
             print("Ready")
             return
         self.ai_last_operation_summary = "AI MERGE OK"
-        print("AI CHANGES PENDING")
+        if line_numbered_program_diff(dict(self.program.lines), self.ai_pending_lines):
+            print("AI CHANGES PENDING")
+        else:
+            print(
+                "AI MERGE OK — NO DIFFERENCES VS CURRENT PROGRAM "
+                "(model output matches memory line-for-line; try a clearer AIMERGE prompt or AIFIX)"
+            )
         print("Ready")
 
     def cmd_aifix(self, hint, verbose: bool = False):
@@ -871,18 +941,33 @@ class InteractiveMode:
             dialect,
             syntax_errors=self.ai_last_syntax_errors,
             verbose=verbose,
+            def_type_map=self.def_type_map,
         )
         if not gen.ok:
             self.ai_last_operation_summary = "AI FIX FAILED"
-            print(f"?{gen.error or 'AI FIX FAILED'}")
-            print("Ready")
+            if gen.lines:
+                self._ai_fail_generation_into_pending(
+                    gen,
+                    operation_summary_failed="AI FIX FAILED",
+                    user_hint="?AI FIX FAILED — USE AILIST OR AIFIX TO REPAIR",
+                )
+            else:
+                err = gen.error or "AI FIX FAILED"
+                print(err if str(err).startswith("?") else f"?{err}")
+                print("Ready")
             return
         if not self._ai_try_set_pending_from_generation(gen, "AI FIX FAILED"):
             self.ai_last_operation_summary = "AI FIX FAILED"
             print("Ready")
             return
         self.ai_last_operation_summary = "AI FIX OK"
-        print("AI CHANGES PENDING")
+        if line_numbered_program_diff(dict(self.program.lines), self.ai_pending_lines):
+            print("AI CHANGES PENDING")
+        else:
+            print(
+                "AI FIX OK — NO DIFFERENCES VS CURRENT PROGRAM "
+                "(model output matches memory line-for-line)"
+            )
         print("Ready")
 
     def cmd_ailist(self, args):
@@ -916,15 +1001,20 @@ class InteractiveMode:
 
     def cmd_aidiff(self):
         """AIDIFF — current vs pending AI program."""
-        from src.trs_ai.program_diff import line_numbered_program_diff
-
         if not self.ai_pending_lines:
             print("NO PENDING AI CHANGES")
         else:
-            for row in line_numbered_program_diff(
+            rows = line_numbered_program_diff(
                 dict(self.program.lines), self.ai_pending_lines
-            ):
-                print(row)
+            )
+            if not rows:
+                print(
+                    "NO DIFFERENCES — pending matches current program line-for-line "
+                    "(AIDIFF compares text per BASIC line number)"
+                )
+            else:
+                for row in rows:
+                    print(row)
         print("Ready")
 
     def cmd_aiapply(self):

@@ -87,6 +87,17 @@ def test_aidiff_no_pending(fixture_env, capsys):
     assert "NO PENDING AI CHANGES" in capsys.readouterr().out
 
 
+def test_aidiff_pending_identical_to_current(fixture_env, capsys):
+    """Pending can match current (e.g. model returned no edits); AIDIFF must say so explicitly."""
+    m = InteractiveMode()
+    m.process_line('10 PRINT "X"')
+    m.process_line("20 END")
+    m.ai_pending_lines = dict(m.program.lines)
+    m.ai_pending_line_order = None
+    m.cmd_aidiff()
+    assert "NO DIFFERENCES" in capsys.readouterr().out
+
+
 def test_ailist_pending(fixture_env, capsys):
     m = InteractiveMode()
     m.cmd_ailist("")
