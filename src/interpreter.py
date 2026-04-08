@@ -1973,6 +1973,69 @@ class Interpreter:
         else:
             raise RuntimeError("AILOAD not available in this context")
 
+    def execute_aimerge(self, stmt):
+        prompt = self.evaluate_expression(stmt.prompt)
+        if not isinstance(prompt, str):
+            raise RuntimeError("AIMERGE requires string prompt")
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            self.interactive_mode.cmd_aimerge(prompt)
+        else:
+            raise RuntimeError("AIMERGE not available in this context")
+
+    def execute_aifix(self, stmt):
+        hint = None
+        if stmt.hint is not None:
+            hint = self.evaluate_expression(stmt.hint)
+            if hint is not None and not isinstance(hint, str):
+                hint = str(hint)
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            self.interactive_mode.cmd_aifix(hint)
+        else:
+            raise RuntimeError("AIFIX not available in this context")
+
+    def execute_aidiff(self, stmt):
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            self.interactive_mode.cmd_aidiff()
+        else:
+            raise RuntimeError("AIDIFF not available in this context")
+
+    def execute_aiapply(self, stmt):
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            self.interactive_mode.cmd_aiapply()
+        else:
+            raise RuntimeError("AIAPPLY not available in this context")
+
+    def execute_aicancel(self, stmt):
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            self.interactive_mode.cmd_aicancel()
+        else:
+            raise RuntimeError("AICANCEL not available in this context")
+
+    def execute_aiexplain(self, stmt):
+        line_num = None
+        if stmt.line_ref is not None:
+            v = self.evaluate_expression(stmt.line_ref)
+            if isinstance(v, str) and v.strip().isdigit():
+                line_num = int(v.strip())
+            elif isinstance(v, (int, float)):
+                line_num = int(v)
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            self.interactive_mode.cmd_aiexplain(line_num)
+        else:
+            raise RuntimeError("AIEXPLAIN not available in this context")
+
+    def execute_aistatus(self, stmt):
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            self.interactive_mode.cmd_aistatus()
+        else:
+            raise RuntimeError("AISTATUS not available in this context")
+
+    def execute_aihelp(self, stmt):
+        if hasattr(self, 'interactive_mode') and self.interactive_mode:
+            self.interactive_mode.cmd_aihelp()
+        else:
+            raise RuntimeError("AIHELP not available in this context")
+
     def execute_save(self, stmt):
         """Execute SAVE statement"""
         # Evaluate filename expression

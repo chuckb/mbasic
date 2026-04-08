@@ -64,3 +64,23 @@ def parse_assistant_content(content: str) -> Tuple[bool, List[str], Optional[str
     if lines:
         return True, lines, None
     return False, [], "No numbered BASIC lines or valid JSON program in AI response"
+
+
+def parse_explanation_content(content: str) -> Tuple[bool, str, Optional[str]]:
+    """Parse model output for AIEXPLAIN: prefer JSON {{\"explanation\": \"...\"}}, else plain text."""
+    raw = strip_markdown_fences(content)
+    if not raw:
+        return False, "", "Empty AI response"
+
+    try:
+        data = json.loads(raw)
+        if isinstance(data, dict):
+            exp = data.get("explanation")
+            if isinstance(exp, str) and exp.strip():
+                return True, exp.strip(), None
+    except json.JSONDecodeError:
+        pass
+
+    if raw.strip():
+        return True, raw.strip(), None
+    return False, "", "Empty explanation"

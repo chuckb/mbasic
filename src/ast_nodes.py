@@ -706,6 +706,73 @@ class AILoadStatementNode:
 
 
 @dataclass
+class AIMergeStatementNode:
+    """AIMERGE — AI revises program into pending buffer (M3)."""
+
+    prompt: 'ExpressionNode'
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class AIFixStatementNode:
+    """AIFIX — AI repair into pending buffer; optional string hint."""
+
+    hint: Optional['ExpressionNode'] = None
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class AIDiffStatementNode:
+    """AIDIFF — show current vs pending AI program."""
+
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class AIApplyStatementNode:
+    """AIAPPLY — commit pending AI program to current."""
+
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class AICancelStatementNode:
+    """AICANCEL — discard pending AI program."""
+
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class AIExplainStatementNode:
+    """AIEXPLAIN [line] — prose explanation (does not change program)."""
+
+    line_ref: Optional['ExpressionNode'] = None
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class AIStatusStatementNode:
+    """AISTATUS — show AI / pending state."""
+
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
+class AIHelpStatementNode:
+    """AIHELP — AI command summary."""
+
+    line_num: int = 0
+    column: int = 0
+
+
+@dataclass
 class LoadStatementNode:
     """LOAD statement - load program from disk
 

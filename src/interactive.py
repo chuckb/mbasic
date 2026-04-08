@@ -129,6 +129,11 @@ class InteractiveMode:
         self.program_interpreter = None  # Interpreter for RUN (preserved for CONT)
         self.ctrl_c_count = 0  # Track consecutive Ctrl+C presses
 
+        # M3: single pending AI program (full line dict), optional error context for AIFIX
+        self.ai_pending_lines = None  # Optional[Dict[int, str]]
+        self.ai_last_error_context = None  # Optional[str]
+        self.ai_last_operation_summary = None  # Optional[str]
+
         # I/O handler (defaults to console if not provided)
         if io_handler is None:
             from src.iohandler.console import ConsoleIOHandler
@@ -178,6 +183,61 @@ class InteractiveMode:
                 print(f"  {line_text}")
 
         return line_node
+
+    def _program_source_from_dict(self, d):
+        if not d:
+            return ""
+        return "\n".join(d[k] for k in sorted(d.keys())) + "\n"
+
+    def _ai_clear_pending(self, manual: bool = False):
+        """Drop pending AI proposal; if manual=True and there was pending, print discard notice."""
+        had = self.ai_pending_lines is not None
+        self.ai_pending_lines = None
+        if had and manual:
+            print("PENDING AI CHANGES DISCARDED DUE TO MANUAL EDIT")
+
+    def _ai_merge_base_source(self):
+        """Source text for next AIMERGE/AIFIX: pending program if any, else current."""
+        if self.ai_pending_lines:
+            return self._program_source_from_dict(self.ai_pending_lines)
+        if self.program.lines:
+            return self._program_source_from_dict(self.program.lines)
+        return None
+
+    def _ai_try_set_pending_from_generation(self, gen, failure_label: str) -> bool:
+        """Validate AI lines into a temp program; on success replace pending buffer."""
+        from editing import ProgramManager
+
+        tmp = ProgramManager(self.def_type_map)
+        errors = []
+        for raw_line in gen.lines:
+            line = raw_line.strip()
+            if not line:
+                continue
+            match = re.match(r"^(\d+)\s", line)
+            if not match:
+                errors.append(f"?Line must start with number: {line[:60]}")
+                continue
+            line_num = int(match.group(1))
+            ok, err = tmp.add_line(line_num, line)
+            if not ok:
+                errors.append(err or f"?Parse error at line {line_num}")
+        if errors or not tmp.lines:
+            for msg in errors:
+                print(msg)
+            print(f"?{failure_label}")
+            return False
+        self.ai_pending_lines = dict(tmp.lines)
+        return True
+
+    def _ai_record_run_failure(self, runtime, exc):
+        parts = [str(exc)]
+        if runtime and runtime.pc and runtime.pc.line_num:
+            ln = runtime.pc.line_num
+            parts.append(f"line {ln}")
+            if ln in self.program.lines:
+                parts.append(self.program.lines[ln])
+        self.ai_last_error_context = " | ".join(parts)
 
     def clear_execution_state(self):
         """Clear GOSUB/RETURN and FOR/NEXT stacks when program is edited.
@@ -235,7 +295,9 @@ class InteractiveMode:
         keywords = [
             'PRINT', 'INPUT', 'LET', 'IF', 'THEN', 'ELSE', 'FOR', 'TO', 'STEP', 'NEXT',
             'GOTO', 'GOSUB', 'RETURN', 'END', 'STOP', 'CONT', 'RUN', 'LIST', 'NEW',
-            'LOAD', 'AILOAD', 'SAVE', 'DELETE', 'RENUM', 'AUTO', 'EDIT', 'WHILE', 'WEND',
+            'LOAD', 'AILOAD', 'AIMERGE', 'AIFIX', 'AIDIFF', 'AIAPPLY', 'AICANCEL',
+            'AIEXPLAIN', 'AISTATUS', 'AIHELP',
+            'SAVE', 'DELETE', 'RENUM', 'AUTO', 'EDIT', 'WHILE', 'WEND',
             'DIM', 'READ', 'DATA', 'RESTORE', 'ON', 'REM', 'DEF', 'FN',
             'AND', 'OR', 'NOT', 'MOD',
             'DEFINT', 'DEFSNG', 'DEFDBL', 'DEFSTR',
@@ -347,6 +409,7 @@ class InteractiveMode:
             if not rest:
                 # Delete line
                 if line_num in self.lines:
+                    self._ai_clear_pending(manual=True)
                     del self.lines[line_num]
                     del self.line_asts[line_num]
                     # Clear execution state since line edits invalidate GOSUB/FOR stacks
@@ -356,6 +419,7 @@ class InteractiveMode:
                         self.program_runtime.statement_table.delete_line(line_num)
             else:
                 # Add/replace line - store both text and parsed AST
+                self._ai_clear_pending(manual=True)
                 self.lines[line_num] = line
                 line_ast = self.parse_single_line(line)
                 if line_ast:
@@ -410,6 +474,7 @@ class InteractiveMode:
             print("?No program")
             return
 
+        runtime = None
         try:
             # Execute using line ASTs directly (new style)
             # Runtime will reference self.line_asts which is mutable
@@ -464,8 +529,11 @@ class InteractiveMode:
                 # Normal RUN without line number - just call interpreter.run()
                 interpreter.run()
 
+            self.ai_last_error_context = None
+
         except Exception as e:
             print_error(e, runtime)
+            self._ai_record_run_failure(runtime, e)
 
     def cmd_cont(self):
         """CONT - Continue execution after STOP or Break
@@ -556,6 +624,8 @@ class InteractiveMode:
 
     def cmd_new(self):
         """NEW - Clear program"""
+        self._ai_clear_pending()
+        self.ai_last_error_context = None
         self.program.clear()
         self.current_file = None
         # Clear execution stacks (GOSUB/FOR/STOP state) when program is cleared
@@ -614,6 +684,7 @@ class InteractiveMode:
                     print(error)
 
             if success:
+                self._ai_clear_pending()
                 self.current_file = filename
                 print(f"Loaded from {filename}")
                 print("Ready")
@@ -674,7 +745,179 @@ class InteractiveMode:
                 print("?No program loaded")
             return
 
+        self._ai_clear_pending()
+        self.ai_last_error_context = None
+        self.ai_last_operation_summary = "AILOAD OK"
         print("Program loaded.")
+        print("Ready")
+
+    def cmd_aimerge(self, prompt: str):
+        """AIMERGE \"prompt\" — AI revision into pending buffer (M3)."""
+        from src.trs_ai.backends import load_backend_from_env
+
+        if not prompt or not str(prompt).strip():
+            print("?Syntax error")
+            return
+
+        base = self._ai_merge_base_source()
+        if base is None:
+            print("NO PROGRAM IN MEMORY")
+            print("Ready")
+            return
+
+        dialect = os.environ.get("TRS_AI_DIALECT_SPEC", "AIBASIC-0.1")
+        print("Contacting AI...")
+        backend = load_backend_from_env()
+        gen = backend.merge_program(base, str(prompt).strip(), dialect)
+        if not gen.ok:
+            self.ai_last_operation_summary = "AI MERGE FAILED"
+            print(f"?{gen.error or 'AI MERGE FAILED'}")
+            print("Ready")
+            return
+        if not self._ai_try_set_pending_from_generation(gen, "AI MERGE FAILED"):
+            self.ai_last_operation_summary = "AI MERGE FAILED"
+            print("Ready")
+            return
+        self.ai_last_operation_summary = "AI MERGE OK"
+        print("AI CHANGES PENDING")
+        print("Ready")
+
+    def cmd_aifix(self, hint):
+        """AIFIX [ \"hint\" ] — AI fix into pending buffer."""
+        from src.trs_ai.backends import load_backend_from_env
+
+        base = self._ai_merge_base_source()
+        if base is None:
+            print("NO PROGRAM IN MEMORY")
+            print("Ready")
+            return
+
+        dialect = os.environ.get("TRS_AI_DIALECT_SPEC", "AIBASIC-0.1")
+        hint_str = None
+        if hint is not None and str(hint).strip():
+            hint_str = str(hint).strip()
+
+        print("Contacting AI...")
+        backend = load_backend_from_env()
+        gen = backend.fix_program(
+            base, self.ai_last_error_context, hint_str, dialect
+        )
+        if not gen.ok:
+            self.ai_last_operation_summary = "AI FIX FAILED"
+            print(f"?{gen.error or 'AI FIX FAILED'}")
+            print("Ready")
+            return
+        if not self._ai_try_set_pending_from_generation(gen, "AI FIX FAILED"):
+            self.ai_last_operation_summary = "AI FIX FAILED"
+            print("Ready")
+            return
+        self.ai_last_operation_summary = "AI FIX OK"
+        print("AI CHANGES PENDING")
+        print("Ready")
+
+    def cmd_aidiff(self):
+        """AIDIFF — current vs pending AI program."""
+        from src.trs_ai.program_diff import line_numbered_program_diff
+
+        if not self.ai_pending_lines:
+            print("NO PENDING AI CHANGES")
+        else:
+            for row in line_numbered_program_diff(
+                dict(self.program.lines), self.ai_pending_lines
+            ):
+                print(row)
+        print("Ready")
+
+    def cmd_aiapply(self):
+        """AIAPPLY — commit pending into current program."""
+        if not self.ai_pending_lines:
+            print("NO PENDING AI CHANGES")
+            print("Ready")
+            return
+
+        pending = self.ai_pending_lines
+        snapshot = dict(self.program.lines)
+        self.program.clear()
+        self.clear_execution_state()
+        self.current_file = None
+        errors = []
+        for ln in sorted(pending.keys()):
+            ok, err = self.program.add_line(ln, pending[ln])
+            if not ok:
+                errors.append(err or f"?Parse error at line {ln}")
+        if errors:
+            self.program.clear()
+            for line_num in sorted(snapshot.keys()):
+                self.program.add_line(line_num, snapshot[line_num])
+            self.clear_execution_state()
+            for msg in errors:
+                print(msg)
+            print("?AI APPLY FAILED")
+            print("Ready")
+            return
+
+        self.ai_pending_lines = None
+        self.ai_last_operation_summary = "AI CHANGES APPLIED"
+        print("AI CHANGES APPLIED")
+        print("Ready")
+
+    def cmd_aicancel(self):
+        """AICANCEL — discard pending AI program."""
+        if not self.ai_pending_lines:
+            print("NO PENDING AI CHANGES")
+        else:
+            self.ai_pending_lines = None
+            self.ai_last_operation_summary = "AI CHANGES CANCELED"
+            print("AI CHANGES CANCELED")
+        print("Ready")
+
+    def cmd_aiexplain(self, line_num):
+        """AIEXPLAIN [ line ] — short explanation (does not change program)."""
+        from src.trs_ai.backends import load_backend_from_env
+
+        if not self.program.lines:
+            print("NO PROGRAM IN MEMORY")
+            print("Ready")
+            return
+
+        src = self._program_source_from_dict(self.program.lines)
+        dialect = os.environ.get("TRS_AI_DIALECT_SPEC", "AIBASIC-0.1")
+        print("Contacting AI...")
+        backend = load_backend_from_env()
+        res = backend.explain_program(src, line_num, dialect)
+        if not res.ok:
+            self.ai_last_operation_summary = "AI EXPLAIN FAILED"
+            print(f"?{res.error or 'AI EXPLAIN FAILED'}")
+            print("Ready")
+            return
+        self.ai_last_operation_summary = "AI EXPLAIN OK"
+        print(res.text)
+        print("Ready")
+
+    def cmd_aistatus(self):
+        """AISTATUS — AI configuration and pending flag."""
+        kind = (os.environ.get("TRS_AI_BACKEND") or "fixture").strip().lower()
+        model = (os.environ.get("TRS_AI_MODEL") or "").strip()
+        print(f"BACKEND={kind}")
+        if model:
+            print(f"MODEL={model}")
+        print("PENDING=YES" if self.ai_pending_lines else "PENDING=NO")
+        summary = self.ai_last_operation_summary or ""
+        if summary:
+            print(f"LAST={summary}")
+        print("ERROR_CONTEXT=YES" if self.ai_last_error_context else "ERROR_CONTEXT=NO")
+        print("Ready")
+
+    def cmd_aihelp(self):
+        """AIHELP — list AI-related commands."""
+        print("AILOAD \"p\"     load program from AI (clears pending)")
+        print("AIMERGE \"p\"    AI edit -> pending")
+        print("AIFIX [\"hint\"] AI fix -> pending")
+        print("AIDIFF           diff current vs pending")
+        print("AIAPPLY          commit pending -> current")
+        print("AICANCEL         discard pending")
+        print("AIEXPLAIN [n]    explain line or program")
+        print("AISTATUS         AI state")
         print("Ready")
 
     def cmd_merge(self, filename):
@@ -711,6 +954,7 @@ class InteractiveMode:
                     print(f"?{error}")
 
             if success:
+                self._ai_clear_pending(manual=True)
                 # Update runtime if it exists (for CONT support)
                 if self.program_runtime:
                     for line_num in self.program.line_asts:
@@ -939,6 +1183,7 @@ class InteractiveMode:
         try:
             # delete_lines_from_program returns list of deleted line numbers (not used here)
             delete_lines_from_program(self, args, self.program_runtime)
+            self._ai_clear_pending(manual=True)
         except ValueError as e:
             print(f"?{e}")
         except Exception as e:
@@ -983,6 +1228,7 @@ class InteractiveMode:
             # Clear execution state since renumbering invalidates GOSUB/FOR stacks
             # (line numbers in stacks are now incorrect)
             self.clear_execution_state()
+            self._ai_clear_pending(manual=True)
             print("Renumbered")
 
         except ValueError as e:
@@ -1282,6 +1528,7 @@ class InteractiveMode:
 
             # Update the line with new text
             full_line = str(line_num) + " " + new_text
+            self._ai_clear_pending(manual=True)
             self.lines[line_num] = full_line
 
             # Parse and update AST
@@ -1399,6 +1646,7 @@ class InteractiveMode:
 
                 # Add the line with its number
                 full_line = str(current_line) + " " + line_text.strip()
+                self._ai_clear_pending(manual=True)
                 self.lines[current_line] = full_line
 
                 # Parse and store AST
@@ -1427,6 +1675,10 @@ class InteractiveMode:
         print("  RUN [line]         - Run program")
         print("  LOAD \"file\"        - Load program")
         print("  AILOAD \"prompt\"    - Load program from AI")
+        print("  AIMERGE \"text\"     - AI edit (pending)")
+        print("  AIFIX [\"hint\"]     - AI fix (pending)")
+        print("  AIDIFF / AIAPPLY / AICANCEL  - Review pending AI changes")
+        print("  AIEXPLAIN [line]   - Explain program or line")
         print("  SAVE \"file\"        - Save program")
         print("  MERGE \"file\"       - Merge program")
         print("  LIST [range]       - List program lines")

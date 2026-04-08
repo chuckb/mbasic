@@ -30,6 +30,14 @@ class TokenType(Enum):
     RUN = auto()
     SAVE = auto()
     AILOAD = auto()
+    AIMERGE = auto()
+    AIFIX = auto()
+    AIDIFF = auto()
+    AIAPPLY = auto()
+    AICANCEL = auto()
+    AIEXPLAIN = auto()
+    AISTATUS = auto()
+    AIHELP = auto()
 
     # Keywords - File Operations
     AS = auto()              # AS (used in OPEN and FIELD)
@@ -273,6 +281,14 @@ KEYWORDS = {
     'run': TokenType.RUN,
     'save': TokenType.SAVE,
     'aiload': TokenType.AILOAD,
+    'aimerge': TokenType.AIMERGE,
+    'aifix': TokenType.AIFIX,
+    'aidiff': TokenType.AIDIFF,
+    'aiapply': TokenType.AIAPPLY,
+    'aicancel': TokenType.AICANCEL,
+    'aiexplain': TokenType.AIEXPLAIN,
+    'aistatus': TokenType.AISTATUS,
+    'aihelp': TokenType.AIHELP,
 
     # File operations
     'as': TokenType.AS,

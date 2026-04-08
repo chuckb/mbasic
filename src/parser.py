@@ -544,6 +544,22 @@ class Parser:
             return self.parse_run()
         elif token.type == TokenType.AILOAD:
             return self.parse_aiload()
+        elif token.type == TokenType.AIMERGE:
+            return self.parse_aimerge()
+        elif token.type == TokenType.AIFIX:
+            return self.parse_aifix()
+        elif token.type == TokenType.AIDIFF:
+            return self.parse_aidiff()
+        elif token.type == TokenType.AIAPPLY:
+            return self.parse_aiapply()
+        elif token.type == TokenType.AICANCEL:
+            return self.parse_aicancel()
+        elif token.type == TokenType.AIEXPLAIN:
+            return self.parse_aiexplain()
+        elif token.type == TokenType.AISTATUS:
+            return self.parse_aistatus()
+        elif token.type == TokenType.AIHELP:
+            return self.parse_aihelp()
         elif token.type == TokenType.LOAD:
             return self.parse_load()
         elif token.type == TokenType.SAVE:
@@ -1763,6 +1779,59 @@ class Parser:
             line_num=token.line,
             column=token.column,
         )
+
+    def parse_aimerge(self) -> AIMergeStatementNode:
+        """Parse AIMERGE \"prompt\" """
+        token = self.advance()
+        prompt = self.parse_expression()
+        return AIMergeStatementNode(
+            prompt=prompt,
+            line_num=token.line,
+            column=token.column,
+        )
+
+    def parse_aifix(self) -> AIFixStatementNode:
+        """Parse AIFIX [ \"hint\" ]"""
+        token = self.advance()
+        hint = None
+        if not self.at_end_of_line() and not self.match(TokenType.COLON):
+            hint = self.parse_expression()
+        return AIFixStatementNode(
+            hint=hint,
+            line_num=token.line,
+            column=token.column,
+        )
+
+    def parse_aidiff(self) -> AIDiffStatementNode:
+        token = self.advance()
+        return AIDiffStatementNode(line_num=token.line, column=token.column)
+
+    def parse_aiapply(self) -> AIApplyStatementNode:
+        token = self.advance()
+        return AIApplyStatementNode(line_num=token.line, column=token.column)
+
+    def parse_aicancel(self) -> AICancelStatementNode:
+        token = self.advance()
+        return AICancelStatementNode(line_num=token.line, column=token.column)
+
+    def parse_aiexplain(self) -> AIExplainStatementNode:
+        token = self.advance()
+        line_ref = None
+        if not self.at_end_of_line() and not self.match(TokenType.COLON):
+            line_ref = self.parse_expression()
+        return AIExplainStatementNode(
+            line_ref=line_ref,
+            line_num=token.line,
+            column=token.column,
+        )
+
+    def parse_aistatus(self) -> AIStatusStatementNode:
+        token = self.advance()
+        return AIStatusStatementNode(line_num=token.line, column=token.column)
+
+    def parse_aihelp(self) -> AIHelpStatementNode:
+        token = self.advance()
+        return AIHelpStatementNode(line_num=token.line, column=token.column)
 
     def parse_load(self) -> LoadStatementNode:
         """Parse LOAD statement

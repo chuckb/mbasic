@@ -1188,7 +1188,10 @@ class SemanticAnalyzer:
         """Analyze a single statement"""
 
         # Check for unsupported compiler commands
-        if isinstance(stmt, (ListStatementNode, AILoadStatementNode, LoadStatementNode,
+        if isinstance(stmt, (ListStatementNode, AILoadStatementNode, AIMergeStatementNode,
+                            AIFixStatementNode, AIDiffStatementNode, AIApplyStatementNode,
+                            AICancelStatementNode, AIExplainStatementNode, AIStatusStatementNode,
+                            AIHelpStatementNode, LoadStatementNode,
                             SaveStatementNode, MergeStatementNode,
                             NewStatementNode, ContStatementNode,
                             DeleteStatementNode,

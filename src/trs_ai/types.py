@@ -11,3 +11,12 @@ class GenerationResult:
     ok: bool
     lines: List[str]
     error: Optional[str] = None
+
+
+@dataclass
+class ExplainResult:
+    """Result of AIEXPLAIN (prose, not program lines)."""
+
+    ok: bool
+    text: str
+    error: Optional[str] = None
