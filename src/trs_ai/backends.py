@@ -121,7 +121,9 @@ Also (settings / help): LIMITS, SHOW SETTINGS, SET SETTING, HELP.
 Intrinsic functions (expressions): ABS, ASC, ATN, CDBL, CHR$, CINT, COS, CSNG, CVD, CVI, CVS, EOF, EXP, FIX, FRE, HEX$, INKEY$, INP, INPUT$, INSTR, INT, LEFT$, LEN, LOC, LOF, LOG, LPOS, MID$, MKD$, MKI$, MKS$, OCT$, PEEK, POS, RIGHT$, RND, SGN, SIN, SPACE$, SPC, SQR, STR$, STRING$, TAB, TAN, USR, VAL, VARPTR
 
 Types: integer %, single !, double #, string $; DIM arrays; OPTION BASE 0 or 1.
+Variable names: letters and digits (and optional period in extended identifiers); underscores are not valid in names.
 Operators: + - * / \\ ^ MOD; = <> < > <= >=; AND OR NOT XOR EQV IMP; string +.
+IF: one ELSE per IF; multiline structured IF/ELSEIF blocks like other dialects are not the model — use line numbers, GOTO/GOSUB, or nested IF on one line where appropriate.
 """.strip()
 
 # Generate / merge / fix only — conservative subset; avoids listing GET/PUT/FIELD that models misapply.
@@ -146,6 +148,16 @@ CLEAR, RANDOMIZE, CLOSE, OPEN (see file rules).
 
 DIM rule (parser requirement): DIM only declares arrays with parentheses, e.g. DIM N$(50), A%(10). Never DIM COUNT% or DIM X without ().
 Initialize scalars with LET or assignment: COUNT%=0, I=0.
+
+Variable names (lexer rule): start with a letter; then only letters, digits, and optional period (.) before an optional
+type suffix ($ % ! #). Underscores are invalid — never use SNAKE_CASE names (e.g. use TOTALCOUNT, ITEMNAME$, N1 not TOTAL_COUNT, ITEM_NAME$).
+
+IF / ELSE (this parser — not QuickBASIC multi-line blocks):
+- IF expr THEN line_number | IF expr GOTO line_number | IF expr THEN statement(s).
+- After THEN (when not a line number), multiple statements may appear on the same physical line separated by ':'.
+- At most one ELSE per IF. There is no ELSEIF keyword. Use ELSE IF cond THEN ... only as ELSE plus one nested IF on the same line; for clarity prefer separate numbered lines or GOTO/GOSUB.
+- The ELSE branch (when not a line number) is a single statement in the grammar — do not write ELSE PRINT A : PRINT B; use ELSE GOTO n, ELSE GOSUB n, or another line.
+- Avoid cramming many ':'-separated statements (especially PRINT with commas) into one IF...THEN line; it often fails to parse — use GOTO/GOSUB to a subroutine block instead.
 
 Hard bans (not in this parser or not for AI output): CLS (clear screen), SPLIT, DEF USR.
 
@@ -176,7 +188,7 @@ Hard bans for generated programs (the host rejects these; the model often halluc
 - Do not fix file problems by switching to random access — use multiple LINE INPUT # / PRINT # lines and a simple text format instead.
 - Do not write one multi-field PRINT # line per record and then read four LINE INPUT # per record (or any unequal count); pair them.
 
-PRINT: prefer semicolons between items. Comma-separated PRINT zones inside long IF...THEN lines often fail parse — split into multiple PRINT lines or use GOSUB.
+PRINT: prefer semicolons between items. Comma-separated PRINT zones inside long IF...THEN lines often fail parse — split into multiple PRINT lines, separate line numbers, or GOSUB.
 
 Types: string $, integer %, single !, double # — keep suffixes consistent. DEF USR is not implemented.
 
@@ -207,8 +219,9 @@ Validity-first rules (strict parser / AIBASIC host):
 COMPACT_SYNTAX_CONTRACT = """
 Syntax reminders:
 - One physical line in the program = one line number. No duplicate line numbers anywhere (common model mistake: restarting at 200 after already using 200 for the menu).
-- ':' separates multiple statements on the same numbered line.
-- LET, IF...THEN...ELSE, FOR...NEXT, GOSUB/RETURN.
+- ':' separates multiple statements on the same numbered line (mainly on the THEN side of IF — ELSE allows one statement or a line number unless ELSE introduces a single nested IF).
+- Identifiers: letters/digits/optional '.' before suffix; no underscores in names.
+- LET, IF...THEN...ELSE (one ELSE; no ELSEIF keyword), FOR...NEXT, GOSUB/RETURN.
 - OPEN "name" FOR INPUT|OUTPUT|APPEND AS #n only (never FOR RANDOM/BINARY; never OPEN "R",...).
 """.strip()
 
@@ -242,6 +255,7 @@ RETRY_EXTRA_GENERATE = """
 IMPORTANT (retry): The previous output failed validation or parsing. Produce a SMALLER, SIMPLER program.
 If duplicate line number: follow the hundreds-block layout in the system prompt (menu 100–189, subs 200+, never reuse a number).
 If DIM/CLS/SPLIT: use DIM A(50) only for arrays; scalars as COUNT%=0; no CLS; no SPLIT — LINE INPUT # and string functions only.
+If invalid names: no underscores (use LETTERS or LETTERS123); IF/ELSE: one ELSE, no ELSE PRINT A : PRINT B — use GOTO/GOSUB or nested IF as single ELSE stmt.
 If OPEN/FOR/GET/PUT/COMMA: sequential files only (FOR INPUT/OUTPUT/APPEND; LINE INPUT#/PRINT#).
 If SAVE/LOAD mismatch or EOF on load: make the same number of file lines per record on write as on read
 (e.g. four PRINT # and four LINE INPUT # per entry, or one of each with parsing).
